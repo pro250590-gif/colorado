@@ -847,6 +847,19 @@ section h2.big{margin-bottom:4px}
 .fooddet[open] .fchev{transform:rotate(180deg)}
 .fooddet .cgo{color:#5b3fc4;background:rgba(91,63,196,.1);border-radius:50%;width:30px;height:30px;display:grid;place-items:center}
 .fooddet .cgo .i{width:20px;height:20px;stroke-width:2.4}
+/* ── ЕДИНЫЙ ВИД СТРОК БЮДЖЕТА ── */
+.brow3{padding:13px 16px;border-bottom:1px solid #eef0f6}
+.b3top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.b3nm{font:700 15px/1.25 "Plus Jakarta Sans",sans-serif;letter-spacing:-.02em;flex:1;min-width:0}
+.b3field{flex:none;display:flex;align-items:center;gap:6px}
+.b3field input{width:82px;border:1.5px solid rgba(91,63,196,.35);border-radius:11px;background:linear-gradient(180deg,#fff,#f6f3ff);padding:9px 10px;font:800 14.5px/1 "Plus Jakarta Sans",sans-serif;text-align:right;color:#1b1e2e}
+.b3field input:focus{outline:2px solid rgba(91,63,196,.28);border-color:#5b3fc4}
+.b3u{font:700 11px/1 "Inter",sans-serif;color:#8b8fa3;min-width:26px}
+.b3bot{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-top:8px}
+.b3desc{font:500 12px/1.4 "Inter",sans-serif;color:#8b8fa3}
+.b3desc b{color:#5b3fc4;font-weight:700}
+.b3desc .cf{color:#5b3fc4}.b3desc .est{color:#8b8fa3;font-weight:800}
+.b3sum{font:800 14px/1 "Plus Jakarta Sans",sans-serif;color:#1b1e2e;white-space:nowrap;flex:none}
 </style>
 </head>
 <body>
@@ -1998,21 +2011,25 @@ function buildBudget(){
   host.innerHTML=BUDGET.map(gr=>{
     const rows=gr.items.map(it=>{
       const val=saved[it.k]!==undefined?saved[it.k]:it.v;
-      /* строки с множителем: за день / на человека / на человека в день */
-      if(it.per==='day'||it.per==='person'||it.per==='personday'){
-        const rate=saved[it.k+'rate']!==undefined?saved[it.k+'rate']:(it.rate!==undefined?it.rate:it.v);
-        const unit=it.per==='day'?'$/дн':'$/чел';
-        const mult=it.per==='day'?('<span class="bmul">× <b data-days>'+(totalNights()+1)+'</b> дн.</span>')
-                  :it.per==='person'?('<span class="bmul">× <b data-ppl>'+PEOPLE+'</b> чел.</span>')
-                  :('<span class="bmul">× <b data-ppl>'+PEOPLE+'</b> чел.</span> <span class="bmul">× <b data-days>'+(totalNights()+1)+'</b> дн.</span>');
-        return '<div class="brow2" data-per="'+it.per+'">'
-          +'<div class="br2top"><b>'+it.nm+'</b><span class="bsum" data-sum="'+it.k+'">—</span></div>'
-          +'<div class="br2bot"><input class="money perunit" data-k="'+it.k+'rate" inputmode="decimal" value="'+rate+'"><span class="br2u">'+unit+' '+mult+'</span></div></div>';
+      const per=it.per;
+      /* единый вид строки: название + поле сверху, описание + итог снизу */
+      let inputK,inputVal,unit,desc,showSum;
+      if(per==='day'||per==='person'||per==='personday'){
+        inputVal=saved[it.k+'rate']!==undefined?saved[it.k+'rate']:(it.rate!==undefined?it.rate:it.v);
+        inputK=it.k+'rate';showSum=true;
+        unit=per==='day'?'$/дн':'$/чел';
+        desc=per==='day'?('за день × <b data-days>'+(totalNights()+1)+'</b> дн.')
+             :per==='person'?('на человека × <b data-ppl>'+PEOPLE+'</b> чел.')
+             :('на человека × <b data-ppl>'+PEOPLE+'</b> чел. × <b data-days>'+(totalNights()+1)+'</b> дн.');
+      }else{
+        inputVal=val;inputK=it.k;showSum=false;unit='$';
+        desc=it.sub+(it.ok?' <span class="cf">'+ic('check','i-sm')+'</span>':(it.est?' <span class="est">~</span>':''));
       }
-      const tag=it.ok?'<span class="cf">'+ic('check','i-sm')+'</span>':(it.est?'<span class="est">~</span>':'');
-      return '<div class="brow">'
-        +'<span class="binfo"><b>'+it.nm+'</b><span>'+it.sub+' '+tag+'</span></span>'
-        +'<span class="bfield"><input class="money" data-k="'+it.k+'" inputmode="decimal" value="'+val+'"><span class="bx">$</span></span></div>';
+      return '<div class="brow3"'+(per?' data-per="'+per+'"':'')+'>'
+        +'<div class="b3top"><b class="b3nm">'+it.nm+'</b>'
+          +'<span class="b3field"><input class="money'+(per?' perunit':'')+'" data-k="'+inputK+'" inputmode="decimal" value="'+inputVal+'"><span class="b3u">'+unit+'</span></span></div>'
+        +'<div class="b3bot"><span class="b3desc">'+desc+'</span>'
+          +(showSum?'<span class="b3sum" data-sum="'+it.k+'">—</span>':'')+'</div></div>';
     }).join('');
     return '<div class="bgroup">'
       +'<div class="bghead"><span class="bgmed" style="background:linear-gradient(150deg,'+gr.c+','+gr.c2+')">'+ic(gr.ic)+'</span>'
@@ -2039,7 +2056,7 @@ function groupBook(g){
 }
 function calcBudget(){
   let sum=0;const days=totalNights()+1;
-  document.querySelectorAll('#budgetBox .brow2[data-per]').forEach(row=>{
+  document.querySelectorAll('#budgetBox .brow3[data-per]').forEach(row=>{
     const inp=row.querySelector('input.perunit'),out=row.querySelector('[data-sum]');
     const qty=itemQty(row.dataset.per,days),v=(parseFloat(inp.value)||0)*qty;
     if(out)out.textContent=v?money(v):'—';
