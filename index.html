@@ -194,27 +194,24 @@ h2.big{font-size:clamp(27px,6.2vw,42px);margin:11px 0 0}
 .planner{border-radius:var(--r2);padding:20px;background:var(--gl);backdrop-filter:var(--blur);
   -webkit-backdrop-filter:var(--blur);border:1px solid var(--gl-line);box-shadow:var(--sh2),var(--edge)}
 .dateset{display:flex;flex-wrap:wrap;gap:11px;align-items:center;margin-bottom:6px;font-size:14.5px}
-.dateset input[type=date]{border:1px solid var(--gl-line);border-radius:12px;padding:12px 14px;
-  font:700 14.5px/1 "JetBrains Mono",monospace;background:rgba(255,255,255,.8);color:var(--ink);box-shadow:var(--sh1)}
+.dateset input[type=date]{border:1px solid var(--gl-line);border-radius:12px;padding:12px 14px;font:700 15px/1 "Manrope",sans-serif;background:rgba(255,255,255,.85);color:var(--ink);box-shadow:var(--sh1)}
 .dateset input[type=date]:focus{outline:2px solid var(--sun1);border-color:var(--sun1)}
 .dshint{color:var(--mut);font-size:13px}
-.stayrow{display:flex;align-items:center;gap:13px;padding:15px 0;border-bottom:1px solid rgba(8,21,15,.07)}
+.stayrow{display:flex;align-items:center;gap:14px;padding:17px 0;border-bottom:1px solid rgba(8,21,15,.08)}
 .stayrow:last-child{border-bottom:0}
-.staydot{width:46px;height:46px;border-radius:50%;flex:none;display:grid;place-items:center;color:#fff;position:relative;
-  box-shadow:var(--sh2),inset 0 1px 0 rgba(255,255,255,.45)}
+.staydot{width:48px;height:48px;border-radius:50%;flex:none;display:grid;place-items:center;color:#fff;position:relative;box-shadow:var(--sh2),inset 0 1px 0 rgba(255,255,255,.45)}
 .staydot::after{content:"";position:absolute;inset:0;border-radius:50%;
   background:linear-gradient(155deg,rgba(255,255,255,.4),rgba(255,255,255,0) 58%)}
+.staytop{display:flex;align-items:center;gap:13px;flex:1;min-width:0}
 .stayinfo{flex:1;min-width:0}
-.stayinfo .sn{font-weight:700;font-size:17.5px;font-family:"Space Grotesk",sans-serif;letter-spacing:-.03em}
-.stayinfo .sd{font-size:12.5px;color:var(--mut);margin-top:4px;font-weight:600;font-family:"JetBrains Mono",monospace}
-.stepper{display:flex;align-items:center;gap:6px;flex:none}
-.stepbtn{width:40px;height:40px;border:1px solid var(--gl-line);background:rgba(255,255,255,.8);border-radius:12px;
-  font-size:20px;font-weight:500;color:var(--ink);cursor:pointer;line-height:1;display:grid;place-items:center;
-  padding:0;box-shadow:var(--sh1),var(--edge)}
+.stayinfo .sn{display:block;font-weight:700;font-size:21px;font-family:"Space Grotesk",sans-serif;letter-spacing:-.035em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.15}
+.stayinfo .sd{display:block;font-size:13.5px;color:var(--mut);margin-top:5px;font-weight:600;font-family:"Manrope",sans-serif;letter-spacing:0;white-space:nowrap}
+.stepper{display:flex;align-items:center;gap:5px;flex:none}
+.stepbtn{width:38px;height:38px;border:1px solid var(--gl-line);background:rgba(255,255,255,.85);border-radius:12px;font-size:19px;font-weight:500;color:var(--ink);cursor:pointer;line-height:1;display:grid;place-items:center;padding:0;box-shadow:var(--sh1),var(--edge)}
 .stepbtn:active{transform:scale(.93)}
-.stepn{min-width:54px;text-align:center}
-.stepn b{display:block;font-size:21px;color:var(--ink);font-weight:700;font-family:"JetBrains Mono",monospace}
-.stepn .stepu{font-size:10px;color:var(--mut);font-weight:700;text-transform:uppercase;letter-spacing:.1em}
+.stepn{min-width:46px;text-align:center}
+.stepn b{display:block;font-size:20px;color:var(--ink);font-weight:700;font-family:"JetBrains Mono",monospace;line-height:1.1}
+.stepn .stepu{font-size:9.5px;color:var(--mut);font-weight:800;text-transform:uppercase;letter-spacing:.08em}
 .staytot{margin-top:15px;font-size:14.5px;color:#fff;font-weight:600;border-radius:15px;padding:15px 17px;
   background:linear-gradient(140deg,var(--alp2),var(--ink));box-shadow:var(--sh2)}
 .staytot b{color:var(--alp1);font-family:"JetBrains Mono",monospace}
@@ -223,30 +220,28 @@ h2.big{font-size:clamp(27px,6.2vw,42px);margin:11px 0 0}
 /* ==========================================================================
    ДНИ — на линии профиля высоты
    ========================================================================== */
-#days{position:relative;padding-left:52px}
-#days::before{content:"";position:absolute;left:22px;top:6px;bottom:26px;width:2px;border-radius:2px;
-  background:linear-gradient(180deg,var(--d1),var(--d4) 42%,var(--sun1) 66%,var(--sky1) 88%,var(--sky2))}
+#days{position:relative}
+#days::before{display:none}
 .day{border-radius:var(--r2);margin:0 0 13px;overflow:hidden;position:relative;background:var(--gl-strong);
   backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border:1px solid var(--gl-line);
   box-shadow:var(--sh1),var(--edge);transition:box-shadow .3s,transform .3s cubic-bezier(.2,.8,.2,1)}
 .day[open]{box-shadow:var(--sh3),var(--edge)}
-.day>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:13px;padding:15px 16px}
+.day>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:13px;padding:14px 15px}
 .day>summary::-webkit-details-marker{display:none}
 /* точка дня на линии высоты + отметка высоты */
-.dnum{position:absolute;left:-52px;top:15px;width:44px;height:44px;border-radius:50%;color:#fff;font-weight:700;
-  font-family:"JetBrains Mono",monospace;font-size:14px;display:grid;place-items:center;
-  box-shadow:var(--sh2),inset 0 1px 0 rgba(255,255,255,.45);border:2.5px solid rgba(255,255,255,.9)}
-.dalt{position:absolute;left:-52px;top:62px;width:44px;text-align:center;font:700 9px/1.25 "JetBrains Mono",monospace;
-  color:var(--mut);letter-spacing:-.03em}
+.dnum{flex:none;width:50px;height:50px;border-radius:16px;color:#fff;display:grid;place-items:center;align-content:center;gap:1px;box-shadow:var(--sh2),inset 0 1px 0 rgba(255,255,255,.4);position:relative;overflow:hidden}
+.dnum b{font:700 20px/1 "JetBrains Mono",monospace;letter-spacing:-.05em}
+.dnum i{font:800 7.5px/1 "Manrope",sans-serif;font-style:normal;text-transform:uppercase;letter-spacing:.14em;opacity:.85}
+.dsub{display:flex;align-items:center;gap:8px;margin-top:6px;flex-wrap:wrap}
+.dalt{font:700 10.5px/1 "JetBrains Mono",monospace;color:var(--sky2);background:rgba(108,140,255,.13);padding:5px 8px;border-radius:7px;letter-spacing:-.03em}
 .dhead-txt{flex:1;min-width:0}
-.dhead-txt h3{font-size:17.5px}
-.dhead-txt .ddate{color:var(--mut);font-size:11.5px;font-weight:700;margin-top:4px;
-  font-family:"JetBrains Mono",monospace;letter-spacing:-.02em}
+.dhead-txt h3{font-size:18.5px;line-height:1.15}
+.dhead-txt .ddate{color:var(--mut);font-size:12.5px;font-weight:700;font-family:"Manrope",sans-serif;letter-spacing:0;margin:0}
 .chev{flex:none;color:var(--mut);transition:transform .3s cubic-bezier(.2,.8,.2,1)}
 .day[open] .chev{transform:rotate(90deg)}
 .dcount{flex:none;font-size:10px;font-weight:800;color:var(--alp2);background:rgba(0,201,167,.11);
   border-radius:999px;padding:6px 10px;font-family:"JetBrains Mono",monospace}
-.day-body{padding:0 16px 18px}
+.day-body{padding:0 15px 18px}
 .leg{background:linear-gradient(135deg,rgba(0,201,167,.1),rgba(108,140,255,.09));border:1px solid var(--gl-line);
   border-radius:14px;padding:12px 14px;font-size:13px;margin:0 0 13px;display:flex;flex-wrap:wrap;gap:8px;
   align-items:center;color:var(--ink2)}
@@ -259,20 +254,16 @@ h2.big{font-size:clamp(27px,6.2vw,42px);margin:11px 0 0}
   padding:10px 13px;border-radius:11px;cursor:pointer;box-shadow:var(--sh1)}
 .tiny:active{transform:scale(.96)}
 ul.stops{list-style:none;margin:0;padding:0}
-ul.stops li{display:flex;gap:13px;align-items:flex-start;padding:13px 0;border-bottom:1px solid rgba(8,21,15,.07)}
+ul.stops li{display:flex;gap:14px;align-items:flex-start;padding:14px 0;border-bottom:1px solid rgba(8,21,15,.07)}
 ul.stops li:last-child{border-bottom:0}
-.chkwrap{flex:none;padding-top:3px}
-input[type=checkbox].tick{appearance:none;-webkit-appearance:none;width:26px;height:26px;border:1.5px solid #c3cfc9;
-  border-radius:9px;background:rgba(255,255,255,.85);cursor:pointer;display:block;position:relative;transition:.18s;
-  box-shadow:var(--sh1)}
+.pic{position:relative;flex:none;width:72px;height:72px}
+input[type=checkbox].tick{appearance:none;-webkit-appearance:none;position:absolute;right:-7px;bottom:-7px;width:28px;height:28px;border:2.5px solid #fff;border-radius:50%;background:rgba(255,255,255,.92);cursor:pointer;transition:.18s;box-shadow:var(--sh2);z-index:2}
 input[type=checkbox].tick:checked{background:linear-gradient(150deg,var(--alp1),var(--alp2));border-color:transparent}
-input[type=checkbox].tick:checked::after{content:"";position:absolute;left:9px;top:4px;width:5px;height:12px;
-  border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(42deg)}
-.thumb{flex:none;width:84px;height:84px;border-radius:17px;overflow:hidden;position:relative;
-  background:#dde5e1 center/cover no-repeat;box-shadow:var(--sh2);border:2px solid rgba(255,255,255,.9)}
+input[type=checkbox].tick:checked::after{content:"";position:absolute;left:8px;top:5px;width:5px;height:11px;border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(42deg)}
+.thumb{display:block;width:72px;height:72px;border-radius:16px;overflow:hidden;position:relative;background:#dde5e1 center/cover no-repeat;box-shadow:var(--sh2);border:2px solid rgba(255,255,255,.9)}
 .thumb.noimg{display:grid;place-items:center;color:var(--mut);background:linear-gradient(150deg,#e4ebe7,#d6e0da)}
 .sinfo{flex:1;min-width:0}
-.snm{font-weight:700;font-size:16.5px;line-height:1.28;font-family:"Space Grotesk",sans-serif;letter-spacing:-.03em}
+.snm{font-weight:700;font-size:16px;line-height:1.25;font-family:"Space Grotesk",sans-serif;letter-spacing:-.03em}
 .snm .cemo{margin-right:5px;color:var(--sun1)}
 .snm a{color:var(--ink);background-image:linear-gradient(var(--sun1),var(--sun1));background-size:100% 1.5px;
   background-repeat:no-repeat;background-position:0 100%;padding-bottom:1px}
@@ -284,7 +275,7 @@ input[type=checkbox].tick:checked::after{content:"";position:absolute;left:9px;t
 .mpill.free{background:rgba(0,201,167,.14);color:var(--alp2)}
 .mpill.best{background:rgba(224,160,32,.16);color:#8a6316}
 .mpill.route{background:rgba(108,140,255,.14);color:var(--sky2)}
-.why{color:var(--ink2);font-size:14.5px;display:block;margin-top:8px;opacity:.9}
+.why{color:var(--ink2);font-size:14.5px;line-height:1.55;display:block;margin-top:8px;opacity:.92}
 .tag{display:inline-block;font-size:9px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;border-radius:6px;
   padding:4px 8px;margin-left:7px;vertical-align:2px;white-space:nowrap}
 .t-must{background:linear-gradient(150deg,var(--sun1),var(--sun2));color:#fff}
@@ -393,6 +384,20 @@ footer a{color:var(--alp1);font-weight:600}
 }
 a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--sun1);
   outline-offset:2px;border-radius:8px}
+
+/* на узких экранах степпер уходит под название, чтобы город не сжимался */
+@media(max-width:430px){
+  .stayrow{flex-wrap:wrap;gap:10px}
+  .staytop{flex:1 1 100%}
+  .stepper{margin-left:62px}
+  .stayinfo .sn{font-size:20px}
+  .day>summary{gap:11px;padding:13px 13px}
+  .dnum{width:46px;height:46px;border-radius:14px}
+  .dnum b{font-size:18px}
+  .dhead-txt h3{font-size:17px}
+  .pic,.thumb{width:66px;height:66px}
+  ul.stops li{gap:12px}
+}
 </style>
 </head>
 <body>
@@ -1080,17 +1085,18 @@ function buildDays(){
   DAYS.forEach(d=>{
     const c=DCOL[d.n];const list=P.filter(p=>p.d===d.n);
     out+='<details class="day" data-day="'+d.n+'"'+(d.n===1?' open':'')+'>'
-      +'<span class="dnum" style="background:linear-gradient(150deg,'+c+',rgba(0,0,0,.25))">'+d.n+'</span>'+'<span class="dalt">'+mrs(ALT[d.n])+'</span>'+'<summary class="day-head">'
-      +'<span class="dhead-txt"><h3>'+d.title+'</h3><span class="ddate" data-daydate="'+d.n+'">'+dayDate(START,d.n)+'</span></span>'
+      +'<summary class="day-head">'+'<span class="dnum" style="background:linear-gradient(150deg,'+c+',rgba(0,0,0,.25))"><b>'+d.n+'</b><i>день</i></span>'
+      +'<span class="dhead-txt"><h3>'+d.title+'</h3><span class="dsub"><span class="ddate" data-daydate="'+d.n+'">'+dayDate(START,d.n)+'</span><span class="dalt">'+mrs(ALT[d.n])+'</span></span></span>'
       +'<span class="dcount">'+list.length+' точек</span><span class="chev"><svg class="i i-sm" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9.5 18 6-6-6-6"/></svg></span></summary>'
       +'<div class="day-body">'
       +'<div class="leg"><span class="pill">'+d.pill+'</span> <b>'+d.leg+'</b><a class="dirlink" href="#" data-dir="'+d.n+'" target="_blank" rel="noopener">Маршрут в Google Maps →</a></div>'
       +'<div class="daytools"><button class="tiny" data-dayon="'+d.n+'">Отметить день</button><button class="tiny" data-dayoff="'+d.n+'">Снять день</button></div>'
       +'<ul class="stops">'+list.map(p=>{const emo=p.star?'<span class="cemo star">'+ic('star','i-sm')+'</span>':'';
         return '<li data-id="'+p.id+'" data-cat="'+p.cat+'" data-day="'+p.d+'" data-base="'+p.base+'">'
-        +'<span class="chkwrap"><input type="checkbox" class="tick" data-tick="'+p.id+'" aria-label="показать на карте"></span>'
+        +'<span class="pic">'
         +(PHOTO[p.id]?'<span class="thumb" style="background-image:url('+pimg(p.id,'t')+')"></span>'
                      :'<span class="thumb noimg">'+ic(CATS[p.cat]?CATS[p.cat].e:'pin','i-lg')+'</span>')
+        +'<input type="checkbox" class="tick" data-tick="'+p.id+'" aria-label="показать на карте"></span>'
         +'<span class="sinfo"><span class="snm">'+emo+'<a href="'+gurl(p.q)+'" target="_blank" rel="noopener">'+p.nm+'</a>'+(p.tag?'<span class="tag '+p.tag[1]+'">'+p.tag[0]+'</span>':'')+'</span>'
         +metaStrip(p)
         +'<span class="why">'+p.why+'</span></span></li>';}).join('')+'</ul>'
@@ -1155,6 +1161,8 @@ function savePlan(){try{localStorage.setItem(PKEY,JSON.stringify({start:startIso
 function nightsBefore(baseId){let s=0;for(const b of BASES){if(b.id===baseId)break;s+=b.nights;}return s;}
 function dayDateFor(dayN){const bid=DAY_BASE[dayN];const pos=baseDays[bid].indexOf(dayN);return addDays(startIso,nightsBefore(bid)+pos);}
 function totalNights(){return BASES.reduce((s,b)=>s+b.nights,0);}
+function shortName(s){return s.replace(/\s*\(.*?\)/,'').replace(/\s*\/.*$/,'').trim();}
+function dm(dt){return dt.getDate()+' '+MONTHS[dt.getMonth()].slice(0,3);}
 function nights(n){const a=n%10,b=n%100;if(a===1&&b!==11)return'ночь';if(a>=2&&a<=4&&(b<10||b>=20))return'ночи';return'ночей';}
 function recomputeDates(){
   DAYS.forEach(d=>{const el=document.querySelector('[data-daydate="'+d.n+'"]');if(el)el.textContent=fmtDate(dayDateFor(d.n));});
@@ -1171,8 +1179,9 @@ function buildPlanner(){
 }
 function renderStays(){
   const rows=BASES.map((b,i)=>{const before=nightsBefore(b.id);const ci=addDays(startIso,before),co=addDays(startIso,before+b.nights);
-    return '<div class="stayrow"><span class="staydot" style="background:'+b.color+'">'+ic(b.emoji)+'</span>'
-      +'<span class="stayinfo"><span class="sn">'+b.name+'</span><span class="sd">заезд '+fmtDate(ci)+'&nbsp;&nbsp;→&nbsp;&nbsp;выезд '+fmtDate(co)+'</span></span>'
+    return '<div class="stayrow"><span class="staytop"><span class="staydot" style="background:'+b.color+'">'+ic(b.emoji)+'</span>'
+      +'<span class="stayinfo"><span class="sn">'+shortName(b.name)+'</span>'
+      +'<span class="sd">'+dm(ci)+' → '+dm(co)+'</span></span></span>'
       +'<span class="stepper"><button class="stepbtn" data-nd="'+i+'" data-dir="-1" aria-label="меньше ночей">−</button>'
       +'<span class="stepn"><b>'+b.nights+'</b><span class="stepu">'+nights(b.nights)+'</span></span>'
       +'<button class="stepbtn" data-nd="'+i+'" data-dir="1" aria-label="больше ночей">+</button></span></div>';
