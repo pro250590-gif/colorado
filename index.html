@@ -727,7 +727,8 @@ body{background:linear-gradient(168deg,#eef1f8,#e9edf6 60%,#e6eaf4)!important}
 .cdm{font:500 11px/1 "Inter",sans-serif;color:#8b8fa3}
 .cdm b{color:#5b3fc4}
 .cdtx>b{display:block;font:700 15px/1.25 "Inter",sans-serif;letter-spacing:-.01em;margin-top:6px}
-.cgo{color:#c7c9db;flex:none}
+.cgo{color:#5b3fc4;flex:none;background:rgba(91,63,196,.1);border-radius:50%;width:30px;height:30px;display:grid;place-items:center}
+.cgo .i{width:20px;height:20px;stroke-width:2.4}
 /* ── ВЕРНУТЬ ШАПКУ + ПЛАШКУ-ЦЕПОЧКУ, ПЕРЕКРАСИТЬ В ФИОЛЕТ ── */
 header.hero,#s-route{display:block!important}
 /* шапка: только описание + фото, без метрик и профиля высоты */
@@ -839,6 +840,13 @@ section h2.big{margin-bottom:4px}
 .scsub{display:block;font:500 11px/1.3 "Inter",sans-serif;color:#8b8fa3;margin-top:5px}
 .scdate{flex:none;border:1.5px solid rgba(91,63,196,.35);border-radius:12px;padding:10px 11px;font:700 13px/1 "Inter",sans-serif;background:linear-gradient(180deg,#fff,#f6f3ff);color:#1b1e2e}
 .scdate:focus{outline:2px solid rgba(91,63,196,.28);border-color:#5b3fc4}
+.ctransf b{color:#1b1e2e;font:800 14px/1 "Plus Jakarta Sans",sans-serif;display:inline-block;margin-right:8px}
+.ctransf span{display:inline-block;margin-right:10px;color:#8b8fa3}
+.ctransf{line-height:1.7}
+.fchev{margin-left:auto;transition:transform .25s}
+.fooddet[open] .fchev{transform:rotate(180deg)}
+.fooddet .cgo{color:#5b3fc4;background:rgba(91,63,196,.1);border-radius:50%;width:30px;height:30px;display:grid;place-items:center}
+.fooddet .cgo .i{width:20px;height:20px;stroke-width:2.4}
 </style>
 </head>
 <body>
@@ -903,7 +911,7 @@ section h2.big{margin-bottom:4px}
       <span class="counter">На карте: <b id="cnt">0</b></span>
     </div>
   </div>
-  <p class="maphint">Настоящая карта: кнопки + / − для зума, линейка масштаба (км/мили) внизу слева, выбор вида (карта / улицы / рельеф / спутник) справа вверху. Нажми на точку — описание и ссылка на Google Maps.</p>
+  
 </div></section>
 
 
@@ -1460,6 +1468,7 @@ function pinVisible(p){if(p.cat==='food')return foodVisible(p);return picked.has
 let fopen=null;                       /* какой список сейчас раскрыт над картой */
 /* фото для карточки: берём первый снимок из точек дня */
 /* ================= ЛЕНТА ПО ГОРОДАМ (Layla-style) ================= */
+const TRANSFER={our:{km:120,clean:'2 ч',stops:'5–6 ч'},asp:{km:330,clean:'5 ч',stops:'весь день'},den:{km:260,clean:'4 ч',stops:'6–7 ч'}};
 function citySeg(base){return SEGMENT[base]||'car';}
 function buildCities(){
   const host=document.getElementById('cities');if(!host)return;
@@ -1494,7 +1503,7 @@ function buildCities(){
           +'<div class="cpt"><b>'+shortName(pv.name)+'</b><span>'+dm(ci)+'</span></div>'
           +'<div class="cmid"><div class="cic">'+ic(seg==='flight'?'plane':seg==='train'?'train':seg==='ferry'?'ferry':'car','i-sm')+'</div></div>'
           +'<div class="cpt r"><b>'+shortName(b.name)+'</b><span>'+dm(ci)+'</span></div></div>'
-          +(seg==='flight'?'<a class="cbook" href="'+skyscanner(AIRPORT[pv.id]||'',AIRPORT[b.id]||'',fmtISO(ci))+'" target="_blank" rel="noopener">'+ic('plane','i-sm')+' Подобрать рейсы</a>':'<div class="ctransf">на машине между базами</div>')+'</div></div>';
+          +(seg==='flight'?'<a class="cbook" href="'+skyscanner(AIRPORT[pv.id]||'',AIRPORT[b.id]||'',fmtISO(ci))+'" target="_blank" rel="noopener">'+ic('plane','i-sm')+' Подобрать рейсы</a>':'<div class="ctransf">'+(TRANSFER[b.id]?('<b>'+TRANSFER[b.id].km+' км</b><span>'+TRANSFER[b.id].clean+' чистого хода</span><span>'+TRANSFER[b.id].stops+' с остановками</span>'):'на машине')+'</div>')+'</div></div>';
     }
     /* аренда машины — берётся в первом городе, едет всю поездку до последнего */
     let carHire='';
@@ -1521,7 +1530,7 @@ function buildCities(){
       +'<div class="clbl"><b>Маршрут</b><span>Дни '+firstDay+'–'+lastDay+'</span></div>'
       +days.map(d=>{const n=dayPts(d.n);const list=P.filter(p=>p.d===d.n&&p.cat!=='food');
         return '<details class="cday" data-day="'+d.n+'"><summary class="cdaysum"><span class="cdph"'+(dayPhoto(d.n)?' style="background-image:url('+dayPhoto(d.n)+')"':'')+'></span>'
-        +'<span class="cdtx"><span class="cdm"><b>День '+d.n+'</b> · '+dm(dayDateFor(d.n))+' · '+n+' '+plural(n,'место','места','мест')+'</span><b>'+d.title+'</b></span>'
+        +'<span class="cdtx"><span class="cdm"><b>День '+d.n+'</b> · '+dm(dayDateFor(d.n))+' · '+n+' '+plural(n,'активность','активности','активностей')+'</span><b>'+d.title+'</b></span>'
         +'<span class="cgo">'+ic('chevron','i-sm')+'</span></summary>'
         +'<div class="cdaybody">'
         +(d.leg?'<div class="cleg"><b>'+d.pill+'</b> '+d.leg+'</div>':'')
@@ -1805,9 +1814,8 @@ function buildFood(){
     return '<details class="fooddet" data-base="'+c.base+'"'+(ci===0?' open':'')+'>'
       +'<summary><span class="fmed" style="background:linear-gradient(150deg,'+col+','+col2+')">'+ic('food')+'</span>'
       +'<span class="fhead"><h4>'+c.city+'</h4>'
-      +'<span class="fsub">'+c.spots.length+' '+plural(c.spots.length,'место','места','мест')+' · проверено</span></span>'
-      +'<span class="dcount">'+c.spots.length+'</span>'
-      +'<span class="chev">'+ic('chevron','i-sm')+'</span></summary>'
+      +'<span class="fsub">'+c.spots.length+' '+plural(c.spots.length,'место','места','мест')+'</span></span>'
+      +'<span class="cgo fchev">'+ic('chevron','i-sm')+'</span></summary>'
       +'<div class="food-body">'
       +'<div class="mealbtns">'
       +'<a class="mealbtn all" href="'+gmSearch('restaurants '+c.q)+'" target="_blank" rel="noopener">'+ic('food','i-sm')+' Все на карте</a>'
