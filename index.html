@@ -1417,6 +1417,19 @@ function buildCities(){
           +'<div class="cpt r"><b>'+shortName(b.name)+'</b><span>'+dm(ci)+'</span></div></div>'
           +(seg==='flight'?'<a class="cbook" href="'+skyscanner(AIRPORT[pv.id]||'',AIRPORT[b.id]||'',fmtISO(ci))+'" target="_blank" rel="noopener">'+ic('plane','i-sm')+' Подобрать рейсы</a>':'<div class="ctransf">на машине между базами</div>')+'</div></div>';
     }
+    /* аренда машины — берётся в первом городе, едет всю поездку до последнего */
+    let carHire='';
+    if(i===0){
+      const last=BASES[BASES.length-1];const en=x=>x.split(',')[0].trim();
+      const tripEnd=addDays(startIso,totalNights());
+      carHire='<div class="cnode"><span class="cdot">'+ic('car','i-sm')+'</span>'
+        +'<div class="clbl"><b>Аренда машины</b><span>на всю поездку · '+dm(ci)+'–'+dm(tripEnd)+'</span></div>'
+        +'<div class="carr"><div class="crow">'
+          +'<div class="cpt"><b>'+shortName(b.name)+'</b><span>забрать · '+(AIRPORT[b.id]||'аэропорт')+'</span></div>'
+          +'<div class="cmid"><div class="cic">'+ic('car','i-sm')+'</div></div>'
+          +'<div class="cpt r"><b>'+shortName(last.name)+'</b><span>сдать · '+(AIRPORT[last.id]||'')+'</span></div></div>'
+          +'<a class="cbook" href="'+bookCar(en(b.q),en(last.q),ci,tripEnd)+'" target="_blank" rel="noopener">'+ic('car','i-sm')+' Забронировать машину <small>Kayak</small></a></div></div>';
+    }
     /* проживание */
     const stay='<div class="cnode"><span class="cdot">'+ic('bed','i-sm')+'</span>'
       +'<div class="clbl"><b>Проживание</b><span>Дни '+firstDay+'–'+lastDay+' · '+dm(ci)+'–'+dm(co)+' · '+b.nights+' '+nights(b.nights)+'</span></div>'
@@ -1440,7 +1453,7 @@ function buildCities(){
     return '<section class="city" id="city-'+b.id+'"><div class="wrap">'
       +'<div class="chead"><span class="ckick">База '+(i+1)+' из '+BASES.length+' · '+dm(ci)+'–'+dm(co)+'</span>'
       +'<h2>'+shortName(b.name)+'</h2><p>'+b.desc+'</p></div>'
-      +'<div class="ctl">'+arrival+stay+route+'</div></div></section>';
+      +'<div class="ctl">'+arrival+carHire+stay+route+'</div></div></section>';
   }).join('');
 
   /* дни-аккордеоны: открыт только один */
