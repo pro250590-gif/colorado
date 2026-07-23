@@ -431,9 +431,9 @@ a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{o
         <div class="cnt"><h2>Maroon Bells</h2><p>седьмой день · самое фотографируемое место Колорадо</p></div>
       </div>
       <div class="tile tile-g o"><span class="ic" id="tileIc1"></span>
-        <span class="val"><b id="hDates">7–16 авг</b><span>десять дней</span></span></div>
+        <span class="val"><b id="hDates">7–16 авг</b><span id="tDays">10 дней</span></span></div>
       <div class="tile tile-g g"><span class="ic" id="tileIc2"></span>
-        <span class="val"><b>9</b><span>ночей · 4 базы</span></span></div>
+        <span class="val"><b id="tNights">9 ночей</b><span id="tNightsSub">10 дней · 4 базы</span></span></div>
       <div class="tile tile-w"><span class="ic" id="tileIc3"></span>
         <span class="val"><b>1 150</b><span>км за рулём</span></span></div>
       <div class="tile tile-g d"><span class="ic" id="tileIc4"></span>
@@ -1183,10 +1183,21 @@ function totalNights(){return BASES.reduce((s,b)=>s+b.nights,0);}
 function altName(s){const m=s.match(/\((.+?)\)/);return m?m[1]:'';}
 function shortName(s){return s.replace(/\s*\(.*?\)/,'').replace(/\s*\/.*$/,'').trim();}
 function dm(dt){return dt.getDate()+' '+MONTHS[dt.getMonth()].slice(0,3);}
+function plural(n,a,b,c){const x=n%10,y=n%100;if(x===1&&y!==11)return a;if(x>=2&&x<=4&&(y<10||y>=20))return b;return c;}
 function nights(n){const a=n%10,b=n%100;if(a===1&&b!==11)return'ночь';if(a>=2&&a<=4&&(b<10||b>=20))return'ночи';return'ночей';}
 function recomputeDates(){
   DAYS.forEach(d=>{const el=document.querySelector('[data-daydate="'+d.n+'"]');if(el)el.textContent=fmtDate(dayDateFor(d.n));});
-  const hd=document.getElementById('hDates');if(hd){const s=addDays(startIso,0),e=addDays(startIso,totalNights());hd.textContent=s.getDate()+'–'+e.getDate()+' '+MONTHS[e.getMonth()].slice(0,3);}
+  const tn=totalNights(), td=tn+1;
+  const hd=document.getElementById('hDates');
+  if(hd){const s=addDays(startIso,0),e=addDays(startIso,tn);
+    hd.textContent=s.getDate()+'–'+e.getDate()+' '+MONTHS[e.getMonth()].slice(0,3);}
+  const dd=document.getElementById('tDays');if(dd)dd.textContent=td+' '+plural(td,'день','дня','дней');
+  const nn=document.getElementById('tNights');if(nn)nn.textContent=tn+' '+nights(tn);
+  const ns=document.getElementById('tNightsSub');
+  if(ns)ns.textContent=td+' '+plural(td,'день','дня','дней')+' · '+BASES.length+' '+plural(BASES.length,'база','базы','баз');
+  const td2=document.getElementById('topDate');
+  if(td2){const s=addDays(startIso,0),e=addDays(startIso,tn);
+    td2.textContent=s.getDate()+'–'+e.getDate()+' '+MONTHS[e.getMonth()]+' '+e.getFullYear();}
 }
 function buildPlanner(){
   const host=document.getElementById('planner');
