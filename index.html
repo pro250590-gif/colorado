@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#17332c">
+<title>Колорадо · Дуранго → Денвер · 7–16 августа 2026</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+:root{
+  --pine:#16332b; --pine2:#245043; --gold:#d9922b; --gold2:#f5c15b;
+  --red:#c1462a; --sky:#1f7ab8; --sand:#f8f4ec; --ink:#1e1d1a; --mut:#6f695c;
+  --line:#e6ddcc; --card:#fffdf8; --card2:#fbf7ef;
+  --d1:#0a84ff;--d2:#8e5b3a;--d3:#b8860b;--d4:#e0399b;--d5:#e0399b;--d6:#ff9500;--d7:#ff9500;--d8:#ff9500;--d9:#5b6cff;--d10:#5b6cff;
+  --shadow:0 4px 18px #16332b12; --shadow2:0 2px 8px #16332b0d;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--sand);color:var(--ink);
+  font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",sans-serif}
+.wrap{max-width:1060px;margin:0 auto;padding:0 15px}
+a{color:var(--sky);text-decoration:none}a:hover{text-decoration:underline}
+h1,h2,h3,h4{line-height:1.18;margin:0}
+
+/* открой в браузере — статичный баннер */
+.browserbar{background:var(--gold2);color:#5a3d05;font-size:13.5px;font-weight:600;
+  text-align:center;padding:9px 14px;line-height:1.4}
+.browserbar b{color:#3d2903}
+
+/* HERO */
+header.hero{background:linear-gradient(135deg,var(--pine),#2c5f50 62%,#41806a);color:#fff;
+  padding:38px 0 30px;position:relative;overflow:hidden}
+header.hero::before{content:"";position:absolute;inset:0;opacity:.12;
+  background:repeating-linear-gradient(115deg,#fff 0 1px,transparent 1px 24px)}
+.kicker{letter-spacing:.22em;text-transform:uppercase;font-size:11px;color:var(--gold2);font-weight:800;position:relative}
+header.hero h1{font-size:clamp(25px,5.6vw,44px);margin:9px 0 8px;font-weight:800;letter-spacing:-.5px;position:relative}
+header.hero p.sub{margin:0;font-size:clamp(14px,2.3vw,17px);color:#d8e7e0;max-width:640px;position:relative}
+.stats{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px;position:relative}
+.stat{background:#ffffff1c;border:1px solid #ffffff30;border-radius:10px;padding:8px 13px}
+.stat b{display:block;font-size:17px;color:var(--gold2)}
+.stat span{font-size:11px;color:#cfe0d9;text-transform:uppercase;letter-spacing:.07em}
+
+section{padding:30px 0 4px}
+.eyebrow{color:var(--red);font-weight:800;font-size:11px;letter-spacing:.17em;text-transform:uppercase}
+h2.big{font-size:clamp(21px,4vw,30px);font-weight:800;margin:6px 0 5px;letter-spacing:-.3px}
+.lede{color:var(--mut);max-width:730px;margin:0 0 16px;font-size:14.5px}
+
+/* MAP + фильтры */
+.mapbox{position:relative;border-radius:16px;overflow:hidden;border:1px solid var(--line);box-shadow:var(--shadow);background:#e8efec}
+#map{height:min(62vh,560px);min-height:320px;z-index:1}
+.mapph{height:min(62vh,560px);min-height:320px;display:flex;flex-direction:column;justify-content:center;
+  align-items:center;text-align:center;gap:6px;padding:26px;color:var(--mut);font-size:14px;line-height:1.5;background:#eef3f0}
+.mapph b{color:var(--pine)}
+.pin{display:flex;align-items:center;justify-content:center;border-radius:50%;color:#fff;font-weight:800;
+  font-family:-apple-system,sans-serif;border:2.5px solid #fff;box-shadow:0 2px 6px #00000055;line-height:1}
+.pin.basepin{border-radius:9px;width:32px;height:28px;font-size:16px}
+.basetip{background:var(--pine);color:var(--gold2);border:0;font-weight:800;font-size:12px;box-shadow:0 2px 6px #0003;border-radius:6px;padding:3px 8px}
+.basetip::before{border-right-color:var(--pine)}
+.leaflet-container{font-family:inherit}
+.leaflet-control-scale-line{font-size:11px;font-weight:700;color:#16332b;border-color:#16332b99}
+.mapbar{display:flex;flex-wrap:wrap;gap:7px;align-items:center;padding:10px 11px;background:var(--card);border-top:1px solid var(--line)}
+.btn{border:1px solid var(--line);background:#fff;color:var(--pine);font:700 12.5px/1 inherit;padding:9px 12px;border-radius:9px;cursor:pointer}
+.btn:active{transform:translateY(1px)}.btn.pri{background:var(--pine);color:#fff;border-color:var(--pine)}
+.counter{margin-left:auto;font-size:12.5px;color:var(--mut);font-weight:700}.counter b{color:var(--red)}
+
+.filters{margin:0 0 14px}
+.frow{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-top:8px}
+.flabel{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);min-width:66px}
+.chip{border:1.5px solid var(--line);background:#fff;color:var(--pine);font:700 13px/1 inherit;padding:8px 12px;border-radius:999px;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:5px}
+.chip:active{transform:translateY(1px)}
+.chip.on{background:var(--pine);color:#fff;border-color:var(--pine)}
+.chip .dotc{width:10px;height:10px;border-radius:50%;flex:none}
+.chip.allc{font-weight:800}
+.chip.foodtoggle{border-color:#c1462a66;color:#c1462a}
+.chip.foodtoggle.on{background:#c1462a;color:#fff;border-color:#c1462a}
+.foodhint{font-size:11.5px;color:var(--mut)}
+.maphint{font-size:12.5px;color:var(--mut);margin-top:9px}
+
+/* BASES cards */
+.bases{display:grid;grid-template-columns:repeat(auto-fit,minmax(255px,1fr));gap:13px}
+.base{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--gold);border-radius:12px;padding:15px 17px;box-shadow:var(--shadow2)}
+.base h3{font-size:17px;margin-bottom:3px}
+.base .nights{color:var(--red);font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:.05em}
+.base p{margin:7px 0 0;font-size:14px;color:#3d3a33}
+.base .alt{margin-top:8px;font-size:12.5px;color:var(--mut);border-top:1px dashed var(--line);padding-top:7px}
+
+/* планировщик ночёвок */
+.planner{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow2)}
+.dateset{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px;font-size:14px}
+.dateset input[type=date]{border:1.5px solid var(--line);border-radius:9px;padding:9px 11px;font:700 14px/1 inherit;background:#fffdf8;color:var(--ink)}
+.dateset input[type=date]:focus{outline:2px solid var(--gold);border-color:var(--gold)}
+.dshint{color:var(--mut);font-size:13px}
+.stayrow{display:flex;align-items:center;gap:14px;padding:15px 0;border-bottom:1px dashed var(--line)}
+.stayrow:last-child{border-bottom:0}
+.staydot{width:38px;height:38px;border-radius:10px;flex:none;display:flex;align-items:center;justify-content:center;font-size:19px;color:#fff}
+.stayinfo{flex:1;min-width:0}
+.stayinfo .sn{font-weight:800;font-size:17.5px;letter-spacing:-.2px}
+.stayinfo .sd{font-size:14px;color:var(--mut);margin-top:6px;font-weight:600}
+.stepper{display:flex;align-items:center;gap:8px;flex:none}
+.stepbtn{width:38px;height:38px;border:1.5px solid var(--line);background:#fff;border-radius:10px;font-size:23px;font-weight:700;color:var(--pine);cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center;padding:0}
+.stepbtn:active{transform:translateY(1px);background:#eef3f0}
+.stepn{min-width:62px;text-align:center}
+.stepn b{display:block;font-size:20px;color:var(--pine);font-weight:800}
+.stepn .stepu{font-size:12px;color:var(--mut);font-weight:700}
+.staytot{margin-top:14px;font-size:15px;color:var(--pine);font-weight:700;background:#eef3f0;border-radius:10px;padding:12px 15px}
+.plannote{font-size:13.5px;color:var(--mut);margin-top:12px}
+
+/* DAY accordions */
+.day{background:var(--card);border:1px solid var(--line);border-radius:14px;margin:0 0 12px;overflow:hidden;box-shadow:var(--shadow2)}
+.day[open]{box-shadow:var(--shadow)}
+.day>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:11px;padding:14px 15px;position:relative}
+.day>summary::-webkit-details-marker{display:none}
+.dnum{color:#fff;font-weight:800;font-size:13px;border-radius:9px;padding:6px 9px;flex:none;min-width:34px;text-align:center}
+.dhead-txt{flex:1;min-width:0}
+.dhead-txt h3{font-size:16.5px}
+.dhead-txt .ddate{color:var(--mut);font-size:12.5px;font-weight:700;margin-top:2px}
+.chev{flex:none;color:var(--mut);transition:transform .2s;font-size:14px}
+.day[open] .chev{transform:rotate(90deg)}
+.dcount{flex:none;font-size:11px;font-weight:800;color:var(--mut);background:#eef3f0;border-radius:999px;padding:3px 9px}
+.day-body{padding:2px 15px 16px}
+.leg{background:#f1f6f3;border:1px solid #dae7e1;border-radius:10px;padding:9px 12px;font-size:13px;margin:0 0 11px;display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+.leg .pill{background:var(--pine);color:#fff;border-radius:999px;padding:3px 9px;font-size:11px;font-weight:800;flex:none}
+.leg b{color:var(--pine)}
+.dirlink{margin-left:auto;font-weight:800;font-size:12.5px;white-space:nowrap}
+.daytools{display:flex;gap:7px;margin:0 0 9px}
+.tiny{font:700 12px/1 inherit;border:1px solid var(--line);background:#fff;color:var(--mut);padding:7px 10px;border-radius:8px;cursor:pointer}
+ul.stops{list-style:none;margin:0;padding:0}
+ul.stops li{display:flex;gap:10px;align-items:flex-start;padding:11px 0;border-bottom:1px dashed var(--line)}
+ul.stops li:last-child{border-bottom:0}
+.chkwrap{flex:none;padding-top:1px}
+input[type=checkbox].tick{appearance:none;-webkit-appearance:none;width:26px;height:26px;border:2px solid #cabfa8;border-radius:8px;background:#fff;cursor:pointer;display:block;position:relative;transition:.12s}
+input[type=checkbox].tick:checked{background:var(--pine);border-color:var(--pine)}
+input[type=checkbox].tick:checked::after{content:"";position:absolute;left:8px;top:3px;width:6px;height:13px;border:solid var(--gold2);border-width:0 3px 3px 0;transform:rotate(42deg)}
+.sinfo{flex:1;min-width:0}
+.snm{font-weight:700;font-size:16px}
+.snm .cemo{margin-right:5px}
+.snm .cemo.star{color:var(--gold);font-size:19px;text-shadow:0 1px 1px #0002}
+.snm a{color:var(--ink);border-bottom:1.5px solid #d9922b55}
+.snm a:hover{color:var(--sky);border-bottom-color:var(--sky);text-decoration:none}
+.meta{display:flex;flex-wrap:wrap;gap:5px;margin:6px 0 2px}
+.mpill{font-size:11px;font-weight:700;border-radius:6px;padding:3px 7px;background:#efece3;color:#5f5a4e;white-space:nowrap;line-height:1.2}
+.mpill.must{background:var(--red);color:#fff}
+.mpill.free{background:#1a7f5a1a;color:#1a7f5a}
+.mpill.best{background:#d9922b1f;color:#8a6414}
+.mpill.route{background:#1f7ab81a;color:#1f7ab8}
+.why{color:#4a463d;font-size:14px;display:block;margin-top:5px}
+.tag{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;border-radius:5px;padding:2px 6px;margin-left:5px;vertical-align:1px;white-space:nowrap}
+.t-must{background:#c1462a1a;color:var(--red);border:1px solid #c1462a40}
+.t-easy{background:#1f7ab81a;color:var(--sky);border:1px solid #1f7ab840}
+.t-hike{background:#16332b1a;color:var(--pine);border:1px solid #16332b40}
+.t-4x4{background:#d9922b26;color:#8a6414;border:1px solid #d9922b55}
+li.hiddenrow{display:none}
+.dnote{background:#fdf6e6;border:1px solid #ecd9a8;border-radius:10px;padding:10px 13px;font-size:13px;margin:12px 0 0;color:#5c4a1e}
+.dnote b{color:#7a5f14}
+
+/* FOOD */
+.foodgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:14px}
+.foodcity{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:15px 17px;box-shadow:var(--shadow2)}
+.foodcity h4{font-size:17px;margin-bottom:11px;display:flex;align-items:center;gap:8px}
+.foodcity h4 .fb{width:12px;height:12px;border-radius:50%;flex:none}
+.mealbtns{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:13px}
+.mealbtn{font:700 12.5px/1 inherit;border:1.5px solid var(--line);background:#fff;color:var(--pine);border-radius:999px;padding:9px 12px;white-space:nowrap}
+.mealbtn:hover{text-decoration:none;border-color:var(--gold);color:#8a6414}
+.mealbtn.all{background:var(--pine);color:#fff;border-color:var(--pine)}
+.foodlist{list-style:none;margin:0;padding:0}
+.foodlist li{padding:10px 0;border-bottom:1px dashed var(--line)}
+.foodlist li:last-child{border-bottom:0}
+.foodlist li a{font-weight:700;color:var(--ink);font-size:15.5px;border-bottom:1.5px solid #d9922b55}
+.foodlist li a:hover{color:var(--sky);border-bottom-color:var(--sky);text-decoration:none}
+.foodlist .fmeta{display:block;font-size:11.5px;color:#8a6414;font-weight:700;margin-top:3px}
+.foodlist .fw{display:block;color:var(--mut);font-size:13px;margin-top:3px}
+
+/* accordions статичные */
+details.acc{background:var(--card);border:1px solid var(--line);border-radius:12px;margin:0 0 11px;overflow:hidden;box-shadow:var(--shadow2)}
+details.acc>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;padding:14px 16px;font-weight:800;font-size:16px}
+details.acc>summary::-webkit-details-marker{display:none}
+details.acc>summary .chev{margin-left:auto}
+details.acc[open]>summary{border-bottom:1px solid var(--line)}
+.acc-body{padding:14px 16px}
+.acc-body ul{margin:0;padding-left:17px;font-size:14px}.acc-body li{margin:6px 0}
+
+/* TABLE + budget */
+.tblwrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--card);-webkit-overflow-scrolling:touch;box-shadow:var(--shadow2)}
+table{border-collapse:collapse;width:100%;min-width:520px;font-size:14px}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line)}
+th{background:#eef3f0;font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--pine)}
+tr:last-child td{border-bottom:0}
+td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+.vswitch{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
+.vbtn{border:1px solid var(--line);background:#fff;color:var(--mut);font:700 13px/1.3 inherit;padding:11px 14px;border-radius:10px;cursor:pointer;text-align:left}
+.vbtn.on{background:var(--pine);color:#fff;border-color:var(--pine)}
+.vnote{background:#f1f6f3;border:1px solid #dae7e1;border-radius:10px;padding:10px 13px;font-size:13px;margin:0 0 13px;color:#33463f}
+#budgetTbl tr.grp td{background:#eef3f0;font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--pine)}
+input.money{width:100%;max-width:105px;border:1px solid var(--line);border-radius:8px;padding:7px 9px;font:700 14px/1 inherit;text-align:right;background:#fffdf8;color:var(--ink);font-variant-numeric:tabular-nums}
+input.money:focus{outline:2px solid var(--gold);border-color:var(--gold);background:#fff}
+.cf{color:#1a7f5a;font-size:11px;font-weight:700;white-space:nowrap}
+.est{color:#8a6414;font-size:11px;font-weight:700;white-space:nowrap}
+.tbd{color:var(--red);font-size:11px;font-weight:700;white-space:nowrap}
+#budgetTbl tfoot .tot td{background:var(--pine);color:var(--gold2);font-weight:800;font-size:16px;border:0}
+#budgetTbl tfoot .tot2 td{background:#245043;color:#cfe0d9;font-weight:700;font-size:14px;border:0}
+.budgbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:12px}
+
+footer{background:var(--pine);color:#cfe0d9;margin-top:36px;padding:22px 0 30px;font-size:13px}
+footer a{color:var(--gold2)}
+@media(max-width:640px){section{padding:24px 0 4px}.day-body{padding:2px 12px 14px}.flabel{min-width:0;width:100%}}
+</style>
+</head>
+<body>
+
+<header class="hero"><div class="wrap">
+  <div class="kicker">Road trip · Colorado · 2026</div>
+  <h1>Дуранго → Урей → Аспен → Денвер</h1>
+  <p class="sub">Прилёт 7 августа в Дуранго, вылет 16-го из Денвера. Поезд на Силвертон, Меса-Верде, Million Dollar Highway, Чёрный каньон, Maroon Bells и перевал Independence.</p>
+  <div class="stats">
+    <div class="stat"><b id="hDates">7–16 авг</b><span>2026</span></div>
+    <div class="stat"><b>10 дней</b><span>9 ночей</span></div>
+    <div class="stat"><b>3 базы</b><span>+ ночь у DEN</span></div>
+    <div class="stat"><b>~1 150 км</b><span>за рулём</span></div>
+  </div>
+</div></header>
+
+<section><div class="wrap">
+  <div class="eyebrow">Карта</div>
+  <h2 class="big">Маршрут, точки и фильтры</h2>
+  <p class="lede">Фильтры ниже управляют картой и списком: выбери день, базу или категорию — на карте останутся только нужные точки. Галочка у места показывает/прячет его на карте, а ссылка на Google Maps в списке работает всегда.</p>
+
+  <div class="filters" id="filters"></div>
+
+  <div class="mapbox">
+    <div id="map"><div class="mapph">🗺️ Карта загружается…</div></div>
+    <div class="mapbar">
+      <button class="btn pri" id="allOn">✓ Показать всё</button>
+      <button class="btn" id="allOff">Снять всё</button>
+      <button class="btn" id="onlyStar">★ Только главное</button>
+      <button class="btn" id="fitAll">⤢ Вся карта</button>
+      <span class="counter">На карте: <b id="cnt">0</b></span>
+    </div>
+  </div>
+  <p class="maphint">Настоящая карта: кнопки + / − для зума, линейка масштаба (км/мили) внизу слева, выбор вида (карта / улицы / рельеф / спутник) справа вверху. Нажми на точку — описание и ссылка на Google Maps.</p>
+</div></section>
+
+<section><div class="wrap">
+  <div class="eyebrow">Ночёвки</div>
+  <h2 class="big">Где жить и сколько ночей бронировать</h2>
+  <p class="lede">Поменяй дату прилёта — все даты пересчитаются. Ниже видно, сколько ночей и на какие числа бронировать на каждой базе.</p>
+  <div class="planner" id="planner"></div>
+  <div style="height:14px"></div>
+  <div class="bases" id="baseCards"></div>
+</div></section>
+
+<section><div class="wrap">
+  <div class="eyebrow">День за днём</div>
+  <h2 class="big">Маршрут по дням</h2>
+  <p class="lede">Нажми на день, чтобы раскрыть. Название места — ссылка на Google Maps. Ссылка «Маршрут в Google Maps» у каждого дня строится из отмеченных галочками точек.</p>
+  <div id="days"></div>
+</div></section>
+
+<section><div class="wrap">
+  <div class="eyebrow">Где поесть</div>
+  <h2 class="big">Знаковые места по городам</h2>
+  <p class="lede">Умная подборка колоритных и местных мест (проверено, закрытые убраны). А кнопки «☕ Завтрак / 🍴 Обед / 🍷 Ужин» открывают Google Maps со всеми живыми вариантами этого города прямо сейчас. На карте еду включает переключатель «🍽 Еда».</p>
+  <div class="foodgrid" id="foodGrid"></div>
+</div></section>
+
+<section><div class="wrap">
+  <div class="eyebrow">Сводка</div>
+  <h2 class="big">Переезды и время за рулём</h2>
+  <div class="tblwrap"><table>
+    <thead><tr><th>День</th><th>Отрезок</th><th class="num">Расстояние</th><th class="num">Время</th><th class="num">С остановками</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Прилёт DRO → Дуранго</td><td class="num">24 км</td><td class="num">25 мин</td><td class="num">вечер</td></tr>
+      <tr><td>2</td><td>Поезд в Силвертон (без машины)</td><td class="num">—</td><td class="num">—</td><td class="num">6–9 ч</td></tr>
+      <tr><td>3</td><td>Дуранго ↔ Меса-Верде</td><td class="num">170 км</td><td class="num">2 ч</td><td class="num">весь день</td></tr>
+      <tr><td>4</td><td>Дуранго → Урей (Million Dollar Hwy)</td><td class="num">120 км</td><td class="num">2 ч</td><td class="num">5–6 ч</td></tr>
+      <tr><td>5</td><td>Урей ↔ Теллурайд</td><td class="num">150 км</td><td class="num">2,5 ч</td><td class="num">весь день</td></tr>
+      <tr><td>6</td><td>Урей → Аспен (Чёрный каньон)</td><td class="num">330 км</td><td class="num">5 ч</td><td class="num">весь день</td></tr>
+      <tr><td>7</td><td>Аспен ↔ Maroon Bells</td><td class="num">30 км</td><td class="num">30 мин</td><td class="num">весь день</td></tr>
+      <tr><td>8</td><td>Аспен ↔ долины Castle Creek</td><td class="num">60 км</td><td class="num">1 ч</td><td class="num">весь день</td></tr>
+      <tr><td>9</td><td>Аспен → Денвер (Independence Pass)</td><td class="num">260 км</td><td class="num">4 ч</td><td class="num">6–7 ч</td></tr>
+      <tr><td>10</td><td>Денвер → аэропорт DEN, вылет 12:47</td><td class="num">—</td><td class="num">30 мин</td><td class="num">утро</td></tr>
+      <tr><td><b>Итого</b></td><td><b>Дуранго → Денвер</b></td><td class="num"><b>~1 150 км</b></td><td class="num"><b>~18 ч</b></td><td class="num"><b>10 дней</b></td></tr>
+    </tbody>
+  </table></div>
+</div></section>
+
+<section><div class="wrap">
+  <div class="eyebrow">Деньги</div>
+  <h2 class="big">Бюджет поездки</h2>
+  <p class="lede">Клик по числу — впиши своё, итог пересчитается и сохранится. Перелёт — реальные цены American; жильё и машина ждут твои цифры.</p>
+  <div class="tblwrap"><table id="budgetTbl">
+    <thead><tr><th style="width:40%">Статья</th><th>Детали</th><th class="num" style="width:110px">Сумма, $</th></tr></thead>
+    <tbody>
+      <tr class="grp"><td colspan="3">✈️ Перелёт (American, туда-обратно)</td></tr>
+      <tr><td>Билеты, 2 человека</td><td>Basic Economy <span class="cf">✓ с твоего скриншота</span></td><td class="num"><input class="money" data-k="a1" value="1250.60"></td></tr>
+      <tr><td>Багаж</td><td>2 чел × 2 стороны × $50 <span class="cf">✓</span></td><td class="num"><input class="money" data-k="a2" value="200"></td></tr>
+      <tr class="grp"><td colspan="3">🚗 Машина</td></tr>
+      <tr><td>Аренда, ~9 дней</td><td>SUV, ~$90/день <span class="tbd">? твои цены</span></td><td class="num"><input class="money" data-k="c1" value="810"></td></tr>
+      <tr><td>Возврат в другом городе</td><td>Дуранго → Денвер <span class="est">~ $100-150</span></td><td class="num"><input class="money" data-k="c2" value="130"></td></tr>
+      <tr><td>Бензин</td><td>~1 150 км гор <span class="est">~ оценка</span></td><td class="num"><input class="money" data-k="c3" value="120"></td></tr>
+      <tr class="grp"><td colspan="3">🏠 Жильё · 9 ночей</td></tr>
+      <tr><td>Дуранго</td><td>3 ночи <span class="tbd">? варианты</span></td><td class="num"><input class="money" data-k="h1" value="0"></td></tr>
+      <tr><td>Урей / Риджуэй</td><td>2 ночи <span class="tbd">? варианты</span></td><td class="num"><input class="money" data-k="h2" value="0"></td></tr>
+      <tr><td>Аспен / Басальт</td><td>3 ночи <span class="tbd">? варианты</span></td><td class="num"><input class="money" data-k="h3" value="0"></td></tr>
+      <tr><td>Денвер (у аэропорта)</td><td>1 ночь <span class="tbd">? варианты</span></td><td class="num"><input class="money" data-k="h4" value="0"></td></tr>
+      <tr class="grp"><td colspan="3">🎟 Входы и активности · на двоих</td></tr>
+      <tr><td>Поезд Durango &amp; Silverton</td><td>открытый вагон ~$144×2 +сбор <span class="est">~</span></td><td class="num"><input class="money" data-k="t1" value="311"></td></tr>
+      <tr><td>Mesa Verde</td><td>$30/машина <span class="cf">✓</span></td><td class="num"><input class="money" data-k="t2" value="30"></td></tr>
+      <tr><td>Black Canyon</td><td>$30/машина <span class="cf">✓</span></td><td class="num"><input class="money" data-k="t3" value="30"></td></tr>
+      <tr><td>Maroon Bells</td><td>шаттл $16×2 <span class="cf">✓</span></td><td class="num"><input class="money" data-k="t4" value="32"></td></tr>
+      <tr><td>Ouray Hot Springs</td><td>$26×2 <span class="cf">✓</span></td><td class="num"><input class="money" data-k="t5" value="52"></td></tr>
+      <tr><td>Box Canyon Falls</td><td>$8×2 <span class="cf">✓</span></td><td class="num"><input class="money" data-k="t6" value="16"></td></tr>
+      <tr><td>Гондола в Аспене</td><td>$40×2 <span class="cf">✓</span></td><td class="num"><input class="money" data-k="t7" value="80"></td></tr>
+      <tr><td>Джип-тур Yankee Boy</td><td>~$125×2 <span class="est">~ опц.</span></td><td class="num"><input class="money" data-k="t8" value="250"></td></tr>
+      <tr class="grp"><td colspan="3">🍽 Еда</td></tr>
+      <tr><td>Еда и кафе</td><td>~$90/день × 10 <span class="est">~</span></td><td class="num"><input class="money" data-k="f1" value="900"></td></tr>
+    </tbody>
+    <tfoot>
+      <tr class="tot"><td colspan="2">ИТОГО на двоих</td><td class="num" id="sumAll">—</td></tr>
+      <tr class="tot2"><td colspan="2">На человека</td><td class="num" id="sumPer">—</td></tr>
+    </tfoot>
+  </table></div>
+  <div class="budgbar"><button class="btn" id="resetBudget">↺ Сбросить</button>
+    <span class="counter"><span class="cf">✓</span> подтверждено · <span class="est">~</span> оценка · <span class="tbd">?</span> ждём данных</span></div>
+</div></section>
+
+<section><div class="wrap">
+  <div class="eyebrow">Пока просто иметь в виду</div>
+  <h2 class="big">Что занять заранее и практика</h2>
+
+  <details class="acc" open><summary>🎫 Что бронировать заранее (по срочности)<span class="chev">›</span></summary>
+    <div class="acc-body">
+      <ul>
+        <li><b>Меса-Верде (Cliff Palace) — критично.</b> Билеты открываются ровно за 14 дней в 08:00 MDT. День в парке 9 августа → релиз <b>26 июля, 17:00 Мск</b>. Разбирают за минуты, только <a href="https://www.recreation.gov/ticket/facility/233362" target="_blank" rel="noopener">recreation.gov</a>. В сам парк пускают и без билета.</li>
+        <li><b>Maroon Bells — критично.</b> Август пик. Парковка $10 (только до 08:00 или после 17:00) либо шаттл $16. <a href="https://www.visitmaroonbells.com/" target="_blank" rel="noopener">visitmaroonbells.com</a>.</li>
+        <li><b>Поезд Durango &amp; Silverton.</b> Открытые вагоны на август берут заранее. <a href="https://durangotrain.com/" target="_blank" rel="noopener">durangotrain.com</a>.</li>
+        <li><b>Машина Дуранго → Денвер (one-way).</b> Сбор за возврат в другом городе ~$100-150. SUV разбирают первыми.</li>
+        <li><b>Джип-тур Yankee Boy Basin</b> — опционально, из Урея, полдня.</li>
+      </ul>
+    </div>
+  </details>
+
+  <details class="acc"><summary>☀️ Погода и грозы в августе<span class="chev">›</span></summary>
+    <div class="acc-body"><ul>
+      <li>Сезон муссонов: почти каждый день после 13:00–14:00 короткая гроза в горах.</li>
+      <li>Правило: всё высокогорное — до полудня; города, музеи, источники — после.</li>
+      <li>Долины +25…30°, перевалы +10…15°, ночью до +5°. Нужны слои и ветровка.</li>
+      <li>Солнце на 3 000 м жжёт втрое — крем 50+.</li>
+    </ul></div>
+  </details>
+
+  <details class="acc"><summary>🚗 Машина и дороги<span class="chev">›</span></summary>
+    <div class="acc-body"><ul>
+      <li>Обычной легковой хватает на 95%. SUV нужен только для Yankee Boy, Last Dollar Road, верхней Bridal Veil.</li>
+      <li>Independence Pass: нельзя ТС длиннее 10,7 м.</li>
+      <li>Million Dollar Highway — без отбойников. Не ночью и не в дождь.</li>
+      <li>Между Уреем и Силвертоном заправок нет — заправляйся заранее.</li>
+      <li>Связь пропадает на перевалах — скачай офлайн-карты Google Maps на юго-запад Колорадо.</li>
+      <li>Статус дорог: <a href="https://www.cotrip.org/" target="_blank" rel="noopener">cotrip.org</a>.</li>
+    </ul></div>
+  </details>
+
+  <details class="acc"><summary>🎟 Входы в парки<span class="chev">›</span></summary>
+    <div class="acc-body"><ul>
+      <li>Black Canyon $30/машина, Mesa Verde $30/машина — только карта, наличные не берут.</li>
+      <li>Годовой <a href="https://www.nps.gov/planyourvisit/passes.htm" target="_blank" rel="noopener">America the Beautiful</a> $80 окупается от трёх парков — тут два.</li>
+    </ul></div>
+  </details>
+
+  <details class="acc"><summary>➕ Если появится лишний день<span class="chev">›</span></summary>
+    <div class="acc-body"><ul>
+      <li><b>Great Sand Dunes</b> — раз вылетаешь из Денвера, можно с дня 9 южным путём US-160 через дюны (+1 день).</li>
+      <li><b>Rocky Mountain NP</b> — 2 ч севернее Денвера; заменить ночь у аэропорта на Estes Park.</li>
+      <li><b>Crested Butte</b> — «столица полевых цветов», крюк с дня 6.</li>
+    </ul></div>
+  </details>
+</div></section>
+
+<footer><div class="wrap">
+  План на 7–16 августа 2026 · Дуранго → Урей → Аспен → Денвер · прилёт American в DRO 7 авг 16:17, вылет из DEN 16 авг 12:47.<br>
+  Проверить перед выездом: <a href="https://www.cotrip.org/" target="_blank" rel="noopener">дороги CDOT</a> · <a href="https://durangotrain.com/" target="_blank" rel="noopener">поезд</a> · <a href="https://www.visitmaroonbells.com/" target="_blank" rel="noopener">Maroon Bells</a> · <a href="https://www.recreation.gov/ticket/facility/233362" target="_blank" rel="noopener">Mesa Verde</a>
+</div></footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" onerror="window.__lf=1"></script>
+<script>
+/* ================= ДАННЫЕ ================= */
+const CATS={must:{e:'★',l:'Главное'},nature:{e:'🏔',l:'Природа'},town:{e:'🏘',l:'Города'},springs:{e:'♨️',l:'Источники'},food:{e:'🍽',l:'Еда'},transport:{e:'🚉',l:'Транспорт'}};
+const DCOL={1:'#0a84ff',2:'#8e5b3a',3:'#b8860b',4:'#e0399b',5:'#e0399b',6:'#ff9500',7:'#ff9500',8:'#ff9500',9:'#5b6cff',10:'#5b6cff'};
+
+const BASES=[
+ {id:'dur',name:'Дуранго',emoji:'🚂',nights:3,color:'#0a84ff',lat:37.2753,lng:-107.8801,q:'Durango, CO',
+  desc:'Живой город на реке Анимас, куда прилетаешь: узкоколейка, Меса-Верде, каньоны, источники Пагосы.',
+  alt:'Альтернатива: посёлки к северу по US-550 (Hermosa, Haviland Lake) — тише, в город 20 мин. От аэропорта DRO 25 мин.'},
+ {id:'our',name:'Урей (Ouray)',emoji:'⛰',nights:2,color:'#e0399b',lat:38.0228,lng:-107.6712,q:'Ouray, CO',
+  desc:'«Швейцария Америки»: водопад в скальной щели, горячие источники, джип-трейлы, рядом Теллурайд.',
+  alt:'Альтернатива: Ridgway (15 мин севернее) — тише и дешевле. Урей в 1,5–2 ч от Дуранго.'},
+ {id:'asp',name:'Аспен / Басальт',emoji:'🏔',nights:3,color:'#ff9500',lat:39.1911,lng:-106.8175,q:'Aspen, CO',
+  desc:'Альпийская кульминация: Maroon Bells, ледниковые озёра, перевал Independence, города-призраки.',
+  alt:'Аспен дорогой (от $450+). Basalt (20 мин) и Carbondale (40 мин) — те же горы за $110–160/ночь.'},
+ {id:'den',name:'Денвер (у аэропорта)',emoji:'✈️',nights:1,color:'#5b6cff',lat:39.7392,lng:-104.9903,q:'Denver, CO',
+  desc:'Только переночевать перед вылетом. Район аэропорта / Аврора — чтобы утром 16-го спокойно доехать к рейсу 12:47.',
+  alt:'Ищи отель с бесплатным shuttle до DEN — тогда можно сдать машину вечером 15-го и не платить лишний день аренды.'}
+];
+const DAY_BASE={1:'dur',2:'dur',3:'dur',4:'our',5:'our',6:'asp',7:'asp',8:'asp',9:'den',10:'den'};
+
+const DAYS=[
+ {n:1,title:'Прилёт в Дуранго',pill:'прилёт',leg:'American прилетает в 16:17 · аэропорт → город 25 мин',
+  note:'<b>Первый вечер спокойный.</b> Прилетаешь в 16:17, забираешь машину, заселяешься, гуляешь по Дуранго.'},
+ {n:2,title:'Поезд Durango &amp; Silverton',pill:'поезд',leg:'отправление 08:15–09:45 от вокзала в центре Дуранго',
+  note:'<b>Почему в начале:</b> при высокой пожароопасности поезд иногда останавливают. Раньше в блоке — есть куда пересесть.'},
+ {n:3,title:'Меса-Верде — города в скалах',pill:'радиально',leg:'Дуранго → Меса-Верде 1 ч в одну сторону, ~85 км',
+  note:'<b>Билеты внутрь</b> появляются за 14 дней в 08:00 MDT. Для 9 авг — 26 июля, 17:00 Мск. В сам парк пускают и без билета.'},
+ {n:4,title:'Million Dollar Highway: Дуранго → Урей',pill:'переезд',leg:'~120 км · 2 ч хода, закладывай 5–6 ч с остановками',note:''},
+ {n:5,title:'Урей и Теллурайд',pill:'радиально',leg:'Урей ↔ Теллурайд ~1 ч 15 мин в одну сторону',
+  note:'<b>Если плотно:</b> убери Yankee Boy — или наоборот Теллурайд, и посвяти день джип-туру и источникам.'},
+ {n:6,title:'Урей → Аспен (Чёрный каньон)',pill:'переезд',leg:'~330 км · 5 ч хода, весь день с остановками',note:''},
+ {n:7,title:'Maroon Bells',pill:'радиально',leg:'~30 км от Аспена, весь день у базы',
+  note:'<b>Совет:</b> ехать своей машиной к рассвету (выезд ~06:15) — до 08:00 частные машины пускают, озеро зеркальное.'},
+ {n:8,title:'Долины Аспена',pill:'радиально',leg:'2 короткие долины по 20–30 мин от Аспена',
+  note:'<b>Про август:</b> после 13:00–14:00 грозы. Всё высокогорное — до обеда.'},
+ {n:9,title:'Аспен → Денвер (Independence Pass)',pill:'переезд',leg:'~260 км · 4 ч хода, реально 6–7 ч с остановками',
+  note:'<b>Ночуем у аэропорта Денвера.</b> Завтра ранний вылет — последнюю ночь лучше ближе к DEN.'},
+ {n:10,title:'Денвер → вылет домой',pill:'финал',leg:'сдать машину · рейс American в Майами 12:47',
+  note:'<b>Выезжай к аэропорту к 10–11 утра.</b> Прилёт в Майами 19:00.'}
+];
+
+const P=[
+ {id:'dro',d:1,base:'dur',cat:'transport',lat:37.1515,lng:-107.7538,nm:'Аэропорт Дуранго (DRO)',q:'Durango-La Plata County Airport',tag:['прилёт 16:17','t-easy'],
+  why:'Прилетаешь рейсом American в 16:17. Забираешь машину в аэропорту — и за 25 минут в Дуранго, засветло.'},
+ {id:'art',d:1,base:'dur',cat:'town',lat:37.2700,lng:-107.8790,nm:'Animas River Trail + Main Avenue',q:'Animas River Trail Durango',
+  why:'Первый вечер: набережная вдоль реки через весь город и исторический центр Дуранго.'},
+ {id:'lnh',d:1,base:'dur',cat:'nature',lat:37.2350,lng:-107.9200,nm:'Lake Nighthorse',q:'Lake Nighthorse',tag:['если есть силы','t-easy'],
+  why:'Если бодрая — закат на спокойном озере в 15 мин от города. Сап, купание.'},
+ {id:'trn',d:2,base:'dur',cat:'transport',lat:37.2740,lng:-107.8800,nm:'Durango & Silverton Narrow Gauge Railroad',q:'Durango & Silverton Narrow Gauge Railroad',tag:['ради этого едут','t-must'],star:1,
+  why:'Паровоз 1880-х, узкая колея, 72 км вдоль каньона Анимас по полке в скале на высоте 120 м. <b>Формат:</b> поезд туда + автобус обратно освобождает полдня. <b>Класс:</b> бери открытый вагон Rio Grande (~$144) для фото, садись слева по ходу.'},
+ {id:'mvp',d:3,base:'dur',cat:'town',lat:37.3086,lng:-108.4187,nm:'Mesa Verde National Park',q:'Mesa Verde National Park',tag:['ЮНЕСКО','t-must'],star:1,
+  why:'600 жилищ анасази в нишах отвесных скал, 700–800 лет. Вход $30/машина, только карта. От въезда 40 мин вверх — закладывай целый день.'},
+ {id:'clp',d:3,base:'dur',cat:'town',lat:37.1685,lng:-108.4730,nm:'Cliff Palace',q:'Cliff Palace Mesa Verde',tag:['нужен билет','t-must'],star:1,
+  why:'Крупнейшее скальное поселение Северной Америки, 150 комнат. Внутрь только с рейнджером по билету с recreation.gov. Билеты за 14 дней в 08:00 MDT (для 9 авг — 26 июля).'},
+ {id:'mtl',d:3,base:'dur',cat:'town',lat:37.1830,lng:-108.4640,nm:'Mesa Top Loop Road',q:'Mesa Top Loop Road',tag:['без билетов','t-easy'],
+  why:'Если билетов нет — кольцевая дорога с площадками, откуда жилища видно с другого края каньона.'},
+ {id:'vlc',d:3,base:'dur',cat:'nature',lat:37.3800,lng:-107.5600,nm:'Vallecito Lake',q:'Vallecito Lake',tag:['спокойный вариант','t-easy'],
+  why:'Если скальные города не хочется — большое тихое горное озеро в 40 мин. Сап, пикник.'},
+ {id:'pag',d:3,base:'dur',cat:'springs',lat:37.2695,lng:-107.0098,nm:'Пагоса-Спрингс: The Springs Resort',q:'The Springs Resort Pagosa Springs',tag:['вариант дня','t-easy'],
+  why:'40+ горячих ванн террасами к реке, глубочайший геотермальный источник в мире. 1 ч на восток.'},
+ {id:'chr',d:3,base:'dur',cat:'town',lat:37.1900,lng:-107.3000,nm:'Chimney Rock National Monument',q:'Chimney Rock National Monument',tag:['вариант дня','t-easy'],
+  why:'Храм анасази на высокой меса с ориентацией на луну — тише и атмосфернее Меса-Верде.'},
+ {id:'hav',d:4,base:'our',cat:'nature',lat:37.4680,lng:-107.7960,nm:'Haviland Lake',q:'Haviland Lake Colorado',
+  why:'Первая остановка за Дуранго: тихое лесное озеро у трассы. Кофе перед подъёмом.'},
+ {id:'cbp',d:4,base:'our',cat:'nature',lat:37.6390,lng:-107.7770,nm:'Coal Bank Pass (3 231 м)',q:'Coal Bank Pass',
+  why:'Первый перевал дня, панорама на хребет Твилайт.'},
+ {id:'mol',d:4,base:'our',cat:'nature',lat:37.7481,lng:-107.7053,nm:'Molas Pass Overlook (3 322 м)',q:'Molas Pass Overlook',tag:['лучшая панорама','t-must'],star:1,
+  why:'Та самая открытка Сан-Хуана: луга, озёра, зубцы хребта Гренадир. Рядом Little Molas Lake — зеркальное озерцо, 5 мин по грунтовке.'},
+ {id:'sil',d:4,base:'our',cat:'town',lat:37.8119,lng:-107.6645,nm:'Silverton',q:'Silverton, CO',tag:['обед','t-easy'],
+  why:'Городок на 600 человек на 2 836 м, главная улица грунтовая, дома как из вестерна. Тот, куда вчера приходил поезд.'},
+ {id:'mdh',d:4,base:'our',cat:'nature',lat:37.9500,lng:-107.6900,nm:'Million Dollar Highway (US-550)',q:'Million Dollar Highway',tag:['легендарная дорога','t-must'],star:1,
+  why:'40 км серпантина в отвесной стене над ущельем, без отбойников. Едешь на север (Силвертон→Урей) — внешняя полоса над обрывом, виды максимальные (боишься высоты — знай заранее). 25 миль/ч, не в грозу.'},
+ {id:'rmp',d:4,base:'our',cat:'nature',lat:37.8967,lng:-107.7128,nm:'Red Mountain Pass + Ironton',q:'Red Mountain Pass',
+  why:'Ржаво-красные от окислов горы, остовы шахт, цветные отвалы. Самый «марсианский» участок.'},
+ {id:'bcf',d:4,base:'our',cat:'nature',lat:38.0050,lng:-107.6720,nm:'Bear Creek Falls',q:'Bear Creek Falls Ouray',
+  why:'Последний карман перед Уреем: водопад падает под мостом, по которому едешь.'},
+ {id:'ohs',d:4,base:'our',cat:'springs',lat:38.0290,lng:-107.6720,nm:'Ouray Hot Springs Pool',q:'Ouray Hot Springs Pool',tag:['вечер','t-easy'],
+  why:'Заезд в Урей — и сразу в горячий бассейн под открытым небом среди скал. До 22:00.'},
+ {id:'box',d:5,base:'our',cat:'nature',lat:38.0186,lng:-107.6740,nm:'Box Canyon Falls Park',q:'Box Canyon Falls Park',tag:['$8 · 45 мин','t-easy'],star:1,
+  why:'В 5 мин от центра Урея: 26-метровый водопад в узкой щели, подвесной настил прямо по стене.'},
+ {id:'per',d:5,base:'our',cat:'nature',lat:38.0250,lng:-107.6650,nm:'Perimeter Trail / Cascade Falls',q:'Cascade Falls Ouray',tag:['по желанию','t-hike'],
+  why:'Тропа-кольцо вокруг города по склонам с мостами. До Cascade Falls 20 мин вверх.'},
+ {id:'ykb',d:5,base:'our',cat:'nature',lat:37.9900,lng:-107.7800,nm:'Yankee Boy Basin',q:'Yankee Boy Basin',tag:['нужен джип','t-4x4'],star:1,
+  why:'Альпийский цирк на 3 500 м, ковёр из колокольчиков и водопадов под Mt. Sneffels. На прокатной легковой нельзя — джип-тур из Урея, полдня, ~$100–150 с человека.'},
+ {id:'tel',d:5,base:'our',cat:'town',lat:37.9375,lng:-107.8123,nm:'Telluride + бесплатная гондола',q:'Telluride Gondola',tag:['бесплатно','t-must'],star:1,
+  why:'Городок в тупике цирка. Бесплатная гондола через хребет в Mountain Village — 13 мин, вид на весь каньон. До полуночи.'},
+ {id:'bvf',d:5,base:'our',cat:'nature',lat:37.9270,lng:-107.7860,nm:'Bridal Veil Falls',q:'Bridal Veil Falls Telluride',tag:['111 м','t-must'],star:1,
+  why:'Самый высокий свободнопадающий водопад Колорадо в торце каньона. По асфальту до конца долины — смотришь снизу. Наверх только 4×4 или пешком 3 км.'},
+ {id:'dld',d:5,base:'our',cat:'nature',lat:38.0800,lng:-107.8300,nm:'Dallas Divide',q:'Dallas Divide',
+  why:'Дорога Урей–Теллурайд через этот перевал: классический вид на хребет Sneffels над ранчо. Лучше на закате.'},
+ {id:'rid',d:6,base:'asp',cat:'nature',lat:38.1533,lng:-107.7573,nm:'Ridgway State Park',q:'Ridgway State Park',tag:['по пути','t-easy'],
+  why:'Первая остановка за Уреем: водохранилище с пляжем под хребтом Сан-Хуан — размять ноги.'},
+ {id:'bcg',d:6,base:'asp',cat:'nature',lat:38.5750,lng:-107.7010,nm:'Black Canyon of the Gunnison NP',q:'Black Canyon of the Gunnison National Park',tag:['нацпарк №1','t-must'],star:1,
+  why:'Ущелье 800 м глубиной, местами 400 м шириной — дно видит солнце меньше часа в день. South Rim: дорога вдоль обрыва с 12 площадками. Обязательно Painted Wall. 2–3 ч, вход $30.'},
+ {id:'pnt',d:6,base:'asp',cat:'nature',lat:38.5680,lng:-107.7250,nm:'Painted Wall View',q:'Painted Wall View Black Canyon',
+  why:'Розовые пегматитовые прожилки по чёрной стене — визитка каньона, 685 м, самая высокая стена Колорадо.'},
+ {id:'mcc',d:6,base:'asp',cat:'nature',lat:39.1300,lng:-107.2900,nm:'McClure Pass',q:'McClure Pass',
+  why:'Мягкий перевал через хребет Elk с видом на Mount Sopris. До него — садовые долины Paonia.'},
+ {id:'mar',d:6,base:'asp',cat:'town',lat:39.0742,lng:-107.1897,nm:'Marble + Marble Mill Site Park',q:'Marble Mill Site Park',tag:['крюк 20 мин','t-easy'],
+  why:'Отсюда мрамор для Мемориала Линкольна. Руины завода — белые развалины в лесу.'},
+ {id:'red',d:6,base:'asp',cat:'town',lat:39.1836,lng:-107.2400,nm:'Redstone + Redstone Castle',q:'Redstone Castle',
+  why:'Посёлок вдоль красной реки Crystal с замком угольного магната 1902 г. Кофе перед броском в Аспен.'},
+ {id:'mrb',d:7,base:'asp',cat:'nature',lat:39.0975,lng:-106.9403,nm:'Maroon Bells + Maroon Lake',q:'Maroon Bells',tag:['открытка штата','t-must'],star:1,
+  why:'Две бордовые пирамиды-четырнадцатитысячника в отражении озера. С 22 мая по 18 окт частные машины запрещены 08:00–17:00 — шаттл $16 или своя машина до 08:00 с бронью ($10). К рассвету — пустое зеркальное озеро.'},
+ {id:'mls',d:7,base:'asp',cat:'nature',lat:39.0985,lng:-106.9370,nm:'Maroon Lake Scenic Trail',q:'Maroon Lake Scenic Trail',tag:['3 км · легко','t-easy'],
+  why:'Петля вокруг озера и по осиновой роще. Подходит всем.'},
+ {id:'crl',d:7,base:'asp',cat:'nature',lat:39.0742,lng:-106.9530,nm:'Crater Lake',q:'Crater Lake Trail Aspen',tag:['6 км · средне','t-hike'],
+  why:'Продолжение тропы вверх, к озеру под стенами Bells. Набор ~210 м.'},
+ {id:'gon',d:7,base:'asp',cat:'town',lat:39.1878,lng:-106.8231,nm:'Silver Queen Gondola / Aspen Mountain',q:'Silver Queen Gondola Aspen',tag:['после обеда','t-easy'],
+  why:'Гондола из центра Аспена на вершину 3 417 м, до 7 сентября, от $40. Панорама 360° без усилий.'},
+ {id:'asp',d:7,base:'asp',cat:'town',lat:39.1911,lng:-106.8175,nm:'Центр Аспена + John Denver Sanctuary',q:'John Denver Sanctuary Aspen',
+  why:'Вечером: кирпичные улицы 1880-х, галереи, тихий парк-мемориал у реки.'},
+ {id:'gro',d:8,base:'asp',cat:'nature',lat:39.1650,lng:-106.6250,nm:'Grottos Trail (ледяные гроты)',q:'Grottos Trail Aspen',tag:['1,2 км · легко','t-easy'],star:1,
+  why:'14 км восточнее Аспена: река проточила в граните гроты и ледяные пещеры, гуляешь как по луне. Парковка крошечная — до 10:00.'},
+ {id:'dpb',d:8,base:'asp',cat:'nature',lat:39.1600,lng:-106.6480,nm:"Devil's Punchbowl",q:"Devil's Punchbowl Aspen Colorado",
+  why:'Изумрудный котёл-ванна в скалах выше Grottos. Вода ледяная.'},
+ {id:'ash',d:8,base:'asp',cat:'town',lat:39.0500,lng:-106.7975,nm:'Ashcroft Ghost Town',q:'Ashcroft Ghost Town',tag:['$5','t-easy'],star:1,
+  why:'Долина Castle Creek, 18 км: серебряный город 1880-х — салун, почта, хижины в лугу под пиками.'},
+ {id:'cth',d:8,base:'asp',cat:'nature',lat:39.0670,lng:-106.6640,nm:'Cathedral Lake',q:'Cathedral Lake Trailhead',tag:['9 км · тяжело','t-hike'],
+  why:'Набор 600 м до бирюзового озера в цирке на 3 617 м. Один из лучших хайков штата. Выходить не позже 8 утра.'},
+ {id:'rgt',d:8,base:'asp',cat:'nature',lat:39.2350,lng:-106.8700,nm:'Rio Grande Trail → Woody Creek Tavern',q:'Rio Grande Trail Aspen CO',tag:['лёгкий вариант','t-easy'],
+  why:'Асфальтовая велодорожка вдоль реки, 13 км до легендарной таверны Хантера Томпсона (сама таверна — в разделе «Где поесть», Аспен). Велосипед берётся в Аспене.'},
+ {id:'igh',d:9,base:'den',cat:'town',lat:39.1150,lng:-106.6050,nm:'Independence Ghost Town',q:'Independence Ghost Town Colorado',
+  why:'Первая остановка на подъёме из Аспена: остатки золотого посёлка 1880-х у дороги. Бесплатно, 20 мин.'},
+ {id:'ind',d:9,base:'den',cat:'nature',lat:39.1086,lng:-106.5642,nm:'Independence Pass (3 687 м)',q:'Independence Pass',tag:['гвоздь дня','t-must'],star:1,
+  why:'Четвёртый по высоте асфальтовый перевал штата, один из самых зрелищных в США. Наверху настил-обзорка, тундра, вид на обе стороны хребта. Выезжай пораньше.'},
+ {id:'twn',d:9,base:'den',cat:'nature',lat:39.0836,lng:-106.3800,nm:'Twin Lakes',q:'Twin Lakes, Colorado',
+  why:'Два озера под самой высокой горой Колорадо (Mount Elbert, 4 401 м) после спуска. Отражения открыточные.'},
+ {id:'dil',d:9,base:'den',cat:'nature',lat:39.6289,lng:-106.0436,nm:'Sapphire Point / Dillon Reservoir',q:'Sapphire Point Overlook',
+  why:'Бирюзовое водохранилище в кольце вершин, площадка в 5 мин ходьбы. Обед лучше во Frisco.'},
+ {id:'lov',d:9,base:'den',cat:'nature',lat:39.6636,lng:-105.8792,nm:'Loveland Pass (3 655 м)',q:'Loveland Pass',tag:['крюк 25 мин','t-must'],star:1,
+  why:'Съезд с I-70 на US-6. Последний альпийский перевал: седловина выше границы леса, снежники в августе. Прощальный вид перед Денвером.'},
+ {id:'geo',d:9,base:'den',cat:'town',lat:39.7061,lng:-105.6972,nm:'Georgetown',q:'Georgetown, CO',tag:['30 мин','t-easy'],
+  why:'Викторианский шахтёрский городок у I-70, весь центр — памятник. Последняя остановка перед Денвером.'},
+ {id:'den',d:10,base:'den',cat:'transport',lat:39.8561,lng:-104.6737,nm:'Аэропорт Денвера (DEN)',q:'Denver International Airport',tag:['вылет 12:47','t-must'],star:1,
+  why:'Сдаёшь машину и улетаешь домой. Рейс American в Майами 12:47 (прилёт 19:00) — к аэропорту выехать утром, к 10–11.'},
+];
+
+/* ЕДА — умная подборка знаковых мест по городам (проверено 2026; закрытые исключены) */
+const FOODCITIES=[
+ {city:'Дуранго',base:'dur',lat:37.2753,lng:-107.8801,q:'Durango CO',spots:[
+  {nm:'Carver Brewing Co.',meal:'завтрак/бранч',price:'$$',veg:'вег ok',why:'30+ лет — одна из старейших пивоварен Колорадо. Знаменитый бранч и своё пиво.'},
+  {nm:'James Ranch Grill',meal:'обед',price:'$$',veg:'кое-что',why:'«Стол на ферме» в 20 км по шоссе 550: бургер из говядины со своего ранчо. Сезонно, пн закрыто.'},
+  {nm:'Diamond Belle Saloon',meal:'обед/бар',price:'$$',veg:'кое-что',why:'Рэгтайм-салун 1880-х в отеле Strater, официантки в костюмах — ради атмосферы и коктейля.'},
+  {nm:'Steamworks Brewing Company',meal:'ужин/бар',price:'$$',veg:'вег ok',why:'С 1996; золото GABF за Steam Engine Lager, фирменный Cajun Boil.'},
+  {nm:'Ska Brewing World HQ',meal:'бар',price:'$$',veg:'кое-что',why:'Первая крафтовая пивоварня Дуранго (1995), IPA Modus Hoperandi.'},
+  {nm:'El Moro Spirits & Tavern',meal:'ужин/коктейли',price:'$$–$$$',veg:'кое-что',why:'Стимпанк-салун: серьёзные коктейли и модерн-вестерн кухня.'}
+ ]},
+ {city:'Силвертон',base:'our',lat:37.8119,lng:-107.6645,q:'Silverton CO',spots:[
+  {nm:'Golden Block Brewery',meal:'ужин/бар',price:'$$',veg:'вег ok',why:'Городская пивоварня, пицца из дровяной печи и своё пиво. Самый надёжный вариант круглый год.'},
+  {nm:'Handlebars Food & Saloon',meal:'обед/ужин',price:'$$',veg:'кое-что',why:'Культовый салун Дикого Запада, ребра/BBQ и яблочный коблер. Сезон май–окт.'},
+  {nm:'The Eureka Station',meal:'ужин',price:'$$',veg:'кое-что',why:'Корнуэльские пирожки — традиционная еда шахтёров, на Blair St. Сезон ~июнь–окт.'},
+  {nm:'Kendall Mountain Cafe',meal:'завтрак/обед',price:'$',veg:'вег ok',why:'Самый высокий рейтинг в городке, черничные панкейки.'},
+  {nm:'Coffee Bear',meal:'кофе',price:'$',veg:'вег ok',why:'Местный кофе и выпечка перед поездом или горами.'}
+ ]},
+ {city:'Урей',base:'our',lat:38.0228,lng:-107.6712,q:'Ouray CO',spots:[
+  {nm:'Ouray Brewery',meal:'обед/бар',price:'$$',veg:'вег ok',why:'~16 сортов своего пива, крыша-терраса с видом на 360°. Флайт и бургер.'},
+  {nm:"Maggie's Kitchen",meal:'обед',price:'$–$$',veg:'кое-что',why:'Любимая бургерная, стены в граффити; бургеры из лося/бизона. Вт закрыто.'},
+  {nm:'Mouse\'s Chocolates & Coffee',meal:'десерт/кофе',price:'$$',veg:'вег ok',why:'Институция с 2001: «Scrap Cookie» и своя обжарка кофе.'},
+  {nm:'Taste of Ouray',meal:'ужин',price:'$$$',veg:'кое-что',why:'Farm-to-table, ужин для особого случая (бронь, сезонно).'},
+  {nm:'Brickhouse 737',meal:'ужин',price:'$$–$$$',veg:'кое-что',why:'Современная американская, топ-рейтинг — ужин поприятнее.'},
+  {nm:'Mr. Grumpy Pants Brewing Co.',meal:'бар',price:'$',veg:'—',why:'Колоритная дайв-пивоварня с террасой и видами — местный характер.'}
+ ]},
+ {city:'Теллурайд',base:'our',lat:37.9375,lng:-107.8123,q:'Telluride CO',spots:[
+  {nm:'Brown Dog Pizza',meal:'обед/ужин',price:'$$',veg:'вег ok',why:'Владелец — чемпион мира по пицце; детройтская «313» или зелёное чили «The Telluride».'},
+  {nm:'La Cocina de Luz',meal:'обед/ужин',price:'$$',veg:'веган/GF',why:'Органик-мексиканская с 1998, лепёшки вручную, лучшая маргарита по цене.'},
+  {nm:'Baked in Telluride',meal:'завтрак/кофе',price:'$',veg:'вег ok',why:'Классическая пекарня-кафе: выпечка, завтрак-сэндвичи, «chronut».'},
+  {nm:'Telluride Brewing Co. Tap Room',meal:'бар',price:'$$',veg:'кое-что',why:'Культовая местная пивоварня, золото за Face Down Brown.'},
+  {nm:'New Sheridan Chop House',meal:'ужин',price:'$$$',veg:'кое-что',why:'Салун 1895 → стейк-хаус: выдержанное мясо и дичь.'},
+  {nm:'221 South Oak',meal:'ужин',price:'$$$',veg:'веган-сет',why:'Файн-дайнинг в викторианском доме, шеф — финалист Top Chef.'}
+ ]},
+ {city:'Аспен',base:'asp',lat:39.1911,lng:-106.8175,q:'Aspen CO',spots:[
+  {nm:'The White House Tavern',meal:'обед/ужин',price:'$$–$$$',veg:'кое-что',why:'«Самый знаменитый сэндвич Аспена» — хрустящая курица, в крошечном доме.'},
+  {nm:'J-Bar at Hotel Jerome',meal:'бар',price:'$$',veg:'кое-что',why:'Исторический салун 1889, центр жизни города; бургер и бурбон-шейк «Aspen Crud».'},
+  {nm:'Woody Creek Tavern',meal:'обед/бар',price:'$$',veg:'кое-что',why:'Культовый дайв в 13 км, притон Хантера Томпсона; маргариты, бургер, энчилады.'},
+  {nm:'Cache Cache',meal:'ужин',price:'$$$',veg:'кое-что',why:'Франко-американская институция с 1987, «самая желанная бронь». Сезонно.'},
+  {nm:'Grateful Deli',meal:'обед',price:'$',veg:'кое-что',why:'Лучшая сэндвичная (награды с 2010), субы на заказ — дёшево и вкусно.'},
+  {nm:'Paradise Bakery & Cafe',meal:'завтрак/десерт',price:'$',veg:'вег ok',why:'Классика Аспена с 1976: тёплое печенье, джелато.'}
+ ]},
+ {city:'Басальт',base:'asp',lat:39.3690,lng:-107.0330,q:'Basalt CO',spots:[
+  {nm:'Tempranillo',meal:'ужин',price:'$$',veg:'кое-что',why:'Испанские тапас/паэлья, 300+ испанских вин — без аспенских цен. Arroz negro.'},
+  {nm:'Café Bernard',meal:'завтрак/обед',price:'$$–$$$',veg:'кое-что',why:'Крошечный французский бистро с 1990, ~8 столов; круассаны, эскарго, ягнёнок. Пн закрыто.'},
+  {nm:'The Tipsy Trout',meal:'обед/ужин',price:'$$',veg:'кое-что',why:'Единственное место у реки (терраса над Fryingpan); копчёная форель, трут-бургер.'},
+  {nm:'Westbound & Down Basalt',meal:'бар',price:'$$',veg:'кое-что',why:'Городская пивоварня (бывш. Capitol Creek), флайт и паб-еда.'},
+  {nm:'The Brick Pony Pub',meal:'обед/ужин',price:'$–$$',veg:'кое-что',why:'Простой местный паб: ковбойский бургер, пицца из дровяной печи.'}
+ ]},
+ {city:'Пагоса-Спрингс',base:'dur',lat:37.2695,lng:-107.0098,q:'Pagosa Springs CO',spots:[
+  {nm:'Meander Riverside Eatery',meal:'ужин',price:'$$$',veg:'вег ok',why:'Жемчужина: farm-to-table, в списке NYT «50 лучших ресторанов США 2024». Только ужин, бронь.'},
+  {nm:'Riff Raff Brewing Company',meal:'бар/ужин',price:'$$',veg:'кое-что',why:'Культовая пивоварня — первая в Колорадо на геотермале, в доме 1896; бургер «Cabrito».'},
+  {nm:'Kip\'s Grill & Cantina',meal:'обед/ужин',price:'$–$$',veg:'кое-что',why:'Тако-институция региона: рыбные и креветочные тако Baja.'},
+  {nm:'Two Chicks and a Hippie',meal:'завтрак/кофе',price:'$',veg:'вег ok',why:'Колоритная местная пекарня-кафе: булочки с корицей, sticky buns.'},
+  {nm:'Rosie\'s Pizzeria',meal:'обед/ужин',price:'$$',veg:'вег ok',why:'Любимая местными пицца NY-style, всё с нуля.'}
+ ]}
+];
+/* генерируем точки-еду в P (координаты — кластер вокруг центра города) */
+FOODCITIES.forEach((c,ci)=>{c.spots.forEach((s,si)=>{const ang=si/c.spots.length*Math.PI*2,r=0.006;
+  P.push({id:'f_'+ci+'_'+si,d:0,base:c.base,cat:'food',lat:+(c.lat+r*Math.cos(ang)*0.7).toFixed(5),lng:+(c.lng+r*Math.sin(ang)).toFixed(5),nm:s.nm,q:s.nm+' '+c.q,why:s.why});});});
+
+/* линии маршрута: days = к каким дням относится */
+const LINES=[
+ {type:'leg',days:[4],color:'#e0399b',label:'День 4: Дуранго → Урей',pts:[[38.0228,-107.6712],[38.0050,-107.6720],[37.8967,-107.7128],[37.8119,-107.6645],[37.7481,-107.7053],[37.6390,-107.7770],[37.4680,-107.7960],[37.2753,-107.8801],[37.1515,-107.7538]]},
+ {type:'leg',days:[6],color:'#ff9500',label:'День 6: Урей → Аспен',pts:[[39.1911,-106.8175],[39.3689,-107.0325],[39.4022,-107.2114],[39.1836,-107.2400],[39.1300,-107.2900],[38.8683,-107.5920],[38.7050,-107.6100],[38.5750,-107.7010],[38.4783,-107.8762],[38.1533,-107.7573],[38.0228,-107.6712]]},
+ {type:'leg',days:[9],color:'#5b6cff',label:'День 9: Аспен → Денвер',pts:[[39.8561,-104.6737],[39.7061,-105.6972],[39.6636,-105.8792],[39.6289,-106.0436],[39.5500,-106.1000],[39.2508,-106.2925],[39.0836,-106.3800],[39.1086,-106.5642],[39.1650,-106.6250],[39.1911,-106.8175]]},
+ {type:'rad',days:[2],color:'#8e5b3a',dash:'2,10',w:4,label:'🚂 Поезд Дуранго → Силвертон',pts:[[37.2740,-107.8800],[37.4200,-107.8000],[37.6000,-107.7300],[37.8119,-107.6645]]},
+ {type:'rad',days:[3],color:'#2f9e6f',dash:'8,8',w:3.5,label:'День 3: Меса-Верде',pts:[[37.2753,-107.8801],[37.3086,-108.4187],[37.1685,-108.4730]]},
+ {type:'rad',days:[5],color:'#2f9e6f',dash:'8,8',w:3.5,label:'День 5: Теллурайд',pts:[[38.0228,-107.6712],[38.1533,-107.7573],[38.0800,-107.8300],[37.9375,-107.8123],[37.9270,-107.7860]]},
+ {type:'rad',days:[7],color:'#2f9e6f',dash:'8,8',w:3.5,label:'День 7: Maroon Bells',pts:[[39.1911,-106.8175],[39.0975,-106.9403]]},
+ {type:'rad',days:[8],color:'#2f9e6f',dash:'8,8',w:3.5,label:'День 8: долины',pts:[[39.1911,-106.8175],[39.1650,-106.6250],[39.1600,-106.6480],[39.0500,-106.7975],[39.0670,-106.6640]]}
+];
+
+const START='2026-08-07';
+const MONTHS=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+const WD=['вс','пн','вт','ср','чт','пт','сб'];
+
+/* ================= ХЕЛПЕРЫ ================= */
+const gurl=q=>'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(q);
+function fmtDate(dt){return WD[dt.getDay()]+', '+dt.getDate()+' '+MONTHS[dt.getMonth()];}
+function addDays(iso,n){const d=new Date(iso+'T00:00:00');d.setDate(d.getDate()+n);return d;}
+function dayDate(startIso,dayN){return fmtDate(addDays(startIso,dayN-1));}
+
+/* ================= КАРТА — настоящая (Leaflet) ================= */
+let map=null,FULL=null;const markers={},lineLayers=[];
+function mapFallback(msg){const el=document.getElementById('map');if(el)el.innerHTML='<div class="mapph">🗺️ <b>'+(msg||'Карта не загрузилась')+'</b><br>Открой страницу по обычной ссылке (Netlify/GitHub) в браузере при интернете. Список и ссылки на Google Maps работают всегда.</div>';}
+function popupHTML(nm,q,why,label,color){
+  return '<div style="min-width:190px;max-width:260px">'
+    +(label?'<div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:800;color:'+color+'">'+label+'</div>':'')
+    +'<b style="font-size:15px;display:block;margin:2px 0 4px">'+nm+'</b>'
+    +'<div style="color:#555;font-size:13px;line-height:1.45;max-height:130px;overflow:auto">'+why+'</div>'
+    +'<a href="'+gurl(q)+'" target="_blank" rel="noopener" style="display:inline-block;margin-top:9px;padding:8px 12px;background:#16332b;color:#f5c15b;border-radius:8px;font-weight:800;font-size:13px;text-decoration:none">Открыть в Google Maps →</a></div>';
+}
+function initMap(){
+  if(typeof L==='undefined'){mapFallback('Карта не загрузилась');return;}
+  try{
+    const el=document.getElementById('map');el.innerHTML='';
+    const light=L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{maxZoom:19,attribution:'© OpenStreetMap, © CARTO'});
+    const streets=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'});
+    const relief=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',{maxZoom:18,attribution:'© Esri'});
+    const sat=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:18,attribution:'© Esri'});
+    map=L.map('map',{layers:[light],scrollWheelZoom:false,zoomControl:true}).setView([38.5,-107.3],7);
+    map.on('click',()=>map.scrollWheelZoom.enable());
+    L.control.layers({'Карта':light,'Улицы':streets,'Рельеф':relief,'Спутник':sat},null,{position:'topright'}).addTo(map);
+    L.control.scale({position:'bottomleft',metric:true,imperial:true,maxWidth:140}).addTo(map);
+    BASES.forEach(b=>{L.marker([b.lat,b.lng],{icon:L.divIcon({className:'',html:'<div class="pin basepin" style="background:#16332b">'+b.emoji+'</div>',iconSize:[32,28],iconAnchor:[16,14]})}).addTo(map).bindPopup(popupHTML(b.name,b.q,b.desc,'База ночёвки','#16332b')).bindTooltip(b.name,{permanent:true,direction:'right',className:'basetip',offset:[15,0]});});
+    P.forEach(p=>{const c=p.cat==='food'?'#c1462a':(DCOL[p.d]||'#2f9e6f');const glyph=p.star?'★':(p.cat==='food'?'●':(p.d||''));const sz=p.star?28:22;
+      markers[p.id]=L.marker([p.lat,p.lng],{icon:L.divIcon({className:'',html:'<div class="pin" style="background:'+c+';width:'+sz+'px;height:'+sz+'px;font-size:'+(p.star?15:12)+'px">'+glyph+'</div>',iconSize:[sz,sz],iconAnchor:[sz/2,sz/2]})}).bindPopup(popupHTML(p.nm,p.q,p.why,p.d?('День '+p.d):(CATS[p.cat]?CATS[p.cat].l:''),c));});
+    function drawLine(o){L.polyline(o.pts,{color:'#fff',weight:(o.w||6)+4,opacity:.9,dashArray:o.dash}).addTo(map);const ln=L.polyline(o.pts,{color:o.color,weight:o.w||6,opacity:1,dashArray:o.dash}).addTo(map).bindTooltip(o.label,{sticky:true});lineLayers.push({days:o.days,layer:ln});}
+    LINES.forEach(drawLine);
+    const legs=lineLayers.filter(l=>[4,6,9].some(d=>l.days.indexOf(d)>=0)).map(l=>l.layer);
+    FULL=L.featureGroup(legs).getBounds().pad(0.05);map.fitBounds(FULL);
+    applyFilter();
+  }catch(err){mapFallback('Карта не отрисовалась');}
+}
+function fitVisible(){
+  if(!map)return;
+  if(filter.mode==='all'&&!foodOn){if(FULL)map.fitBounds(FULL);return;}
+  const vis=P.filter(p=>pinVisible(p)&&markers[p.id]);
+  if(!vis.length){if(FULL)map.fitBounds(FULL);return;}
+  const b=L.latLngBounds(vis.map(p=>[p.lat,p.lng])).pad(0.35);
+  map.fitBounds(b,{maxZoom:12});
+}
+
+/* ================= ФИЛЬТРЫ ================= */
+let filter={mode:'all',v:null};let foodOn=false;
+/* основной фильтр — только НЕ-еда (маршрутные точки) */
+function matchesPrimary(p){
+  if(p.cat==='food')return false;
+  if(filter.mode==='all')return true;
+  if(filter.mode==='day')return p.d===filter.v;
+  if(filter.mode==='base')return p.base===filter.v;
+  if(filter.mode==='cat')return filter.v==='star'?!!p.star:p.cat===filter.v;
+  return true;
+}
+/* еда — отдельный слой, накладывается на текущий вид */
+function foodVisible(f){
+  if(!foodOn)return false;
+  if(filter.mode==='base')return f.base===filter.v;
+  if(filter.mode==='day')return f.base===DAY_BASE[filter.v];
+  return true; // «Всё» или категория → вся еда
+}
+function pinVisible(p){if(p.cat==='food')return foodVisible(p);return picked.has(p.id)&&matchesPrimary(p);}
+function buildFilters(){
+  const box=document.getElementById('filters');
+  let h='<div class="frow"><span class="flabel">Показать</span>'
+    +'<button class="chip allc" data-f="all">Всё</button>'
+    +'<button class="chip" data-f="cat" data-v="star"><span>★</span> Главное</button></div>';
+  h+='<div class="frow"><span class="flabel">По дням</span>'+DAYS.map(d=>'<button class="chip" data-f="day" data-v="'+d.n+'"><span class="dotc" style="background:'+DCOL[d.n]+'"></span>'+d.n+'</button>').join('')+'</div>';
+  h+='<div class="frow"><span class="flabel">По базам</span>'+BASES.map(b=>'<button class="chip" data-f="base" data-v="'+b.id+'"><span class="dotc" style="background:'+b.color+'"></span>'+b.emoji+' '+b.name.split(' ')[0]+'</button>').join('')+'</div>';
+  const ck=['nature','town','springs'];
+  h+='<div class="frow"><span class="flabel">Категории</span>'+ck.map(c=>'<button class="chip" data-f="cat" data-v="'+c+'">'+CATS[c].e+' '+CATS[c].l+'</button>').join('')+'</div>';
+  h+='<div class="frow"><span class="flabel">Наложить</span><button class="chip foodtoggle" id="foodToggle">🍽 Показать еду на карте</button><span class="foodhint">поверх выбранного дня или базы</span></div>';
+  box.innerHTML=h;
+  box.querySelectorAll('.chip').forEach(ch=>{
+    if(ch.id==='foodToggle'){ch.addEventListener('click',()=>{foodOn=!foodOn;applyFilter();});return;}
+    ch.addEventListener('click',()=>{
+      const f=ch.dataset.f,v=ch.dataset.v;
+      if(f==='all'){filter={mode:'all',v:null};}
+      else{const nv=(f==='day')?+v:v;
+        if(filter.mode===f&&String(filter.v)===String(nv)){filter={mode:'all',v:null};}
+        else{filter={mode:f,v:nv};}}
+      applyFilter();
+    });
+  });
+}
+function applyFilter(){
+  // чипы
+  document.querySelectorAll('#filters .chip').forEach(ch=>{
+    if(ch.id==='foodToggle'){ch.classList.toggle('on',foodOn);return;}
+    const f=ch.dataset.f,v=ch.dataset.v;let on=false;
+    if(f==='all'&&filter.mode==='all')on=true;
+    else if(f===filter.mode&&String(filter.v)===String(v))on=true;
+    ch.classList.toggle('on',on);
+  });
+  // строки списка (только маршрутные точки; еда — отдельный раздел ниже)
+  P.forEach(p=>{if(p.cat==='food')return;const li=document.querySelector('li[data-id="'+p.id+'"]');if(li)li.classList.toggle('hiddenrow',!matchesPrimary(p));});
+  // карточки дней
+  DAYS.forEach(d=>{const card=document.querySelector('details.day[data-day="'+d.n+'"]');if(!card)return;
+    const anyVis=P.some(p=>p.d===d.n&&matchesPrimary(p));
+    const relevant=(filter.mode==='all')||(filter.mode==='day'&&filter.v===d.n)||(filter.mode==='base'&&filter.v===DAY_BASE[d.n])||(filter.mode==='cat'&&anyVis);
+    card.style.display=relevant?'':'none';
+    if(filter.mode==='day'&&filter.v===d.n)card.open=true;
+    if(filter.mode==='base'&&filter.v===DAY_BASE[d.n])card.open=true;
+  });
+  // карта: точки (маршрут по основному фильтру + еда отдельным слоем)
+  let shownPts=0;
+  P.forEach(p=>{if(!map||!markers[p.id])return;const show=pinVisible(p);
+    if(show){if(!map.hasLayer(markers[p.id]))markers[p.id].addTo(map);shownPts++;}
+    else{if(map.hasLayer(markers[p.id]))map.removeLayer(markers[p.id]);}});
+  // линии
+  if(map)lineLayers.forEach(l=>{const show=(filter.mode==='all')||(filter.mode==='day'&&l.days.indexOf(filter.v)>=0)||(filter.mode==='base'&&l.days.some(dn=>DAY_BASE[dn]===filter.v));
+    if(show){if(!map.hasLayer(l.layer))l.layer.addTo(map);}else{if(map.hasLayer(l.layer))map.removeLayer(l.layer);}});
+  const cntEl=document.getElementById('cnt');if(cntEl)cntEl.textContent=map?shownPts:0;
+  fitVisible();
+  updateDirLinks();
+}
+
+/* ================= СПИСОК ДНЕЙ ================= */
+const KEY='co-trip-2026-picks';let picked;
+try{picked=new Set(JSON.parse(localStorage.getItem(KEY))||P.map(p=>p.id));}catch(e){picked=new Set(P.map(p=>p.id));}
+function savePicks(){try{localStorage.setItem(KEY,JSON.stringify([...picked]));}catch(e){}}
+
+/* Мета-строка по каждому месту: цена · время · лучшее время · по пути/крюк */
+const META={
+ dro:{price:'—',dur:'приезд'},
+ art:{price:'бесплатно',dur:'1–2 ч',best:'вечер'},
+ lnh:{price:'бесплатно',dur:'1–2 ч',best:'закат'},
+ trn:{price:'$90–144/чел',dur:'весь день',best:'весь день'},
+ mvp:{price:'$30/маш',dur:'весь день',best:'до полудня',route:'~1 ч от Дуранго'},
+ clp:{price:'~$8/чел',dur:'~1 ч',best:'днём'},
+ mtl:{price:'входит в парк',dur:'1–2 ч',best:'днём'},
+ vlc:{price:'бесплатно',dur:'полдня',route:'~40 мин от Дуранго'},
+ pag:{price:'от $67/чел',dur:'полдня',route:'~1 ч на восток'},
+ chr:{price:'$12 +$20/маш',dur:'2–3 ч',best:'днём',route:'~1 ч от Дуранго'},
+ hav:{price:'бесплатно',dur:'15–30 мин',route:'по пути'},
+ cbp:{price:'бесплатно',dur:'15 мин',route:'по пути'},
+ mol:{price:'бесплатно',dur:'20–40 мин',best:'днём',route:'по пути'},
+ sil:{price:'обед',dur:'~1 ч',best:'обед',route:'по пути'},
+ mdh:{price:'бесплатно',dur:'2–3 ч',best:'днём, не в грозу',route:'сама дорога'},
+ rmp:{price:'бесплатно',dur:'20 мин',route:'по пути'},
+ bcf:{price:'бесплатно',dur:'10 мин',route:'по пути'},
+ ohs:{price:'$26/чел',dur:'1–2 ч',best:'вечер',route:'в Урее'},
+ box:{price:'$8/чел',dur:'45 мин',best:'днём',route:'в Урее'},
+ per:{price:'бесплатно',dur:'1–3 ч',best:'днём',route:'в Урее'},
+ ykb:{price:'~$125/чел (джип)',dur:'полдня',best:'до полудня',route:'джип-тур из Урея'},
+ tel:{price:'гондола бесплатно',dur:'2–4 ч',best:'днём / закат',route:'~1 ч 15 от Урея'},
+ bvf:{price:'бесплатно (снизу)',dur:'~1 ч',best:'днём',route:'за Теллурайдом'},
+ dld:{price:'бесплатно',dur:'15 мин',best:'закат',route:'по дороге в Теллурайд'},
+ rid:{price:'~$10/маш',dur:'30 мин',route:'по пути'},
+ bcg:{price:'$30/маш',dur:'2–3 ч',best:'днём',route:'крюк ~30 мин'},
+ pnt:{price:'входит в парк',dur:'15 мин',best:'днём',route:'в парке'},
+ mcc:{price:'бесплатно',dur:'15 мин',route:'по пути'},
+ mar:{price:'бесплатно',dur:'20–40 мин',route:'крюк ~20 мин'},
+ red:{price:'бесплатно',dur:'30 мин',route:'по пути'},
+ mrb:{price:'шаттл $16 / парк. $10',dur:'2–4 ч',best:'на рассвете',route:'~30 мин от Аспена'},
+ mls:{price:'бесплатно',dur:'~1 ч',best:'утро',route:'у озера'},
+ crl:{price:'бесплатно',dur:'~2 ч',best:'утро',route:'от Maroon Lake'},
+ gon:{price:'от $40/чел',dur:'1–2 ч',best:'после обеда',route:'центр Аспена'},
+ asp:{price:'бесплатно',dur:'1–2 ч',best:'вечер',route:'центр Аспена'},
+ gro:{price:'бесплатно',dur:'~1 ч',best:'до 10:00',route:'~20 мин от Аспена'},
+ dpb:{price:'бесплатно',dur:'30 мин',best:'днём',route:'у Grottos'},
+ ash:{price:'$5/чел',dur:'~1 ч',best:'днём',route:'~25 мин от Аспена'},
+ cth:{price:'бесплатно',dur:'4–5 ч (хайк)',best:'выход до 8:00',route:'за Ashcroft'},
+ rgt:{price:'прокат вело',dur:'2–3 ч',best:'днём',route:'из Аспена'},
+ igh:{price:'бесплатно',dur:'20 мин',route:'по пути'},
+ ind:{price:'бесплатно',dur:'30–60 мин',best:'до полудня',route:'по пути (перевал)'},
+ twn:{price:'бесплатно',dur:'30 мин',best:'утро',route:'по пути'},
+ dil:{price:'бесплатно',dur:'30 мин',best:'днём',route:'по пути'},
+ lov:{price:'бесплатно',dur:'25 мин',best:'днём',route:'крюк ~25 мин'},
+ geo:{price:'бесплатно (город)',dur:'30–60 мин',best:'днём',route:'по пути'},
+ den:{price:'—',dur:'вылет'}
+};
+function metaStrip(p){
+  const m=META[p.id];if(!m)return '';
+  let out='<span class="meta">';
+  if(p.star)out+='<span class="mpill must">★ обязательно</span>';
+  if(m.price)out+='<span class="mpill '+(m.price==='бесплатно'?'free':'')+'">💵 '+m.price+'</span>';
+  if(m.dur)out+='<span class="mpill">⏱ '+m.dur+'</span>';
+  if(m.best)out+='<span class="mpill best">🕐 '+m.best+'</span>';
+  if(m.route)out+='<span class="mpill route">📍 '+m.route+'</span>';
+  return out+'</span>';
+}
+function buildDays(){
+  const host=document.getElementById('days');let out='';
+  DAYS.forEach(d=>{
+    const c=DCOL[d.n];const list=P.filter(p=>p.d===d.n);
+    out+='<details class="day" data-day="'+d.n+'"'+(d.n===1?' open':'')+'>'
+      +'<summary class="day-head"><span class="dnum" style="background:'+c+'">Д'+d.n+'</span>'
+      +'<span class="dhead-txt"><h3>'+d.title+'</h3><span class="ddate" data-daydate="'+d.n+'">'+dayDate(START,d.n)+'</span></span>'
+      +'<span class="dcount">'+list.length+' точек</span><span class="chev">›</span></summary>'
+      +'<div class="day-body">'
+      +'<div class="leg"><span class="pill">'+d.pill+'</span> <b>'+d.leg+'</b><a class="dirlink" href="#" data-dir="'+d.n+'" target="_blank" rel="noopener">Маршрут в Google Maps →</a></div>'
+      +'<div class="daytools"><button class="tiny" data-dayon="'+d.n+'">Отметить день</button><button class="tiny" data-dayoff="'+d.n+'">Снять день</button></div>'
+      +'<ul class="stops">'+list.map(p=>{const emo=p.star?'<span class="cemo star">★</span>':(CATS[p.cat]?'<span class="cemo">'+CATS[p.cat].e+'</span>':'');
+        return '<li data-id="'+p.id+'" data-cat="'+p.cat+'" data-day="'+p.d+'" data-base="'+p.base+'">'
+        +'<span class="chkwrap"><input type="checkbox" class="tick" data-tick="'+p.id+'" aria-label="показать на карте"></span>'
+        +'<span class="sinfo"><span class="snm">'+emo+'<a href="'+gurl(p.q)+'" target="_blank" rel="noopener">'+p.nm+'</a>'+(p.tag?'<span class="tag '+p.tag[1]+'">'+p.tag[0]+'</span>':'')+'</span>'
+        +metaStrip(p)
+        +'<span class="why">'+p.why+'</span></span></li>';}).join('')+'</ul>'
+      +(d.note?'<div class="dnote">'+d.note+'</div>':'')+'</div></details>';
+  });
+  host.innerHTML=out;
+}
+function dirURL(dayN){
+  const sel=P.filter(p=>p.d===dayN&&picked.has(p.id));if(!sel.length)return null;
+  if(sel.length===1)return gurl(sel[0].q);
+  const o=encodeURIComponent(sel[0].q),dst=encodeURIComponent(sel[sel.length-1].q);
+  const wp=sel.slice(1,-1).slice(0,8).map(p=>encodeURIComponent(p.q)).join('%7C');
+  return 'https://www.google.com/maps/dir/?api=1&origin='+o+'&destination='+dst+(wp?'&waypoints='+wp:'')+'&travelmode=driving';
+}
+function updateDirLinks(){document.querySelectorAll('[data-dir]').forEach(a=>{const u=dirURL(+a.dataset.dir);
+  if(u){a.href=u;a.style.opacity='1';a.style.pointerEvents='auto';}else{a.href='#';a.style.opacity='.35';a.style.pointerEvents='none';}});}
+function syncChecks(){P.forEach(p=>{const b=document.querySelector('[data-tick="'+p.id+'"]');if(b)b.checked=picked.has(p.id);
+  const li=document.querySelector('li[data-id="'+p.id+'"]');if(li)li.style.opacity=picked.has(p.id)?'1':'.55';});}
+
+/* ================= ЕДА ================= */
+function gmSearch(q){return 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(q);}
+function buildFood(){
+  const host=document.getElementById('foodGrid');
+  host.innerHTML=FOODCITIES.map(c=>{const base=BASES.find(b=>b.id===c.base);const col=base?base.color:'#c1462a';
+    return '<div class="foodcity" data-base="'+c.base+'">'
+      +'<h4><span class="fb" style="background:'+col+'"></span>'+c.city+'</h4>'
+      +'<div class="mealbtns">'
+      +'<a class="mealbtn all" href="'+gmSearch('restaurants '+c.q)+'" target="_blank" rel="noopener">🍽 Все на карте</a>'
+      +'<a class="mealbtn" href="'+gmSearch('breakfast '+c.q)+'" target="_blank" rel="noopener">☕ Завтрак</a>'
+      +'<a class="mealbtn" href="'+gmSearch('lunch restaurants '+c.q)+'" target="_blank" rel="noopener">🍴 Обед</a>'
+      +'<a class="mealbtn" href="'+gmSearch('dinner restaurants '+c.q)+'" target="_blank" rel="noopener">🍷 Ужин</a>'
+      +'</div>'
+      +'<ul class="foodlist">'+c.spots.map(s=>
+        '<li><a href="'+gmSearch(s.nm+' '+c.q)+'" target="_blank" rel="noopener">'+s.nm+'</a>'
+        +'<span class="fmeta">'+s.meal+' · '+s.price+' · '+s.veg+'</span>'
+        +'<span class="fw">'+s.why+'</span></li>').join('')+'</ul>'
+      +'</div>';
+  }).join('');
+}
+
+/* ================= ПЛАНИРОВЩИК НОЧЁВОК ================= */
+/* ===== состояние плана: дата старта + ночи (редактируемо, сохраняется) ===== */
+const PKEY='co-trip-2026-plan';let startIso=START;
+const baseDays={};BASES.forEach(b=>baseDays[b.id]=[]);
+Object.keys(DAY_BASE).forEach(d=>baseDays[DAY_BASE[d]].push(+d));
+Object.keys(baseDays).forEach(k=>baseDays[k].sort((a,b)=>a-b));
+function loadPlan(){try{const s=JSON.parse(localStorage.getItem(PKEY));if(s){if(s.start)startIso=s.start;if(Array.isArray(s.nights))BASES.forEach((b,i)=>{if(typeof s.nights[i]==='number'&&s.nights[i]>=1)b.nights=s.nights[i];});}}catch(e){}}
+function savePlan(){try{localStorage.setItem(PKEY,JSON.stringify({start:startIso,nights:BASES.map(b=>b.nights)}));}catch(e){}}
+function nightsBefore(baseId){let s=0;for(const b of BASES){if(b.id===baseId)break;s+=b.nights;}return s;}
+function dayDateFor(dayN){const bid=DAY_BASE[dayN];const pos=baseDays[bid].indexOf(dayN);return addDays(startIso,nightsBefore(bid)+pos);}
+function totalNights(){return BASES.reduce((s,b)=>s+b.nights,0);}
+function nights(n){const a=n%10,b=n%100;if(a===1&&b!==11)return'ночь';if(a>=2&&a<=4&&(b<10||b>=20))return'ночи';return'ночей';}
+function recomputeDates(){
+  DAYS.forEach(d=>{const el=document.querySelector('[data-daydate="'+d.n+'"]');if(el)el.textContent=fmtDate(dayDateFor(d.n));});
+  const hd=document.getElementById('hDates');if(hd){const s=addDays(startIso,0),e=addDays(startIso,totalNights());hd.textContent=s.getDate()+'–'+e.getDate()+' '+MONTHS[e.getMonth()].slice(0,3);}
+}
+function buildPlanner(){
+  const host=document.getElementById('planner');
+  host.innerHTML='<div class="dateset"><label for="startDate"><b>Начало путешествия:</b></label>'
+    +'<input type="date" id="startDate" value="'+startIso+'"><span class="dshint">меняешь дату или число ночей — всё пересчитывается</span></div>'
+    +'<div id="stayList"></div>'
+    +'<div class="plannote">Кнопками − / + меняй число ночей на каждой базе. Заезды-выезды и даты в маршруте по дням пересчитаются сами.</div>';
+  renderStays();
+  document.getElementById('startDate').addEventListener('change',e=>{startIso=e.target.value||START;savePlan();renderStays();recomputeDates();});
+}
+function renderStays(){
+  const rows=BASES.map((b,i)=>{const before=nightsBefore(b.id);const ci=addDays(startIso,before),co=addDays(startIso,before+b.nights);
+    return '<div class="stayrow"><span class="staydot" style="background:'+b.color+'">'+b.emoji+'</span>'
+      +'<span class="stayinfo"><span class="sn">'+b.name+'</span><span class="sd">заезд '+fmtDate(ci)+'&nbsp;&nbsp;→&nbsp;&nbsp;выезд '+fmtDate(co)+'</span></span>'
+      +'<span class="stepper"><button class="stepbtn" data-nd="'+i+'" data-dir="-1" aria-label="меньше ночей">−</button>'
+      +'<span class="stepn"><b>'+b.nights+'</b><span class="stepu">'+nights(b.nights)+'</span></span>'
+      +'<button class="stepbtn" data-nd="'+i+'" data-dir="1" aria-label="больше ночей">+</button></span></div>';
+  }).join('');
+  const tn=totalNights();
+  document.getElementById('stayList').innerHTML=rows
+    +'<div class="staytot">Всего <b>'+tn+'</b> '+nights(tn)+' · вся поездка '+fmtDate(addDays(startIso,0))+'&nbsp;→&nbsp;'+fmtDate(addDays(startIso,tn))+'</div>';
+}
+
+/* ================= СОБЫТИЯ ================= */
+document.addEventListener('change',e=>{const id=e.target.dataset&&e.target.dataset.tick;if(!id)return;
+  e.target.checked?picked.add(id):picked.delete(id);savePicks();syncChecks();applyFilter();});
+document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)return;
+  if(t.dataset.dayon){P.filter(p=>p.d===+t.dataset.dayon).forEach(p=>picked.add(p.id));savePicks();syncChecks();applyFilter();}
+  if(t.dataset.dayoff){P.filter(p=>p.d===+t.dataset.dayoff).forEach(p=>picked.delete(p.id));savePicks();syncChecks();applyFilter();}
+  if(t.dataset.nd!==undefined){const i=+t.dataset.nd,dir=+t.dataset.dir;BASES[i].nights=Math.max(1,Math.min(21,BASES[i].nights+dir));savePlan();renderStays();recomputeDates();}});
+function wireButtons(){
+  document.getElementById('allOn').onclick=()=>{P.forEach(p=>picked.add(p.id));savePicks();syncChecks();applyFilter();};
+  document.getElementById('allOff').onclick=()=>{picked.clear();savePicks();syncChecks();applyFilter();};
+  document.getElementById('onlyStar').onclick=()=>{picked.clear();P.filter(p=>p.star).forEach(p=>picked.add(p.id));savePicks();syncChecks();filter={mode:'cat',v:'star'};applyFilter();};
+  document.getElementById('fitAll').onclick=()=>{filter={mode:'all',v:null};applyFilter();if(map&&FULL){map.fitBounds(FULL);}document.getElementById('map').scrollIntoView({behavior:'smooth',block:'center'});};
+}
+
+/* ================= БЮДЖЕТ ================= */
+const BKEY='co-trip-2026-budget';const DEF={};
+function money(n){return '$'+n.toLocaleString('en-US',{maximumFractionDigits:0});}
+function calcBudget(){let sum=0;document.querySelectorAll('#budgetTbl tbody input.money').forEach(i=>sum+=parseFloat(i.value)||0);
+  document.getElementById('sumAll').textContent=money(sum);document.getElementById('sumPer').textContent=money(sum/2);
+  const o={};document.querySelectorAll('input.money').forEach(i=>o[i.dataset.k]=i.value);try{localStorage.setItem(BKEY,JSON.stringify(o));}catch(e){}}
+function wireBudget(){
+  document.querySelectorAll('input.money').forEach(i=>DEF[i.dataset.k]=i.value);
+  let saved={};try{saved=JSON.parse(localStorage.getItem(BKEY))||{};}catch(e){}
+  document.querySelectorAll('input.money').forEach(i=>{if(saved[i.dataset.k]!==undefined)i.value=saved[i.dataset.k];
+    i.setAttribute('inputmode','decimal');i.addEventListener('input',calcBudget);i.addEventListener('focus',()=>i.select());});
+  document.getElementById('resetBudget').addEventListener('click',()=>{document.querySelectorAll('input.money').forEach(i=>i.value=DEF[i.dataset.k]);calcBudget();});
+  calcBudget();
+}
+
+/* ================= СТАРТ ================= */
+loadPlan();
+buildFilters();buildDays();buildFood();buildPlanner();wireButtons();wireBudget();
+recomputeDates();
+syncChecks();applyFilter();
+if('requestIdleCallback' in window){requestIdleCallback(initMap,{timeout:1500});}else{setTimeout(initMap,60);}
+</script>
+</body>
+</html>
