@@ -777,7 +777,7 @@ section h2.big{font-family:"Fraunces",Georgia,serif!important;font-weight:600!im
 .fmed,.bgmed,.staydot,.hdot,.fico2{background:linear-gradient(150deg,#7a5cf0,#5b3fc4)!important}
 .foodcity h4 .fb{background:linear-gradient(150deg,#7a5cf0,#5b3fc4)!important}
 /* кнопки брони в бюджете/жилье → фиолет */
-.hbook{background:linear-gradient(96deg,#6b4fd6,#5b3fc4)!important}
+.hbook{background:linear-gradient(180deg,#fff,#f4f1ff)!important;color:#5b3fc4!important;border:1.5px solid rgba(91,63,196,.4)!important;box-shadow:0 6px 16px -12px rgba(27,30,46,.4)!important}
 .bbook{border-color:rgba(91,63,196,.4)!important;color:#5b3fc4!important;background:linear-gradient(180deg,#fff,#f4f1ff)!important}
 /* поля и степперы: оранжевые рамки → фиолет */
 .stepbtn{border-color:rgba(91,63,196,.35)!important;color:#5b3fc4!important;background:linear-gradient(180deg,#fff,#f5f2ff)!important}
@@ -1536,7 +1536,7 @@ function buildCities(){
       +'<div class="cstay"><span class="cph"'+(basePhoto(b.id)?' style="background-image:url('+basePhoto(b.id)+')"':'')+'></span>'
         +'<span class="cin"><h3>Где остановиться</h3>'
         +'<span class="cmeta">'+shortName(b.name)+' · '+b.nights+' '+nights(b.nights)+' · '+dm(ci)+'–'+dm(co)+'<br>на '+PEOPLE+' '+plural(PEOPLE,'гостя','гостей','гостей')+'</span>'
-        +'<a class="cbookl" href="'+bookHotel(b.q,ci,co,PEOPLE)+'" target="_blank" rel="noopener">Забронировать на Booking '+ic('ext','i-sm')+'</a></span></div></div>';
+        +'<a class="cbookl" href="'+bookHotel(b.q,ci,co,PEOPLE)+'" target="_blank" rel="noopener">Забронировать на Booking</a></span></div></div>';
     /* маршрут по дням */
     const route='<div class="cnode"><span class="cdot">'+ic('cal','i-sm')+'</span>'
       +'<div class="clbl"><b>Маршрут</b><span>Дни '+firstDay+'–'+lastDay+'</span></div>'
@@ -2048,7 +2048,7 @@ function groupBook(g){
   else if(g==='Машина'){const en=s=>s.split(',')[0].trim();url=bookCar(en(BASES[0].q),en(BASES[BASES.length-1].q),ci,co);label='Забронировать машину';icon='car';}
   else if(g==='Входы и активности'){url=bookActivity(BASES[0].q+' tours tickets');label='Забронировать активности';icon='ticket';}
   else return '';
-  return '<a class="bbook" href="'+url+'" target="_blank" rel="noopener">'+ic(icon,'i-sm')+'<span>'+label+'</span>'+ic('chevron','i-sm')+'</a>';
+  return '<a class="bbook" href="'+url+'" target="_blank" rel="noopener">'+ic(icon,'i-sm')+'<span>'+label+'</span></a>';
 }
 function calcBudget(){
   let sum=0;const days=totalNights()+1;
