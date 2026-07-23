@@ -641,6 +641,25 @@ input.money.perunit{max-width:62px;padding:7px 6px;text-align:center;margin:0 1p
 .gt-sub{display:flex;gap:10px;margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,.16);position:relative;z-index:2}
 .gt-sub span{flex:1;font:600 11px/1 "Inter",sans-serif;opacity:.8;display:flex;flex-direction:column;gap:7px;text-transform:uppercase;letter-spacing:.06em}
 .gt-sub b{font:800 19px/1 "Plus Jakarta Sans",sans-serif;color:#fff;opacity:1;letter-spacing:-.03em}
+/* ── ПЛАШКА-МАРШРУТ ── */
+.routewrap{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin:0 -12px;padding:4px 12px 8px}
+.routewrap::-webkit-scrollbar{display:none}
+.routeline{display:flex;align-items:flex-start;gap:0;min-width:min-content}
+.rstop{flex:none;display:flex;flex-direction:column;align-items:center;gap:6px;width:74px;text-align:center}
+.rdot{width:44px;height:44px;border-radius:15px;color:#fff;display:grid;place-items:center;position:relative;overflow:hidden;box-shadow:var(--sh1),inset 0 1px 0 rgba(255,255,255,.42)}
+.rdot::after{content:"";position:absolute;inset:0;border-radius:15px;background:radial-gradient(120% 78% at 14% 8%,rgba(255,255,255,.4),rgba(255,255,255,0) 58%)}
+.rdot .i{position:relative;z-index:2}
+.rname{font:800 12.5px/1.1 "Plus Jakarta Sans",sans-serif;letter-spacing:-.03em;color:var(--ink)}
+.rcode{font:700 9px/1 "JetBrains Mono",ui-monospace,monospace;color:var(--mut);letter-spacing:.04em}
+.rdate{font:600 9.5px/1.2 "Inter",sans-serif;color:var(--mut)}
+.rseg{flex:none;width:58px;display:flex;flex-direction:column;align-items:center;gap:5px;padding-top:9px;text-decoration:none;position:relative}
+.rseg::before{content:"";position:absolute;top:31px;left:-8px;right:-8px;height:2px;border-radius:2px;background:repeating-linear-gradient(90deg,var(--sage) 0 5px,transparent 5px 10px)}
+.rsi{width:30px;height:30px;border-radius:10px;display:grid;place-items:center;position:relative;z-index:2;background:#fff;border:1.5px solid var(--line);color:var(--ink2);box-shadow:var(--sh1)}
+.rseg-flight .rsi{background:linear-gradient(150deg,#6c7cff,#4a3d8f);color:#fff;border-color:transparent}
+.rseg-book .rsi{border-color:rgba(217,106,18,.45)}
+.rsl{font:700 8.5px/1 "Inter",sans-serif;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);position:relative;z-index:2}
+.rseg-book .rsl{color:var(--orange3)}
+.rseg-book:active{transform:scale(.94)}
 </style>
 </head>
 <body>
@@ -675,6 +694,13 @@ input.money.perunit{max-width:62px;padding:7px 6px;text-align:center;margin:0 1p
     </div>
   </div>
 </header>
+
+<section id="s-route"><div class="wrap">
+  <div class="eyebrow">Маршрут</div>
+  <h2 class="big">Как добираешься</h2>
+  <p class="lede">Весь путь одной лентой: перелёты, переезды и города с датами. Нажми на самолёт — подберём билеты на твои даты.</p>
+  <div class="routewrap"><div class="routeline" id="routeLine"></div></div>
+</div></section>
 
 <section id="s-map"><div class="wrap">
   <div class="eyebrow">Карта</div>
@@ -850,7 +876,9 @@ const ICONS={
  foodwine:'<path d="M2.6 2.3v4.3M5.9 2.3v4.3M9.2 2.3v4.3M2.6 6.6a3.3 3.3 0 0 0 6.6 0M5.9 9.9v11.8"/><path d="M12 3.2v17.6" opacity=".35"/><path d="M14.6 2.3h7.4l-1 5.5a2.85 2.85 0 0 1-5.4 0l-1-5.5Z"/><path d="M18.3 12v9.7M15.6 21.7h5.4"/>',
  layers:'<path d="m12 2 9 5-9 5-9-5 9-5ZM3 12l9 5 9-5M3 17l9 5 9-5"/>',
  pencil:'<path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
- city:'<path d="M3 21h18M5 21V7l6-3v17M13 21V10l6-2v13M8 8h.01M8 12h.01M8 16h.01M16 12h.01M16 16h.01"/>'
+ city:'<path d="M3 21h18M5 21V7l6-3v17M13 21V10l6-2v13M8 8h.01M8 12h.01M8 16h.01M16 12h.01M16 16h.01"/>',
+ flight:'<path d="M17.9 19.3 15.8 11l3.6-3.6a2.1 2.1 0 1 0-3-3L12.8 8 4.6 6.2a1 1 0 0 0-.9 1.7l4.9 3.1-2 3H3.6l-.9 2 3.8 1 1 3.8 2-.9v-3l3-2 3.1 5a1 1 0 0 0 1.7-.9Z"/>',
+ ferry:'<path d="M3 15.5c1.2 0 1.2 1 2.4 1s1.2-1 2.4-1 1.2 1 2.4 1 1.2-1 2.4-1 1.2 1 2.4 1 1.2-1 2.4-1M5 15V9h14l-2 6M9 9V5h6v4M12 2v3"/>'
 };
 function ic(n,cls){return ICONS[n]?'<svg class="i'+(cls?' '+cls:'')+'" viewBox="0 0 24 24" aria-hidden="true" focusable="false">'+ICONS[n]+'</svg>':'';}
 function med(n,bg,cls){return '<span class="med '+(cls||'')+'" style="background:'+bg+'">'+ic(n)+'</span>';}
@@ -1092,6 +1120,46 @@ const ALT={1:1988,2:2836,3:2600,4:3322,5:3500,6:2700,7:2900,8:2870,9:3687,10:160
 const ALTNM={1:'Дуранго',2:'Силвертон',3:'Меса-Верде',4:'Molas Pass',5:'Yankee Boy',6:'Чёрный каньон',7:'Maroon Bells',8:'Ashcroft',9:'Independence',10:'Денвер'};
 /* профиль высоты в шапке — подпись всей страницы */
 function mrs(v){return v?String(v).replace(/B(?=(d{3})+(?!d))/g,' ')+' м':'';}
+/* ================= ПЛАШКА-МАРШРУТ ================= */
+/* точка отправления и аэропорты — часть будущей анкеты; транспорт между базами по умолчанию машина */
+const ORIGIN={city:'Майами',code:'MIA'};
+const AIRPORT={dur:'DRO',den:'DEN'};
+const SEGMENT={dur:'flight',our:'car',asp:'car',den:'car'};
+function skyscanner(from,to,iso){
+  const d=addDays(iso,0);const yy=String(d.getFullYear()).slice(2),mm=('0'+(d.getMonth()+1)).slice(-2),dd=('0'+d.getDate()).slice(-2);
+  return 'https://www.skyscanner.ru/transport/flights/'+from.toLowerCase()+'/'+to.toLowerCase()+'/'+yy+mm+dd+'/';
+}
+function fmtISO(d){return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);}
+function buildRoute(){
+  const host=document.getElementById('routeLine');if(!host)return;
+  const startAir=AIRPORT[BASES[0].id]||'DRO', endAir=AIRPORT[BASES[BASES.length-1].id]||'DEN';
+  const endIso=fmtISO(addDays(startIso,totalNights()));
+  const stop=(name,code,dates,isOrigin,c1,c2)=>{
+    const bg=isOrigin?'linear-gradient(150deg,#4a5568,#1d2530)':'linear-gradient(150deg,'+(c1||'#12855e')+','+(c2||'#0a6047')+')';
+    return '<div class="rstop"><span class="rdot" style="background:'+bg+'">'+ic(isOrigin?'flight':'city','i-sm')+'</span>'
+      +'<span class="rname">'+name+'</span>'
+      +(code?'<span class="rcode">'+code+'</span>':'')
+      +(dates?'<span class="rdate">'+dates+'</span>':'')+'</div>';
+  };
+  const seg=(type,url,label)=>{
+    const inner=ic(type==='flight'?'flight':type==='train'?'train':type==='ferry'?'ferry':type==='bus'?'bed':'car','i-sm');
+    const cls='rseg rseg-'+type+(url?' rseg-book':'');
+    if(url)return '<a class="'+cls+'" href="'+url+'" target="_blank" rel="noopener" title="подобрать билеты"><span class="rsi">'+inner+'</span><span class="rsl">'+label+'</span></a>';
+    return '<span class="'+cls+'"><span class="rsi">'+inner+'</span><span class="rsl">'+label+'</span></span>';
+  };
+  let html=stop(ORIGIN.city,ORIGIN.code,'',true)
+    +seg('flight',skyscanner(ORIGIN.code,startAir,startIso),'билеты');
+  BASES.forEach((b,i)=>{
+    const before=nightsBefore(b.id);
+    const ci=addDays(startIso,before),co=addDays(startIso,before+b.nights);
+    html+=stop(shortName(b.name),AIRPORT[b.id]||'',dm(ci)+'–'+dm(co),false,b.color,BCOL2[b.id]);
+    if(i<BASES.length-1){const nx=BASES[i+1];html+=seg(SEGMENT[nx.id]||'car','','переезд');}
+  });
+  html+=seg('flight',skyscanner(endAir,ORIGIN.code,endIso),'билеты')
+    +stop(ORIGIN.city,ORIGIN.code,'',true);
+  host.innerHTML=html;
+}
+
 function buildElev(){
   const host=document.getElementById('elev');if(!host)return;
   const ds=Object.keys(ALT).map(Number).sort((a,b)=>a-b);
@@ -1515,7 +1583,7 @@ function buildPlanner(){
     +'<div id="stayList"></div>'
     +'<div class="plannote">Кнопками − / + меняй число ночей на каждой базе. Заезды-выезды и даты в маршруте по дням пересчитаются сами.</div>';
   renderStays();
-  document.getElementById('startDate').addEventListener('change',e=>{startIso=e.target.value||START;savePlan();renderStays();recomputeDates();refreshBudgetCounts();});
+  document.getElementById('startDate').addEventListener('change',e=>{startIso=e.target.value||START;savePlan();renderStays();recomputeDates();refreshBudgetCounts();buildRoute();});
 }
 function renderStays(){
   const rows=BASES.map((b,i)=>{const before=nightsBefore(b.id);const ci=addDays(startIso,before),co=addDays(startIso,before+b.nights);
@@ -1577,7 +1645,7 @@ document.addEventListener('change',e=>{const id=e.target.dataset&&e.target.datas
 document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)return;
   if(t.dataset.dayon){P.filter(p=>p.d===+t.dataset.dayon).forEach(p=>picked.add(p.id));savePicks();syncChecks();applyFilter();}
   if(t.dataset.dayoff){P.filter(p=>p.d===+t.dataset.dayoff).forEach(p=>picked.delete(p.id));savePicks();syncChecks();applyFilter();}
-  if(t.dataset.nd!==undefined){const i=+t.dataset.nd,dir=+t.dataset.dir;BASES[i].nights=Math.max(1,Math.min(21,BASES[i].nights+dir));savePlan();renderStays();recomputeDates();refreshBudgetCounts();}});
+  if(t.dataset.nd!==undefined){const i=+t.dataset.nd,dir=+t.dataset.dir;BASES[i].nights=Math.max(1,Math.min(21,BASES[i].nights+dir));savePlan();renderStays();recomputeDates();refreshBudgetCounts();buildRoute();}});
 function wireButtons(){
   document.getElementById('allOn').onclick=()=>{P.forEach(p=>picked.add(p.id));savePicks();syncChecks();applyFilter();};
   document.getElementById('allOff').onclick=()=>{picked.clear();savePicks();syncChecks();applyFilter();};
@@ -1686,144 +1754,7 @@ function wireBudget(){
 /* ================= СТАРТ ================= */
 loadPlan();
 ['tileIc1|clock','tileIc2|pin','tileIc3|money','tileIc4|tree'].forEach(p=>{const [id,ico]=p.split('|');const el=document.getElementById(id);if(el)el.innerHTML=ic(ico);});
-buildElev();buildFilters();buildDays();buildFood();buildBases();buildPlanner();wireButtons();wireBudget();buildBudgetStay();
-recomputeDates();
-syncChecks();applyFilter();
-if(typeof requestIdleCallback==='function'){requestIdleCallback(initMap,{timeout:1500});}else{setTimeout(initMap,60);}
-
-
-/* появление блоков при прокрутке — сдержанно, одна волна */
-(function reveal(){
-  if(!('IntersectionObserver' in window))return;
-  const targets=[...document.querySelectorAll('section .base, section details.day, .foodcity, .planner, .mapbox, .tblwrap, details.acc')];
-  targets.forEach(t=>t.classList.add('rise'));
-  const io=new IntersectionObserver((es,o)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');o.unobserve(e.target);}});},
-    {rootMargin:'0px 0px -8% 0px',threshold:.08});
-  targets.forEach(t=>io.observe(t));
-})();
-
-/* клик вне фильтра — список закрывается */
-document.addEventListener('click',e=>{
-  if(!fopen)return;
-  if(e.target.closest('#filters'))return;
-  fopen=null;buildFilters();applyFilter();
-});
-
-/* подсветка текущего раздела в нижней панели */
-(function navHighlight(){
-  const links=[...document.querySelectorAll('.bottomnav a')];
-  if(!links.length||!('IntersectionObserver' in window))return;
-  const byId={};links.forEach(a=>byId[a.getAttribute('href').slice(1)]=a);
-  const secs=Object.keys(byId).map(id=>document.getElementById(id)).filter(Boolean);
-  const io=new IntersectionObserver(es=>{
-    es.forEach(e=>{if(e.isIntersecting){links.forEach(l=>l.classList.remove('on'));
-      const a=byId[e.target.id];if(a)a.classList.add('on');}});
-  },{rootMargin:'-45% 0px -50% 0px'});
-  secs.forEach(s=>io.observe(s));
-})();
-</script>
-</body>
-</html>
-+Math.round(n).toLocaleString('en-US').replace(/,/g,' ');}
-/* строки жилья: одна на базу, ночи берутся из планировщика */
-/* жильё переехало в раздел «Ночёвки» — здесь ничего не строим */
-function buildBudgetStay(){}
-/* число дней в строках «за день» обновляем при смене ночей */
-function refreshBudgetCounts(){
-  if(typeof calcBudget==='function')calcBudget();
-}
-/* ================= БЮДЖЕТ: группы-карточки ================= */
-const BUDGET=[
- {g:'Перелёт',ic:'plane',c:'#5a4bb5',c2:'#3b3080',items:[
-   {k:'a1',nm:'Билеты · 2 человека',sub:'American, туда-обратно · Basic Economy',v:1250.60,ok:1},
-   {k:'a2',nm:'Багаж',sub:'2 чел × 2 стороны × $50',v:200,ok:1},
- ]},
- {g:'Машина',ic:'car',c:'#a1663a',c2:'#6f4227',items:[
-   {k:'c1',nm:'Аренда машины',per:'day',rate:90,sub:'SUV · цена за день'},
-   {k:'c2',nm:'Возврат в другом городе',sub:'Дуранго → Денвер',v:130,est:1},
-   {k:'c3',nm:'Бензин',sub:'~1 150 км по горам',v:120,est:1},
- ]},
- {g:'Входы и активности',ic:'ticket',c:'#d96a12',c2:'#b0530c',note:'на двоих',items:[
-   {k:'t1',nm:'Поезд Durango & Silverton',sub:'открытый вагон ~$144×2 +сбор',v:311,est:1},
-   {k:'t2',nm:'Mesa Verde',sub:'$30 / машина',v:30,ok:1},
-   {k:'t3',nm:'Black Canyon',sub:'$30 / машина',v:30,ok:1},
-   {k:'t4',nm:'Maroon Bells',sub:'шаттл $16 × 2',v:32,ok:1},
-   {k:'t5',nm:'Ouray Hot Springs',sub:'$26 × 2',v:52,ok:1},
-   {k:'t6',nm:'Box Canyon Falls',sub:'$8 × 2',v:16,ok:1},
-   {k:'t7',nm:'Гондола в Аспене',sub:'$40 × 2',v:80,ok:1},
-   {k:'t8',nm:'Джип-тур Yankee Boy',sub:'опция · ~$125 × 2',v:250,est:1},
- ]},
- {g:'Еда',ic:'food',c:'#12855e',c2:'#0a6047',items:[
-   {k:'f1',nm:'Еда и кафе',per:'day',rate:90,sub:'на двоих · цена за день'},
- ]},
-];
-function buildBudget(){
-  const host=document.getElementById('budgetBox');if(!host)return;
-  let saved={};try{saved=JSON.parse(localStorage.getItem(BKEY))||{};}catch(e){}
-  host.innerHTML=BUDGET.map(gr=>{
-    const rows=gr.items.map(it=>{
-      const val=saved[it.k]!==undefined?saved[it.k]:it.v;
-      if(it.per==='day'){
-        const rate=saved[it.k+'rate']!==undefined?saved[it.k+'rate']:it.rate;
-        return '<div class="brow" data-per="day">'
-          +'<span class="binfo"><b>'+it.nm+'</b><span>'+it.sub+' × <b data-days>'+(totalNights()+1)+'</b> дн.</span></span>'
-          +'<span class="bfield"><input class="money perunit" data-k="'+it.k+'rate" inputmode="decimal" value="'+rate+'"><span class="bx">$/дн</span></span>'
-          +'<span class="bsum" data-sum="'+it.k+'">—</span></div>';
-      }
-      const tag=it.ok?'<span class="cf">'+ic('check','i-sm')+'</span>':(it.est?'<span class="est">~</span>':'');
-      return '<div class="brow">'
-        +'<span class="binfo"><b>'+it.nm+'</b><span>'+it.sub+' '+tag+'</span></span>'
-        +'<span class="bfield"><input class="money" data-k="'+it.k+'" inputmode="decimal" value="'+val+'"><span class="bx">$</span></span></div>';
-    }).join('');
-    return '<div class="bgroup">'
-      +'<div class="bghead"><span class="bgmed" style="background:linear-gradient(150deg,'+gr.c+','+gr.c2+')">'+ic(gr.ic)+'</span>'
-      +'<span class="bgt"><b>'+gr.g+'</b>'+(gr.note?'<span>'+gr.note+'</span>':'')+'</span>'
-      +'<span class="bgsum" data-gsum="'+gr.g+'">—</span></div>'
-      +rows+'</div>';
-  }).join('');
-  host.querySelectorAll('input.money').forEach(i=>{
-    i.addEventListener('input',calcBudget);
-    i.addEventListener('focus',()=>i.select());
-  });
-  calcBudget();
-}
-function calcBudget(){
-  let sum=0;const days=totalNights()+1;
-  document.querySelectorAll('#budgetBox .brow[data-per="day"]').forEach(row=>{
-    const inp=row.querySelector('input.perunit'),out=row.querySelector('[data-sum]');
-    const rate=parseFloat(inp.value)||0,v=rate*days;
-    if(out)out.textContent=v?money(v):'—';
-    const dd=row.querySelector('[data-days]');if(dd)dd.textContent=days;
-  });
-  BUDGET.forEach(gr=>{
-    let gsum=0;
-    gr.items.forEach(it=>{
-      if(it.per==='day'){const r=document.querySelector('.perunit[data-k="'+it.k+'rate"]');gsum+=(parseFloat(r&&r.value)||0)*days;}
-      else{const f=document.querySelector('#budgetBox input.money[data-k="'+it.k+'"]');gsum+=parseFloat(f&&f.value)||0;}
-    });
-    const gel=document.querySelector('[data-gsum="'+gr.g+'"]');if(gel)gel.textContent=money(gsum);
-    sum+=gsum;
-  });
-  sum+=(typeof hotelTotal==='function'?hotelTotal():0);
-  const o={};document.querySelectorAll('#budgetBox input.money').forEach(i=>o[i.dataset.k]=i.value);
-  BASES.forEach((b,i)=>o['h'+(i+1)+'rate']=HRATE[i]||0);
-  try{localStorage.setItem(BKEY,JSON.stringify(o));}catch(e){}
-  document.getElementById('sumAll').textContent=money(sum);
-  document.getElementById('sumPer').textContent=money(Math.round(sum/2));
-  const sd=document.getElementById('sumDay');if(sd)sd.textContent=money(Math.round(sum/days));
-  const mn=document.getElementById('tMoney');if(mn&&sum>0)mn.textContent='$'+Math.round(sum/2).toLocaleString('en-US').replace(/,/g,' ');
-}
-function wireBudget(){
-  buildBudget();
-  const rb=document.getElementById('resetBudget');
-  if(rb)rb.addEventListener('click',()=>{try{localStorage.removeItem(BKEY);}catch(e){}
-    BASES.forEach((b,i)=>HRATE[i]=0);buildBudget();renderStays();});
-}
-
-/* ================= СТАРТ ================= */
-loadPlan();
-['tileIc1|clock','tileIc2|pin','tileIc3|money','tileIc4|tree'].forEach(p=>{const [id,ico]=p.split('|');const el=document.getElementById(id);if(el)el.innerHTML=ic(ico);});
-buildElev();buildFilters();buildDays();buildFood();buildBases();buildPlanner();wireButtons();wireBudget();buildBudgetStay();
+buildRoute();buildElev();buildFilters();buildDays();buildFood();buildBases();buildPlanner();wireButtons();wireBudget();buildBudgetStay();
 recomputeDates();
 syncChecks();applyFilter();
 if(typeof requestIdleCallback==='function'){requestIdleCallback(initMap,{timeout:1500});}else{setTimeout(initMap,60);}
