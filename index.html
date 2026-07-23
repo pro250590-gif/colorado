@@ -802,6 +802,7 @@ const ICONS={
  info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.8h.01"/>',
  tree:'<path d="M12 2 7 10h3l-4 6h5v6h2v-6h5l-4-6h3L12 2Z"/>',
  chevron:'<path d="m6 9 6 6 6-6"/>',
+ foodwine:'<path d="M4 2.5v6a2.2 2.2 0 0 0 2.2 2.2V21.5M4 2.5v6M8.4 2.5v6a2.2 2.2 0 0 1-2.2 2.2"/><path d="M13.6 2.5h6.8l-.75 4.6a2.7 2.7 0 0 1-5.3 0L13.6 2.5Z"/><path d="M17 11.6v9.9M14.4 21.5h5.2"/>',
  layers:'<path d="m12 2 9 5-9 5-9-5 9-5ZM3 12l9 5 9-5M3 17l9 5 9-5"/>',
  pencil:'<path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>'
 };
@@ -1365,10 +1366,15 @@ function syncChecks(){P.forEach(p=>{const b=document.querySelector('[data-tick="
 
 /* фото для заведения подбираем по типу кухни */
 /* иконка по типу заведения: завтрак — кофе, бар и пивоварня — бокал, остальное — прибор */
-function foodIcon(s){const t=(s.nm+' '+s.meal+' '+s.why);
-  if(/завтрак|бранч|brunch|breakfast|coffee|кофе|пекарн|bakery|булоч/i.test(t))return 'coffee';
-  if(/бар|bar|salo{1,2}n|салун|коктейл|brew|пивовар|beer|ale|вино|wine/i.test(t))return 'wine';
-  return 'food';}
+function foodIcon(s){
+  const meal=(s.meal||'').toLowerCase();
+  const drink=/бар|паб|pub|salo{1,2}n|салун|пивовар|brew|коктейл|вино|wine|beer|tavern|таверн/.test(meal+' '+(s.nm||'').toLowerCase());
+  const eat=/завтрак|бранч|обед|ужин|brunch|breakfast|lunch|dinner|кухн|grill|гриль/.test(meal);
+  if(drink&&eat)return 'foodwine';        /* и поесть, и выпить */
+  if(drink)return 'wine';                 /* только бар */
+  if(/завтрак|бранч|brunch|breakfast|кофе|coffee|пекарн|bakery|булоч/.test(meal))return 'coffee';
+  return 'food';
+}
 function foodId(ci,si){return 'f'+ci+'-'+si;}
 
 /* выбранные заведения — как галочки у точек маршрута */
