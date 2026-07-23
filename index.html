@@ -556,6 +556,12 @@ a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{o
 .fsub{display:block;font:600 12px/1 "Inter",sans-serif;color:var(--mut);margin-top:6px}
 .food-body{padding:14px 16px 18px}
 .foodstops li{align-items:flex-start}
+
+/* иконка заведения вместо фотографии */
+.fico2{display:grid;place-items:center;color:#fff;border:0;position:relative;overflow:hidden}
+.fico2::after{content:"";position:absolute;inset:0;
+  background:radial-gradient(120% 78% at 14% 8%,rgba(255,255,255,.4),rgba(255,255,255,0) 58%)}
+.fico2 .i{width:32px;height:32px;position:relative;z-index:2;stroke-width:1.7}
 </style>
 </head>
 <body>
@@ -1358,31 +1364,11 @@ function syncChecks(){P.forEach(p=>{const b=document.querySelector('[data-tick="
 
 
 /* фото для заведения подбираем по типу кухни */
-/* фото по типу заведения; у типа несколько вариантов, чтобы в городе не повторялись */
-const FOODPIC=[
- [/brew|пивовар|beer|ale|taproom|lager|ipa/i,['beer','beer3','beer2']],
- [/salo{1,2}n|салун|коктейл|cocktail|whiskey|бар|bar/i,['saloon','saloon2']],
- [/burger|бургер|grill|ранчо|ranch|гриль/i,['burger','steak2']],
- [/steak|стейк|chop|мясо|bbq|барбекю|ребра/i,['steak','steak2']],
- [/taco|мексик|cantina|burrito|тако/i,['mexican','mexican2']],
- [/pizza|пицц/i,['pizza']],
- [/bakery|пекарн|выпечк|croissant|донат|donut|булоч|хлеб/i,['bakery']],
- [/coffee|кофе|espresso|latte|кафе|caf/i,['coffee']],
- [/ice ?cream|мороженое|gelato|десерт|sweet/i,['icecream']],
- [/fish|seafood|рыб|устри|oyster|море/i,['fish','fish2']],
- [/завтрак|бранч|brunch|breakfast|pancake|блин|вафл/i,['breakfast','bakery']],
-];
-const FOODFALL=['steak','fish2','coffee','bakery','beer2','saloon2','mexican2','breakfast'];
-function foodPic(s,size,idx,used){
-  const t=(s.nm+' '+s.meal+' '+s.why);
-  let list=null;
-  for(const [re,l] of FOODPIC) if(re.test(t)){list=l;break;}
-  const pool=(list||[]).concat(FOODFALL);
-  let pick=pool.find(k=>used&&!used.has(k));   /* в городе снимки не повторяются */
-  if(!pick)pick=pool[(idx||0)%pool.length];
-  if(used)used.add(pick);
-  return 'img/f-'+pick+'-'+size+'.webp';
-}
+/* иконка по типу заведения: завтрак — кофе, бар и пивоварня — бокал, остальное — прибор */
+function foodIcon(s){const t=(s.nm+' '+s.meal+' '+s.why);
+  if(/завтрак|бранч|brunch|breakfast|coffee|кофе|пекарн|bakery|булоч/i.test(t))return 'coffee';
+  if(/бар|bar|salo{1,2}n|салун|коктейл|brew|пивовар|beer|ale|вино|wine/i.test(t))return 'wine';
+  return 'food';}
 function foodId(ci,si){return 'f'+ci+'-'+si;}
 
 /* выбранные заведения — как галочки у точек маршрута */
@@ -1399,7 +1385,6 @@ function buildFood(){
   host.innerHTML=FOODCITIES.map((c,ci)=>{
     const base=BASES.find(b=>b.id===c.base);
     const col=base?base.color:'#d96a12',col2=BCOL2[c.base]||col;
-    const used=new Set();
     return '<details class="fooddet" data-base="'+c.base+'"'+(ci===0?' open':'')+'>'
       +'<summary><span class="fmed" style="background:linear-gradient(150deg,'+col+','+col2+')">'+ic('food')+'</span>'
       +'<span class="fhead"><h4>'+c.city+'</h4>'
@@ -1416,7 +1401,7 @@ function buildFood(){
       +'<ul class="stops foodstops">'+c.spots.map((s,si)=>{
         const id=foodId(ci,si);
         return '<li data-food="'+id+'">'
-          +'<span class="pic"><span class="thumb" style="background-image:url('+foodPic(s,'t',si,used)+')"></span>'
+          +'<span class="pic"><span class="thumb fico2" style="background:linear-gradient(150deg,'+col+','+col2+')">'+ic(foodIcon(s),'i-lg')+'</span>'
           +'<input type="checkbox" class="tick" data-ftick="'+id+'" aria-label="показать на карте"></span>'
           +'<span class="sinfo"><span class="snm"><a href="'+gmSearch(s.nm+' '+c.q)+'" target="_blank" rel="noopener">'+s.nm+'</a></span>'
           +'<span class="meta"><span class="mpill best">'+s.meal+'</span>'
