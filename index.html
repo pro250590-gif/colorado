@@ -515,6 +515,28 @@ a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{o
 #map,.mapph{padding-top:0}
 .leaflet-top{margin-top:56px}
 @media(max-width:420px){.mfb{font-size:11px;padding:10px 4px}.mfall,.mffood{width:34px;height:34px}}
+
+/* ── ЕДИНЫЙ ЗНАК «ЭТО МОЖНО НАЖАТЬ»: оранжевая обводка ── */
+.stepbtn,.tiny,.btn,.mealbtn,.vbtn,.dateset input[type=date],input.money,.mfx{
+  border:1.5px solid rgba(217,106,18,.4)!important}
+.stepbtn:active,.tiny:active,.btn:active,.vbtn:active{border-color:var(--orange2)!important}
+.dateset input[type=date]:focus,input.money:focus{border-color:var(--orange2)!important;outline:2px solid rgba(217,106,18,.28)}
+/* кнопки − / + — крупные, с оранжевым знаком */
+.stepbtn{width:42px;height:42px;font-size:24px;font-weight:600;color:var(--orange3);
+  background:linear-gradient(180deg,#fff,#fff6ec)!important;box-shadow:0 1px 2px rgba(20,32,27,.05),0 6px 14px -8px rgba(217,106,18,.5)}
+.stepbtn:active{transform:scale(.9);background:linear-gradient(150deg,var(--orange1),var(--orange3))!important;color:#fff}
+.stepper{gap:7px}
+/* поле даты — видно, что редактируется */
+.dateset{gap:10px}
+.dateset input[type=date]{background:linear-gradient(180deg,#fff,#fff6ec)!important;color:var(--ink);
+  box-shadow:0 6px 14px -8px rgba(217,106,18,.45)}
+.dateset label b{font:800 13.5px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:-.03em}
+.edithint{display:inline-flex;align-items:center;gap:6px;font:700 10.5px/1 "Inter",sans-serif;color:var(--orange3);
+  background:rgba(217,106,18,.1);border-radius:999px;padding:7px 11px}
+/* кнопки на карте и в списке — тот же оранжевый контур */
+.tiny{color:var(--orange3);background:linear-gradient(180deg,#fff,#fff8f1)!important}
+.mealbtn{color:var(--ink2)}
+.mfx{color:var(--orange3);background:rgba(217,106,18,.1)}
 </style>
 </head>
 <body>
@@ -755,7 +777,8 @@ const ICONS={
  info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.8h.01"/>',
  tree:'<path d="M12 2 7 10h3l-4 6h5v6h2v-6h5l-4-6h3L12 2Z"/>',
  chevron:'<path d="m6 9 6 6 6-6"/>',
- layers:'<path d="m12 2 9 5-9 5-9-5 9-5ZM3 12l9 5 9-5M3 17l9 5 9-5"/>'
+ layers:'<path d="m12 2 9 5-9 5-9-5 9-5ZM3 12l9 5 9-5M3 17l9 5 9-5"/>',
+ pencil:'<path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>'
 };
 function ic(n,cls){return ICONS[n]?'<svg class="i'+(cls?' '+cls:'')+'" viewBox="0 0 24 24" aria-hidden="true" focusable="false">'+ICONS[n]+'</svg>':'';}
 function med(n,bg,cls){return '<span class="med '+(cls||'')+'" style="background:'+bg+'">'+ic(n)+'</span>';}
@@ -1018,7 +1041,7 @@ function buildElev(){
 }
 
 /* ================= КАРТА — настоящая (Leaflet) ================= */
-let map=null,FULL=null;const markers={},lineLayers=[];
+let map=null,FULL=null;const markers={},baseMarkers={},lineLayers=[];
 function mapFallback(msg){const el=document.getElementById('map');if(el)el.innerHTML='<div class="mapph">'+ic('map','i-lg')+' <b>'+(msg||'Карта не загрузилась')+'</b><br>Открой страницу по обычной ссылке (Netlify/GitHub) в браузере при интернете. Список и ссылки на Google Maps работают всегда.</div>';}
 function popupHTML(nm,q,why,label,color,photo){
   return '<div style="min-width:200px;max-width:250px">'
@@ -1040,7 +1063,7 @@ function initMap(){
     map.on('click',()=>map.scrollWheelZoom.enable());
     L.control.layers({'Карта':light,'Улицы':streets,'Рельеф':relief,'Спутник':sat},null,{position:'topright'}).addTo(map);
     L.control.scale({position:'bottomleft',metric:true,imperial:true,maxWidth:140}).addTo(map);
-    BASES.forEach(b=>{L.marker([b.lat,b.lng],{icon:L.divIcon({className:'',html:'<div class="pin basepin">'+ic(b.emoji,'i-sm')+'</div>',iconSize:[32,28],iconAnchor:[16,14]})}).addTo(map).bindPopup(popupHTML(b.name,b.q,b.desc,'База ночёвки','#16332b')).bindTooltip(b.name,{permanent:true,direction:'right',className:'basetip',offset:[15,0]});});
+    BASES.forEach(b=>{baseMarkers[b.id]=L.marker([b.lat,b.lng],{icon:L.divIcon({className:'',html:'<div class="pin basepin">'+ic(b.emoji,'i-sm')+'</div>',iconSize:[32,28],iconAnchor:[16,14]})}).addTo(map).bindPopup(popupHTML(b.name,b.q,b.desc,'База ночёвки','#0d5138',basePhoto(b.id))).bindTooltip(shortName(b.name),{permanent:true,direction:'right',className:'basetip',offset:[15,0]});});
     P.forEach(p=>{const c=p.cat==='food'?'#c1462a':(DCOL[p.d]||'#2f9e6f');const ph=PHOTO[p.id];
       let icon;
       if(ph){ /* булавка-капля с фотографией места */
@@ -1180,6 +1203,9 @@ function applyFilter(){
   });
   // карта: точки (маршрут по основному фильтру + еда отдельным слоем)
   let shownPts=0;
+  BASES.forEach(b=>{const m=baseMarkers[b.id];if(!map||!m)return;
+    const show=(filter.mode==='all')||(filter.mode==='base'&&filter.v===b.id)||(filter.mode==='day'&&DAY_BASE[filter.v]===b.id);
+    if(show){if(!map.hasLayer(m))m.addTo(map);}else{if(map.hasLayer(m))map.removeLayer(m);}});
   P.forEach(p=>{if(!map||!markers[p.id])return;const show=pinVisible(p);
     if(show){if(!map.hasLayer(markers[p.id]))markers[p.id].addTo(map);shownPts++;}
     else{if(map.hasLayer(markers[p.id]))map.removeLayer(markers[p.id]);}});
@@ -1337,7 +1363,8 @@ function savePlan(){try{localStorage.setItem(PKEY,JSON.stringify({start:startIso
 function nightsBefore(baseId){let s=0;for(const b of BASES){if(b.id===baseId)break;s+=b.nights;}return s;}
 function dayDateFor(dayN){const bid=DAY_BASE[dayN];const pos=baseDays[bid].indexOf(dayN);return addDays(startIso,nightsBefore(bid)+pos);}
 function totalNights(){return BASES.reduce((s,b)=>s+b.nights,0);}
-function altName(s){const m=s.match(/\((.+?)\)/);return m?m[1]:'';}
+/* в скобках показываем только латинское название (Ouray), русские уточнения не дублируем */
+function altName(s){const m=s.match(/\((.+?)\)/);return m&&/^[A-Za-z][A-Za-z .-]*$/.test(m[1])?m[1]:'';}
 function shortName(s){return s.replace(/\s*\(.*?\)/,'').replace(/\s*\/.*$/,'').trim();}
 function dm(dt){return dt.getDate()+' '+MONTHS[dt.getMonth()].slice(0,3);}
 function plural(n,a,b,c){const x=n%10,y=n%100;if(x===1&&y!==11)return a;if(x>=2&&x<=4&&(y<10||y>=20))return b;return c;}
@@ -1364,7 +1391,7 @@ function recomputeDates(){
 function buildPlanner(){
   const host=document.getElementById('planner');
   host.innerHTML='<div class="dateset"><label for="startDate"><b>Начало путешествия:</b></label>'
-    +'<input type="date" id="startDate" value="'+startIso+'"><span class="dshint">меняешь дату или число ночей — всё пересчитывается</span></div>'
+    +'<input type="date" id="startDate" value="'+startIso+'"><span class="edithint">'+ic('pencil','i-sm')+' можно менять</span><span class="dshint">меняешь дату или число ночей — всё пересчитывается</span></div>'
     +'<div id="stayList"></div>'
     +'<div class="plannote">Кнопками − / + меняй число ночей на каждой базе. Заезды-выезды и даты в маршруте по дням пересчитаются сами.</div>';
   renderStays();
