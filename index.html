@@ -803,6 +803,16 @@ input.money:focus,.hf input:focus,.bfield input:focus{outline:2px solid rgba(91,
 .bmul{white-space:nowrap;display:inline-block}
 .dcount{color:#5b3fc4!important;background:rgba(91,63,196,.12)!important}
 .fooddet .chev,.fico2 .i{color:#fff}
+/* строки «за день/человека» — две строки: название+итог, ниже цена×кол-во */
+.brow2{padding:13px 16px;border-bottom:1px solid #eef0f6}
+.br2top{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.br2top b{font:700 14.5px/1.2 "Plus Jakarta Sans",sans-serif;letter-spacing:-.02em}
+.br2top .bsum{font:800 15px/1 "Plus Jakarta Sans",sans-serif;color:#1b1e2e;white-space:nowrap}
+.br2bot{display:flex;align-items:center;gap:9px;margin-top:10px}
+.br2bot input{width:80px;border:1.5px solid rgba(91,63,196,.35);border-radius:11px;background:linear-gradient(180deg,#fff,#f6f3ff);padding:9px 10px;font:800 14px/1 "Plus Jakarta Sans",sans-serif;text-align:center;color:#1b1e2e}
+.br2bot input:focus{outline:2px solid rgba(91,63,196,.28);border-color:#5b3fc4}
+.br2u{font:500 12px/1.3 "Inter",sans-serif;color:#8b8fa3}
+.br2u b{color:#5b3fc4;font-weight:700}
 </style>
 </head>
 <body>
@@ -1955,10 +1965,9 @@ function buildBudget(){
         const mult=it.per==='day'?('<span class="bmul">× <b data-days>'+(totalNights()+1)+'</b> дн.</span>')
                   :it.per==='person'?('<span class="bmul">× <b data-ppl>'+PEOPLE+'</b> чел.</span>')
                   :('<span class="bmul">× <b data-ppl>'+PEOPLE+'</b> чел.</span> <span class="bmul">× <b data-days>'+(totalNights()+1)+'</b> дн.</span>');
-        return '<div class="brow" data-per="'+it.per+'">'
-          +'<span class="binfo"><b>'+it.nm+'</b><span>'+it.sub+' '+mult+'</span></span>'
-          +'<span class="bfield"><input class="money perunit" data-k="'+it.k+'rate" inputmode="decimal" value="'+rate+'"><span class="bx">'+unit+'</span></span>'
-          +'<span class="bsum" data-sum="'+it.k+'">—</span></div>';
+        return '<div class="brow2" data-per="'+it.per+'">'
+          +'<div class="br2top"><b>'+it.nm+'</b><span class="bsum" data-sum="'+it.k+'">—</span></div>'
+          +'<div class="br2bot"><input class="money perunit" data-k="'+it.k+'rate" inputmode="decimal" value="'+rate+'"><span class="br2u">'+unit+' '+mult+'</span></div></div>';
       }
       const tag=it.ok?'<span class="cf">'+ic('check','i-sm')+'</span>':(it.est?'<span class="est">~</span>':'');
       return '<div class="brow">'
@@ -1990,7 +1999,7 @@ function groupBook(g){
 }
 function calcBudget(){
   let sum=0;const days=totalNights()+1;
-  document.querySelectorAll('#budgetBox .brow[data-per]').forEach(row=>{
+  document.querySelectorAll('#budgetBox .brow2[data-per]').forEach(row=>{
     const inp=row.querySelector('input.perunit'),out=row.querySelector('[data-sum]');
     const qty=itemQty(row.dataset.per,days),v=(parseFloat(inp.value)||0)*qty;
     if(out)out.textContent=v?money(v):'—';
