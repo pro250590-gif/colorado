@@ -5,221 +5,325 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#17332c">
 <title>Колорадо · Дуранго → Денвер · 7–16 августа 2026</title>
+<meta name="description" content="Маршрут по Колорадо на 10 дней: Дуранго, Урей, Аспен, Денвер. Карта, план по дням, где поесть, бюджет.">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap">
 <style>
 :root{
-  --pine:#16332b; --pine2:#245043; --gold:#d9922b; --gold2:#f5c15b;
-  --red:#c1462a; --sky:#1f7ab8; --sand:#f8f4ec; --ink:#1e1d1a; --mut:#6f695c;
-  --line:#e6ddcc; --card:#fffdf8; --card2:#fbf7ef;
+  /* светлая, воздушная база — как Salt in our Hair */
+  --paper:#fbfaf7; --card:#ffffff; --card2:#f6f4ef;
+  --ink:#191814; --ink2:#3c3a34; --mut:#8b8578; --line:#eae5db; --line2:#f2eee6;
+  /* акценты — приглушённые, используются экономно */
+  --pine:#2f4f43; --pine2:#41695a; --gold:#b98536; --gold2:#e0b96e;
+  --red:#b0503a; --sky:#3a6f96; --sand:#fbfaf7;
   --d1:#0a84ff;--d2:#8e5b3a;--d3:#b8860b;--d4:#e0399b;--d5:#e0399b;--d6:#ff9500;--d7:#ff9500;--d8:#ff9500;--d9:#5b6cff;--d10:#5b6cff;
-  --shadow:0 4px 18px #16332b12; --shadow2:0 2px 8px #16332b0d;
+  --shadow:0 10px 40px -18px #2f4f4340; --shadow2:0 2px 14px -6px #2f4f4330;
+  --r:20px; --r2:14px;
+  --nav:64px;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html{-webkit-text-size-adjust:100%}
-body{margin:0;background:var(--sand);color:var(--ink);
-  font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",sans-serif}
-.wrap{max-width:1060px;margin:0 auto;padding:0 15px}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);
+  font:17px/1.65 "Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+  padding-bottom:calc(var(--nav) + env(safe-area-inset-bottom));
+  font-feature-settings:"kern" 1;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+.narrow{max-width:730px}
 a{color:var(--sky);text-decoration:none}a:hover{text-decoration:underline}
-h1,h2,h3,h4{line-height:1.18;margin:0}
+h1,h2,h3,h4{line-height:1.14;margin:0;font-family:"Fraunces","Iowan Old Style","Palatino Linotype",Georgia,serif;font-weight:600;letter-spacing:-.015em}
 
-/* открой в браузере — статичный баннер */
-.browserbar{background:var(--gold2);color:#5a3d05;font-size:13.5px;font-weight:600;
-  text-align:center;padding:9px 14px;line-height:1.4}
-.browserbar b{color:#3d2903}
+/* верхняя строка-бренд */
+.topbar{position:sticky;top:0;z-index:60;background:#fbfaf7f2;backdrop-filter:saturate(180%) blur(14px);
+  -webkit-backdrop-filter:saturate(180%) blur(14px);border-bottom:1px solid var(--line2)}
+.topbar .wrap{display:flex;align-items:center;gap:12px;height:54px}
+.brand{font-family:"Fraunces",Georgia,serif;font-weight:600;font-size:19px;letter-spacing:-.02em}
+.brand i{font-style:normal;color:var(--gold)}
+.topdate{margin-left:auto;font-size:12.5px;color:var(--mut);font-weight:500;letter-spacing:.02em}
 
-/* HERO */
-header.hero{background:linear-gradient(135deg,var(--pine),#2c5f50 62%,#41806a);color:#fff;
-  padding:38px 0 30px;position:relative;overflow:hidden}
-header.hero::before{content:"";position:absolute;inset:0;opacity:.12;
-  background:repeating-linear-gradient(115deg,#fff 0 1px,transparent 1px 24px)}
-.kicker{letter-spacing:.22em;text-transform:uppercase;font-size:11px;color:var(--gold2);font-weight:800;position:relative}
-header.hero h1{font-size:clamp(25px,5.6vw,44px);margin:9px 0 8px;font-weight:800;letter-spacing:-.5px;position:relative}
-header.hero p.sub{margin:0;font-size:clamp(14px,2.3vw,17px);color:#d8e7e0;max-width:640px;position:relative}
-.stats{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px;position:relative}
-.stat{background:#ffffff1c;border:1px solid #ffffff30;border-radius:10px;padding:8px 13px}
-.stat b{display:block;font-size:17px;color:var(--gold2)}
-.stat span{font-size:11px;color:#cfe0d9;text-transform:uppercase;letter-spacing:.07em}
+.browserbar{background:#f4ead6;color:#6b4e18;font-size:13px;font-weight:500;text-align:center;padding:10px 16px;line-height:1.45}
+.browserbar b{color:#4a3609}
 
-section{padding:30px 0 4px}
-.eyebrow{color:var(--red);font-weight:800;font-size:11px;letter-spacing:.17em;text-transform:uppercase}
-h2.big{font-size:clamp(21px,4vw,30px);font-weight:800;margin:6px 0 5px;letter-spacing:-.3px}
-.lede{color:var(--mut);max-width:730px;margin:0 0 16px;font-size:14.5px}
+/* HERO — светлый, много воздуха */
+header.hero{padding:44px 0 26px;background:var(--paper)}
+.kicker{letter-spacing:.3em;text-transform:uppercase;font-size:10.5px;color:var(--gold);font-weight:600}
+header.hero h1{font-size:clamp(34px,8.2vw,58px);margin:16px 0 0;font-weight:600;line-height:1.06}
+header.hero h1 em{font-style:normal;display:block;color:var(--mut);font-size:.52em;font-weight:400;margin-top:14px;letter-spacing:0}
+header.hero p.sub{margin:18px 0 0;font-size:16.5px;color:var(--ink2);max-width:620px;line-height:1.6}
+.stats{display:flex;flex-wrap:wrap;gap:26px;margin-top:26px;padding-top:22px;border-top:1px solid var(--line)}
+.stat b{display:block;font-family:"Fraunces",Georgia,serif;font-size:22px;color:var(--ink);font-weight:600;letter-spacing:-.01em}
+.stat span{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.14em;font-weight:500}
 
-/* MAP + фильтры */
-.mapbox{position:relative;border-radius:16px;overflow:hidden;border:1px solid var(--line);box-shadow:var(--shadow);background:#e8efec}
-#map{height:min(62vh,560px);min-height:320px;z-index:1}
-.mapph{height:min(62vh,560px);min-height:320px;display:flex;flex-direction:column;justify-content:center;
-  align-items:center;text-align:center;gap:6px;padding:26px;color:var(--mut);font-size:14px;line-height:1.5;background:#eef3f0}
+section{padding:52px 0 0}
+section:last-of-type{padding-bottom:10px}
+.eyebrow{color:var(--gold);font-weight:600;font-size:10.5px;letter-spacing:.28em;text-transform:uppercase}
+h2.big{font-size:clamp(26px,5.6vw,38px);font-weight:600;margin:12px 0 0}
+.lede{color:var(--mut);max-width:640px;margin:14px 0 24px;font-size:15.5px;line-height:1.6}
+
+/* HERO с фотографией */
+.herophoto{position:relative;border-radius:var(--r);overflow:hidden;margin-top:28px;box-shadow:var(--shadow);
+  aspect-ratio:16/10;max-height:460px;background:var(--card2)}
+.herophoto img{width:100%;height:100%;object-fit:cover;display:block}
+.herophoto .cap{position:absolute;left:0;right:0;bottom:0;padding:56px 20px 18px;color:#fff;font-size:12.5px;font-weight:500;
+  letter-spacing:.04em;background:linear-gradient(to top,#000000a6,#00000000)}
+@media(min-width:760px){.herophoto{aspect-ratio:21/9}}
+
+/* MAP */
+.mapbox{position:relative;border-radius:var(--r);overflow:hidden;border:1px solid var(--line);box-shadow:var(--shadow);background:#eef1ee}
+#map{height:min(58vh,540px);min-height:330px;z-index:1}
+.mapph{height:min(58vh,540px);min-height:330px;display:flex;flex-direction:column;justify-content:center;
+  align-items:center;text-align:center;gap:8px;padding:28px;color:var(--mut);font-size:14.5px;line-height:1.55;background:#f2f4f1}
 .mapph b{color:var(--pine)}
-.pin{display:flex;align-items:center;justify-content:center;border-radius:50%;color:#fff;font-weight:800;
-  font-family:-apple-system,sans-serif;border:2.5px solid #fff;box-shadow:0 2px 6px #00000055;line-height:1}
-.pin.basepin{border-radius:9px;width:32px;height:28px;font-size:16px}
-.basetip{background:var(--pine);color:var(--gold2);border:0;font-weight:800;font-size:12px;box-shadow:0 2px 6px #0003;border-radius:6px;padding:3px 8px}
-.basetip::before{border-right-color:var(--pine)}
+.pin{display:flex;align-items:center;justify-content:center;border-radius:50%;color:#fff;font-weight:700;
+  font-family:-apple-system,sans-serif;border:2.5px solid #fff;box-shadow:0 3px 10px #0000004d;line-height:1}
+.pin.basepin{border-radius:10px;width:32px;height:28px;font-size:16px}
+/* булавка-капля с фотографией места */
+.photopin{position:relative;width:52px;height:60px;filter:drop-shadow(0 4px 8px #00000047)}
+.photopin .ph{position:absolute;top:0;left:0;width:52px;height:52px;border-radius:50%;overflow:hidden;
+  border:3px solid #fff;background:#e8ece9 center/cover no-repeat}
+.photopin .tip{position:absolute;left:50%;bottom:1px;transform:translateX(-50%);width:0;height:0;
+  border-left:7px solid transparent;border-right:7px solid transparent;border-top:10px solid #fff}
+.photopin .badge{position:absolute;top:-3px;right:-4px;min-width:20px;height:20px;border-radius:999px;color:#fff;
+  font:700 11px/20px -apple-system,sans-serif;text-align:center;border:2px solid #fff;padding:0 4px;box-sizing:content-box}
+.basetip{background:var(--ink);color:#fff;border:0;font-weight:600;font-size:12px;box-shadow:0 3px 10px #0003;border-radius:7px;padding:4px 9px}
+.basetip::before{border-right-color:var(--ink)}
 .leaflet-container{font-family:inherit}
-.leaflet-control-scale-line{font-size:11px;font-weight:700;color:#16332b;border-color:#16332b99}
-.mapbar{display:flex;flex-wrap:wrap;gap:7px;align-items:center;padding:10px 11px;background:var(--card);border-top:1px solid var(--line)}
-.btn{border:1px solid var(--line);background:#fff;color:var(--pine);font:700 12.5px/1 inherit;padding:9px 12px;border-radius:9px;cursor:pointer}
-.btn:active{transform:translateY(1px)}.btn.pri{background:var(--pine);color:#fff;border-color:var(--pine)}
-.counter{margin-left:auto;font-size:12.5px;color:var(--mut);font-weight:700}.counter b{color:var(--red)}
+.leaflet-popup-content-wrapper{border-radius:14px}
+.leaflet-control-scale-line{font-size:11px;font-weight:600;color:#191814;border-color:#19181499}
+.mapbar{display:flex;gap:8px;align-items:center;padding:12px;background:var(--card);border-top:1px solid var(--line);
+  overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.mapbar::-webkit-scrollbar{display:none}
+.btn{border:1px solid var(--line);background:#fff;color:var(--ink);font:600 13.5px/1 inherit;padding:12px 15px;border-radius:12px;cursor:pointer;white-space:nowrap;flex:none;transition:.15s}
+.btn:active{transform:scale(.97)}
+.btn.pri{background:var(--pine);color:#fff;border-color:var(--pine)}
+.counter{margin-left:auto;font-size:12.5px;color:var(--mut);font-weight:500;white-space:nowrap;flex:none;padding-left:8px}
+.counter b{color:var(--ink);font-weight:600}
 
-.filters{margin:0 0 14px}
-.frow{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-top:8px}
-.flabel{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);min-width:66px}
-.chip{border:1.5px solid var(--line);background:#fff;color:var(--pine);font:700 13px/1 inherit;padding:8px 12px;border-radius:999px;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:5px}
-.chip:active{transform:translateY(1px)}
-.chip.on{background:var(--pine);color:#fff;border-color:var(--pine)}
-.chip .dotc{width:10px;height:10px;border-radius:50%;flex:none}
-.chip.allc{font-weight:800}
-.chip.foodtoggle{border-color:#c1462a66;color:#c1462a}
-.chip.foodtoggle.on{background:#c1462a;color:#fff;border-color:#c1462a}
-.foodhint{font-size:11.5px;color:var(--mut)}
-.maphint{font-size:12.5px;color:var(--mut);margin-top:9px}
+.filters{margin:0 0 16px}
+.frow{display:flex;gap:8px;align-items:center;flex-wrap:nowrap;margin-top:10px;overflow-x:auto;
+  -webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:2px}
+.frow::-webkit-scrollbar{display:none}
+.flabel{font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.16em;color:var(--mut);min-width:62px;flex:none}
+.chip{border:1px solid var(--line);background:#fff;color:var(--ink2);font:600 14px/1 inherit;padding:11px 15px;border-radius:999px;
+  cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:7px;flex:none;transition:.15s}
+.chip:active{transform:scale(.96)}
+.chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.chip .dotc{width:9px;height:9px;border-radius:50%;flex:none}
+.chip.allc{font-weight:600}
+.chip.foodtoggle{border-color:#b0503a4d;color:var(--red)}
+.chip.foodtoggle.on{background:var(--red);color:#fff;border-color:var(--red)}
+.foodhint{font-size:12px;color:var(--mut);flex:none}
+.maphint{font-size:13px;color:var(--mut);margin-top:12px;line-height:1.55}
 
-/* BASES cards */
-.bases{display:grid;grid-template-columns:repeat(auto-fit,minmax(255px,1fr));gap:13px}
-.base{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--gold);border-radius:12px;padding:15px 17px;box-shadow:var(--shadow2)}
-.base h3{font-size:17px;margin-bottom:3px}
-.base .nights{color:var(--red);font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:.05em}
-.base p{margin:7px 0 0;font-size:14px;color:#3d3a33}
-.base .alt{margin-top:8px;font-size:12.5px;color:var(--mut);border-top:1px dashed var(--line);padding-top:7px}
+/* БАЗЫ — горизонтальная лента-цепочка, как у Layla */
+.bases{display:flex;gap:12px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;
+  padding:2px 20px 6px;margin:0 -20px}
+.bases::-webkit-scrollbar{display:none}
+.base{background:var(--card);border:1px solid var(--line);border-radius:var(--r2);padding:18px 20px;
+  box-shadow:var(--shadow2);flex:0 0 82%;max-width:330px;position:relative}
+.base::after{content:"→";position:absolute;right:-19px;top:50%;transform:translateY(-50%);color:var(--mut);
+  font-size:17px;font-weight:400;z-index:2}
+.base:last-child::after{display:none}
+.base{padding:0}
+.bphoto{height:132px;background:var(--card2) center/cover no-repeat;border-radius:var(--r2) var(--r2) 0 0;
+  position:relative;overflow:hidden}
+.bphoto::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,#00000059,#00000000 55%)}
+.bphoto .bnum{position:absolute;left:14px;bottom:12px;z-index:2;color:#fff;font:600 12px/1 inherit;
+  letter-spacing:.14em;text-transform:uppercase;text-shadow:0 1px 4px #0006}
+.bbody{padding:16px 20px 18px}
+.base h3{font-size:20px;margin-bottom:6px}
+.base .nights{color:var(--gold);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.14em}
+.base p{margin:10px 0 0;font-size:14.5px;color:var(--ink2);line-height:1.55}
+.base .alt{margin-top:12px;font-size:13px;color:var(--mut);border-top:1px solid var(--line2);padding-top:10px;line-height:1.5}
 
-/* планировщик ночёвок */
-.planner{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow2)}
-.dateset{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px;font-size:14px}
-.dateset input[type=date]{border:1.5px solid var(--line);border-radius:9px;padding:9px 11px;font:700 14px/1 inherit;background:#fffdf8;color:var(--ink)}
+/* ПЛАНИРОВЩИК НОЧЁВОК */
+.planner{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:20px;box-shadow:var(--shadow2)}
+.dateset{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:6px;font-size:15px}
+.dateset input[type=date]{border:1px solid var(--line);border-radius:12px;padding:12px 14px;font:600 15px/1 inherit;background:#fff;color:var(--ink)}
 .dateset input[type=date]:focus{outline:2px solid var(--gold);border-color:var(--gold)}
-.dshint{color:var(--mut);font-size:13px}
-.stayrow{display:flex;align-items:center;gap:14px;padding:15px 0;border-bottom:1px dashed var(--line)}
+.dshint{color:var(--mut);font-size:13.5px}
+.stayrow{display:flex;align-items:center;gap:14px;padding:16px 0;border-bottom:1px solid var(--line2)}
 .stayrow:last-child{border-bottom:0}
-.staydot{width:38px;height:38px;border-radius:10px;flex:none;display:flex;align-items:center;justify-content:center;font-size:19px;color:#fff}
+.staydot{width:42px;height:42px;border-radius:13px;flex:none;display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff}
 .stayinfo{flex:1;min-width:0}
-.stayinfo .sn{font-weight:800;font-size:17.5px;letter-spacing:-.2px}
-.stayinfo .sd{font-size:14px;color:var(--mut);margin-top:6px;font-weight:600}
-.stepper{display:flex;align-items:center;gap:8px;flex:none}
-.stepbtn{width:38px;height:38px;border:1.5px solid var(--line);background:#fff;border-radius:10px;font-size:23px;font-weight:700;color:var(--pine);cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center;padding:0}
-.stepbtn:active{transform:translateY(1px);background:#eef3f0}
-.stepn{min-width:62px;text-align:center}
-.stepn b{display:block;font-size:20px;color:var(--pine);font-weight:800}
-.stepn .stepu{font-size:12px;color:var(--mut);font-weight:700}
-.staytot{margin-top:14px;font-size:15px;color:var(--pine);font-weight:700;background:#eef3f0;border-radius:10px;padding:12px 15px}
-.plannote{font-size:13.5px;color:var(--mut);margin-top:12px}
+.stayinfo .sn{font-weight:600;font-size:18px;font-family:"Fraunces",Georgia,serif;letter-spacing:-.01em}
+.stayinfo .sd{font-size:13.5px;color:var(--mut);margin-top:5px;font-weight:500}
+.stepper{display:flex;align-items:center;gap:6px;flex:none}
+.stepbtn{width:40px;height:40px;border:1px solid var(--line);background:#fff;border-radius:12px;font-size:22px;font-weight:500;
+  color:var(--ink);cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center;padding:0;transition:.15s}
+.stepbtn:active{transform:scale(.94);background:var(--card2)}
+.stepn{min-width:58px;text-align:center}
+.stepn b{display:block;font-size:20px;color:var(--ink);font-weight:700;font-variant-numeric:tabular-nums}
+.stepn .stepu{font-size:11px;color:var(--mut);font-weight:500}
+.staytot{margin-top:16px;font-size:15px;color:var(--ink);font-weight:500;background:var(--card2);border-radius:14px;padding:14px 16px}
+.plannote{font-size:13.5px;color:var(--mut);margin-top:14px;line-height:1.55}
 
-/* DAY accordions */
-.day{background:var(--card);border:1px solid var(--line);border-radius:14px;margin:0 0 12px;overflow:hidden;box-shadow:var(--shadow2)}
+/* ДНИ — таймлайн со сворачивающимися блоками */
+.day{background:var(--card);border:1px solid var(--line);border-radius:var(--r2);margin:0 0 10px;overflow:hidden;
+  box-shadow:var(--shadow2);transition:box-shadow .2s}
 .day[open]{box-shadow:var(--shadow)}
-.day>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:11px;padding:14px 15px;position:relative}
+.day>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:14px;padding:17px 18px;position:relative}
 .day>summary::-webkit-details-marker{display:none}
-.dnum{color:#fff;font-weight:800;font-size:13px;border-radius:9px;padding:6px 9px;flex:none;min-width:34px;text-align:center}
+.dnum{color:#fff;font-weight:700;font-size:13px;border-radius:11px;padding:9px 0;flex:none;width:44px;text-align:center;
+  font-variant-numeric:tabular-nums;letter-spacing:.02em}
 .dhead-txt{flex:1;min-width:0}
-.dhead-txt h3{font-size:16.5px}
-.dhead-txt .ddate{color:var(--mut);font-size:12.5px;font-weight:700;margin-top:2px}
-.chev{flex:none;color:var(--mut);transition:transform .2s;font-size:14px}
+.dhead-txt h3{font-size:18px;font-weight:600}
+.dhead-txt .ddate{color:var(--mut);font-size:12.5px;font-weight:500;margin-top:4px;letter-spacing:.02em}
+.chev{flex:none;color:var(--mut);transition:transform .25s;font-size:15px}
 .day[open] .chev{transform:rotate(90deg)}
-.dcount{flex:none;font-size:11px;font-weight:800;color:var(--mut);background:#eef3f0;border-radius:999px;padding:3px 9px}
-.day-body{padding:2px 15px 16px}
-.leg{background:#f1f6f3;border:1px solid #dae7e1;border-radius:10px;padding:9px 12px;font-size:13px;margin:0 0 11px;display:flex;flex-wrap:wrap;gap:7px;align-items:center}
-.leg .pill{background:var(--pine);color:#fff;border-radius:999px;padding:3px 9px;font-size:11px;font-weight:800;flex:none}
-.leg b{color:var(--pine)}
-.dirlink{margin-left:auto;font-weight:800;font-size:12.5px;white-space:nowrap}
-.daytools{display:flex;gap:7px;margin:0 0 9px}
-.tiny{font:700 12px/1 inherit;border:1px solid var(--line);background:#fff;color:var(--mut);padding:7px 10px;border-radius:8px;cursor:pointer}
+.dcount{flex:none;font-size:11px;font-weight:600;color:var(--mut);background:var(--card2);border-radius:999px;padding:5px 10px}
+.day-body{padding:0 18px 20px}
+.leg{background:var(--card2);border-radius:13px;padding:12px 14px;font-size:13.5px;margin:0 0 14px;
+  display:flex;flex-wrap:wrap;gap:8px;align-items:center;color:var(--ink2)}
+.leg .pill{background:var(--pine);color:#fff;border-radius:999px;padding:4px 10px;font-size:11px;font-weight:600;flex:none}
+.leg b{color:var(--ink);font-weight:600}
+.dirlink{margin-left:auto;font-weight:600;font-size:13px;white-space:nowrap}
+.daytools{display:flex;gap:8px;margin:0 0 12px;flex-wrap:wrap}
+.tiny{font:600 12.5px/1 inherit;border:1px solid var(--line);background:#fff;color:var(--mut);padding:10px 13px;border-radius:10px;cursor:pointer}
+.tiny:active{transform:scale(.96)}
 ul.stops{list-style:none;margin:0;padding:0}
-ul.stops li{display:flex;gap:10px;align-items:flex-start;padding:11px 0;border-bottom:1px dashed var(--line)}
+ul.stops li{display:flex;gap:13px;align-items:flex-start;padding:15px 0;border-bottom:1px solid var(--line2)}
 ul.stops li:last-child{border-bottom:0}
-.chkwrap{flex:none;padding-top:1px}
-input[type=checkbox].tick{appearance:none;-webkit-appearance:none;width:26px;height:26px;border:2px solid #cabfa8;border-radius:8px;background:#fff;cursor:pointer;display:block;position:relative;transition:.12s}
-input[type=checkbox].tick:checked{background:var(--pine);border-color:var(--pine)}
-input[type=checkbox].tick:checked::after{content:"";position:absolute;left:8px;top:3px;width:6px;height:13px;border:solid var(--gold2);border-width:0 3px 3px 0;transform:rotate(42deg)}
-.sinfo{flex:1;min-width:0}
-.snm{font-weight:700;font-size:16px}
-.snm .cemo{margin-right:5px}
-.snm .cemo.star{color:var(--gold);font-size:19px;text-shadow:0 1px 1px #0002}
-.snm a{color:var(--ink);border-bottom:1.5px solid #d9922b55}
-.snm a:hover{color:var(--sky);border-bottom-color:var(--sky);text-decoration:none}
-.meta{display:flex;flex-wrap:wrap;gap:5px;margin:6px 0 2px}
-.mpill{font-size:11px;font-weight:700;border-radius:6px;padding:3px 7px;background:#efece3;color:#5f5a4e;white-space:nowrap;line-height:1.2}
-.mpill.must{background:var(--red);color:#fff}
-.mpill.free{background:#1a7f5a1a;color:#1a7f5a}
-.mpill.best{background:#d9922b1f;color:#8a6414}
-.mpill.route{background:#1f7ab81a;color:#1f7ab8}
-.why{color:#4a463d;font-size:14px;display:block;margin-top:5px}
-.tag{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;border-radius:5px;padding:2px 6px;margin-left:5px;vertical-align:1px;white-space:nowrap}
-.t-must{background:#c1462a1a;color:var(--red);border:1px solid #c1462a40}
-.t-easy{background:#1f7ab81a;color:var(--sky);border:1px solid #1f7ab840}
-.t-hike{background:#16332b1a;color:var(--pine);border:1px solid #16332b40}
-.t-4x4{background:#d9922b26;color:#8a6414;border:1px solid #d9922b55}
+.chkwrap{flex:none;padding-top:2px}
+/* миниатюра места */
+.thumb{flex:none;width:78px;height:78px;border-radius:14px;overflow:hidden;background:var(--card2) center/cover no-repeat;
+  position:relative;box-shadow:inset 0 0 0 1px #00000008}
+.thumb.noimg{display:flex;align-items:center;justify-content:center;font-size:26px;opacity:.5}
 li.hiddenrow{display:none}
-.dnote{background:#fdf6e6;border:1px solid #ecd9a8;border-radius:10px;padding:10px 13px;font-size:13px;margin:12px 0 0;color:#5c4a1e}
-.dnote b{color:#7a5f14}
+input[type=checkbox].tick{appearance:none;-webkit-appearance:none;width:27px;height:27px;border:1.5px solid #d5cec0;border-radius:9px;
+  background:#fff;cursor:pointer;display:block;position:relative;transition:.15s}
+input[type=checkbox].tick:checked{background:var(--pine);border-color:var(--pine)}
+input[type=checkbox].tick:checked::after{content:"";position:absolute;left:9px;top:4px;width:5px;height:13px;
+  border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(42deg)}
+.sinfo{flex:1;min-width:0}
+.snm{font-weight:600;font-size:17px;line-height:1.35;font-family:"Fraunces",Georgia,serif;letter-spacing:-.01em}
+.snm .cemo{margin-right:6px}
+.snm .cemo.star{color:var(--gold);font-size:18px}
+.snm a{color:var(--ink);border-bottom:1px solid #b9853666}
+.snm a:hover{color:var(--sky);border-bottom-color:var(--sky);text-decoration:none}
+.meta{display:flex;flex-wrap:wrap;gap:6px;margin:9px 0 0}
+.mpill{font-size:11px;font-weight:600;border-radius:8px;padding:5px 9px;background:var(--card2);color:#6e685c;white-space:nowrap;line-height:1.2}
+.mpill.must{background:var(--red);color:#fff}
+.mpill.free{background:#2f7d5c14;color:#2f7d5c}
+.mpill.best{background:#b9853618;color:#8a6316}
+.mpill.route{background:#3a6f9614;color:var(--sky)}
+.why{color:var(--ink2);font-size:14.5px;display:block;margin-top:8px;line-height:1.55}
+.tag{display:inline-block;font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;border-radius:6px;
+  padding:3px 7px;margin-left:6px;vertical-align:2px;white-space:nowrap}
+.t-must{background:#b0503a14;color:var(--red)}
+.t-easy{background:#3a6f9614;color:var(--sky)}
+.t-hike{background:#2f4f4314;color:var(--pine)}
+.t-4x4{background:#b9853620;color:#8a6316}
+li.hiddenrow{display:none}
+.dnote{background:#fdf8ee;border:1px solid #f0e2c4;border-radius:13px;padding:13px 15px;font-size:13.5px;margin:14px 0 0;color:#6b5520;line-height:1.55}
+.dnote b{color:#513f11;font-weight:600}
 
-/* FOOD */
-.foodgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:14px}
-.foodcity{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:15px 17px;box-shadow:var(--shadow2)}
-.foodcity h4{font-size:17px;margin-bottom:11px;display:flex;align-items:center;gap:8px}
-.foodcity h4 .fb{width:12px;height:12px;border-radius:50%;flex:none}
-.mealbtns{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:13px}
-.mealbtn{font:700 12.5px/1 inherit;border:1.5px solid var(--line);background:#fff;color:var(--pine);border-radius:999px;padding:9px 12px;white-space:nowrap}
-.mealbtn:hover{text-decoration:none;border-color:var(--gold);color:#8a6414}
-.mealbtn.all{background:var(--pine);color:#fff;border-color:var(--pine)}
+/* ЕДА */
+.foodgrid{display:grid;grid-template-columns:1fr;gap:12px}
+.foodcity{background:var(--card);border:1px solid var(--line);border-radius:var(--r2);padding:20px;box-shadow:var(--shadow2)}
+.foodcity h4{font-size:20px;margin-bottom:14px;display:flex;align-items:center;gap:10px;font-weight:600}
+.foodcity h4 .fb{width:11px;height:11px;border-radius:50%;flex:none}
+.mealbtns{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:16px}
+.mealbtn{font:600 13px/1 inherit;border:1px solid var(--line);background:#fff;color:var(--ink2);border-radius:999px;padding:11px 14px;white-space:nowrap}
+.mealbtn:hover{text-decoration:none;border-color:var(--gold);color:#8a6316}
+.mealbtn.all{background:var(--ink);color:#fff;border-color:var(--ink)}
 .foodlist{list-style:none;margin:0;padding:0}
-.foodlist li{padding:10px 0;border-bottom:1px dashed var(--line)}
+.foodlist li{padding:13px 0;border-bottom:1px solid var(--line2)}
 .foodlist li:last-child{border-bottom:0}
-.foodlist li a{font-weight:700;color:var(--ink);font-size:15.5px;border-bottom:1.5px solid #d9922b55}
+.foodlist li a{font-weight:600;color:var(--ink);font-size:16px;border-bottom:1px solid #b9853666;font-family:"Fraunces",Georgia,serif}
 .foodlist li a:hover{color:var(--sky);border-bottom-color:var(--sky);text-decoration:none}
-.foodlist .fmeta{display:block;font-size:11.5px;color:#8a6414;font-weight:700;margin-top:3px}
-.foodlist .fw{display:block;color:var(--mut);font-size:13px;margin-top:3px}
+.foodlist .fmeta{display:block;font-size:11.5px;color:#8a6316;font-weight:600;margin-top:5px;letter-spacing:.03em}
+.foodlist .fw{display:block;color:var(--mut);font-size:14px;margin-top:5px;line-height:1.5}
 
-/* accordions статичные */
-details.acc{background:var(--card);border:1px solid var(--line);border-radius:12px;margin:0 0 11px;overflow:hidden;box-shadow:var(--shadow2)}
-details.acc>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;padding:14px 16px;font-weight:800;font-size:16px}
+/* АККОРДЕОНЫ */
+details.acc{background:var(--card);border:1px solid var(--line);border-radius:var(--r2);margin:0 0 10px;overflow:hidden;box-shadow:var(--shadow2)}
+details.acc>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:17px 18px;font-weight:600;font-size:16.5px;
+  font-family:"Fraunces",Georgia,serif}
 details.acc>summary::-webkit-details-marker{display:none}
 details.acc>summary .chev{margin-left:auto}
-details.acc[open]>summary{border-bottom:1px solid var(--line)}
-.acc-body{padding:14px 16px}
-.acc-body ul{margin:0;padding-left:17px;font-size:14px}.acc-body li{margin:6px 0}
+details.acc[open]>summary{border-bottom:1px solid var(--line2)}
+.acc-body{padding:16px 18px}
+.acc-body ul{margin:0;padding-left:20px;font-size:15px;line-height:1.6}
+.acc-body li{margin:9px 0}
 
-/* TABLE + budget */
-.tblwrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--card);-webkit-overflow-scrolling:touch;box-shadow:var(--shadow2)}
-table{border-collapse:collapse;width:100%;min-width:520px;font-size:14px}
-th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line)}
-th{background:#eef3f0;font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--pine)}
+/* ТАБЛИЦЫ + БЮДЖЕТ */
+.tblwrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r2);background:var(--card);
+  -webkit-overflow-scrolling:touch;box-shadow:var(--shadow2)}
+table{border-collapse:collapse;width:100%;min-width:520px;font-size:14.5px}
+th,td{padding:13px 14px;text-align:left;border-bottom:1px solid var(--line2)}
+th{background:var(--card2);font-size:10.5px;text-transform:uppercase;letter-spacing:.14em;color:var(--mut);font-weight:600}
 tr:last-child td{border-bottom:0}
 td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
-.vswitch{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
-.vbtn{border:1px solid var(--line);background:#fff;color:var(--mut);font:700 13px/1.3 inherit;padding:11px 14px;border-radius:10px;cursor:pointer;text-align:left}
-.vbtn.on{background:var(--pine);color:#fff;border-color:var(--pine)}
-.vnote{background:#f1f6f3;border:1px solid #dae7e1;border-radius:10px;padding:10px 13px;font-size:13px;margin:0 0 13px;color:#33463f}
-#budgetTbl tr.grp td{background:#eef3f0;font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--pine)}
-input.money{width:100%;max-width:105px;border:1px solid var(--line);border-radius:8px;padding:7px 9px;font:700 14px/1 inherit;text-align:right;background:#fffdf8;color:var(--ink);font-variant-numeric:tabular-nums}
-input.money:focus{outline:2px solid var(--gold);border-color:var(--gold);background:#fff}
-.cf{color:#1a7f5a;font-size:11px;font-weight:700;white-space:nowrap}
-.est{color:#8a6414;font-size:11px;font-weight:700;white-space:nowrap}
-.tbd{color:var(--red);font-size:11px;font-weight:700;white-space:nowrap}
-#budgetTbl tfoot .tot td{background:var(--pine);color:var(--gold2);font-weight:800;font-size:16px;border:0}
-#budgetTbl tfoot .tot2 td{background:#245043;color:#cfe0d9;font-weight:700;font-size:14px;border:0}
-.budgbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:12px}
+.vswitch{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}
+.vbtn{border:1px solid var(--line);background:#fff;color:var(--ink2);font:600 13.5px/1.4 inherit;padding:13px 15px;border-radius:13px;cursor:pointer;text-align:left}
+.vbtn.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.vnote{background:var(--card2);border-radius:13px;padding:13px 15px;font-size:13.5px;margin:0 0 14px;color:var(--ink2);line-height:1.55}
+#budgetTbl tr.grp td{background:var(--card2);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--mut)}
+input.money{width:100%;max-width:105px;border:1px solid var(--line);border-radius:10px;padding:9px 11px;font:600 14.5px/1 inherit;
+  text-align:right;background:#fff;color:var(--ink);font-variant-numeric:tabular-nums}
+input.money:focus{outline:2px solid var(--gold);border-color:var(--gold)}
+.cf{color:#2f7d5c;font-size:11px;font-weight:600;white-space:nowrap}
+.est{color:#8a6316;font-size:11px;font-weight:600;white-space:nowrap}
+.tbd{color:var(--red);font-size:11px;font-weight:600;white-space:nowrap}
+#budgetTbl tfoot .tot td{background:var(--pine);color:#fff;font-weight:600;font-size:17px;border:0;font-family:"Fraunces",Georgia,serif}
+#budgetTbl tfoot .tot2 td{background:var(--pine2);color:#dce8e2;font-weight:500;font-size:14px;border:0}
+.budgbar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:14px}
 
-footer{background:var(--pine);color:#cfe0d9;margin-top:36px;padding:22px 0 30px;font-size:13px}
-footer a{color:var(--gold2)}
-@media(max-width:640px){section{padding:24px 0 4px}.day-body{padding:2px 12px 14px}.flabel{min-width:0;width:100%}}
+footer{background:var(--card2);color:var(--mut);margin-top:50px;padding:30px 0 36px;font-size:13.5px;line-height:1.7;border-top:1px solid var(--line)}
+footer a{color:var(--pine);font-weight:500}
+
+/* НИЖНЯЯ НАВИГАЦИЯ — как в приложении */
+.bottomnav{position:fixed;left:0;right:0;bottom:0;z-index:80;display:flex;
+  background:#fffffff2;backdrop-filter:saturate(180%) blur(16px);-webkit-backdrop-filter:saturate(180%) blur(16px);
+  border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+.bottomnav a{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  height:var(--nav);color:var(--mut);font-size:10.5px;font-weight:500;letter-spacing:.02em;text-decoration:none;transition:.15s}
+.bottomnav a span.ic{font-size:20px;line-height:1}
+.bottomnav a:hover{text-decoration:none;color:var(--ink)}
+.bottomnav a.on{color:var(--pine)}
+
+@media(min-width:760px){
+  section{padding:64px 0 0}
+  .foodgrid{grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px}
+  .base{flex:0 0 320px}
+  .bases{padding:2px 0 8px;margin:0}
+  .base::after{right:-18px}
+  body{padding-bottom:0}
+  .bottomnav{display:none}
+  header.hero{padding:64px 0 32px}
+  .stats{gap:40px}
+}
+@media(max-width:400px){
+  .wrap{padding:0 16px}
+  .bases{padding:2px 16px 6px;margin:0 -16px}
+}
 </style>
 </head>
 <body>
 
+<div class="topbar"><div class="wrap">
+  <span class="brand">Colorado<i>.</i></span>
+  <span class="topdate" id="topDate">7–16 августа 2026</span>
+</div></div>
+
 <header class="hero"><div class="wrap">
   <div class="kicker">Road trip · Colorado · 2026</div>
-  <h1>Дуранго → Урей → Аспен → Денвер</h1>
-  <p class="sub">Прилёт 7 августа в Дуранго, вылет 16-го из Денвера. Поезд на Силвертон, Меса-Верде, Million Dollar Highway, Чёрный каньон, Maroon Bells и перевал Independence.</p>
+  <h1>Дуранго → Урей<em>Аспен → Денвер</em></h1>
+  <p class="sub">Десять дней по юго-западу Колорадо: паровоз на Силвертон, скальные города Меса-Верде, Million Dollar Highway, Чёрный каньон, Maroon Bells и перевал Independence.</p>
   <div class="stats">
     <div class="stat"><b id="hDates">7–16 авг</b><span>2026</span></div>
     <div class="stat"><b>10 дней</b><span>9 ночей</span></div>
     <div class="stat"><b>3 базы</b><span>+ ночь у DEN</span></div>
     <div class="stat"><b>~1 150 км</b><span>за рулём</span></div>
   </div>
+  <div class="herophoto">
+    <img src="img/hero-w.webp" alt="Maroon Bells, Колорадо" loading="eager" decoding="async" fetchpriority="high">
+    <div class="cap">Maroon Bells под Аспеном — день 7</div>
+  </div>
 </div></header>
 
-<section><div class="wrap">
+<section id="s-map"><div class="wrap">
   <div class="eyebrow">Карта</div>
   <h2 class="big">Маршрут, точки и фильтры</h2>
   <p class="lede">Фильтры ниже управляют картой и списком: выбери день, базу или категорию — на карте останутся только нужные точки. Галочка у места показывает/прячет его на карте, а ссылка на Google Maps в списке работает всегда.</p>
@@ -239,7 +343,7 @@ footer a{color:var(--gold2)}
   <p class="maphint">Настоящая карта: кнопки + / − для зума, линейка масштаба (км/мили) внизу слева, выбор вида (карта / улицы / рельеф / спутник) справа вверху. Нажми на точку — описание и ссылка на Google Maps.</p>
 </div></section>
 
-<section><div class="wrap">
+<section id="s-stay"><div class="wrap">
   <div class="eyebrow">Ночёвки</div>
   <h2 class="big">Где жить и сколько ночей бронировать</h2>
   <p class="lede">Поменяй дату прилёта — все даты пересчитаются. Ниже видно, сколько ночей и на какие числа бронировать на каждой базе.</p>
@@ -248,21 +352,21 @@ footer a{color:var(--gold2)}
   <div class="bases" id="baseCards"></div>
 </div></section>
 
-<section><div class="wrap">
+<section id="s-days"><div class="wrap">
   <div class="eyebrow">День за днём</div>
   <h2 class="big">Маршрут по дням</h2>
   <p class="lede">Нажми на день, чтобы раскрыть. Название места — ссылка на Google Maps. Ссылка «Маршрут в Google Maps» у каждого дня строится из отмеченных галочками точек.</p>
   <div id="days"></div>
 </div></section>
 
-<section><div class="wrap">
+<section id="s-food"><div class="wrap">
   <div class="eyebrow">Где поесть</div>
   <h2 class="big">Знаковые места по городам</h2>
   <p class="lede">Умная подборка колоритных и местных мест (проверено, закрытые убраны). А кнопки «☕ Завтрак / 🍴 Обед / 🍷 Ужин» открывают Google Maps со всеми живыми вариантами этого города прямо сейчас. На карте еду включает переключатель «🍽 Еда».</p>
   <div class="foodgrid" id="foodGrid"></div>
 </div></section>
 
-<section><div class="wrap">
+<section id="s-drive"><div class="wrap">
   <div class="eyebrow">Сводка</div>
   <h2 class="big">Переезды и время за рулём</h2>
   <div class="tblwrap"><table>
@@ -283,7 +387,7 @@ footer a{color:var(--gold2)}
   </table></div>
 </div></section>
 
-<section><div class="wrap">
+<section id="s-money"><div class="wrap">
   <div class="eyebrow">Деньги</div>
   <h2 class="big">Бюджет поездки</h2>
   <p class="lede">Клик по числу — впиши своё, итог пересчитается и сохранится. Перелёт — реальные цены American; жильё и машина ждут твои цифры.</p>
@@ -323,7 +427,7 @@ footer a{color:var(--gold2)}
     <span class="counter"><span class="cf">✓</span> подтверждено · <span class="est">~</span> оценка · <span class="tbd">?</span> ждём данных</span></div>
 </div></section>
 
-<section><div class="wrap">
+<section id="s-tips"><div class="wrap">
   <div class="eyebrow">Пока просто иметь в виду</div>
   <h2 class="big">Что занять заранее и практика</h2>
 
@@ -377,8 +481,17 @@ footer a{color:var(--gold2)}
 
 <footer><div class="wrap">
   План на 7–16 августа 2026 · Дуранго → Урей → Аспен → Денвер · прилёт American в DRO 7 авг 16:17, вылет из DEN 16 авг 12:47.<br>
+  Фотографии мест — <a href="https://commons.wikimedia.org/" target="_blank" rel="noopener">Викисклад</a>, свободные лицензии.<br>
   Проверить перед выездом: <a href="https://www.cotrip.org/" target="_blank" rel="noopener">дороги CDOT</a> · <a href="https://durangotrain.com/" target="_blank" rel="noopener">поезд</a> · <a href="https://www.visitmaroonbells.com/" target="_blank" rel="noopener">Maroon Bells</a> · <a href="https://www.recreation.gov/ticket/facility/233362" target="_blank" rel="noopener">Mesa Verde</a>
 </div></footer>
+
+<nav class="bottomnav">
+  <a href="#s-map"><span class="ic">🗺</span>Карта</a>
+  <a href="#s-days"><span class="ic">📋</span>Дни</a>
+  <a href="#s-stay"><span class="ic">🛏</span>Ночёвки</a>
+  <a href="#s-food"><span class="ic">🍽</span>Еда</a>
+  <a href="#s-money"><span class="ic">💵</span>Бюджет</a>
+</nav>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" onerror="window.__lf=1"></script>
 <script>
@@ -602,15 +715,22 @@ function fmtDate(dt){return WD[dt.getDay()]+', '+dt.getDate()+' '+MONTHS[dt.getM
 function addDays(iso,n){const d=new Date(iso+'T00:00:00');d.setDate(d.getDate()+n);return d;}
 function dayDate(startIso,dayN){return fmtDate(addDays(startIso,dayN-1));}
 
+/* ================= ФОТО МЕСТ (Викисклад, свободные лицензии) ================= */
+/* фотографии мест лежат в папке img/ — три размера: p (булавка), t (миниатюра), l (крупно) */
+const PHOTO={};["dro","art","lnh","trn","mvp","clp","vlc","pag","chr","hav","cbp","mol","sil","mdh","rmp","bcf","ohs","box","ykb","tel","dld","rid","bcg","pnt","mcc","mar","red","mrb","crl","gon","asp","gro","ash","rgt","igh","ind","dil","lov","geo","den"].forEach(k=>PHOTO[k]=1);
+const BPHOTO={dur:'art',our:'ohs',asp:'asp',den:'den'};
+function pimg(id,s){return 'img/'+id+'-'+s+'.webp';}
+
 /* ================= КАРТА — настоящая (Leaflet) ================= */
 let map=null,FULL=null;const markers={},lineLayers=[];
 function mapFallback(msg){const el=document.getElementById('map');if(el)el.innerHTML='<div class="mapph">🗺️ <b>'+(msg||'Карта не загрузилась')+'</b><br>Открой страницу по обычной ссылке (Netlify/GitHub) в браузере при интернете. Список и ссылки на Google Maps работают всегда.</div>';}
-function popupHTML(nm,q,why,label,color){
-  return '<div style="min-width:190px;max-width:260px">'
-    +(label?'<div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:800;color:'+color+'">'+label+'</div>':'')
-    +'<b style="font-size:15px;display:block;margin:2px 0 4px">'+nm+'</b>'
-    +'<div style="color:#555;font-size:13px;line-height:1.45;max-height:130px;overflow:auto">'+why+'</div>'
-    +'<a href="'+gurl(q)+'" target="_blank" rel="noopener" style="display:inline-block;margin-top:9px;padding:8px 12px;background:#16332b;color:#f5c15b;border-radius:8px;font-weight:800;font-size:13px;text-decoration:none">Открыть в Google Maps →</a></div>';
+function popupHTML(nm,q,why,label,color,photo){
+  return '<div style="min-width:200px;max-width:250px">'
+    +(photo?'<img src="'+photo+'" alt="" loading="lazy" style="width:100%;height:118px;object-fit:cover;border-radius:11px;margin-bottom:9px;display:block">':'')
+    +(label?'<div style="font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;color:'+color+'">'+label+'</div>':'')
+    +'<b style="font-size:16px;display:block;margin:3px 0 5px;font-family:Fraunces,Georgia,serif;font-weight:600">'+nm+'</b>'
+    +'<div style="color:#5b5750;font-size:13px;line-height:1.5;max-height:120px;overflow:auto">'+why+'</div>'
+    +'<a href="'+gurl(q)+'" target="_blank" rel="noopener" style="display:inline-block;margin-top:10px;padding:9px 13px;background:#2f4f43;color:#fff;border-radius:10px;font-weight:600;font-size:13px;text-decoration:none">Открыть в Google Maps →</a></div>';
 }
 function initMap(){
   if(typeof L==='undefined'){mapFallback('Карта не загрузилась');return;}
@@ -625,8 +745,18 @@ function initMap(){
     L.control.layers({'Карта':light,'Улицы':streets,'Рельеф':relief,'Спутник':sat},null,{position:'topright'}).addTo(map);
     L.control.scale({position:'bottomleft',metric:true,imperial:true,maxWidth:140}).addTo(map);
     BASES.forEach(b=>{L.marker([b.lat,b.lng],{icon:L.divIcon({className:'',html:'<div class="pin basepin" style="background:#16332b">'+b.emoji+'</div>',iconSize:[32,28],iconAnchor:[16,14]})}).addTo(map).bindPopup(popupHTML(b.name,b.q,b.desc,'База ночёвки','#16332b')).bindTooltip(b.name,{permanent:true,direction:'right',className:'basetip',offset:[15,0]});});
-    P.forEach(p=>{const c=p.cat==='food'?'#c1462a':(DCOL[p.d]||'#2f9e6f');const glyph=p.star?'★':(p.cat==='food'?'●':(p.d||''));const sz=p.star?28:22;
-      markers[p.id]=L.marker([p.lat,p.lng],{icon:L.divIcon({className:'',html:'<div class="pin" style="background:'+c+';width:'+sz+'px;height:'+sz+'px;font-size:'+(p.star?15:12)+'px">'+glyph+'</div>',iconSize:[sz,sz],iconAnchor:[sz/2,sz/2]})}).bindPopup(popupHTML(p.nm,p.q,p.why,p.d?('День '+p.d):(CATS[p.cat]?CATS[p.cat].l:''),c));});
+    P.forEach(p=>{const c=p.cat==='food'?'#c1462a':(DCOL[p.d]||'#2f9e6f');const ph=PHOTO[p.id];
+      let icon;
+      if(ph){ /* булавка-капля с фотографией места */
+        icon=L.divIcon({className:'',iconSize:[52,60],iconAnchor:[26,60],popupAnchor:[0,-56],
+          html:'<div class="photopin"><div class="ph" style="background-image:url('+pimg(p.id,'p')+')"></div>'
+              +'<div class="badge" style="background:'+c+'">'+(p.d||'★')+'</div><div class="tip"></div></div>'});
+      }else{
+        const glyph=p.star?'★':(p.cat==='food'?'●':(p.d||''));const sz=p.star?28:22;
+        icon=L.divIcon({className:'',iconSize:[sz,sz],iconAnchor:[sz/2,sz/2],
+          html:'<div class="pin" style="background:'+c+';width:'+sz+'px;height:'+sz+'px;font-size:'+(p.star?15:12)+'px">'+glyph+'</div>'});
+      }
+      markers[p.id]=L.marker([p.lat,p.lng],{icon:icon}).bindPopup(popupHTML(p.nm,p.q,p.why,p.d?('День '+p.d):(CATS[p.cat]?CATS[p.cat].l:''),c,ph?pimg(p.id,'l'):null));});
     function drawLine(o){L.polyline(o.pts,{color:'#fff',weight:(o.w||6)+4,opacity:.9,dashArray:o.dash}).addTo(map);const ln=L.polyline(o.pts,{color:o.color,weight:o.w||6,opacity:1,dashArray:o.dash}).addTo(map).bindTooltip(o.label,{sticky:true});lineLayers.push({days:o.days,layer:ln});}
     LINES.forEach(drawLine);
     const legs=lineLayers.filter(l=>[4,6,9].some(d=>l.days.indexOf(d)>=0)).map(l=>l.layer);
@@ -796,12 +926,27 @@ function buildDays(){
       +'<ul class="stops">'+list.map(p=>{const emo=p.star?'<span class="cemo star">★</span>':(CATS[p.cat]?'<span class="cemo">'+CATS[p.cat].e+'</span>':'');
         return '<li data-id="'+p.id+'" data-cat="'+p.cat+'" data-day="'+p.d+'" data-base="'+p.base+'">'
         +'<span class="chkwrap"><input type="checkbox" class="tick" data-tick="'+p.id+'" aria-label="показать на карте"></span>'
+        +(PHOTO[p.id]?'<span class="thumb" style="background-image:url('+pimg(p.id,'t')+')"></span>'
+                     :'<span class="thumb noimg">'+(CATS[p.cat]?CATS[p.cat].e:'📍')+'</span>')
         +'<span class="sinfo"><span class="snm">'+emo+'<a href="'+gurl(p.q)+'" target="_blank" rel="noopener">'+p.nm+'</a>'+(p.tag?'<span class="tag '+p.tag[1]+'">'+p.tag[0]+'</span>':'')+'</span>'
         +metaStrip(p)
         +'<span class="why">'+p.why+'</span></span></li>';}).join('')+'</ul>'
       +(d.note?'<div class="dnote">'+d.note+'</div>':'')+'</div></details>';
   });
   host.innerHTML=out;
+}
+/* карточки баз — лента со стрелками, как в приложениях-планировщиках */
+function buildBases(){
+  const host=document.getElementById('baseCards');if(!host)return;
+  host.innerHTML=BASES.map((b,i)=>{
+    const ph=BPHOTO[b.id];
+    return '<div class="base" data-base="'+b.id+'">'
+      +'<div class="bphoto"'+(ph?' style="background-image:url('+pimg(BPHOTO[b.id],'l')+')"':'')+'>'
+      +'<span class="bnum">Остановка '+(i+1)+'</span></div>'
+      +'<div class="bbody"><div class="nights" data-basenights="'+b.id+'">'+b.nights+' '+nights(b.nights)+'</div>'
+      +'<h3>'+b.emoji+' '+b.name+'</h3><p>'+b.desc+'</p>'
+      +(b.alt?'<div class="alt">'+b.alt+'</div>':'')+'</div></div>';
+  }).join('');
 }
 function dirURL(dayN){
   const sel=P.filter(p=>p.d===dayN&&picked.has(p.id));if(!sel.length)return null;
@@ -870,6 +1015,8 @@ function renderStays(){
       +'<button class="stepbtn" data-nd="'+i+'" data-dir="1" aria-label="больше ночей">+</button></span></div>';
   }).join('');
   const tn=totalNights();
+  BASES.forEach(b=>{const el=document.querySelector('[data-basenights="'+b.id+'"]');
+    if(el)el.textContent=b.nights+' '+nights(b.nights);});
   document.getElementById('stayList').innerHTML=rows
     +'<div class="staytot">Всего <b>'+tn+'</b> '+nights(tn)+' · вся поездка '+fmtDate(addDays(startIso,0))+'&nbsp;→&nbsp;'+fmtDate(addDays(startIso,tn))+'</div>';
 }
@@ -905,10 +1052,10 @@ function wireBudget(){
 
 /* ================= СТАРТ ================= */
 loadPlan();
-buildFilters();buildDays();buildFood();buildPlanner();wireButtons();wireBudget();
+buildFilters();buildDays();buildFood();buildBases();buildPlanner();wireButtons();wireBudget();
 recomputeDates();
 syncChecks();applyFilter();
-if('requestIdleCallback' in window){requestIdleCallback(initMap,{timeout:1500});}else{setTimeout(initMap,60);}
+if(typeof requestIdleCallback==='function'){requestIdleCallback(initMap,{timeout:1500});}else{setTimeout(initMap,60);}
 </script>
 </body>
 </html>
