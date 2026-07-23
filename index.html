@@ -663,6 +663,16 @@ input.money.perunit{max-width:62px;padding:7px 6px;text-align:center;margin:0 1p
 .pstep{display:flex;align-items:center;gap:8px;flex:none}
 .pnum{min-width:40px;text-align:center}
 .pnum b{font:800 22px/1 "JetBrains Mono",ui-monospace,monospace;color:var(--ink)}
+/* ── КНОПКИ БРОНИ (партнёрские) ── */
+.hbook{display:flex;align-items:center;gap:8px;width:100%;margin-top:2px;padding:11px 14px;border-radius:13px;text-decoration:none;background:linear-gradient(150deg,#1c9166,#0a6047);color:#fff;font:800 12px/1.2 "Plus Jakarta Sans",sans-serif;letter-spacing:-.02em;box-shadow:var(--sh1),inset 0 1px 0 rgba(255,255,255,.25)}
+.hbook .i{flex:none}
+.hbook:active{transform:scale(.99)}
+.hrow{flex-wrap:wrap}
+.hbook span{flex:1}
+.bbook{display:flex;align-items:center;gap:9px;margin:2px 16px 14px;padding:12px 14px;border-radius:13px;text-decoration:none;border:1.5px solid rgba(217,106,18,.4);background:linear-gradient(180deg,#fff,#fff6ec);color:var(--orange3);font:800 12.5px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:-.02em;box-shadow:var(--sh1)}
+.bbook span{flex:1}
+.bbook .i:last-child{opacity:.5}
+.bbook:active{transform:scale(.99)}
 </style>
 </head>
 <body>
@@ -1133,6 +1143,20 @@ function skyscanner(from,to,iso){
   return 'https://www.skyscanner.ru/transport/flights/'+from.toLowerCase()+'/'+to.toLowerCase()+'/'+yy+mm+dd+'/';
 }
 function fmtISO(d){return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);}
+/* ================= ПАРТНЁРСКИЕ ССЫЛКИ БРОНИ ================= */
+/* AFF — метки партнёрок; пусто = ссылки работают, но без нашего процента. Заполнить после регистрации. */
+const AFF={booking:'',gyg:'',kayak:''};
+function bookHotel(cityQ,ci,co,people){
+  const p='ss='+encodeURIComponent(cityQ)+'&checkin='+fmtISO(ci)+'&checkout='+fmtISO(co)
+    +'&group_adults='+(people||PEOPLE)+'&no_rooms='+Math.max(1,Math.ceil((people||PEOPLE)/2))+'&group_children=0';
+  return 'https://www.booking.com/searchresults.html?'+p+(AFF.booking?'&aid='+AFF.booking:'');
+}
+function bookCar(pickup,dropoff,ci,co){
+  return 'https://www.kayak.com/cars/'+encodeURIComponent(pickup)+'/'+encodeURIComponent(dropoff)+'/'+fmtISO(ci)+'/'+fmtISO(co);
+}
+function bookActivity(q){
+  return 'https://www.getyourguide.com/s/?q='+encodeURIComponent(q)+(AFF.gyg?'&partner_id='+AFF.gyg:'');
+}
 function buildRoute(){
   const host=document.getElementById('routeLine');if(!host)return;
   const startAir=AIRPORT[BASES[0].id]||'DRO', endAir=AIRPORT[BASES[BASES.length-1].id]||'DEN';
@@ -1600,7 +1624,9 @@ function renderStays(){
       +'<span class="hmoney">'
         +'<span class="hf"><label>за ночь</label><input class="money hrate" data-hi="'+i+'" inputmode="decimal" value="'+(rate||'')+'" placeholder="0"></span>'
         +'<span class="hf"><label>всего</label><input class="money htot" data-hi="'+i+'" inputmode="decimal" value="'+(tot||'')+'" placeholder="0"></span>'
-      +'</span></div>';
+      +'</span>'
+      +'<a class="hbook" href="'+bookHotel(b.q,ci,co,PEOPLE)+'" target="_blank" rel="noopener" title="подобрать жильё на Booking">'+ic('bed','i-sm')+'<span>Забронировать на Booking · '+dm(ci)+'–'+dm(co)+' · '+PEOPLE+' гост.</span></a>'
+      +'</div>';
   }).join('');
   const tn=totalNights();
   BASES.forEach(b=>{const el=document.querySelector('[data-basenights="'+b.id+'"]');
@@ -1715,7 +1741,7 @@ function buildBudget(){
       +'<div class="bghead"><span class="bgmed" style="background:linear-gradient(150deg,'+gr.c+','+gr.c2+')">'+ic(gr.ic)+'</span>'
       +'<span class="bgt"><b>'+gr.g+'</b>'+(gr.note?'<span>'+gr.note+'</span>':'')+'</span>'
       +'<span class="bgsum" data-gsum="'+gr.g+'">—</span></div>'
-      +rows+'</div>';
+      +rows+groupBook(gr.g)+'</div>';
   }).join('');
   host.querySelectorAll('input.money').forEach(i=>{
     i.addEventListener('input',calcBudget);
@@ -1724,6 +1750,16 @@ function buildBudget(){
   calcBudget();
 }
 function itemQty(per,days){return per==='day'?days:per==='person'?PEOPLE:per==='personday'?PEOPLE*days:1;}
+/* кнопка брони под группой бюджета */
+function groupBook(g){
+  const ci=addDays(startIso,0),co=addDays(startIso,totalNights());
+  let url,label,icon;
+  if(g==='Перелёт'){url=skyscanner(ORIGIN.code,AIRPORT[BASES[0].id]||'DRO',startIso);label='Подобрать билеты';icon='flight';}
+  else if(g==='Машина'){const en=s=>s.split(',')[0].trim();url=bookCar(en(BASES[0].q),en(BASES[BASES.length-1].q),ci,co);label='Забронировать машину';icon='car';}
+  else if(g==='Входы и активности'){url=bookActivity(BASES[0].q+' tours tickets');label='Забронировать активности';icon='ticket';}
+  else return '';
+  return '<a class="bbook" href="'+url+'" target="_blank" rel="noopener">'+ic(icon,'i-sm')+'<span>'+label+'</span>'+ic('chevron','i-sm')+'</a>';
+}
 function calcBudget(){
   let sum=0;const days=totalNights()+1;
   document.querySelectorAll('#budgetBox .brow[data-per]').forEach(row=>{
