@@ -677,7 +677,6 @@ input.money.perunit{max-width:62px;padding:7px 6px;text-align:center;margin:0 1p
 :root{--accent:#5b3fc4;--accent2:#8b6cf0;--vio:#5b3fc4}
 body{background:linear-gradient(168deg,#eef1f8,#e9edf6 60%,#e6eaf4)!important}
 /* скрыть старую шапку-бенто и плашку-маршрут — их заменяет лента городов */
-header.hero,#s-route{display:none!important}
 .orb-1{background:radial-gradient(circle at 34% 28%,#d9d0f7,#c3b3ee 46%,#a98ee0 76%,#8b6cf0)!important;opacity:.5!important}
 .orb-2{background:radial-gradient(circle at 32% 26%,#fff,#e4e7f5 42%,#c9cfec 76%,#b0b8e4)!important;opacity:.5!important}
 .orb-3{background:radial-gradient(circle at 34% 28%,#e8e2fb,#c9b8f2 52%,#9d7fe6 78%,#7a5cf0)!important;opacity:.45!important}
@@ -729,6 +728,23 @@ header.hero,#s-route{display:none!important}
 .cdm b{color:#5b3fc4}
 .cdtx>b{display:block;font:700 15px/1.25 "Inter",sans-serif;letter-spacing:-.01em;margin-top:6px}
 .cgo{color:#c7c9db;flex:none}
+/* ── ВЕРНУТЬ ШАПКУ + ПЛАШКУ-ЦЕПОЧКУ, ПЕРЕКРАСИТЬ В ФИОЛЕТ ── */
+header.hero,#s-route{display:block!important}
+/* шапка: только описание + фото, без метрик и профиля высоты */
+header.hero .stats,header.hero .elev,header.hero .tile-g,header.hero .tile-w{display:none!important}
+header.hero .bento{display:block!important}
+header.hero .kicker{color:#5b3fc4!important}
+header.hero h1 em{background:none!important;-webkit-background-clip:border-box!important;background-clip:border-box!important;color:#5b3fc4!important}
+#s-route .eyebrow,.eyebrow{color:#5b3fc4!important}
+/* переопределяем прежние зелёный/оранжевый на фиолет — глобально */
+:root{--green1:#7a5cf0;--green2:#5b3fc4;--green3:#4a2fb0;--orange1:#9c82f2;--orange2:#6b4fd6;--orange3:#5b3fc4;--deep1:#6b4fd6;--deep2:#3b2a8f}
+/* точечно самые заметные акценты */
+.btn.pri,.chip.on,.mfall.act,.fseg button.on{background:linear-gradient(150deg,#7a5cf0,#5b3fc4)!important}
+.mfb.act,.chip.on{background:linear-gradient(150deg,#5b3fc4,#3b2a8f)!important}
+.bottomnav a.on{background:linear-gradient(150deg,#5b3fc4,#3b2a8f)!important}
+.counter b,.cf,.dcount,.mftx b~*,.fsub{color:inherit}
+.brandmark{background:linear-gradient(150deg,#7a5cf0,#5b3fc4)!important}
+.brand i{color:#5b3fc4!important}
 </style>
 </head>
 <body>
@@ -764,15 +780,17 @@ header.hero,#s-route{display:none!important}
   </div>
 </header>
 
-<div class="citystep" id="cityStep"></div>
-<div id="cities"></div>
-
 <section id="s-route"><div class="wrap">
   <div class="eyebrow">Маршрут</div>
   <h2 class="big">Как добираешься</h2>
   <p class="lede">Весь путь одной лентой: перелёты, переезды и города с датами. Нажми на самолёт — подберём билеты на твои даты.</p>
   <div class="routewrap"><div class="routeline" id="routeLine"></div></div>
 </div></section>
+
+<div class="citystep" id="cityStep"></div>
+<div id="cities"></div>
+
+
 
 <section id="s-map"><div class="wrap">
   <div class="eyebrow">Карта</div>
