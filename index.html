@@ -204,8 +204,10 @@ h2.big{font-size:clamp(27px,6.2vw,42px);margin:11px 0 0}
   background:linear-gradient(155deg,rgba(255,255,255,.4),rgba(255,255,255,0) 58%)}
 .staytop{display:flex;align-items:center;gap:13px;flex:1;min-width:0}
 .stayinfo{flex:1;min-width:0}
+.stayinfo .sn i{font-style:normal;font-size:12.5px;color:var(--mut);font-weight:600;margin-left:8px;font-family:"Manrope",sans-serif;letter-spacing:0}
 .stayinfo .sn{display:block;font-weight:700;font-size:21px;font-family:"Space Grotesk",sans-serif;letter-spacing:-.035em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.15}
-.stayinfo .sd{display:block;font-size:13.5px;color:var(--mut);margin-top:5px;font-weight:600;font-family:"Manrope",sans-serif;letter-spacing:0;white-space:nowrap}
+.stayinfo .sd{display:block;font-size:13.5px;color:var(--mut);margin-top:5px;font-weight:600;font-family:"Manrope",sans-serif;line-height:1.45}
+.stayinfo .sd b{color:var(--ink2);font-weight:800;font-size:10px;text-transform:uppercase;letter-spacing:.1em}
 .stepper{display:flex;align-items:center;gap:5px;flex:none}
 .stepbtn{width:38px;height:38px;border:1px solid var(--gl-line);background:rgba(255,255,255,.85);border-radius:12px;font-size:19px;font-weight:500;color:var(--ink);cursor:pointer;line-height:1;display:grid;place-items:center;padding:0;box-shadow:var(--sh1),var(--edge)}
 .stepbtn:active{transform:scale(.93)}
@@ -1161,6 +1163,7 @@ function savePlan(){try{localStorage.setItem(PKEY,JSON.stringify({start:startIso
 function nightsBefore(baseId){let s=0;for(const b of BASES){if(b.id===baseId)break;s+=b.nights;}return s;}
 function dayDateFor(dayN){const bid=DAY_BASE[dayN];const pos=baseDays[bid].indexOf(dayN);return addDays(startIso,nightsBefore(bid)+pos);}
 function totalNights(){return BASES.reduce((s,b)=>s+b.nights,0);}
+function altName(s){const m=s.match(/\((.+?)\)/);return m?m[1]:'';}
 function shortName(s){return s.replace(/\s*\(.*?\)/,'').replace(/\s*\/.*$/,'').trim();}
 function dm(dt){return dt.getDate()+' '+MONTHS[dt.getMonth()].slice(0,3);}
 function nights(n){const a=n%10,b=n%100;if(a===1&&b!==11)return'ночь';if(a>=2&&a<=4&&(b<10||b>=20))return'ночи';return'ночей';}
@@ -1180,8 +1183,8 @@ function buildPlanner(){
 function renderStays(){
   const rows=BASES.map((b,i)=>{const before=nightsBefore(b.id);const ci=addDays(startIso,before),co=addDays(startIso,before+b.nights);
     return '<div class="stayrow"><span class="staytop"><span class="staydot" style="background:'+b.color+'">'+ic(b.emoji)+'</span>'
-      +'<span class="stayinfo"><span class="sn">'+shortName(b.name)+'</span>'
-      +'<span class="sd">'+dm(ci)+' → '+dm(co)+'</span></span></span>'
+      +'<span class="stayinfo"><span class="sn">'+shortName(b.name)+(altName(b.name)?'<i>'+altName(b.name)+'</i>':'')+'</span>'
+      +'<span class="sd"><b>заезд</b> '+fmtDate(ci)+' &nbsp;<b>выезд</b> '+fmtDate(co)+'</span></span></span>'
       +'<span class="stepper"><button class="stepbtn" data-nd="'+i+'" data-dir="-1" aria-label="меньше ночей">−</button>'
       +'<span class="stepn"><b>'+b.nights+'</b><span class="stepu">'+nights(b.nights)+'</span></span>'
       +'<button class="stepbtn" data-nd="'+i+'" data-dir="1" aria-label="больше ночей">+</button></span></div>';
