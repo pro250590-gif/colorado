@@ -641,6 +641,7 @@ input.money.perunit{max-width:62px;padding:7px 6px;text-align:center;margin:0 1p
 .gt-sub{display:flex;gap:10px;margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,.16);position:relative;z-index:2}
 .gt-sub span{flex:1;font:600 11px/1 "Inter",sans-serif;opacity:.8;display:flex;flex-direction:column;gap:7px;text-transform:uppercase;letter-spacing:.06em}
 .gt-sub b{font:800 19px/1 "Plus Jakarta Sans",sans-serif;color:#fff;opacity:1;letter-spacing:-.03em}
+.gt-sub i{font-style:normal}
 /* ── ПЛАШКА-МАРШРУТ (минимал, как Layla) ── */
 .routewrap{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin:0 -12px;padding:2px 12px 6px}
 .routewrap::-webkit-scrollbar{display:none}
@@ -657,6 +658,11 @@ input.money.perunit{max-width:62px;padding:7px 6px;text-align:center;margin:0 1p
 .rseg .i{width:18px;height:18px;position:relative;z-index:1}
 .rseg.book .rc{color:var(--ink2)}
 .rseg.book:active .rc{transform:scale(.92)}
+.peoplebar{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--card);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid var(--cardline);border-radius:var(--r2);box-shadow:var(--sh1);padding:14px 18px;margin:0 0 11px}
+.peoplebar .pl{font:800 14.5px/1.2 "Plus Jakarta Sans",sans-serif;letter-spacing:-.03em}
+.pstep{display:flex;align-items:center;gap:8px;flex:none}
+.pnum{min-width:40px;text-align:center}
+.pnum b{font:800 22px/1 "JetBrains Mono",ui-monospace,monospace;color:var(--ink)}
 </style>
 </head>
 <body>
@@ -760,11 +766,11 @@ input.money.perunit{max-width:62px;padding:7px 6px;text-align:center;margin:0 1p
   <div class="eyebrow">Деньги</div>
   <h2 class="big">Бюджет и жильё</h2>
   <p class="lede">Всё в одном месте: ночи и стоимость жилья, билеты, машина, входы и еда. Меняешь ночи или цены — итог считается сам.</p>
-  <div class="planner" id="planner"></div>
+  <div class="peoplebar"><span class="pl">Сколько человек едет</span><span class="pstep"><button class="stepbtn" id="pMinus" aria-label="меньше человек">−</button><span class="pnum"><b id="pNum">2</b></span><button class="stepbtn" id="pPlus" aria-label="больше человек">+</button></span></div><div class="planner" id="planner"></div>
   <div id="budgetBox"></div>
   <div class="grandtot">
     <div class="gt-main"><span>Вся поездка · на двоих</span><b id="sumAll">—</b></div>
-    <div class="gt-sub"><span>На человека<b id="sumPer">—</b></span><span>В день<b id="sumDay">—</b></span></div>
+    <div class="gt-sub"><span><i id="gtPerLabel">На человека (2)</i><b id="sumPer">—</b></span><span>В день<b id="sumDay">—</b></span></div>
   </div>
   <div class="budgbar"><button class="btn" id="resetBudget"><svg class="i i-sm" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 2.6-6.4M3 3v5h5"/></svg> Сбросить суммы</button></div>
 </div></section>
@@ -1536,12 +1542,12 @@ function buildFood(){
 
 /* ================= ПЛАНИРОВЩИК НОЧЁВОК ================= */
 /* ===== состояние плана: дата старта + ночи (редактируемо, сохраняется) ===== */
-const PKEY='co-trip-2026-plan';let startIso=START;
+const PKEY='co-trip-2026-plan';let startIso=START;let PEOPLE=2;
 const baseDays={};BASES.forEach(b=>baseDays[b.id]=[]);
 Object.keys(DAY_BASE).forEach(d=>baseDays[DAY_BASE[d]].push(+d));
 Object.keys(baseDays).forEach(k=>baseDays[k].sort((a,b)=>a-b));
-function loadPlan(){try{const s=JSON.parse(localStorage.getItem(PKEY));if(s){if(s.start)startIso=s.start;if(Array.isArray(s.nights))BASES.forEach((b,i)=>{if(typeof s.nights[i]==='number'&&s.nights[i]>=1)b.nights=s.nights[i];});}}catch(e){}}
-function savePlan(){try{localStorage.setItem(PKEY,JSON.stringify({start:startIso,nights:BASES.map(b=>b.nights)}));}catch(e){}}
+function loadPlan(){try{const s=JSON.parse(localStorage.getItem(PKEY));if(s){if(s.start)startIso=s.start;if(typeof s.people==='number'&&s.people>=1)PEOPLE=s.people;if(Array.isArray(s.nights))BASES.forEach((b,i)=>{if(typeof s.nights[i]==='number'&&s.nights[i]>=1)b.nights=s.nights[i];});}}catch(e){}}
+function savePlan(){try{localStorage.setItem(PKEY,JSON.stringify({start:startIso,people:PEOPLE,nights:BASES.map(b=>b.nights)}));}catch(e){}}
 function nightsBefore(baseId){let s=0;for(const b of BASES){if(b.id===baseId)break;s+=b.nights;}return s;}
 function dayDateFor(dayN){const bid=DAY_BASE[dayN];const pos=baseDays[bid].indexOf(dayN);return addDays(startIso,nightsBefore(bid)+pos);}
 function totalNights(){return BASES.reduce((s,b)=>s+b.nights,0);}
@@ -1660,26 +1666,26 @@ function refreshBudgetCounts(){
 /* ================= БЮДЖЕТ: группы-карточки ================= */
 const BUDGET=[
  {g:'Перелёт',ic:'plane',c:'#5a4bb5',c2:'#3b3080',items:[
-   {k:'a1',nm:'Билеты · 2 человека',sub:'American, туда-обратно · Basic Economy',v:1250.60,ok:1},
-   {k:'a2',nm:'Багаж',sub:'2 чел × 2 стороны × $50',v:200,ok:1},
+   {k:'a1',nm:'Билеты',sub:'туда-обратно',per:'person',v:625,ok:1},
+   {k:'a2',nm:'Багаж',sub:'2 стороны',per:'person',v:100,ok:1},
  ]},
  {g:'Машина',ic:'car',c:'#a1663a',c2:'#6f4227',items:[
    {k:'c1',nm:'Аренда машины',per:'day',rate:90,sub:'SUV · цена за день'},
-   {k:'c2',nm:'Возврат в другом городе',sub:'Дуранго → Денвер',v:130,est:1},
-   {k:'c3',nm:'Бензин',sub:'~1 150 км по горам',v:120,est:1},
+   {k:'c2',nm:'Возврат в другом городе',sub:'Дуранго → Денвер · на всех',v:130,est:1},
+   {k:'c3',nm:'Бензин',sub:'~1 150 км · на всех',v:120,est:1},
  ]},
- {g:'Входы и активности',ic:'ticket',c:'#d96a12',c2:'#b0530c',note:'на двоих',items:[
-   {k:'t1',nm:'Поезд Durango & Silverton',sub:'открытый вагон ~$144×2 +сбор',v:311,est:1},
-   {k:'t2',nm:'Mesa Verde',sub:'$30 / машина',v:30,ok:1},
-   {k:'t3',nm:'Black Canyon',sub:'$30 / машина',v:30,ok:1},
-   {k:'t4',nm:'Maroon Bells',sub:'шаттл $16 × 2',v:32,ok:1},
-   {k:'t5',nm:'Ouray Hot Springs',sub:'$26 × 2',v:52,ok:1},
-   {k:'t6',nm:'Box Canyon Falls',sub:'$8 × 2',v:16,ok:1},
-   {k:'t7',nm:'Гондола в Аспене',sub:'$40 × 2',v:80,ok:1},
-   {k:'t8',nm:'Джип-тур Yankee Boy',sub:'опция · ~$125 × 2',v:250,est:1},
+ {g:'Входы и активности',ic:'ticket',c:'#d96a12',c2:'#b0530c',items:[
+   {k:'t1',nm:'Поезд Durango & Silverton',sub:'открытый вагон',per:'person',v:156,est:1},
+   {k:'t2',nm:'Mesa Verde',sub:'$30 / машина · на всех',v:30,ok:1},
+   {k:'t3',nm:'Black Canyon',sub:'$30 / машина · на всех',v:30,ok:1},
+   {k:'t4',nm:'Maroon Bells',sub:'шаттл',per:'person',v:16,ok:1},
+   {k:'t5',nm:'Ouray Hot Springs',sub:'бассейн',per:'person',v:26,ok:1},
+   {k:'t6',nm:'Box Canyon Falls',sub:'вход',per:'person',v:8,ok:1},
+   {k:'t7',nm:'Гондола в Аспене',sub:'подъём',per:'person',v:40,ok:1},
+   {k:'t8',nm:'Джип-тур Yankee Boy',sub:'опция',per:'person',v:125,est:1},
  ]},
  {g:'Еда',ic:'food',c:'#12855e',c2:'#0a6047',items:[
-   {k:'f1',nm:'Еда и кафе',per:'day',rate:90,sub:'на двоих · цена за день'},
+   {k:'f1',nm:'Еда и кафе',per:'personday',rate:45,sub:'на человека в день'},
  ]},
 ];
 function buildBudget(){
@@ -1688,11 +1694,16 @@ function buildBudget(){
   host.innerHTML=BUDGET.map(gr=>{
     const rows=gr.items.map(it=>{
       const val=saved[it.k]!==undefined?saved[it.k]:it.v;
-      if(it.per==='day'){
-        const rate=saved[it.k+'rate']!==undefined?saved[it.k+'rate']:it.rate;
-        return '<div class="brow" data-per="day">'
-          +'<span class="binfo"><b>'+it.nm+'</b><span>'+it.sub+' × <b data-days>'+(totalNights()+1)+'</b> дн.</span></span>'
-          +'<span class="bfield"><input class="money perunit" data-k="'+it.k+'rate" inputmode="decimal" value="'+rate+'"><span class="bx">$/дн</span></span>'
+      /* строки с множителем: за день / на человека / на человека в день */
+      if(it.per==='day'||it.per==='person'||it.per==='personday'){
+        const rate=saved[it.k+'rate']!==undefined?saved[it.k+'rate']:(it.rate!==undefined?it.rate:it.v);
+        const unit=it.per==='day'?'$/дн':'$/чел';
+        const mult=it.per==='day'?('× <b data-days>'+(totalNights()+1)+'</b> дн.')
+                  :it.per==='person'?('× <b data-ppl>'+PEOPLE+'</b> чел.')
+                  :('× <b data-ppl>'+PEOPLE+'</b> чел. × <b data-days>'+(totalNights()+1)+'</b> дн.');
+        return '<div class="brow" data-per="'+it.per+'">'
+          +'<span class="binfo"><b>'+it.nm+'</b><span>'+it.sub+' '+mult+'</span></span>'
+          +'<span class="bfield"><input class="money perunit" data-k="'+it.k+'rate" inputmode="decimal" value="'+rate+'"><span class="bx">'+unit+'</span></span>'
           +'<span class="bsum" data-sum="'+it.k+'">—</span></div>';
       }
       const tag=it.ok?'<span class="cf">'+ic('check','i-sm')+'</span>':(it.est?'<span class="est">~</span>':'');
@@ -1712,18 +1723,20 @@ function buildBudget(){
   });
   calcBudget();
 }
+function itemQty(per,days){return per==='day'?days:per==='person'?PEOPLE:per==='personday'?PEOPLE*days:1;}
 function calcBudget(){
   let sum=0;const days=totalNights()+1;
-  document.querySelectorAll('#budgetBox .brow[data-per="day"]').forEach(row=>{
+  document.querySelectorAll('#budgetBox .brow[data-per]').forEach(row=>{
     const inp=row.querySelector('input.perunit'),out=row.querySelector('[data-sum]');
-    const rate=parseFloat(inp.value)||0,v=rate*days;
+    const qty=itemQty(row.dataset.per,days),v=(parseFloat(inp.value)||0)*qty;
     if(out)out.textContent=v?money(v):'—';
     const dd=row.querySelector('[data-days]');if(dd)dd.textContent=days;
+    const pp=row.querySelector('[data-ppl]');if(pp)pp.textContent=PEOPLE;
   });
   BUDGET.forEach(gr=>{
     let gsum=0;
     gr.items.forEach(it=>{
-      if(it.per==='day'){const r=document.querySelector('.perunit[data-k="'+it.k+'rate"]');gsum+=(parseFloat(r&&r.value)||0)*days;}
+      if(it.per){const r=document.querySelector('.perunit[data-k="'+it.k+'rate"]');gsum+=(parseFloat(r&&r.value)||0)*itemQty(it.per,days);}
       else{const f=document.querySelector('#budgetBox input.money[data-k="'+it.k+'"]');gsum+=parseFloat(f&&f.value)||0;}
     });
     const gel=document.querySelector('[data-gsum="'+gr.g+'"]');if(gel)gel.textContent=money(gsum);
@@ -1734,15 +1747,22 @@ function calcBudget(){
   BASES.forEach((b,i)=>o['h'+(i+1)+'rate']=HRATE[i]||0);
   try{localStorage.setItem(BKEY,JSON.stringify(o));}catch(e){}
   document.getElementById('sumAll').textContent=money(sum);
-  document.getElementById('sumPer').textContent=money(Math.round(sum/2));
+  document.getElementById('sumPer').textContent=money(Math.round(sum/PEOPLE));
   const sd=document.getElementById('sumDay');if(sd)sd.textContent=money(Math.round(sum/days));
-  const mn=document.getElementById('tMoney');if(mn&&sum>0)mn.textContent='$'+Math.round(sum/2).toLocaleString('en-US').replace(/,/g,' ');
+  const mn=document.getElementById('tMoney');if(mn&&sum>0)mn.textContent='$'+Math.round(sum/PEOPLE).toLocaleString('en-US').replace(/,/g,' ');
+  const gm=document.getElementById('gtPerLabel');if(gm)gm.textContent='На человека ('+PEOPLE+')';
 }
 function wireBudget(){
   buildBudget();
   const rb=document.getElementById('resetBudget');
   if(rb)rb.addEventListener('click',()=>{try{localStorage.removeItem(BKEY);}catch(e){}
     BASES.forEach((b,i)=>HRATE[i]=0);buildBudget();renderStays();});
+  /* сколько человек едет */
+  const pn=document.getElementById('pNum');if(pn)pn.textContent=PEOPLE;
+  const setPeople=(d)=>{PEOPLE=Math.max(1,Math.min(60,PEOPLE+d));if(pn)pn.textContent=PEOPLE;savePlan();calcBudget();};
+  const pm=document.getElementById('pMinus'),pp=document.getElementById('pPlus');
+  if(pm)pm.addEventListener('click',()=>setPeople(-1));
+  if(pp)pp.addEventListener('click',()=>setPeople(1));
 }
 
 /* ================= СТАРТ ================= */
