@@ -769,6 +769,40 @@ header.hero h1 em{background:none!important;-webkit-background-clip:border-box!i
 .mapbar{display:none!important}
 .leaflet-control-attribution{font-size:8px!important;background:rgba(255,255,255,.55)!important;color:#9a9aad!important;padding:1px 5px!important;opacity:.7}
 .leaflet-control-attribution a{color:#9a9aad!important}
+/* ══ ЕДИНЫЙ ФИОЛЕТОВЫЙ СТИЛЬ для Еды и Бюджета ══ */
+/* заголовки разделов — засечки, как у городов */
+section h2.big{font-family:"Fraunces",Georgia,serif!important;font-weight:600!important;letter-spacing:-.01em!important}
+/* все медальоны → фиолет */
+.fmed,.bgmed,.staydot,.hdot,.fico2{background:linear-gradient(150deg,#7a5cf0,#5b3fc4)!important}
+.foodcity h4 .fb{background:linear-gradient(150deg,#7a5cf0,#5b3fc4)!important}
+/* кнопки брони в бюджете/жилье → фиолет */
+.hbook{background:linear-gradient(96deg,#6b4fd6,#5b3fc4)!important}
+.bbook{border-color:rgba(91,63,196,.4)!important;color:#5b3fc4!important;background:linear-gradient(180deg,#fff,#f4f1ff)!important}
+/* поля и степперы: оранжевые рамки → фиолет */
+.stepbtn{border-color:rgba(91,63,196,.35)!important;color:#5b3fc4!important;background:linear-gradient(180deg,#fff,#f5f2ff)!important}
+.stepbtn:active{background:linear-gradient(150deg,#7a5cf0,#5b3fc4)!important;color:#fff!important}
+input.money,.hf input,.bfield input{border-color:rgba(91,63,196,.35)!important;background:linear-gradient(180deg,#fff,#f6f3ff)!important}
+input.money:focus,.hf input:focus,.bfield input:focus{outline:2px solid rgba(91,63,196,.28)!important;border-color:#5b3fc4!important}
+.dateset input[type=date]{border-color:rgba(91,63,196,.35)!important;background:linear-gradient(180deg,#fff,#f6f3ff)!important}
+.dateset input[type=date]:focus{outline:2px solid rgba(91,63,196,.28)!important;border-color:#5b3fc4!important}
+.hf:last-child input{color:#5b3fc4!important}
+/* мета-пилюли еды: оранжевую тип-еды делаем нейтральной */
+.foodlist .fmeta{color:#6b4fd6!important}
+.mealbtn.all{background:linear-gradient(150deg,#7a5cf0,#5b3fc4)!important;border-color:transparent!important}
+.mealbtn{border-color:#e5e6f5!important}.mealbtn:hover{color:#5b3fc4!important;border-color:rgba(91,63,196,.4)!important}
+/* большой итог + плашка ночей → фиолет */
+.grandtot,.staytot{background:linear-gradient(150deg,#5b3fc4,#2e2170)!important}
+.grandtot .gt-main b{color:#b9a6f5!important}.staytot b,.staytot .hsum{color:#b9a6f5!important}
+/* группа бюджета: сумма фиолетовая */
+.bgsum{color:#5b3fc4!important}.day .tx .m b,.cf{color:inherit}
+/* карточка людей и планировщик — ровные отступы */
+.peoplebar,.planner{border-radius:20px}
+/* цена «за день»: множитель в одну строку, не переносить уродливо */
+.brow .binfo span{line-height:1.5}
+.bx{white-space:nowrap}
+.bmul{white-space:nowrap;display:inline-block}
+.dcount{color:#5b3fc4!important;background:rgba(91,63,196,.12)!important}
+.fooddet .chev,.fico2 .i{color:#fff}
 </style>
 </head>
 <body>
@@ -1918,9 +1952,9 @@ function buildBudget(){
       if(it.per==='day'||it.per==='person'||it.per==='personday'){
         const rate=saved[it.k+'rate']!==undefined?saved[it.k+'rate']:(it.rate!==undefined?it.rate:it.v);
         const unit=it.per==='day'?'$/дн':'$/чел';
-        const mult=it.per==='day'?('× <b data-days>'+(totalNights()+1)+'</b> дн.')
-                  :it.per==='person'?('× <b data-ppl>'+PEOPLE+'</b> чел.')
-                  :('× <b data-ppl>'+PEOPLE+'</b> чел. × <b data-days>'+(totalNights()+1)+'</b> дн.');
+        const mult=it.per==='day'?('<span class="bmul">× <b data-days>'+(totalNights()+1)+'</b> дн.</span>')
+                  :it.per==='person'?('<span class="bmul">× <b data-ppl>'+PEOPLE+'</b> чел.</span>')
+                  :('<span class="bmul">× <b data-ppl>'+PEOPLE+'</b> чел.</span> <span class="bmul">× <b data-days>'+(totalNights()+1)+'</b> дн.</span>');
         return '<div class="brow" data-per="'+it.per+'">'
           +'<span class="binfo"><b>'+it.nm+'</b><span>'+it.sub+' '+mult+'</span></span>'
           +'<span class="bfield"><input class="money perunit" data-k="'+it.k+'rate" inputmode="decimal" value="'+rate+'"><span class="bx">'+unit+'</span></span>'
