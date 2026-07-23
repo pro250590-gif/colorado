@@ -561,7 +561,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{o
 .fico2{display:grid;place-items:center;color:#fff;border:0;position:relative;overflow:hidden}
 .fico2::after{content:"";position:absolute;inset:0;
   background:radial-gradient(120% 78% at 14% 8%,rgba(255,255,255,.4),rgba(255,255,255,0) 58%)}
-.fico2 .i{width:32px;height:32px;position:relative;z-index:2;stroke-width:1.7}
+.fico2 .i{width:40px;height:40px;position:relative;z-index:2;stroke-width:1.55}
 </style>
 </head>
 <body>
@@ -775,7 +775,7 @@ const ICONS={
  map:'<path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14M15 6v14"/>',
  list:'<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',
  bed:'<path d="M2 20v-8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v8M2 16h20M6 10V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v4"/>',
- food:'<path d="M3 2v7a3 3 0 0 0 3 3v10M6 2v7M9 2v7M18 2c-1.6 2-2.4 4.2-2.4 6.4 0 1.9.9 3.1 2.4 3.4V22"/>',
+ food:'<path d="M3.4 2.3v4.5M6.9 2.3v4.5M10.4 2.3v4.5M3.4 6.8a3.5 3.5 0 0 0 7 0M6.9 10.3v11.4"/><path d="M17.9 2.3c-2.1 2.4-3.1 5.2-3.1 7.9 0 2.3 1.2 3.9 3.1 4.3v7.2"/>',
  wallet:'<path d="M19 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0 0 4h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5"/><path d="M17.5 13h.01"/>',
  mountain:'<path d="m8 3 4.5 8.5L17 7l5 14H2L8 3Z"/>',
  town:'<path d="M3 21h18M5 21V9l7-5 7 5v12M10 21v-6h4v6"/>',
@@ -794,7 +794,7 @@ const ICONS={
  ticket:'<path d="M3 9.5V7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2.5a2.5 2.5 0 0 0 0 5V17a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2.5a2.5 2.5 0 0 0 0-5Z"/><path d="M13 5v2M13 11v2M13 17v2"/>',
  plus:'<path d="M12 5v14M5 12h14"/>',
  coffee:'<path d="M17 8h1.2a3.4 3.4 0 0 1 0 6.8H17"/><path d="M3 8h14v7.5a4.5 4.5 0 0 1-4.5 4.5h-5A4.5 4.5 0 0 1 3 15.5Z"/><path d="M7 2.5V5M11 2.5V5"/>',
- wine:'<path d="M8.5 22h7M12 15.5V22M6.8 3h10.4l-.9 6.2a4.6 4.6 0 0 1-9.1 0L6.8 3Z"/>',
+ wine:'<path d="M6.4 2.4h11.2l-1.5 6.9a4.2 4.2 0 0 1-8.2 0L6.4 2.4Z"/><path d="M12 13.4v8.2M8.4 21.6h7.2"/>',
  chevron:'<path d="m9.5 18 6-6-6-6"/>',
  plane:'<path d="M17.9 19.3 15.8 11l3.6-3.6a2.1 2.1 0 1 0-3-3L12.8 8 4.6 6.2a1 1 0 0 0-.9 1.7l4.9 3.1-2 3H3.6l-.9 2 3.8 1 1 3.8 2-.9v-3l3-2 3.1 5a1 1 0 0 0 1.7-.9Z"/>',
  route:'<circle cx="6" cy="19" r="2.5"/><circle cx="18" cy="5" r="2.5"/><path d="M15.5 5H10a4 4 0 0 0 0 8h4a4 4 0 0 1 0 8H8.5"/>',
@@ -802,7 +802,7 @@ const ICONS={
  info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.8h.01"/>',
  tree:'<path d="M12 2 7 10h3l-4 6h5v6h2v-6h5l-4-6h3L12 2Z"/>',
  chevron:'<path d="m6 9 6 6 6-6"/>',
- foodwine:'<path d="M4 2.5v6a2.2 2.2 0 0 0 2.2 2.2V21.5M4 2.5v6M8.4 2.5v6a2.2 2.2 0 0 1-2.2 2.2"/><path d="M13.6 2.5h6.8l-.75 4.6a2.7 2.7 0 0 1-5.3 0L13.6 2.5Z"/><path d="M17 11.6v9.9M14.4 21.5h5.2"/>',
+ foodwine:'<path d="M2.6 2.3v4.3M5.9 2.3v4.3M9.2 2.3v4.3M2.6 6.6a3.3 3.3 0 0 0 6.6 0M5.9 9.9v11.8"/><path d="M12 3.2v17.6" opacity=".35"/><path d="M14.6 2.3h7.4l-1 5.5a2.85 2.85 0 0 1-5.4 0l-1-5.5Z"/><path d="M18.3 12v9.7M15.6 21.7h5.4"/>',
  layers:'<path d="m12 2 9 5-9 5-9-5 9-5ZM3 12l9 5 9-5M3 17l9 5 9-5"/>',
  pencil:'<path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>'
 };
