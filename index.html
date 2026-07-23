@@ -409,6 +409,62 @@ footer a{color:var(--orange1);font-weight:600}
 }
 a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--orange2);
   outline-offset:2px;border-radius:8px}
+
+/* ── ФИЛЬТР: сегменты вдоль + карточки по две в ряд ── */
+.fseg{display:flex;background:rgba(20,32,27,.06);border-radius:999px;padding:4px;gap:2px}
+.fseg button{flex:1;text-align:center;padding:12px 8px;border:0;background:none;border-radius:999px;cursor:pointer;
+  font:800 12.5px/1 "Plus Jakarta Sans",sans-serif;color:var(--mut);letter-spacing:-.02em}
+.fseg button.on{background:#fff;color:var(--ink);box-shadow:0 4px 12px -6px rgba(20,32,27,.5)}
+.fall{display:flex;align-items:center;justify-content:space-between;width:100%;margin-top:10px;border:1px solid var(--cardline);
+  background:var(--card);border-radius:18px;padding:14px 16px;cursor:pointer;box-shadow:var(--sh1);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+.fall b{font:800 13.5px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:-.03em;color:var(--ink)}
+.fall span{font:700 11.5px/1 "Inter",sans-serif;color:var(--green2)}
+.fall.on{background:linear-gradient(150deg,#1f3b31,#0d211a);border-color:transparent}
+.fall.on b{color:#fff}.fall.on span{color:var(--orange1)}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:9px}
+.fcell{border:1px solid var(--cardline);background:var(--card);border-radius:20px;overflow:hidden;padding:0;cursor:pointer;
+  text-align:left;box-shadow:var(--sh1);position:relative;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  transition:transform .15s,box-shadow .2s}
+.fcell:active{transform:scale(.975)}
+.fph{display:block;height:78px;background:#dde5e1 center/cover no-repeat;position:relative}
+.fph[data-noimg]{background:linear-gradient(150deg,#eef2ef,#dde6e0);display:grid;place-items:center}
+.fph::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,20,16,.02),rgba(10,20,16,.5))}
+.fico{position:relative;z-index:2;width:38px;height:38px;border-radius:13px;display:grid;place-items:center;color:#fff;
+  box-shadow:var(--sh1),inset 0 1px 0 rgba(255,255,255,.4)}
+.fbadge{position:absolute;left:9px;top:9px;z-index:3;color:#fff;font:800 10.5px/1 "Plus Jakarta Sans",sans-serif;
+  padding:6px 9px;border-radius:9px;box-shadow:0 3px 8px rgba(0,0,0,.3);letter-spacing:-.01em}
+.fph[data-noimg] .fbadge{display:none}
+.ftick{position:absolute;right:9px;top:9px;z-index:3;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;
+  color:#fff;background:linear-gradient(150deg,var(--green1),var(--green3));box-shadow:0 4px 10px -4px rgba(10,96,71,.8);
+  opacity:0;transform:scale(.6);transition:.2s}
+.fcell.on .ftick{opacity:1;transform:none}
+.fcell.on{box-shadow:inset 0 0 0 2px var(--green2),var(--sh1)}
+.fcell.on .fbd{background:rgba(47,190,134,.1)}
+.fbd{display:block;padding:10px 12px 12px}
+.fbd b{display:block;font:700 13.5px/1.24 "Plus Jakarta Sans",sans-serif;letter-spacing:-.03em;color:var(--ink);
+  min-height:33px}
+.fbd span{display:block;font:500 11px/1 "Inter",sans-serif;color:var(--mut);margin-top:6px}
+.foodline{display:flex;align-items:center;gap:11px;width:100%;margin-top:9px;background:var(--card);border:1px solid var(--cardline);
+  border-radius:18px;padding:12px 15px;cursor:pointer;box-shadow:var(--sh1);backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px)}
+.foodline .fic{width:32px;height:32px;border-radius:11px;display:grid;place-items:center;color:#fff;flex:none;
+  background:linear-gradient(150deg,var(--orange1),var(--orange3));box-shadow:inset 0 1px 0 rgba(255,255,255,.4)}
+.foodline b{font:700 13.5px/1 "Inter",sans-serif;flex:1;text-align:left;color:var(--ink)}
+.sw{width:46px;height:27px;border-radius:999px;background:rgba(20,32,27,.14);position:relative;flex:none;transition:background .2s}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:21px;height:21px;border-radius:50%;background:#fff;
+  box-shadow:0 2px 6px rgba(20,32,27,.4);transition:left .2s}
+.foodline.on .sw{background:linear-gradient(150deg,var(--green1),var(--green3))}
+.foodline.on .sw::after{left:22px}
+
+/* ── ПЛИТКИ ШАПКИ: иконка и число в строку, подпись снизу (вариант И) ── */
+.tile-g,.tile-w{min-height:110px;display:flex;flex-direction:column;justify-content:space-between}
+.tile .thead{display:flex;align-items:center;gap:11px;position:relative;z-index:2}
+.tile .thead .ic{width:34px;height:34px;border-radius:12px}
+.tile .thead b{font:800 24px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:-.05em}
+.tile .tcap{position:relative;z-index:2;font:600 10.5px/1.3 "Inter",sans-serif;letter-spacing:.06em;text-transform:uppercase;
+  opacity:.9;margin-top:13px;padding-top:11px;border-top:1px solid rgba(255,255,255,.26)}
+.tile-w .tcap{color:#78867e;opacity:1;border-top-color:rgba(20,32,27,.08)}
 </style>
 </head>
 <body>
@@ -430,14 +486,14 @@ a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{o
         <img src="img/hero-w.webp" alt="Maroon Bells, Колорадо" decoding="async" fetchpriority="high">
         <div class="cnt"><h2>Maroon Bells</h2><p>седьмой день · самое фотографируемое место Колорадо</p></div>
       </div>
-      <div class="tile tile-g o"><span class="ic" id="tileIc1"></span>
-        <span class="val"><b id="hDates">7–16 авг</b><span id="tDays">10 дней</span></span></div>
-      <div class="tile tile-g g"><span class="ic" id="tileIc2"></span>
-        <span class="val"><b id="tNights">9 ночей</b><span id="tNightsSub">10 дней · 4 базы</span></span></div>
-      <div class="tile tile-w"><span class="ic" id="tileIc3"></span>
-        <span class="val"><b>1 150</b><span>км за рулём</span></span></div>
-      <div class="tile tile-g d"><span class="ic" id="tileIc4"></span>
-        <span class="val"><b>3 687</b><span>метров пик</span></span></div>
+      <div class="tile tile-g o"><span class="thead"><span class="ic" id="tileIc1"></span><b id="hDates">12 дней</b></span>
+        <span class="tcap" id="tDays">11 ночей · 4 базы</span></div>
+      <div class="tile tile-g g"><span class="thead"><span class="ic" id="tileIc2"></span><b id="tPlaces">47</b></span>
+        <span class="tcap">мест отобрано</span></div>
+      <div class="tile tile-w"><span class="thead"><span class="ic" id="tileIc3"></span><b id="tMoney">$2 106</b></span>
+        <span class="tcap">на человека</span></div>
+      <div class="tile tile-g d"><span class="thead"><span class="ic" id="tileIc4"></span><b>2</b></span>
+        <span class="tcap">национальных парка</span></div>
       <!-- профиль высоты: маршрут — это набор и сброс высоты -->
       <div class="elev" id="elev"></div>
     </div>
@@ -646,7 +702,8 @@ const ICONS={
  plane:'<path d="M17.9 19.3 15.8 11l3.6-3.6a2.1 2.1 0 1 0-3-3L12.8 8 4.6 6.2a1 1 0 0 0-.9 1.7l4.9 3.1-2 3H3.6l-.9 2 3.8 1 1 3.8 2-.9v-3l3-2 3.1 5a1 1 0 0 0 1.7-.9Z"/>',
  route:'<circle cx="6" cy="19" r="2.5"/><circle cx="18" cy="5" r="2.5"/><path d="M15.5 5H10a4 4 0 0 0 0 8h4a4 4 0 0 1 0 8H8.5"/>',
  camera:'<path d="M4 8h3l1.5-2.5h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z"/><circle cx="12" cy="13.5" r="3.4"/>',
- info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.8h.01"/>'
+ info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.8h.01"/>',
+ tree:'<path d="M12 2 7 10h3l-4 6h5v6h2v-6h5l-4-6h3L12 2Z"/>'
 };
 function ic(n,cls){return ICONS[n]?'<svg class="i'+(cls?' '+cls:'')+'" viewBox="0 0 24 24" aria-hidden="true" focusable="false">'+ICONS[n]+'</svg>':'';}
 function med(n,bg,cls){return '<span class="med '+(cls||'')+'" style="background:'+bg+'">'+ic(n)+'</span>';}
@@ -979,37 +1036,65 @@ function foodVisible(f){
   return true; // «Всё» или категория → вся еда
 }
 function pinVisible(p){if(p.cat==='food')return foodVisible(p);return picked.has(p.id)&&matchesPrimary(p);}
+let fseg='day';                       /* какой раздел фильтра открыт */
+/* фото для карточки: берём первый снимок из точек дня */
+function dayPhoto(n){const p=P.find(x=>x.d===n&&PHOTO[x.id]);return p?pimg(p.id,'t'):'';}
+function basePhoto(id){return BPHOTO[id]?pimg(BPHOTO[id],'t'):'';}
+function dayPts(n){return P.filter(p=>p.d===n&&p.cat!=='food').length;}
+function catPts(k){return k==='star'?P.filter(p=>p.star).length:P.filter(p=>p.cat===k).length;}
+
+function fcell(o){
+  /* o: {f,v,photo,color,badge,title,sub,icon} */
+  return '<button class="fcell" data-f="'+o.f+'" data-v="'+o.v+'">'
+    +'<span class="fph"'+(o.photo?' style="background-image:url('+o.photo+')"':' data-noimg="1"')+'>'
+    +(o.photo?'':'<span class="fico" style="background:'+o.color+'">'+ic(o.icon||'pin')+'</span>')
+    +'<span class="fbadge" style="background:'+o.color+'">'+o.badge+'</span>'
+    +'<span class="ftick">'+ic('check','i-sm')+'</span></span>'
+    +'<span class="fbd"><b>'+o.title+'</b><span>'+o.sub+'</span></span></button>';
+}
 function buildFilters(){
   const box=document.getElementById('filters');
-  let h='<div class="frow"><span class="flabel">Показать</span>'
-    +'<button class="chip allc" data-f="all">Всё</button>'
-    +'<button class="chip" data-f="cat" data-v="star">'+ic('star','i-sm')+' Главное</button></div>';
-  h+='<div class="frow"><span class="flabel">По дням</span>'+DAYS.map(d=>'<button class="chip" data-f="day" data-v="'+d.n+'"><span class="dotc" style="background:'+DCOL[d.n]+'"></span>'+d.n+'</button>').join('')+'</div>';
-  h+='<div class="frow"><span class="flabel">По базам</span>'+BASES.map(b=>'<button class="chip" data-f="base" data-v="'+b.id+'"><span class="dotc" style="background:'+b.color+'"></span>'+ic(b.emoji,'i-sm')+' '+b.name.split(' ')[0]+'</button>').join('')+'</div>';
-  const ck=['nature','town','springs'];
-  h+='<div class="frow"><span class="flabel">Категории</span>'+ck.map(c=>'<button class="chip" data-f="cat" data-v="'+c+'">'+ic(CATS[c].e,'i-sm')+' '+CATS[c].l+'</button>').join('')+'</div>';
-  h+='<div class="frow"><span class="flabel">Наложить</span><button class="chip foodtoggle" id="foodToggle">'+ic('food','i-sm')+' Показать еду на карте</button><span class="foodhint">поверх выбранного дня или базы</span></div>';
-  box.innerHTML=h;
-  box.querySelectorAll('.chip').forEach(ch=>{
-    if(ch.id==='foodToggle'){ch.addEventListener('click',()=>{foodOn=!foodOn;applyFilter();});return;}
-    ch.addEventListener('click',()=>{
-      const f=ch.dataset.f,v=ch.dataset.v;
-      if(f==='all'){filter={mode:'all',v:null};}
-      else{const nv=(f==='day')?+v:v;
-        if(filter.mode===f&&String(filter.v)===String(nv)){filter={mode:'all',v:null};}
-        else{filter={mode:f,v:nv};}}
-      applyFilter();
-    });
-  });
+  const total=P.filter(p=>p.cat!=='food').length;
+  let cells='';
+  if(fseg==='day'){
+    cells=DAYS.map(d=>fcell({f:'day',v:d.n,photo:dayPhoto(d.n),color:DCOL[d.n],badge:'День '+d.n,
+      title:d.title,sub:fmtShort(dayDateFor(d.n))+' · '+dayPts(d.n)+' '+plural(dayPts(d.n),'точка','точки','точек')})).join('');
+  }else if(fseg==='base'){
+    cells=BASES.map((b,i)=>fcell({f:'base',v:b.id,photo:basePhoto(b.id),color:b.color,badge:'База '+(i+1),
+      title:shortName(b.name),sub:b.nights+' '+nights(b.nights)})).join('');
+  }else{
+    const ck=[['star','Главное','#f47b20'],['nature','Природа','#12855e'],['town','Города','#3d5a72'],
+              ['springs','Источники','#3d8bff'],['transport','Транспорт','#a1663a']];
+    cells=ck.map(([k,l,c])=>fcell({f:'cat',v:k,photo:'',color:c,icon:k==='star'?'star':CATS[k].e,badge:l,
+      title:l,sub:catPts(k)+' '+plural(catPts(k),'место','места','мест')})).join('');
+  }
+  box.innerHTML='<div class="fseg">'
+      +'<button data-seg="day"'+(fseg==='day'?' class="on"':'')+'>Дни</button>'
+      +'<button data-seg="base"'+(fseg==='base'?' class="on"':'')+'>Базы</button>'
+      +'<button data-seg="cat"'+(fseg==='cat'?' class="on"':'')+'>Категории</button></div>'
+    +'<button class="fall" data-f="all"><b>Показать всё</b><span>'+total+' '+plural(total,'точка','точки','точек')+'</span></button>'
+    +'<div class="fgrid">'+cells+'</div>'
+    +'<button class="foodline" id="foodToggle"><span class="fic">'+ic('food','i-sm')+'</span>'
+      +'<b>Еда на карте</b><span class="sw"></span></button>';
+
+  box.querySelectorAll('[data-seg]').forEach(b=>b.addEventListener('click',()=>{fseg=b.dataset.seg;buildFilters();applyFilter();}));
+  box.querySelector('#foodToggle').addEventListener('click',()=>{foodOn=!foodOn;applyFilter();});
+  box.querySelectorAll('[data-f]').forEach(el=>el.addEventListener('click',()=>{
+    const f=el.dataset.f,v=el.dataset.v;
+    if(f==='all'){filter={mode:'all',v:null};}
+    else{const nv=(f==='day')?+v:v;
+      if(filter.mode===f&&String(filter.v)===String(nv))filter={mode:'all',v:null};
+      else filter={mode:f,v:nv};}
+    applyFilter();
+  }));
 }
+function fmtShort(dt){return dt.getDate()+' '+MONTHS[dt.getMonth()].slice(0,3);}
 function applyFilter(){
-  // чипы
-  document.querySelectorAll('#filters .chip').forEach(ch=>{
-    if(ch.id==='foodToggle'){ch.classList.toggle('on',foodOn);return;}
-    const f=ch.dataset.f,v=ch.dataset.v;let on=false;
-    if(f==='all'&&filter.mode==='all')on=true;
-    else if(f===filter.mode&&String(filter.v)===String(v))on=true;
-    ch.classList.toggle('on',on);
+  // карточки фильтра
+  const ft=document.getElementById('foodToggle');if(ft)ft.classList.toggle('on',foodOn);
+  document.querySelectorAll('#filters [data-f]').forEach(el=>{
+    const f=el.dataset.f,v=el.dataset.v;
+    el.classList.toggle('on',(f==='all'&&filter.mode==='all')||(f===filter.mode&&String(filter.v)===String(v)));
   });
   // строки списка (только маршрутные точки; еда — отдельный раздел ниже)
   P.forEach(p=>{if(p.cat==='food')return;const li=document.querySelector('li[data-id="'+p.id+'"]');if(li)li.classList.toggle('hiddenrow',!matchesPrimary(p));});
@@ -1188,10 +1273,15 @@ function nights(n){const a=n%10,b=n%100;if(a===1&&b!==11)return'ночь';if(a>=
 function recomputeDates(){
   DAYS.forEach(d=>{const el=document.querySelector('[data-daydate="'+d.n+'"]');if(el)el.textContent=fmtDate(dayDateFor(d.n));});
   const tn=totalNights(), td=tn+1;
-  const hd=document.getElementById('hDates');
-  if(hd){const s=addDays(startIso,0),e=addDays(startIso,tn);
-    hd.textContent=s.getDate()+'–'+e.getDate()+' '+MONTHS[e.getMonth()].slice(0,3);}
-  const dd=document.getElementById('tDays');if(dd)dd.textContent=td+' '+plural(td,'день','дня','дней');
+
+  const dd=document.getElementById('tDays');
+  if(dd)dd.textContent=tn+' '+nights(tn)+' · '+BASES.length+' '+plural(BASES.length,'база','базы','баз');
+  const hd2=document.getElementById('hDates');if(hd2)hd2.textContent=td+' '+plural(td,'день','дня','дней');
+  const pl=document.getElementById('tPlaces');
+  if(pl)pl.textContent=P.filter(p=>p.cat!=='food').length;
+  const mn=document.getElementById('tMoney');
+  if(mn){let sum=0;document.querySelectorAll('#budgetTbl tbody input.money').forEach(i=>sum+=parseFloat(i.value)||0);
+    if(sum>0)mn.textContent='$'+Math.round(sum/2).toLocaleString('en-US').replace(/,/g,' ');}
   const nn=document.getElementById('tNights');if(nn)nn.textContent=tn+' '+nights(tn);
   const ns=document.getElementById('tNightsSub');
   if(ns)ns.textContent=td+' '+plural(td,'день','дня','дней')+' · '+BASES.length+' '+plural(BASES.length,'база','базы','баз');
@@ -1243,6 +1333,8 @@ const BKEY='co-trip-2026-budget';const DEF={};
 function money(n){return '$'+n.toLocaleString('en-US',{maximumFractionDigits:0});}
 function calcBudget(){let sum=0;document.querySelectorAll('#budgetTbl tbody input.money').forEach(i=>sum+=parseFloat(i.value)||0);
   document.getElementById('sumAll').textContent=money(sum);document.getElementById('sumPer').textContent=money(sum/2);
+  const mnT=document.getElementById('tMoney');
+  if(mnT&&sum>0)mnT.textContent='$'+Math.round(sum/2).toLocaleString('en-US').replace(/,/g,' ');
   const o={};document.querySelectorAll('input.money').forEach(i=>o[i.dataset.k]=i.value);try{localStorage.setItem(BKEY,JSON.stringify(o));}catch(e){}}
 function wireBudget(){
   document.querySelectorAll('input.money').forEach(i=>DEF[i.dataset.k]=i.value);
@@ -1255,7 +1347,7 @@ function wireBudget(){
 
 /* ================= СТАРТ ================= */
 loadPlan();
-['tileIc1|clock','tileIc2|bed','tileIc3|car','tileIc4|mountain'].forEach(p=>{const [id,ico]=p.split('|');const el=document.getElementById(id);if(el)el.innerHTML=ic(ico);});
+['tileIc1|clock','tileIc2|pin','tileIc3|money','tileIc4|tree'].forEach(p=>{const [id,ico]=p.split('|');const el=document.getElementById(id);if(el)el.innerHTML=ic(ico);});
 buildElev();buildFilters();buildDays();buildFood();buildBases();buildPlanner();wireButtons();wireBudget();
 recomputeDates();
 syncChecks();applyFilter();
