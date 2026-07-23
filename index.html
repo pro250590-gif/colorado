@@ -672,14 +672,11 @@ a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{o
       <tr><td>Билеты, 2 человека</td><td>Basic Economy <span class="cf"><svg class="i i-sm" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> с твоего скриншота</span></td><td class="num"><input class="money" data-k="a1" value="1250.60"></td></tr>
       <tr><td>Багаж</td><td>2 чел × 2 стороны × $50 <span class="cf"><svg class="i i-sm" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span></td><td class="num"><input class="money" data-k="a2" value="200"></td></tr>
       <tr class="grp"><td colspan="3"><svg class="i i-sm" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17H3.6a.6.6 0 0 1-.6-.6V12l2.2-5.4A1 1 0 0 1 6.1 6h11.8a1 1 0 0 1 .9.6L21 12v4.4a.6.6 0 0 1-.6.6H19M5 17a2 2 0 1 0 4 0M15 17a2 2 0 1 0 4 0M9 17h6"/></svg> Машина</td></tr>
-      <tr><td>Аренда, ~9 дней</td><td>SUV, ~$90/день <span class="tbd">? твои цены</span></td><td class="num"><input class="money" data-k="c1" value="810"></td></tr>
+      <tr data-per="day"><td>Аренда машины</td><td>SUV · <input class="money perunit" data-k="c1rate" value="90"> $ в день × <b data-days>10</b></td><td class="num" data-sum="c1">—</td></tr>
       <tr><td>Возврат в другом городе</td><td>Дуранго → Денвер <span class="est">~ $100-150</span></td><td class="num"><input class="money" data-k="c2" value="130"></td></tr>
       <tr><td>Бензин</td><td>~1 150 км гор <span class="est">~ оценка</span></td><td class="num"><input class="money" data-k="c3" value="120"></td></tr>
-      <tr class="grp"><td colspan="3"><svg class="i i-sm" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V9l7-5 7 5v12M10 21v-6h4v6"/></svg> Жильё · 9 ночей</td></tr>
-      <tr><td>Дуранго</td><td>3 ночи <span class="tbd">? варианты</span></td><td class="num"><input class="money" data-k="h1" value="0"></td></tr>
-      <tr><td>Урей / Риджуэй</td><td>2 ночи <span class="tbd">? варианты</span></td><td class="num"><input class="money" data-k="h2" value="0"></td></tr>
-      <tr><td>Аспен / Басальт</td><td>3 ночи <span class="tbd">? варианты</span></td><td class="num"><input class="money" data-k="h3" value="0"></td></tr>
-      <tr><td>Денвер (у аэропорта)</td><td>1 ночь <span class="tbd">? варианты</span></td><td class="num"><input class="money" data-k="h4" value="0"></td></tr>
+      <tr class="grp"><td colspan="3"><svg class="i i-sm" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V9l7-5 7 5v12M10 21v-6h4v6"/></svg> <span id="bStayHead">Жильё</span></td></tr>
+      <tbody id="bStay"></tbody>
       <tr class="grp"><td colspan="3"><svg class="i i-sm" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5V7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2.5a2.5 2.5 0 0 0 0 5V17a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2.5a2.5 2.5 0 0 0 0-5Z"/></svg> Входы и активности · на двоих</td></tr>
       <tr><td>Поезд Durango &amp; Silverton</td><td>открытый вагон ~$144×2 +сбор <span class="est">~</span></td><td class="num"><input class="money" data-k="t1" value="311"></td></tr>
       <tr><td>Mesa Verde</td><td>$30/машина <span class="cf"><svg class="i i-sm" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span></td><td class="num"><input class="money" data-k="t2" value="30"></td></tr>
@@ -690,7 +687,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{o
       <tr><td>Гондола в Аспене</td><td>$40×2 <span class="cf"><svg class="i i-sm" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span></td><td class="num"><input class="money" data-k="t7" value="80"></td></tr>
       <tr><td>Джип-тур Yankee Boy</td><td>~$125×2 <span class="est">~ опц.</span></td><td class="num"><input class="money" data-k="t8" value="250"></td></tr>
       <tr class="grp"><td colspan="3"><svg class="i i-sm" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7a3 3 0 0 0 3 3v10M6 2v7M9 2v7M18 2c-1.6 2-2.4 4.2-2.4 6.4 0 1.9.9 3.1 2.4 3.4V22"/></svg> Еда</td></tr>
-      <tr><td>Еда и кафе</td><td>~$90/день × 10 <span class="est">~</span></td><td class="num"><input class="money" data-k="f1" value="900"></td></tr>
+      <tr data-per="day"><td>Еда и кафе</td><td>на двоих · <input class="money perunit" data-k="f1rate" value="90"> $ в день × <b data-days>10</b></td><td class="num" data-sum="f1">—</td></tr>
     </tbody>
     <tfoot>
       <tr class="tot"><td colspan="2">ИТОГО на двоих</td><td class="num" id="sumAll">—</td></tr>
@@ -1469,7 +1466,7 @@ function buildPlanner(){
     +'<div id="stayList"></div>'
     +'<div class="plannote">Кнопками − / + меняй число ночей на каждой базе. Заезды-выезды и даты в маршруте по дням пересчитаются сами.</div>';
   renderStays();
-  document.getElementById('startDate').addEventListener('change',e=>{startIso=e.target.value||START;savePlan();renderStays();recomputeDates();});
+  document.getElementById('startDate').addEventListener('change',e=>{startIso=e.target.value||START;savePlan();renderStays();recomputeDates();refreshBudgetCounts();});
 }
 function renderStays(){
   const rows=BASES.map((b,i)=>{const before=nightsBefore(b.id);const ci=addDays(startIso,before),co=addDays(startIso,before+b.nights);
@@ -1493,7 +1490,7 @@ document.addEventListener('change',e=>{const id=e.target.dataset&&e.target.datas
 document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)return;
   if(t.dataset.dayon){P.filter(p=>p.d===+t.dataset.dayon).forEach(p=>picked.add(p.id));savePicks();syncChecks();applyFilter();}
   if(t.dataset.dayoff){P.filter(p=>p.d===+t.dataset.dayoff).forEach(p=>picked.delete(p.id));savePicks();syncChecks();applyFilter();}
-  if(t.dataset.nd!==undefined){const i=+t.dataset.nd,dir=+t.dataset.dir;BASES[i].nights=Math.max(1,Math.min(21,BASES[i].nights+dir));savePlan();renderStays();recomputeDates();}});
+  if(t.dataset.nd!==undefined){const i=+t.dataset.nd,dir=+t.dataset.dir;BASES[i].nights=Math.max(1,Math.min(21,BASES[i].nights+dir));savePlan();renderStays();recomputeDates();refreshBudgetCounts();}});
 function wireButtons(){
   document.getElementById('allOn').onclick=()=>{P.forEach(p=>picked.add(p.id));savePicks();syncChecks();applyFilter();};
   document.getElementById('allOff').onclick=()=>{picked.clear();savePicks();syncChecks();applyFilter();};
@@ -1504,7 +1501,46 @@ function wireButtons(){
 /* ================= БЮДЖЕТ ================= */
 const BKEY='co-trip-2026-budget';const DEF={};
 function money(n){return '$'+n.toLocaleString('en-US',{maximumFractionDigits:0});}
-function calcBudget(){let sum=0;document.querySelectorAll('#budgetTbl tbody input.money').forEach(i=>sum+=parseFloat(i.value)||0);
+/* строки жилья: одна на базу, ночи берутся из планировщика */
+function buildBudgetStay(){
+  const host=document.getElementById('bStay');if(!host)return;
+  host.innerHTML=BASES.map((b,i)=>'<tr data-per="night" data-base="'+b.id+'">'
+    +'<td>'+shortName(b.name)+'</td>'
+    +'<td><b data-bn="'+b.id+'">'+b.nights+'</b> <span data-bw="'+b.id+'">'+nights(b.nights)+'</span> × '
+    +'<input class="money perunit" data-k="h'+(i+1)+'rate" value="0"> $ за ночь</td>'
+    +'<td class="num" data-sum="h'+(i+1)+'">—</td></tr>').join('');
+  host.querySelectorAll('input.money').forEach(inp=>{
+    let saved={};try{saved=JSON.parse(localStorage.getItem(BKEY))||{};}catch(e){}
+    if(saved[inp.dataset.k]!==undefined)inp.value=saved[inp.dataset.k];
+    inp.setAttribute('inputmode','decimal');
+    inp.addEventListener('input',calcBudget);
+    inp.addEventListener('focus',()=>inp.select());
+  });
+  refreshBudgetCounts();
+}
+/* обновляем числа ночей и дней в бюджете, не трогая введённые цены */
+function refreshBudgetCounts(){
+  const tn=totalNights(),td=tn+1;
+  BASES.forEach(b=>{const el=document.querySelector('[data-bn="'+b.id+'"]');
+    if(el)el.textContent=b.nights;
+    const w=document.querySelector('[data-bw="'+b.id+'"]');if(w)w.textContent=nights(b.nights);});
+  document.querySelectorAll('[data-days]').forEach(el=>el.textContent=td);
+  const hd=document.getElementById('bStayHead');
+  if(hd)hd.textContent='Жильё · '+tn+' '+nights(tn);
+  calcBudget();
+}
+function calcBudget(){let sum=0;
+  /* строки «цена за единицу × количество» считаем сами */
+  document.querySelectorAll('#budgetTbl tr[data-per]').forEach(tr=>{
+    const inp=tr.querySelector('input.perunit'),out=tr.querySelector('[data-sum]');
+    if(!inp||!out)return;
+    const rate=parseFloat(inp.value)||0;
+    const qty=tr.dataset.per==='night'
+      ? (BASES.find(b=>b.id===tr.dataset.base)||{nights:0}).nights
+      : totalNights()+1;
+    const v=rate*qty;out.textContent=v?money(v):'—';sum+=v;
+  });
+  document.querySelectorAll('#budgetTbl tbody input.money:not(.perunit)').forEach(i=>sum+=parseFloat(i.value)||0);
   document.getElementById('sumAll').textContent=money(sum);document.getElementById('sumPer').textContent=money(sum/2);
   const mnT=document.getElementById('tMoney');
   if(mnT&&sum>0)mnT.textContent='$'+Math.round(sum/2).toLocaleString('en-US').replace(/,/g,' ');
@@ -1521,7 +1557,7 @@ function wireBudget(){
 /* ================= СТАРТ ================= */
 loadPlan();
 ['tileIc1|clock','tileIc2|pin','tileIc3|money','tileIc4|tree'].forEach(p=>{const [id,ico]=p.split('|');const el=document.getElementById(id);if(el)el.innerHTML=ic(ico);});
-buildElev();buildFilters();buildDays();buildFood();buildBases();buildPlanner();wireButtons();wireBudget();
+buildElev();buildFilters();buildDays();buildFood();buildBases();buildPlanner();wireButtons();wireBudget();buildBudgetStay();
 recomputeDates();
 syncChecks();applyFilter();
 if(typeof requestIdleCallback==='function'){requestIdleCallback(initMap,{timeout:1500});}else{setTimeout(initMap,60);}
