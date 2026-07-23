@@ -732,6 +732,7 @@ body{background:linear-gradient(168deg,#eef1f8,#e9edf6 60%,#e6eaf4)!important}
 header.hero,#s-route{display:block!important}
 /* шапка: только описание + фото, без метрик и профиля высоты */
 header.hero .stats,header.hero .elev,header.hero .tile-g,header.hero .tile-w{display:none!important}
+#s-days{display:none!important}
 header.hero .bento{display:block!important}
 header.hero .kicker{color:#5b3fc4!important}
 header.hero h1 em{background:none!important;-webkit-background-clip:border-box!important;background-clip:border-box!important;color:#5b3fc4!important}
@@ -745,6 +746,26 @@ header.hero h1 em{background:none!important;-webkit-background-clip:border-box!i
 .counter b,.cf,.dcount,.mftx b~*,.fsub{color:inherit}
 .brandmark{background:linear-gradient(150deg,#7a5cf0,#5b3fc4)!important}
 .brand i{color:#5b3fc4!important}
+/* ── ДЕНЬ-АККОРДЕОН В ЛЕНТЕ ── */
+.cday{display:block;background:#fff;border:1px solid #e8e9f2;border-radius:15px;margin-bottom:9px;overflow:hidden;text-decoration:none;color:inherit}
+.cday[open]{box-shadow:0 12px 28px -16px rgba(27,30,46,.32)}
+.cdaysum{display:flex;align-items:center;gap:13px;padding:11px;cursor:pointer;list-style:none}
+.cdaysum::-webkit-details-marker{display:none}
+.cday .cgo{transition:transform .25s}
+.cday[open] .cgo{transform:rotate(180deg)}
+.cdaybody{padding:2px 14px 15px}
+.cleg{background:#f2effc;border-radius:12px;padding:10px 13px;font:500 12.5px/1.5 "Inter",sans-serif;color:#4a4d63;margin:2px 0 12px}
+.cleg b{color:#5b3fc4;font-weight:700;text-transform:uppercase;font-size:10px;letter-spacing:.06em;margin-right:6px}
+.cplaces{list-style:none;margin:0;padding:0}
+.cplaces li{padding:13px 0;border-top:1px solid #eef0f6}
+.cplaces li:first-child{border-top:0}
+.cpnm{font:700 16px/1.3 "Plus Jakarta Sans",sans-serif;letter-spacing:-.02em;display:block}
+.cpnm a{color:#1b1e2e;text-decoration:none;border-bottom:1.5px solid rgba(91,63,196,.35)}
+.cpnm a:hover{color:#5b3fc4}
+.cstar{color:#5b3fc4;margin-right:5px}
+.cwhy{display:block;font:400 14px/1.55 "Inter",sans-serif;color:#5c5f72;margin-top:7px}
+.cnote{background:#f6f2ff;border:1px solid #e6ddfb;border-radius:12px;padding:11px 13px;font:500 13px/1.5 "Inter",sans-serif;color:#4a3a7a;margin-top:12px}
+.cnote b{color:#3b2a8f}
 </style>
 </head>
 <body>
@@ -922,7 +943,7 @@ header.hero h1 em{background:none!important;-webkit-background-clip:border-box!i
 
 <nav class="bottomnav">
   <a href="#s-map" aria-label="Карта"><svg class="i" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14M15 6v14"/></svg>Карта</a>
-  <a href="#s-days" aria-label="Дни"><svg class="i" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>Дни</a>
+  <a href="#cities" aria-label="Дни"><svg class="i" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>Дни</a>
   
   <a href="#s-food" aria-label="Еда"><svg class="i" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7a3 3 0 0 0 3 3v10M6 2v7M9 2v7M18 2c-1.6 2-2.4 4.2-2.4 6.4 0 1.9.9 3.1 2.4 3.4V22"/></svg>Еда</a>
   <a href="#s-money" aria-label="Бюджет"><svg class="i" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0 0 4h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5"/><path d="M17.5 13h.01"/></svg>Бюджет</a>
@@ -963,6 +984,7 @@ const ICONS={
  info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.8h.01"/>',
  tree:'<path d="M12 2 7 10h3l-4 6h5v6h2v-6h5l-4-6h3L12 2Z"/>',
  chevron:'<path d="m6 9 6 6 6-6"/>',
+ cal:'<path d="M3 8h18M7 3v4M17 3v4M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"/>',
  foodwine:'<path d="M2.6 2.3v4.3M5.9 2.3v4.3M9.2 2.3v4.3M2.6 6.6a3.3 3.3 0 0 0 6.6 0M5.9 9.9v11.8"/><path d="M12 3.2v17.6" opacity=".35"/><path d="M14.6 2.3h7.4l-1 5.5a2.85 2.85 0 0 1-5.4 0l-1-5.5Z"/><path d="M18.3 12v9.7M15.6 21.7h5.4"/>',
  layers:'<path d="m12 2 9 5-9 5-9-5 9-5ZM3 12l9 5 9-5M3 17l9 5 9-5"/>',
  pencil:'<path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
@@ -1405,10 +1427,15 @@ function buildCities(){
     /* маршрут по дням */
     const route='<div class="cnode"><span class="cdot">'+ic('cal','i-sm')+'</span>'
       +'<div class="clbl"><b>Маршрут</b><span>Дни '+firstDay+'–'+lastDay+'</span></div>'
-      +days.map(d=>{const n=dayPts(d.n);
-        return '<a class="cday" href="#day-'+d.n+'"><span class="cdph"'+(dayPhoto(d.n)?' style="background-image:url('+dayPhoto(d.n)+')"':'')+'></span>'
+      +days.map(d=>{const n=dayPts(d.n);const list=P.filter(p=>p.d===d.n&&p.cat!=='food');
+        return '<details class="cday" data-day="'+d.n+'"><summary class="cdaysum"><span class="cdph"'+(dayPhoto(d.n)?' style="background-image:url('+dayPhoto(d.n)+')"':'')+'></span>'
         +'<span class="cdtx"><span class="cdm"><b>День '+d.n+'</b> · '+dm(dayDateFor(d.n))+' · '+n+' '+plural(n,'место','места','мест')+'</span><b>'+d.title+'</b></span>'
-        +'<span class="cgo">'+ic('chevron','i-sm')+'</span></a>';}).join('')+'</div>';
+        +'<span class="cgo">'+ic('chevron','i-sm')+'</span></summary>'
+        +'<div class="cdaybody">'
+        +(d.leg?'<div class="cleg"><b>'+d.pill+'</b> '+d.leg+'</div>':'')
+        +'<ul class="cplaces">'+list.map(p=>{const emo=p.star?'<span class="cstar">'+ic('star','i-sm')+'</span>':'';
+          return '<li><span class="cpnm">'+emo+'<a href="'+gurl(p.q)+'" target="_blank" rel="noopener">'+p.nm+'</a></span>'+metaStrip(p)+'<span class="cwhy">'+p.why+'</span></li>';}).join('')+'</ul>'
+        +(d.note?'<div class="cnote">'+d.note+'</div>':'')+'</div></details>';}).join('')+'</div>';
 
     return '<section class="city" id="city-'+b.id+'"><div class="wrap">'
       +'<div class="chead"><span class="ckick">База '+(i+1)+' из '+BASES.length+' · '+dm(ci)+'–'+dm(co)+'</span>'
@@ -1416,6 +1443,10 @@ function buildCities(){
       +'<div class="ctl">'+arrival+stay+route+'</div></div></section>';
   }).join('');
 
+  /* дни-аккордеоны: открыт только один */
+  host.querySelectorAll('.cday').forEach(det=>det.addEventListener('toggle',()=>{
+    if(det.open)host.querySelectorAll('.cday[open]').forEach(o=>{if(o!==det)o.open=false;});
+  }));
   /* подсветка активного города в степпере при прокрутке */
   if('IntersectionObserver' in window){
     const links={};stepHost&&stepHost.querySelectorAll('.cst').forEach(a=>links[a.dataset.city]=a);
