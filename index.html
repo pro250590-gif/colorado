@@ -813,6 +813,32 @@ input.money:focus,.hf input:focus,.bfield input:focus{outline:2px solid rgba(91,
 .br2bot input:focus{outline:2px solid rgba(91,63,196,.28);border-color:#5b3fc4}
 .br2u{font:500 12px/1.3 "Inter",sans-serif;color:#8b8fa3}
 .br2u b{color:#5b3fc4;font-weight:700}
+/* ── БОЛЬШОЙ ИТОГ — ровно и красиво ── */
+.grandtot{padding:20px 20px 18px}
+.gt-top{display:flex;align-items:baseline;justify-content:space-between;gap:12px;position:relative;z-index:2}
+.gt-top span{font:600 13px/1.3 "Inter",sans-serif;opacity:.82}
+.gt-top b{font:800 32px/1 "Plus Jakarta Sans",sans-serif;color:#c3b0fb!important;letter-spacing:-.04em;white-space:nowrap}
+.gt-row{display:grid;grid-template-columns:1fr 1fr;margin-top:16px;padding-top:16px;border-top:1px solid rgba(255,255,255,.18);position:relative;z-index:2}
+.gt-cell{display:flex;flex-direction:column;gap:8px;padding-right:14px}
+.gt-cell+.gt-cell{padding-left:18px;padding-right:0;border-left:1px solid rgba(255,255,255,.18)}
+.gt-cell i{font:700 10px/1.2 "Inter",sans-serif;font-style:normal;text-transform:uppercase;letter-spacing:.1em;opacity:.72}
+.gt-cell b{font:800 22px/1 "Plus Jakarta Sans",sans-serif;color:#fff;letter-spacing:-.03em}
+/* ── ОТСТУПЫ между блоками ── */
+#budgetBox{margin-top:16px}
+.plannote{margin:14px 2px 4px!important}
+.peoplebar{margin-bottom:14px!important}
+/* заголовок раздела ↔ первый блок под ним */
+section h2.big{margin-bottom:4px}
+.tblwrap{margin-top:16px}
+#s-drive .eyebrow+h2.big,#s-drive h2.big{margin-bottom:0}
+/* ── КАРТОЧКА СТАРТА ПОЕЗДКИ (в начале ленты) ── */
+.startcard{display:flex;align-items:center;gap:13px;background:#fff;border:1px solid #e8e9f2;border-radius:18px;padding:14px 16px;margin:0 18px 4px;box-shadow:0 10px 24px -16px rgba(27,30,46,.3)}
+.scmed{flex:none;width:42px;height:42px;border-radius:14px;background:linear-gradient(150deg,#7a5cf0,#5b3fc4);color:#fff;display:grid;place-items:center;box-shadow:0 5px 12px -6px rgba(27,30,46,.5)}
+.scin{flex:1;min-width:0}
+.sclbl{display:block;font:800 15px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:-.03em}
+.scsub{display:block;font:500 11px/1.3 "Inter",sans-serif;color:#8b8fa3;margin-top:5px}
+.scdate{flex:none;border:1.5px solid rgba(91,63,196,.35);border-radius:12px;padding:10px 11px;font:700 13px/1 "Inter",sans-serif;background:linear-gradient(180deg,#fff,#f6f3ff);color:#1b1e2e}
+.scdate:focus{outline:2px solid rgba(91,63,196,.28);border-color:#5b3fc4}
 </style>
 </head>
 <body>
@@ -924,8 +950,11 @@ input.money:focus,.hf input:focus,.bfield input:focus{outline:2px solid rgba(91,
   <div class="peoplebar"><span class="pl">Сколько человек едет</span><span class="pstep"><button class="stepbtn" id="pMinus" aria-label="меньше человек">−</button><span class="pnum"><b id="pNum">2</b></span><button class="stepbtn" id="pPlus" aria-label="больше человек">+</button></span></div><div class="planner" id="planner"></div>
   <div id="budgetBox"></div>
   <div class="grandtot">
-    <div class="gt-main"><span>Вся поездка · на двоих</span><b id="sumAll">—</b></div>
-    <div class="gt-sub"><span><i id="gtPerLabel">На человека (2)</i><b id="sumPer">—</b></span><span>В день<b id="sumDay">—</b></span></div>
+    <div class="gt-top"><span>Вся поездка · на двоих</span><b id="sumAll">—</b></div>
+    <div class="gt-row">
+      <div class="gt-cell"><i id="gtPerLabel">На человека</i><b id="sumPer">—</b></div>
+      <div class="gt-cell"><i>В день</i><b id="sumDay">—</b></div>
+    </div>
   </div>
   <div class="budgbar"><button class="btn" id="resetBudget"><svg class="i i-sm" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 2.6-6.4M3 3v5h5"/></svg> Сбросить суммы</button></div>
 </div></section>
@@ -1439,7 +1468,10 @@ function buildCities(){
   if(stepHost){stepHost.innerHTML=BASES.map((b,i)=>
     '<a class="cst'+(i===0?' on':'')+'" href="#city-'+b.id+'" data-city="'+b.id+'"><span class="cn">'+(i+1)+'</span>'+shortName(b.name)+'</a>').join('');}
 
-  host.innerHTML=BASES.map((b,i)=>{
+  const startCard='<div class="startcard"><span class="scmed">'+ic('cal','i-sm')+'</span>'
+    +'<span class="scin"><span class="sclbl">Старт поездки</span><span class="scsub">меняешь дату — все дни и брони пересчитываются</span></span>'
+    +'<input type="date" id="startDate" class="scdate" value="'+startIso+'"></div>';
+  host.innerHTML=startCard+BASES.map((b,i)=>{
     const before=nightsBefore(b.id);
     const ci=addDays(startIso,before),co=addDays(startIso,before+b.nights);
     const days=DAYS.filter(d=>DAY_BASE[d.n]===b.id);
@@ -1503,6 +1535,9 @@ function buildCities(){
       +'<div class="ctl">'+arrival+carHire+stay+route+'</div></div></section>';
   }).join('');
 
+  /* старт поездки — из первого экрана, пересчитывает всё */
+  const sd=document.getElementById('startDate');
+  if(sd)sd.addEventListener('change',e=>{startIso=e.target.value||START;savePlan();renderStays();recomputeDates();refreshBudgetCounts();buildRoute();buildCities();});
   /* дни-аккордеоны: открыт только один */
   host.querySelectorAll('.cday').forEach(det=>det.addEventListener('toggle',()=>{
     if(!det.open)return;
@@ -1840,12 +1875,9 @@ function recomputeDates(){
 }
 function buildPlanner(){
   const host=document.getElementById('planner');
-  host.innerHTML='<div class="dateset"><label for="startDate"><b>Старт поездки:</b></label>'
-    +'<input type="date" id="startDate" value="'+startIso+'"><span class="dshint">ставь ночи стрелками, вписывай цену за ночь или всю сумму — второе посчитается</span></div>'
-    +'<div id="stayList"></div>'
+  host.innerHTML='<div id="stayList"></div>'
     +'<div class="plannote">Кнопками − / + меняй число ночей на каждой базе. Заезды-выезды и даты в маршруте по дням пересчитаются сами.</div>';
   renderStays();
-  document.getElementById('startDate').addEventListener('change',e=>{startIso=e.target.value||START;savePlan();renderStays();recomputeDates();refreshBudgetCounts();buildRoute();buildCities();});
 }
 function renderStays(){
   const rows=BASES.map((b,i)=>{const before=nightsBefore(b.id);const ci=addDays(startIso,before),co=addDays(startIso,before+b.nights);
