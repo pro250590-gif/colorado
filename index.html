@@ -1358,25 +1358,30 @@ function syncChecks(){P.forEach(p=>{const b=document.querySelector('[data-tick="
 
 
 /* фото для заведения подбираем по типу кухни */
+/* фото по типу заведения; у типа несколько вариантов, чтобы в городе не повторялись */
 const FOODPIC=[
- [/brew|пивовар|beer|ale|taproom/i,'beer'],
- [/salo{1,2}n|салун|коктейл|bar\b|бар\b/i,'saloon'],
- [/burger|бургер|grill|ранчо|ranch/i,'burger'],
- [/steak|стейк|chop|мясо/i,'steak'],
- [/taco|мексик|cantina|burrito/i,'mexican'],
- [/pizza|пицц/i,'pizza'],
- [/bakery|пекарн|выпечк|croissant|донат|donut|булоч/i,'bakery'],
- [/coffee|кофе|espresso|latte|кафе/i,'coffee'],
- [/ice ?cream|мороженое|gelato|десерт/i,'icecream'],
- [/fish|seafood|рыб|устри|oyster/i,'fish'],
- [/завтрак|бранч|brunch|breakfast|pancake|блин/i,'breakfast'],
+ [/brew|пивовар|beer|ale|taproom|lager|ipa/i,['beer','beer3','beer2']],
+ [/salo{1,2}n|салун|коктейл|cocktail|whiskey|бар|bar/i,['saloon','saloon2']],
+ [/burger|бургер|grill|ранчо|ranch|гриль/i,['burger','steak2']],
+ [/steak|стейк|chop|мясо|bbq|барбекю|ребра/i,['steak','steak2']],
+ [/taco|мексик|cantina|burrito|тако/i,['mexican','mexican2']],
+ [/pizza|пицц/i,['pizza']],
+ [/bakery|пекарн|выпечк|croissant|донат|donut|булоч|хлеб/i,['bakery']],
+ [/coffee|кофе|espresso|latte|кафе|caf/i,['coffee']],
+ [/ice ?cream|мороженое|gelato|десерт|sweet/i,['icecream']],
+ [/fish|seafood|рыб|устри|oyster|море/i,['fish','fish2']],
+ [/завтрак|бранч|brunch|breakfast|pancake|блин|вафл/i,['breakfast','bakery']],
 ];
-function foodPic(s,size){
+const FOODFALL=['steak','fish2','coffee','bakery','beer2','saloon2','mexican2','breakfast'];
+function foodPic(s,size,idx,used){
   const t=(s.nm+' '+s.meal+' '+s.why);
-  for(const [re,k] of FOODPIC) if(re.test(t)) return 'img/f-'+k+'-'+size+'.webp';
-  if(/ужин|dinner/i.test(s.meal)) return 'img/f-steak-'+size+'.webp';
-  if(/завтрак/i.test(s.meal)) return 'img/f-breakfast-'+size+'.webp';
-  return 'img/f-coffee-'+size+'.webp';
+  let list=null;
+  for(const [re,l] of FOODPIC) if(re.test(t)){list=l;break;}
+  const pool=(list||[]).concat(FOODFALL);
+  let pick=pool.find(k=>used&&!used.has(k));   /* в городе снимки не повторяются */
+  if(!pick)pick=pool[(idx||0)%pool.length];
+  if(used)used.add(pick);
+  return 'img/f-'+pick+'-'+size+'.webp';
 }
 function foodId(ci,si){return 'f'+ci+'-'+si;}
 
@@ -1394,6 +1399,7 @@ function buildFood(){
   host.innerHTML=FOODCITIES.map((c,ci)=>{
     const base=BASES.find(b=>b.id===c.base);
     const col=base?base.color:'#d96a12',col2=BCOL2[c.base]||col;
+    const used=new Set();
     return '<details class="fooddet" data-base="'+c.base+'"'+(ci===0?' open':'')+'>'
       +'<summary><span class="fmed" style="background:linear-gradient(150deg,'+col+','+col2+')">'+ic('food')+'</span>'
       +'<span class="fhead"><h4>'+c.city+'</h4>'
@@ -1410,7 +1416,7 @@ function buildFood(){
       +'<ul class="stops foodstops">'+c.spots.map((s,si)=>{
         const id=foodId(ci,si);
         return '<li data-food="'+id+'">'
-          +'<span class="pic"><span class="thumb" style="background-image:url('+foodPic(s,'t')+')"></span>'
+          +'<span class="pic"><span class="thumb" style="background-image:url('+foodPic(s,'t',si,used)+')"></span>'
           +'<input type="checkbox" class="tick" data-ftick="'+id+'" aria-label="показать на карте"></span>'
           +'<span class="sinfo"><span class="snm"><a href="'+gmSearch(s.nm+' '+c.q)+'" target="_blank" rel="noopener">'+s.nm+'</a></span>'
           +'<span class="meta"><span class="mpill best">'+s.meal+'</span>'
