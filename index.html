@@ -1391,7 +1391,7 @@ function recomputeDates(){
 function buildPlanner(){
   const host=document.getElementById('planner');
   host.innerHTML='<div class="dateset"><label for="startDate"><b>Начало путешествия:</b></label>'
-    +'<input type="date" id="startDate" value="'+startIso+'"><span class="edithint">'+ic('pencil','i-sm')+' можно менять</span><span class="dshint">меняешь дату или число ночей — всё пересчитывается</span></div>'
+    +'<input type="date" id="startDate" value="'+startIso+'"><span class="dshint">меняешь дату или число ночей — всё пересчитывается</span></div>'
     +'<div id="stayList"></div>'
     +'<div class="plannote">Кнопками − / + меняй число ночей на каждой базе. Заезды-выезды и даты в маршруте по дням пересчитаются сами.</div>';
   renderStays();
