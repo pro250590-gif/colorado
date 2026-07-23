@@ -562,6 +562,16 @@ a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{o
 .fico2::after{content:"";position:absolute;inset:0;
   background:radial-gradient(120% 78% at 14% 8%,rgba(255,255,255,.4),rgba(255,255,255,0) 58%)}
 .fico2 .i{width:40px;height:40px;position:relative;z-index:2;stroke-width:1.55}
+
+/* бюджет: поле цены компактное, таблица помещается на телефоне */
+input.money.perunit{max-width:62px;padding:7px 6px;text-align:center;margin:0 1px;font-size:13.5px}
+#budgetTbl{min-width:0;font-size:13.5px}
+#budgetTbl th,#budgetTbl td{padding:11px 8px}
+#budgetTbl td:first-child{width:34%}
+#budgetTbl td:nth-child(2){font-size:12.5px;white-space:nowrap}
+#budgetTbl td:last-child{width:78px;text-align:right;font-weight:700;padding-right:12px}
+#budgetTbl input.money:not(.perunit){max-width:74px}
+[data-sum]{font:800 14px/1 "Plus Jakarta Sans",sans-serif;color:var(--ink)}
 </style>
 </head>
 <body>
@@ -672,7 +682,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{o
       <tr><td>Билеты, 2 человека</td><td>Basic Economy <span class="cf"><svg class="i i-sm" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> с твоего скриншота</span></td><td class="num"><input class="money" data-k="a1" value="1250.60"></td></tr>
       <tr><td>Багаж</td><td>2 чел × 2 стороны × $50 <span class="cf"><svg class="i i-sm" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span></td><td class="num"><input class="money" data-k="a2" value="200"></td></tr>
       <tr class="grp"><td colspan="3"><svg class="i i-sm" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17H3.6a.6.6 0 0 1-.6-.6V12l2.2-5.4A1 1 0 0 1 6.1 6h11.8a1 1 0 0 1 .9.6L21 12v4.4a.6.6 0 0 1-.6.6H19M5 17a2 2 0 1 0 4 0M15 17a2 2 0 1 0 4 0M9 17h6"/></svg> Машина</td></tr>
-      <tr data-per="day"><td>Аренда машины</td><td>SUV · <input class="money perunit" data-k="c1rate" value="90"> $ в день × <b data-days>10</b></td><td class="num" data-sum="c1">—</td></tr>
+      <tr data-per="day"><td>Аренда машины</td><td>SUV · <input class="money perunit" data-k="c1rate" value="90"> $ × <b data-days>10</b> дн.</td><td class="num" data-sum="c1">—</td></tr>
       <tr><td>Возврат в другом городе</td><td>Дуранго → Денвер <span class="est">~ $100-150</span></td><td class="num"><input class="money" data-k="c2" value="130"></td></tr>
       <tr><td>Бензин</td><td>~1 150 км гор <span class="est">~ оценка</span></td><td class="num"><input class="money" data-k="c3" value="120"></td></tr>
       <tr class="grp"><td colspan="3"><svg class="i i-sm" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V9l7-5 7 5v12M10 21v-6h4v6"/></svg> <span id="bStayHead">Жильё</span></td></tr>
@@ -687,7 +697,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{o
       <tr><td>Гондола в Аспене</td><td>$40×2 <span class="cf"><svg class="i i-sm" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span></td><td class="num"><input class="money" data-k="t7" value="80"></td></tr>
       <tr><td>Джип-тур Yankee Boy</td><td>~$125×2 <span class="est">~ опц.</span></td><td class="num"><input class="money" data-k="t8" value="250"></td></tr>
       <tr class="grp"><td colspan="3"><svg class="i i-sm" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7a3 3 0 0 0 3 3v10M6 2v7M9 2v7M18 2c-1.6 2-2.4 4.2-2.4 6.4 0 1.9.9 3.1 2.4 3.4V22"/></svg> Еда</td></tr>
-      <tr data-per="day"><td>Еда и кафе</td><td>на двоих · <input class="money perunit" data-k="f1rate" value="90"> $ в день × <b data-days>10</b></td><td class="num" data-sum="f1">—</td></tr>
+      <tr data-per="day"><td>Еда и кафе</td><td>на двоих · <input class="money perunit" data-k="f1rate" value="90"> $ × <b data-days>10</b> дн.</td><td class="num" data-sum="f1">—</td></tr>
     </tbody>
     <tfoot>
       <tr class="tot"><td colspan="2">ИТОГО на двоих</td><td class="num" id="sumAll">—</td></tr>
@@ -1507,7 +1517,7 @@ function buildBudgetStay(){
   host.innerHTML=BASES.map((b,i)=>'<tr data-per="night" data-base="'+b.id+'">'
     +'<td>'+shortName(b.name)+'</td>'
     +'<td><b data-bn="'+b.id+'">'+b.nights+'</b> <span data-bw="'+b.id+'">'+nights(b.nights)+'</span> × '
-    +'<input class="money perunit" data-k="h'+(i+1)+'rate" value="0"> $ за ночь</td>'
+    +'<input class="money perunit" data-k="h'+(i+1)+'rate" value="0"> $</td>'
     +'<td class="num" data-sum="h'+(i+1)+'">—</td></tr>').join('');
   host.querySelectorAll('input.money').forEach(inp=>{
     let saved={};try{saved=JSON.parse(localStorage.getItem(BKEY))||{};}catch(e){}
