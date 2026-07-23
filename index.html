@@ -572,6 +572,44 @@ input.money.perunit{max-width:62px;padding:7px 6px;text-align:center;margin:0 1p
 #budgetTbl td:last-child{width:78px;text-align:right;font-weight:700;padding-right:12px}
 #budgetTbl input.money:not(.perunit){max-width:74px}
 [data-sum]{font:800 14px/1 "Plus Jakarta Sans",sans-serif;color:var(--ink)}
+
+/* ── ОБЪЕДИНЁННЫЙ БЛОК ЖИЛЬЯ (ночёвки + бюджет) ── */
+.hrow{display:flex;align-items:center;gap:12px;padding:15px 0;border-bottom:1px solid var(--line2)}
+.hrow:last-of-type{border-bottom:0}
+.hdot{flex:none;width:48px;height:48px;border-radius:16px;color:#fff;display:grid;place-items:center;position:relative;
+  overflow:hidden;box-shadow:var(--sh1),inset 0 1px 0 rgba(255,255,255,.42)}
+.hdot::after{content:"";position:absolute;inset:0;border-radius:16px;
+  background:radial-gradient(120% 78% at 14% 8%,rgba(255,255,255,.42),rgba(255,255,255,0) 58%)}
+.hdot .i{position:relative;z-index:2;width:24px;height:24px}
+.hmain{flex:1;min-width:0}
+.hname{display:block;font:800 18px/1.1 "Plus Jakarta Sans",sans-serif;letter-spacing:-.04em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hname i{font-style:normal;font-size:11.5px;color:var(--mut);font-weight:600;margin-left:6px;font-family:"Inter",sans-serif}
+.hdate{display:block;font:600 11.5px/1 "Inter",sans-serif;color:var(--mut);margin-top:6px;white-space:nowrap}
+.hstep{display:flex;align-items:center;gap:5px;margin-top:9px}
+.hstep .stepbtn{width:30px;height:30px;border-radius:9px;font-size:17px}
+.hn{min-width:52px;text-align:center;font:700 12px/1 "Inter",sans-serif;color:var(--ink2)}
+.hn b{font:800 13px/1 "Plus Jakarta Sans",sans-serif}
+.hmoney{flex:none;display:flex;gap:7px}
+.hf{display:flex;flex-direction:column;align-items:center;width:66px}
+.hf label{font:700 8px/1 "Inter",sans-serif;text-transform:uppercase;letter-spacing:.09em;color:var(--mut);margin-bottom:6px}
+.hf input{width:100%;border:1.5px solid rgba(217,106,18,.4);border-radius:11px;background:linear-gradient(180deg,#fff,#fff6ec);
+  padding:9px 6px;font:800 14px/1 "Plus Jakarta Sans",sans-serif;color:var(--ink);text-align:center}
+.hf input:focus{outline:2px solid rgba(217,106,18,.28);border-color:var(--orange2)}
+.hf:last-child input{color:var(--green2)}
+/* итог жилья — как плашка снизу */
+.staytot{display:flex;align-items:center;justify-content:space-between;margin-top:15px;font-size:14.5px;color:#fff;
+  font-weight:600;border-radius:18px;padding:15px 18px;background:linear-gradient(150deg,var(--green2),#0a2a20);
+  box-shadow:var(--sh2);position:relative;overflow:hidden}
+.staytot::before{content:"";position:absolute;inset:0;
+  background:radial-gradient(120% 78% at 12% 6%,rgba(255,255,255,.2),rgba(255,255,255,0) 56%)}
+.staytot span{position:relative;z-index:2}
+.staytot b{position:relative;z-index:2}
+.staytot .hsum{font:800 22px/1 "Plus Jakarta Sans",sans-serif;color:var(--orange1)}
+@media(max-width:400px){
+  .hf{width:58px}.hf input{font-size:13px;padding:8px 4px}
+  .hdot{width:44px;height:44px}
+}
 </style>
 </head>
 <body>
@@ -629,8 +667,8 @@ input.money.perunit{max-width:62px;padding:7px 6px;text-align:center;margin:0 1p
 
 <section id="s-stay"><div class="wrap">
   <div class="eyebrow">Ночёвки</div>
-  <h2 class="big">Где жить и сколько ночей бронировать</h2>
-  <p class="lede">Поменяй дату прилёта — все даты пересчитаются. Ниже видно, сколько ночей и на какие числа бронировать на каждой базе.</p>
+  <h2 class="big">Жильё: ночи и стоимость</h2>
+  <p class="lede">Ставь число ночей стрелками. Цену вписывай за ночь или всю сумму — второе поле посчитается само. Всё сразу идёт в бюджет.</p>
   <div class="planner" id="planner"></div>
   <div style="height:14px"></div>
   <div class="bases" id="baseCards"></div>
@@ -674,7 +712,7 @@ input.money.perunit{max-width:62px;padding:7px 6px;text-align:center;margin:0 1p
 <section id="s-money"><div class="wrap">
   <div class="eyebrow">Деньги</div>
   <h2 class="big">Бюджет поездки</h2>
-  <p class="lede">Клик по числу — впиши своё, итог пересчитается и сохранится. Перелёт — реальные цены American; жильё и машина ждут твои цифры.</p>
+  <p class="lede">Клик по числу — впиши своё, итог пересчитается и сохранится. Жильё считается в разделе «Ночёвки» и попадает сюда в общий итог.</p>
   <div class="tblwrap"><table id="budgetTbl">
     <thead><tr><th style="width:40%">Статья</th><th>Детали</th><th class="num" style="width:110px">Сумма, $</th></tr></thead>
     <tbody>
@@ -685,8 +723,7 @@ input.money.perunit{max-width:62px;padding:7px 6px;text-align:center;margin:0 1p
       <tr data-per="day"><td>Аренда машины</td><td>SUV · <input class="money perunit" data-k="c1rate" value="90"> $ × <b data-days>10</b> дн.</td><td class="num" data-sum="c1">—</td></tr>
       <tr><td>Возврат в другом городе</td><td>Дуранго → Денвер <span class="est">~ $100-150</span></td><td class="num"><input class="money" data-k="c2" value="130"></td></tr>
       <tr><td>Бензин</td><td>~1 150 км гор <span class="est">~ оценка</span></td><td class="num"><input class="money" data-k="c3" value="120"></td></tr>
-      <tr class="grp"><td colspan="3"><svg class="i i-sm" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V9l7-5 7 5v12M10 21v-6h4v6"/></svg> <span id="bStayHead">Жильё</span></td></tr>
-      <tbody id="bStay"></tbody>
+      <tr class="grp"><td colspan="3"><svg class="i i-sm" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
       <tr class="grp"><td colspan="3"><svg class="i i-sm" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5V7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2.5a2.5 2.5 0 0 0 0 5V17a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2.5a2.5 2.5 0 0 0 0-5Z"/></svg> Входы и активности · на двоих</td></tr>
       <tr><td>Поезд Durango &amp; Silverton</td><td>открытый вагон ~$144×2 +сбор <span class="est">~</span></td><td class="num"><input class="money" data-k="t1" value="311"></td></tr>
       <tr><td>Mesa Verde</td><td>$30/машина <span class="cf"><svg class="i i-sm" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span></td><td class="num"><input class="money" data-k="t2" value="30"></td></tr>
@@ -811,7 +848,8 @@ const ICONS={
  chevron:'<path d="m6 9 6 6 6-6"/>',
  foodwine:'<path d="M2.6 2.3v4.3M5.9 2.3v4.3M9.2 2.3v4.3M2.6 6.6a3.3 3.3 0 0 0 6.6 0M5.9 9.9v11.8"/><path d="M12 3.2v17.6" opacity=".35"/><path d="M14.6 2.3h7.4l-1 5.5a2.85 2.85 0 0 1-5.4 0l-1-5.5Z"/><path d="M18.3 12v9.7M15.6 21.7h5.4"/>',
  layers:'<path d="m12 2 9 5-9 5-9-5 9-5ZM3 12l9 5 9-5M3 17l9 5 9-5"/>',
- pencil:'<path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>'
+ pencil:'<path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
+ city:'<path d="M3 21h18M5 21V7l6-3v17M13 21V10l6-2v13M8 8h.01M8 12h.01M8 16h.01M16 12h.01M16 16h.01"/>'
 };
 function ic(n,cls){return ICONS[n]?'<svg class="i'+(cls?' '+cls:'')+'" viewBox="0 0 24 24" aria-hidden="true" focusable="false">'+ICONS[n]+'</svg>':'';}
 function med(n,bg,cls){return '<span class="med '+(cls||'')+'" style="background:'+bg+'">'+ic(n)+'</span>';}
@@ -824,16 +862,16 @@ const BCOL2={dur:'#0a6047',our:'#b0530c',asp:'#0f2233',den:'#3b3080'};
 const DCOL={};
 
 const BASES=[
- {id:'dur',name:'Дуранго',emoji:'train',nights:3,color:BCOL.dur,lat:37.2753,lng:-107.8801,q:'Durango, CO',
+ {id:'dur',name:'Дуранго',emoji:'city',nights:3,color:BCOL.dur,lat:37.2753,lng:-107.8801,q:'Durango, CO',
   desc:'Живой город на реке Анимас, куда прилетаешь: узкоколейка, Меса-Верде, каньоны, источники Пагосы.',
   alt:'Альтернатива: посёлки к северу по US-550 (Hermosa, Haviland Lake) — тише, в город 20 мин. От аэропорта DRO 25 мин.'},
- {id:'our',name:'Урей (Ouray)',emoji:'springs',nights:2,color:BCOL.our,lat:38.0228,lng:-107.6712,q:'Ouray, CO',
+ {id:'our',name:'Урей (Ouray)',emoji:'city',nights:2,color:BCOL.our,lat:38.0228,lng:-107.6712,q:'Ouray, CO',
   desc:'«Швейцария Америки»: водопад в скальной щели, горячие источники, джип-трейлы, рядом Теллурайд.',
   alt:'Альтернатива: Ridgway (15 мин севернее) — тише и дешевле. Урей в 1,5–2 ч от Дуранго.'},
- {id:'asp',name:'Аспен / Басальт',emoji:'mountain',nights:3,color:BCOL.asp,lat:39.1911,lng:-106.8175,q:'Aspen, CO',
+ {id:'asp',name:'Аспен / Басальт',emoji:'city',nights:3,color:BCOL.asp,lat:39.1911,lng:-106.8175,q:'Aspen, CO',
   desc:'Альпийская кульминация: Maroon Bells, ледниковые озёра, перевал Independence, города-призраки.',
   alt:'Аспен дорогой (от $450+). Basalt (20 мин) и Carbondale (40 мин) — те же горы за $110–160/ночь.'},
- {id:'den',name:'Денвер (у аэропорта)',emoji:'plane',nights:1,color:BCOL.den,lat:39.7392,lng:-104.9903,q:'Denver, CO',
+ {id:'den',name:'Денвер (у аэропорта)',emoji:'city',nights:1,color:BCOL.den,lat:39.7392,lng:-104.9903,q:'Denver, CO',
   desc:'Только переночевать перед вылетом. Район аэропорта / Аврора — чтобы утром 16-го спокойно доехать к рейсу 12:47.',
   alt:'Ищи отель с бесплатным shuttle до DEN — тогда можно сдать машину вечером 15-го и не платить лишний день аренды.'}
 ];
@@ -1471,8 +1509,8 @@ function recomputeDates(){
 }
 function buildPlanner(){
   const host=document.getElementById('planner');
-  host.innerHTML='<div class="dateset"><label for="startDate"><b>Начало путешествия:</b></label>'
-    +'<input type="date" id="startDate" value="'+startIso+'"><span class="dshint">меняешь дату или число ночей — всё пересчитывается</span></div>'
+  host.innerHTML='<div class="dateset"><label for="startDate"><b>Старт поездки:</b></label>'
+    +'<input type="date" id="startDate" value="'+startIso+'"><span class="dshint">ставь ночи стрелками, вписывай цену за ночь или всю сумму — второе посчитается</span></div>'
     +'<div id="stayList"></div>'
     +'<div class="plannote">Кнопками − / + меняй число ночей на каждой базе. Заезды-выезды и даты в маршруте по дням пересчитаются сами.</div>';
   renderStays();
@@ -1480,18 +1518,56 @@ function buildPlanner(){
 }
 function renderStays(){
   const rows=BASES.map((b,i)=>{const before=nightsBefore(b.id);const ci=addDays(startIso,before),co=addDays(startIso,before+b.nights);
-    return '<div class="stayrow"><span class="staytop"><span class="staydot" style="background:'+b.color+'">'+ic(b.emoji)+'</span>'
-      +'<span class="stayinfo"><span class="sn">'+shortName(b.name)+(altName(b.name)?'<i>'+altName(b.name)+'</i>':'')+'</span>'
-      +'<span class="sd"><b>заезд</b> '+fmtDate(ci)+' &nbsp;<b>выезд</b> '+fmtDate(co)+'</span></span></span>'
-      +'<span class="stepper"><button class="stepbtn" data-nd="'+i+'" data-dir="-1" aria-label="меньше ночей">−</button>'
-      +'<span class="stepn"><b>'+b.nights+'</b><span class="stepu">'+nights(b.nights)+'</span></span>'
-      +'<button class="stepbtn" data-nd="'+i+'" data-dir="1" aria-label="больше ночей">+</button></span></div>';
+    const rate=hotelRate(i), tot=rate*b.nights;
+    return '<div class="hrow">'
+      +'<span class="hdot" style="background:linear-gradient(150deg,'+b.color+','+(BCOL2[b.id]||b.color)+')">'+ic(b.emoji)+'</span>'
+      +'<span class="hmain">'
+        +'<span class="hname">'+shortName(b.name)+(altName(b.name)?'<i>'+altName(b.name)+'</i>':'')+'</span>'
+        +'<span class="hdate">'+dm(ci)+' → '+dm(co)+'</span>'
+        +'<span class="hstep"><button class="stepbtn" data-nd="'+i+'" data-dir="-1" aria-label="меньше ночей">−</button>'
+          +'<span class="hn"><b data-hn="'+i+'">'+b.nights+'</b> <span data-hw="'+i+'">'+nights(b.nights)+'</span></span>'
+          +'<button class="stepbtn" data-nd="'+i+'" data-dir="1" aria-label="больше ночей">+</button></span>'
+      +'</span>'
+      +'<span class="hmoney">'
+        +'<span class="hf"><label>за ночь</label><input class="money hrate" data-hi="'+i+'" inputmode="decimal" value="'+(rate||'')+'" placeholder="0"></span>'
+        +'<span class="hf"><label>всего</label><input class="money htot" data-hi="'+i+'" inputmode="decimal" value="'+(tot||'')+'" placeholder="0"></span>'
+      +'</span></div>';
   }).join('');
   const tn=totalNights();
   BASES.forEach(b=>{const el=document.querySelector('[data-basenights="'+b.id+'"]');
     if(el)el.textContent=b.nights+' '+nights(b.nights);});
   document.getElementById('stayList').innerHTML=rows
-    +'<div class="staytot">Всего <b>'+tn+'</b> '+nights(tn)+' · вся поездка '+fmtDate(addDays(startIso,0))+'&nbsp;→&nbsp;'+fmtDate(addDays(startIso,tn))+'</div>';
+    +'<div class="staytot"><span>Жильё · <b>'+tn+'</b> '+nights(tn)+'</span><b class="hsum">'+money(hotelTotal())+'</b></div>';
+  wireHotelInputs();
+}
+/* цена за ночь по базе — из памяти бюджета */
+var HRATE={};
+(function(){let s={};try{s=JSON.parse(localStorage.getItem(BKEY))||{};}catch(e){}BASES.forEach((b,i)=>HRATE[i]=parseFloat(s['h'+(i+1)+'rate'])||0);})();
+function hotelRate(i){return HRATE[i]||0;}
+function hotelTotal(){return BASES.reduce((a,b,i)=>a+hotelRate(i)*b.nights,0);}
+function saveHotelRate(i,rate){HRATE[i]=rate;let s={};try{s=JSON.parse(localStorage.getItem(BKEY))||{};}catch(e){}
+  s['h'+(i+1)+'rate']=rate;try{localStorage.setItem(BKEY,JSON.stringify(s));}catch(e){}}
+/* два поля: за ночь ↔ всего, второе считается */
+function wireHotelInputs(){
+  document.querySelectorAll('#stayList .hrate').forEach(inp=>{
+    inp.addEventListener('input',()=>{const i=+inp.dataset.hi,rate=parseFloat(inp.value)||0;
+      saveHotelRate(i,rate);
+      const t=document.querySelector('.htot[data-hi="'+i+'"]');if(t)t.value=rate?rate*BASES[i].nights:'';
+      updateHotelSum();});
+    inp.addEventListener('focus',()=>inp.select());
+  });
+  document.querySelectorAll('#stayList .htot').forEach(inp=>{
+    inp.addEventListener('input',()=>{const i=+inp.dataset.hi,tot=parseFloat(inp.value)||0;
+      const rate=BASES[i].nights?Math.round(tot/BASES[i].nights):0;
+      saveHotelRate(i,rate);
+      const r=document.querySelector('.hrate[data-hi="'+i+'"]');if(r)r.value=rate||'';
+      updateHotelSum();});
+    inp.addEventListener('focus',()=>inp.select());
+  });
+}
+function updateHotelSum(){
+  const el=document.querySelector('#stayList .hsum');if(el)el.textContent=money(hotelTotal());
+  calcBudget();
 }
 
 /* ================= СОБЫТИЯ ================= */
@@ -1512,22 +1588,8 @@ function wireButtons(){
 const BKEY='co-trip-2026-budget';const DEF={};
 function money(n){return '$'+n.toLocaleString('en-US',{maximumFractionDigits:0});}
 /* строки жилья: одна на базу, ночи берутся из планировщика */
-function buildBudgetStay(){
-  const host=document.getElementById('bStay');if(!host)return;
-  host.innerHTML=BASES.map((b,i)=>'<tr data-per="night" data-base="'+b.id+'">'
-    +'<td>'+shortName(b.name)+'</td>'
-    +'<td><b data-bn="'+b.id+'">'+b.nights+'</b> <span data-bw="'+b.id+'">'+nights(b.nights)+'</span> × '
-    +'<input class="money perunit" data-k="h'+(i+1)+'rate" value="0"> $</td>'
-    +'<td class="num" data-sum="h'+(i+1)+'">—</td></tr>').join('');
-  host.querySelectorAll('input.money').forEach(inp=>{
-    let saved={};try{saved=JSON.parse(localStorage.getItem(BKEY))||{};}catch(e){}
-    if(saved[inp.dataset.k]!==undefined)inp.value=saved[inp.dataset.k];
-    inp.setAttribute('inputmode','decimal');
-    inp.addEventListener('input',calcBudget);
-    inp.addEventListener('focus',()=>inp.select());
-  });
-  refreshBudgetCounts();
-}
+/* жильё переехало в раздел «Ночёвки» — здесь ничего не строим */
+function buildBudgetStay(){}
 /* обновляем числа ночей и дней в бюджете, не трогая введённые цены */
 function refreshBudgetCounts(){
   const tn=totalNights(),td=tn+1;
@@ -1551,6 +1613,7 @@ function calcBudget(){let sum=0;
     const v=rate*qty;out.textContent=v?money(v):'—';sum+=v;
   });
   document.querySelectorAll('#budgetTbl tbody input.money:not(.perunit)').forEach(i=>sum+=parseFloat(i.value)||0);
+  sum+=(typeof hotelTotal==='function'?hotelTotal():0);   /* жильё из раздела Ночёвки */
   document.getElementById('sumAll').textContent=money(sum);document.getElementById('sumPer').textContent=money(sum/2);
   const mnT=document.getElementById('tMoney');
   if(mnT&&sum>0)mnT.textContent='$'+Math.round(sum/2).toLocaleString('en-US').replace(/,/g,' ');
