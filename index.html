@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#f6f2ea">
 <title>Колорадо · Дуранго → Денвер · 7–16 августа 2026</title>
 <meta name="description" content="Маршрут по Колорадо на 10 дней: Дуранго, Урей, Аспен, Денвер. Карта, план по дням, где поесть, бюджет.">
@@ -1425,8 +1425,7 @@ function initMap(){
     const streets=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'});
     const relief=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',{maxZoom:18,attribution:'© Esri'});
     const sat=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:18,attribution:'© Esri'});
-    map=L.map('map',{layers:[light],scrollWheelZoom:false,zoomControl:true}).setView([38.5,-107.3],7);map.attributionControl.setPrefix('');
-    map.on('click',()=>map.scrollWheelZoom.enable());
+    map=L.map('map',{layers:[light],scrollWheelZoom:false,zoomControl:false,dragging:false,touchZoom:false,doubleClickZoom:false,boxZoom:false,keyboard:false,tap:false}).setView([38.5,-107.3],7);map.attributionControl.setPrefix('');
     L.control.layers({'Карта':light,'Улицы':streets,'Рельеф':relief,'Спутник':sat},null,{position:'topright'}).addTo(map);
     L.control.scale({position:'bottomleft',metric:true,imperial:true,maxWidth:140}).addTo(map);
     BASES.forEach(b=>{baseMarkers[b.id]=L.marker([b.lat,b.lng],{icon:L.divIcon({className:'',html:'<div class="pin basepin">'+ic(b.emoji,'i-sm')+'</div>',iconSize:[32,28],iconAnchor:[16,14]})}).addTo(map).bindPopup(popupHTML(b.name,b.q,b.desc,'База ночёвки','#0d5138',basePhoto(b.id))).bindTooltip(shortName(b.name),{permanent:true,direction:'right',className:'basetip',offset:[15,0]});});
