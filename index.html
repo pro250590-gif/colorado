@@ -537,6 +537,25 @@ a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{o
 .tiny{color:var(--orange3);background:linear-gradient(180deg,#fff,#fff8f1)!important}
 .mealbtn{color:var(--ink2)}
 .mfx{color:var(--orange3);background:rgba(217,106,18,.1)}
+
+/* ── ЕДА: города раскрываются, как дни ── */
+.foodgrid{display:block}
+.fooddet{border-radius:var(--r);margin:0 0 11px;overflow:hidden;background:var(--card);backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);border:1px solid var(--cardline);box-shadow:var(--sh1);transition:box-shadow .3s}
+.fooddet[open]{box-shadow:var(--sh3)}
+.fooddet>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:13px;padding:15px 16px}
+.fooddet>summary::-webkit-details-marker{display:none}
+.fooddet[open]>summary{border-bottom:1px solid var(--line2)}
+.fmed{flex:none;width:50px;height:50px;border-radius:17px;color:#fff;display:grid;place-items:center;position:relative;
+  overflow:hidden;box-shadow:var(--sh1),inset 0 1px 0 rgba(255,255,255,.4)}
+.fmed::after{content:"";position:absolute;inset:0;
+  background:radial-gradient(120% 78% at 14% 8%,rgba(255,255,255,.4),rgba(255,255,255,0) 58%)}
+.fmed .i{position:relative;z-index:2}
+.fhead{flex:1;min-width:0}
+.fhead h4{font:800 18.5px/1.14 "Plus Jakarta Sans",sans-serif;letter-spacing:-.042em;margin:0}
+.fsub{display:block;font:600 12px/1 "Inter",sans-serif;color:var(--mut);margin-top:6px}
+.food-body{padding:14px 16px 18px}
+.foodstops li{align-items:flex-start}
 </style>
 </head>
 <body>
@@ -785,24 +804,29 @@ function med(n,bg,cls){return '<span class="med '+(cls||'')+'" style="background
 
 /* ================= ДАННЫЕ ================= */
 const CATS={must:{e:'star',l:'Главное'},nature:{e:'mountain',l:'Природа'},town:{e:'town',l:'Города'},springs:{e:'springs',l:'Источники'},food:{e:'food',l:'Еда'},transport:{e:'train',l:'Транспорт'}};
-const DCOL={1:'#3d8bff',2:'#a1663a',3:'#e0a020',4:'#ff4d6d',5:'#ff4d6d',6:'#ff7a1a',7:'#ff7a1a',8:'#ff7a1a',9:'#6c8cff',10:'#6c8cff'};
+/* цвет дня = цвет базы, где ночуем (вариант А) */
+const BCOL={dur:'#12855e',our:'#d96a12',asp:'#1d3448',den:'#5a4bb5'};
+const BCOL2={dur:'#0a6047',our:'#b0530c',asp:'#0f2233',den:'#3b3080'};
+const DCOL={};
 
 const BASES=[
- {id:'dur',name:'Дуранго',emoji:'train',nights:3,color:'#2f7fd4',lat:37.2753,lng:-107.8801,q:'Durango, CO',
+ {id:'dur',name:'Дуранго',emoji:'train',nights:3,color:BCOL.dur,lat:37.2753,lng:-107.8801,q:'Durango, CO',
   desc:'Живой город на реке Анимас, куда прилетаешь: узкоколейка, Меса-Верде, каньоны, источники Пагосы.',
   alt:'Альтернатива: посёлки к северу по US-550 (Hermosa, Haviland Lake) — тише, в город 20 мин. От аэропорта DRO 25 мин.'},
- {id:'our',name:'Урей (Ouray)',emoji:'springs',nights:2,color:'#c2417f',lat:38.0228,lng:-107.6712,q:'Ouray, CO',
+ {id:'our',name:'Урей (Ouray)',emoji:'springs',nights:2,color:BCOL.our,lat:38.0228,lng:-107.6712,q:'Ouray, CO',
   desc:'«Швейцария Америки»: водопад в скальной щели, горячие источники, джип-трейлы, рядом Теллурайд.',
   alt:'Альтернатива: Ridgway (15 мин севернее) — тише и дешевле. Урей в 1,5–2 ч от Дуранго.'},
- {id:'asp',name:'Аспен / Басальт',emoji:'mountain',nights:3,color:'#d96a12',lat:39.1911,lng:-106.8175,q:'Aspen, CO',
+ {id:'asp',name:'Аспен / Басальт',emoji:'mountain',nights:3,color:BCOL.asp,lat:39.1911,lng:-106.8175,q:'Aspen, CO',
   desc:'Альпийская кульминация: Maroon Bells, ледниковые озёра, перевал Independence, города-призраки.',
   alt:'Аспен дорогой (от $450+). Basalt (20 мин) и Carbondale (40 мин) — те же горы за $110–160/ночь.'},
- {id:'den',name:'Денвер (у аэропорта)',emoji:'plane',nights:1,color:'#4a5bc4',lat:39.7392,lng:-104.9903,q:'Denver, CO',
+ {id:'den',name:'Денвер (у аэропорта)',emoji:'plane',nights:1,color:BCOL.den,lat:39.7392,lng:-104.9903,q:'Denver, CO',
   desc:'Только переночевать перед вылетом. Район аэропорта / Аврора — чтобы утром 16-го спокойно доехать к рейсу 12:47.',
   alt:'Ищи отель с бесплатным shuttle до DEN — тогда можно сдать машину вечером 15-го и не платить лишний день аренды.'}
 ];
 const DAY_BASE={1:'dur',2:'dur',3:'dur',4:'our',5:'our',6:'asp',7:'asp',8:'asp',9:'den',10:'den'};
+Object.keys(DAY_BASE).forEach(n=>DCOL[n]=BCOL[DAY_BASE[n]]);
 
+const ORD=['','первый','второй','третий','четвёртый','пятый','шестой','седьмой','восьмой','девятый','десятый','11-й','12-й','13-й','14-й'];
 const DAYS=[
  {n:1,title:'Прилёт в Дуранго',pill:'прилёт',leg:'American прилетает в 16:17 · аэропорт → город 25 мин',
   note:'<b>Первый вечер спокойный.</b> Прилетаешь в 16:17, забираешь машину, заселяешься, гуляешь по Дуранго.'},
@@ -979,7 +1003,7 @@ const FOODCITIES=[
 ];
 /* генерируем точки-еду в P (координаты — кластер вокруг центра города) */
 FOODCITIES.forEach((c,ci)=>{c.spots.forEach((s,si)=>{const ang=si/c.spots.length*Math.PI*2,r=0.006;
-  P.push({id:'f_'+ci+'_'+si,d:0,base:c.base,cat:'food',lat:+(c.lat+r*Math.cos(ang)*0.7).toFixed(5),lng:+(c.lng+r*Math.sin(ang)).toFixed(5),nm:s.nm,q:s.nm+' '+c.q,why:s.why});});});
+  P.push({id:'f_'+ci+'_'+si,fid:'f'+ci+'-'+si,d:0,base:c.base,cat:'food',lat:+(c.lat+r*Math.cos(ang)*0.7).toFixed(5),lng:+(c.lng+r*Math.sin(ang)).toFixed(5),nm:s.nm,q:s.nm+' '+c.q,why:s.why});});});
 
 /* линии маршрута: days = к каким дням относится */
 const LINES=[
@@ -1106,6 +1130,7 @@ function matchesPrimary(p){
 /* еда — отдельный слой, накладывается на текущий вид */
 function foodVisible(f){
   if(!foodOn)return false;
+  if(f.fid&&!foodPicked.has(f.fid))return false;
   if(filter.mode==='base')return f.base===filter.v;
   if(filter.mode==='day')return f.base===DAY_BASE[filter.v];
   return true; // «Всё» или категория → вся еда
@@ -1287,9 +1312,9 @@ function buildDays(){
   DAYS.forEach(d=>{
     const c=DCOL[d.n];const list=P.filter(p=>p.d===d.n);
     out+='<details class="day" data-day="'+d.n+'"'+(d.n===1?' open':'')+'>'
-      +'<summary class="day-head">'+'<span class="dnum" style="background:linear-gradient(150deg,'+c+',rgba(0,0,0,.25))"><b>'+d.n+'</b><i>день</i></span>'
+      +'<summary class="day-head">'+'<span class="dnum" style="background:linear-gradient(150deg,'+c+','+(BCOL2[DAY_BASE[d.n]]||c)+')"><b>'+d.n+'</b><i>'+ORD[d.n]+'</i></span>'
       +'<span class="dhead-txt"><h3>'+d.title+'</h3><span class="dsub"><span class="ddate" data-daydate="'+d.n+'">'+dayDate(START,d.n)+'</span><span class="dalt">'+mrs(ALT[d.n])+'</span></span></span>'
-      +'<span class="dcount">'+list.length+' точек</span><span class="chev"><svg class="i i-sm" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9.5 18 6-6-6-6"/></svg></span></summary>'
+      +'<span class="dcount">'+list.length+' '+plural(list.length,'точка','точки','точек')+'</span><span class="chev"><svg class="i i-sm" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9.5 18 6-6-6-6"/></svg></span></summary>'
       +'<div class="day-body">'
       +'<div class="leg"><span class="pill">'+d.pill+'</span> <b>'+d.leg+'</b><a class="dirlink" href="#" data-dir="'+d.n+'" target="_blank" rel="noopener">Маршрут в Google Maps →</a></div>'
       +'<div class="daytools"><button class="tiny" data-dayon="'+d.n+'">Отметить день</button><button class="tiny" data-dayoff="'+d.n+'">Снять день</button></div>'
@@ -1331,25 +1356,77 @@ function updateDirLinks(){document.querySelectorAll('[data-dir]').forEach(a=>{co
 function syncChecks(){P.forEach(p=>{const b=document.querySelector('[data-tick="'+p.id+'"]');if(b)b.checked=picked.has(p.id);
   const li=document.querySelector('li[data-id="'+p.id+'"]');if(li)li.style.opacity=picked.has(p.id)?'1':'.55';});}
 
+
+/* фото для заведения подбираем по типу кухни */
+const FOODPIC=[
+ [/brew|пивовар|beer|ale|taproom/i,'beer'],
+ [/salo{1,2}n|салун|коктейл|bar\b|бар\b/i,'saloon'],
+ [/burger|бургер|grill|ранчо|ranch/i,'burger'],
+ [/steak|стейк|chop|мясо/i,'steak'],
+ [/taco|мексик|cantina|burrito/i,'mexican'],
+ [/pizza|пицц/i,'pizza'],
+ [/bakery|пекарн|выпечк|croissant|донат|donut|булоч/i,'bakery'],
+ [/coffee|кофе|espresso|latte|кафе/i,'coffee'],
+ [/ice ?cream|мороженое|gelato|десерт/i,'icecream'],
+ [/fish|seafood|рыб|устри|oyster/i,'fish'],
+ [/завтрак|бранч|brunch|breakfast|pancake|блин/i,'breakfast'],
+];
+function foodPic(s,size){
+  const t=(s.nm+' '+s.meal+' '+s.why);
+  for(const [re,k] of FOODPIC) if(re.test(t)) return 'img/f-'+k+'-'+size+'.webp';
+  if(/ужин|dinner/i.test(s.meal)) return 'img/f-steak-'+size+'.webp';
+  if(/завтрак/i.test(s.meal)) return 'img/f-breakfast-'+size+'.webp';
+  return 'img/f-coffee-'+size+'.webp';
+}
+function foodId(ci,si){return 'f'+ci+'-'+si;}
+
+/* выбранные заведения — как галочки у точек маршрута */
+const FKEY='co-trip-2026-food';
+let foodPicked=new Set();
+try{const s=JSON.parse(localStorage.getItem(FKEY));if(Array.isArray(s))foodPicked=new Set(s);else FOODCITIES.forEach((c,ci)=>c.spots.forEach((s2,si)=>foodPicked.add('f'+ci+'-'+si)));}
+catch(e){FOODCITIES.forEach((c,ci)=>c.spots.forEach((s2,si)=>foodPicked.add('f'+ci+'-'+si)));}
+function saveFoodPicks(){try{localStorage.setItem(FKEY,JSON.stringify([...foodPicked]));}catch(e){}}
+
 /* ================= ЕДА ================= */
 function gmSearch(q){return 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(q);}
 function buildFood(){
   const host=document.getElementById('foodGrid');
-  host.innerHTML=FOODCITIES.map(c=>{const base=BASES.find(b=>b.id===c.base);const col=base?base.color:'#c1462a';
-    return '<div class="foodcity" data-base="'+c.base+'">'
-      +'<h4><span class="fb" style="background:'+col+'"></span>'+c.city+'</h4>'
+  host.innerHTML=FOODCITIES.map((c,ci)=>{
+    const base=BASES.find(b=>b.id===c.base);
+    const col=base?base.color:'#d96a12',col2=BCOL2[c.base]||col;
+    return '<details class="fooddet" data-base="'+c.base+'"'+(ci===0?' open':'')+'>'
+      +'<summary><span class="fmed" style="background:linear-gradient(150deg,'+col+','+col2+')">'+ic('food')+'</span>'
+      +'<span class="fhead"><h4>'+c.city+'</h4>'
+      +'<span class="fsub">'+c.spots.length+' '+plural(c.spots.length,'место','места','мест')+' · проверено</span></span>'
+      +'<span class="dcount">'+c.spots.length+'</span>'
+      +'<span class="chev">'+ic('chevron','i-sm')+'</span></summary>'
+      +'<div class="food-body">'
       +'<div class="mealbtns">'
       +'<a class="mealbtn all" href="'+gmSearch('restaurants '+c.q)+'" target="_blank" rel="noopener">'+ic('food','i-sm')+' Все на карте</a>'
       +'<a class="mealbtn" href="'+gmSearch('breakfast '+c.q)+'" target="_blank" rel="noopener">'+ic('coffee','i-sm')+' Завтрак</a>'
       +'<a class="mealbtn" href="'+gmSearch('lunch restaurants '+c.q)+'" target="_blank" rel="noopener">'+ic('food','i-sm')+' Обед</a>'
       +'<a class="mealbtn" href="'+gmSearch('dinner restaurants '+c.q)+'" target="_blank" rel="noopener">'+ic('wine','i-sm')+' Ужин</a>'
       +'</div>'
-      +'<ul class="foodlist">'+c.spots.map(s=>
-        '<li><a href="'+gmSearch(s.nm+' '+c.q)+'" target="_blank" rel="noopener">'+s.nm+'</a>'
-        +'<span class="fmeta">'+s.meal+' · '+s.price+' · '+s.veg+'</span>'
-        +'<span class="fw">'+s.why+'</span></li>').join('')+'</ul>'
-      +'</div>';
+      +'<ul class="stops foodstops">'+c.spots.map((s,si)=>{
+        const id=foodId(ci,si);
+        return '<li data-food="'+id+'">'
+          +'<span class="pic"><span class="thumb" style="background-image:url('+foodPic(s,'t')+')"></span>'
+          +'<input type="checkbox" class="tick" data-ftick="'+id+'" aria-label="показать на карте"></span>'
+          +'<span class="sinfo"><span class="snm"><a href="'+gmSearch(s.nm+' '+c.q)+'" target="_blank" rel="noopener">'+s.nm+'</a></span>'
+          +'<span class="meta"><span class="mpill best">'+s.meal+'</span>'
+          +'<span class="mpill">'+s.price+'</span>'
+          +'<span class="mpill'+(/вег ok/i.test(s.veg)?' free':'')+'">'+s.veg+'</span></span>'
+          +'<span class="why">'+s.why+'</span></span></li>';
+      }).join('')+'</ul></div></details>';
   }).join('');
+  /* галочки еды */
+  host.querySelectorAll('[data-ftick]').forEach(b=>{
+    b.checked=foodPicked.has(b.dataset.ftick);
+    b.addEventListener('change',()=>{
+      b.checked?foodPicked.add(b.dataset.ftick):foodPicked.delete(b.dataset.ftick);
+      saveFoodPicks();applyFilter();
+    });
+  });
 }
 
 /* ================= ПЛАНИРОВЩИК НОЧЁВОК ================= */
