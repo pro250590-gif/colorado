@@ -465,6 +465,56 @@ a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{o
 .tile .tcap{position:relative;z-index:2;font:600 10.5px/1.3 "Inter",sans-serif;letter-spacing:.06em;text-transform:uppercase;
   opacity:.9;margin-top:13px;padding-top:11px;border-top:1px solid rgba(255,255,255,.26)}
 .tile-w .tcap{color:#78867e;opacity:1;border-top-color:rgba(20,32,27,.08)}
+
+/* ── ФИЛЬТР НА КАРТЕ ── */
+.mapbox{position:relative}
+.filters{position:absolute;left:10px;right:10px;top:10px;z-index:700;margin:0}
+.mfbar{display:flex;gap:5px;align-items:center;background:rgba(255,255,255,.9);backdrop-filter:saturate(180%) blur(18px);
+  -webkit-backdrop-filter:saturate(180%) blur(18px);border:1px solid var(--cardline);border-radius:16px;padding:5px;
+  box-shadow:var(--sh2)}
+.mfb{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:3px;border:0;background:none;
+  border-radius:12px;padding:10px 6px;cursor:pointer;font:800 12px/1 "Plus Jakarta Sans",sans-serif;color:var(--ink2);
+  letter-spacing:-.02em;transition:background .18s,color .18s}
+.mfb span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mfb .i{opacity:.45;transition:transform .22s}
+.mfb.open .i{transform:rotate(180deg)}
+.mfb.act{background:linear-gradient(150deg,#1f3b31,#0d211a);color:#fff}
+.mfb.act .i{opacity:.75}
+.mfall,.mffood{width:38px;height:38px;flex:none;border:0;border-radius:12px;display:grid;place-items:center;cursor:pointer;
+  background:rgba(20,32,27,.06);color:var(--ink2)}
+.mfall.act{background:linear-gradient(150deg,var(--green1),var(--green3));color:#fff}
+.mffood.act{background:linear-gradient(150deg,var(--orange1),var(--orange3));color:#fff}
+/* выпадающий список поверх карты */
+.mfdrop{margin-top:7px;border-radius:18px;overflow:hidden;background:rgba(255,255,255,.94);
+  backdrop-filter:saturate(180%) blur(22px);-webkit-backdrop-filter:saturate(180%) blur(22px);
+  border:1px solid var(--cardline);box-shadow:var(--sh3);opacity:0;transform:translateY(-8px) scale(.985);
+  pointer-events:none;transition:opacity .2s,transform .22s cubic-bezier(.2,.8,.2,1)}
+.mfdrop.show{opacity:1;transform:none;pointer-events:auto}
+.mfhead{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px 10px}
+.mfhead b{font:800 13px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:-.03em}
+.mfx{border:0;background:rgba(20,32,27,.06);border-radius:999px;padding:7px 11px;cursor:pointer;
+  font:700 10.5px/1 "Inter",sans-serif;color:var(--green2);white-space:nowrap}
+.mflist{max-height:min(46vh,330px);overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:6px}
+.mfrow{display:flex;align-items:center;gap:11px;width:100%;border:0;background:none;cursor:pointer;text-align:left;
+  padding:8px 14px;border-top:1px solid rgba(20,32,27,.05)}
+.mfrow:first-child{border-top:0}
+.mfth{position:relative;width:42px;height:42px;border-radius:13px;flex:none;background:#dde5e1 center/cover no-repeat;
+  display:grid;place-items:center;box-shadow:0 5px 12px -7px rgba(20,32,27,.7)}
+.mfic{width:100%;height:100%;border-radius:13px;display:grid;place-items:center;color:#fff}
+.mfdot{position:absolute;left:-3px;top:-3px;width:13px;height:13px;border-radius:50%;border:2px solid #fff;
+  box-shadow:0 2px 5px rgba(0,0,0,.28)}
+.mftx{flex:1;min-width:0}
+.mftx b{display:block;font:700 13.5px/1.2 "Plus Jakarta Sans",sans-serif;letter-spacing:-.03em;color:var(--ink);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mftx span{display:block;font:500 11px/1 "Inter",sans-serif;color:var(--mut);margin-top:5px}
+.mfck{width:24px;height:24px;border-radius:50%;flex:none;display:grid;place-items:center;color:transparent;
+  border:1.5px solid rgba(20,32,27,.14)}
+.mfrow.on{background:rgba(47,190,134,.1)}
+.mfrow.on .mfck{background:linear-gradient(150deg,var(--green1),var(--green3));border-color:transparent;color:#fff}
+/* карта опускается ниже строки фильтра */
+#map,.mapph{padding-top:0}
+.leaflet-top{margin-top:56px}
+@media(max-width:420px){.mfb{font-size:11px;padding:10px 4px}.mfall,.mffood{width:34px;height:34px}}
 </style>
 </head>
 <body>
@@ -505,9 +555,9 @@ a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{o
   <h2 class="big">Маршрут, точки и фильтры</h2>
   <p class="lede">Фильтры ниже управляют картой и списком: выбери день, базу или категорию — на карте останутся только нужные точки. Галочка у места показывает/прячет его на карте, а ссылка на Google Maps в списке работает всегда.</p>
 
-  <div class="filters" id="filters"></div>
-
   <div class="mapbox">
+    <!-- фильтр живёт на самой карте: строка сверху, список выпадает поверх -->
+    <div class="filters" id="filters"></div>
     <div id="map"><div class="mapph"><svg class="i i-lg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2ZM9 4v14M15 6v14"/></svg> Карта загружается…</div></div>
     <div class="mapbar">
       <button class="btn pri" id="allOn"><svg class="i i-sm" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Показать всё</button>
@@ -703,7 +753,9 @@ const ICONS={
  route:'<circle cx="6" cy="19" r="2.5"/><circle cx="18" cy="5" r="2.5"/><path d="M15.5 5H10a4 4 0 0 0 0 8h4a4 4 0 0 1 0 8H8.5"/>',
  camera:'<path d="M4 8h3l1.5-2.5h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z"/><circle cx="12" cy="13.5" r="3.4"/>',
  info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.8h.01"/>',
- tree:'<path d="M12 2 7 10h3l-4 6h5v6h2v-6h5l-4-6h3L12 2Z"/>'
+ tree:'<path d="M12 2 7 10h3l-4 6h5v6h2v-6h5l-4-6h3L12 2Z"/>',
+ chevron:'<path d="m6 9 6 6 6-6"/>',
+ layers:'<path d="m12 2 9 5-9 5-9-5 9-5ZM3 12l9 5 9-5M3 17l9 5 9-5"/>'
 };
 function ic(n,cls){return ICONS[n]?'<svg class="i'+(cls?' '+cls:'')+'" viewBox="0 0 24 24" aria-hidden="true" focusable="false">'+ICONS[n]+'</svg>':'';}
 function med(n,bg,cls){return '<span class="med '+(cls||'')+'" style="background:'+bg+'">'+ic(n)+'</span>';}
@@ -1036,7 +1088,7 @@ function foodVisible(f){
   return true; // «Всё» или категория → вся еда
 }
 function pinVisible(p){if(p.cat==='food')return foodVisible(p);return picked.has(p.id)&&matchesPrimary(p);}
-let fseg='day';                       /* какой раздел фильтра открыт */
+let fopen=null;                       /* какой список сейчас раскрыт над картой */
 /* фото для карточки: берём первый снимок из точек дня */
 function dayPhoto(n){const p=P.find(x=>x.d===n&&PHOTO[x.id]);return p?pimg(p.id,'t'):'';}
 function basePhoto(id){return BPHOTO[id]?pimg(BPHOTO[id],'t'):'';}
@@ -1055,47 +1107,67 @@ function fcell(o){
 function buildFilters(){
   const box=document.getElementById('filters');
   const total=P.filter(p=>p.cat!=='food').length;
-  let cells='';
-  if(fseg==='day'){
-    cells=DAYS.map(d=>fcell({f:'day',v:d.n,photo:dayPhoto(d.n),color:DCOL[d.n],badge:'День '+d.n,
-      title:d.title,sub:fmtShort(dayDateFor(d.n))+' · '+dayPts(d.n)+' '+plural(dayPts(d.n),'точка','точки','точек')})).join('');
-  }else if(fseg==='base'){
-    cells=BASES.map((b,i)=>fcell({f:'base',v:b.id,photo:basePhoto(b.id),color:b.color,badge:'База '+(i+1),
-      title:shortName(b.name),sub:b.nights+' '+nights(b.nights)})).join('');
-  }else{
-    const ck=[['star','Главное','#f47b20'],['nature','Природа','#12855e'],['town','Города','#3d5a72'],
-              ['springs','Источники','#3d8bff'],['transport','Транспорт','#a1663a']];
-    cells=ck.map(([k,l,c])=>fcell({f:'cat',v:k,photo:'',color:c,icon:k==='star'?'star':CATS[k].e,badge:l,
-      title:l,sub:catPts(k)+' '+plural(catPts(k),'место','места','мест')})).join('');
-  }
-  box.innerHTML='<div class="fseg">'
-      +'<button data-seg="day"'+(fseg==='day'?' class="on"':'')+'>Дни</button>'
-      +'<button data-seg="base"'+(fseg==='base'?' class="on"':'')+'>Базы</button>'
-      +'<button data-seg="cat"'+(fseg==='cat'?' class="on"':'')+'>Категории</button></div>'
-    +'<button class="fall" data-f="all"><b>Показать всё</b><span>'+total+' '+plural(total,'точка','точки','точек')+'</span></button>'
-    +'<div class="fgrid">'+cells+'</div>'
-    +'<button class="foodline" id="foodToggle"><span class="fic">'+ic('food','i-sm')+'</span>'
-      +'<b>Еда на карте</b><span class="sw"></span></button>';
+  const cur=filter.mode, cv=filter.v;
+  const label=(seg)=>{
+    if(cur!==seg)return seg==='day'?'Дни':seg==='base'?'Базы':'Типы';
+    if(seg==='day')return 'День '+cv;
+    if(seg==='base'){const b=BASES.find(x=>x.id===cv);return b?shortName(b.name):'Базы';}
+    const m={star:'Главное',nature:'Природа',town:'Города',springs:'Источники',transport:'Транспорт'};
+    return m[cv]||'Типы';
+  };
+  const tab=(seg)=>'<button class="mfb'+(cur===seg?' act':'')+(fopen===seg?' open':'')+'" data-seg="'+seg+'">'
+    +'<span>'+label(seg)+'</span>'+ic('chevron','i-sm')+'</button>';
 
-  box.querySelectorAll('[data-seg]').forEach(b=>b.addEventListener('click',()=>{fseg=b.dataset.seg;buildFilters();applyFilter();}));
-  box.querySelector('#foodToggle').addEventListener('click',()=>{foodOn=!foodOn;applyFilter();});
-  box.querySelectorAll('[data-f]').forEach(el=>el.addEventListener('click',()=>{
+  box.innerHTML='<div class="mfbar">'
+      +'<button class="mfall'+(cur==='all'?' act':'')+'" data-f="all" title="показать все точки">'+ic('layers','i-sm')+'</button>'
+      +tab('day')+tab('base')+tab('cat')
+      +'<button class="mffood'+(foodOn?' act':'')+'" id="foodToggle" title="еда на карте">'+ic('food','i-sm')+'</button>'
+    +'</div>'
+    +'<div class="mfdrop'+(fopen?' show':'')+'" id="mfdrop">'+(fopen?dropList(fopen,total):'')+'</div>';
+
+  box.querySelectorAll('[data-seg]').forEach(b=>b.addEventListener('click',e=>{
+    e.stopPropagation();fopen=(fopen===b.dataset.seg)?null:b.dataset.seg;buildFilters();applyFilter();}));
+  box.querySelector('#foodToggle').addEventListener('click',e=>{e.stopPropagation();foodOn=!foodOn;fopen=null;buildFilters();applyFilter();});
+  box.querySelectorAll('[data-f]').forEach(el=>el.addEventListener('click',e=>{
+    e.stopPropagation();
     const f=el.dataset.f,v=el.dataset.v;
     if(f==='all'){filter={mode:'all',v:null};}
     else{const nv=(f==='day')?+v:v;
       if(filter.mode===f&&String(filter.v)===String(nv))filter={mode:'all',v:null};
       else filter={mode:f,v:nv};}
-    applyFilter();
+    fopen=null;                       /* выбрал — список закрылся, осталась карта */
+    buildFilters();applyFilter();fitVisible();
   }));
+}
+/* строки выпадающего списка */
+function dropList(seg,total){
+  const row=(o)=>'<button class="mfrow'+(o.on?' on':'')+'" data-f="'+o.f+'" data-v="'+o.v+'">'
+    +'<span class="mfth"'+(o.photo?' style="background-image:url('+o.photo+')"':'')+'>'
+    +(o.photo?'':'<span class="mfic" style="background:'+o.color+'">'+ic(o.icon||'pin','i-sm')+'</span>')
+    +'<span class="mfdot" style="background:'+o.color+'"></span></span>'
+    +'<span class="mftx"><b>'+o.title+'</b><span>'+o.sub+'</span></span>'
+    +'<span class="mfck">'+ic('check','i-sm')+'</span></button>';
+  let rows='';
+  if(seg==='day'){
+    rows=DAYS.map(d=>row({f:'day',v:d.n,on:filter.mode==='day'&&filter.v===d.n,photo:dayPhoto(d.n),color:DCOL[d.n],
+      title:'День '+d.n+' · '+d.title,sub:fmtShort(dayDateFor(d.n))+' · '+dayPts(d.n)+' '+plural(dayPts(d.n),'точка','точки','точек')})).join('');
+  }else if(seg==='base'){
+    rows=BASES.map((b,i)=>row({f:'base',v:b.id,on:filter.mode==='base'&&filter.v===b.id,photo:basePhoto(b.id),color:b.color,
+      title:shortName(b.name),sub:'база '+(i+1)+' · '+b.nights+' '+nights(b.nights)})).join('');
+  }else{
+    const ck=[['star','Главное','#f47b20','star'],['nature','Природа','#12855e','mountain'],['town','Города','#3d5a72','town'],
+              ['springs','Источники','#3d8bff','springs'],['transport','Транспорт','#a1663a','train']];
+    rows=ck.map(([k,l,c,i])=>row({f:'cat',v:k,on:filter.mode==='cat'&&filter.v===k,photo:'',color:c,icon:i,
+      title:l,sub:catPts(k)+' '+plural(catPts(k),'место','места','мест')})).join('');
+  }
+  return '<div class="mfhead"><b>'+(seg==='day'?'Выбери день':seg==='base'?'Выбери базу':'Выбери тип мест')+'</b>'
+    +'<button class="mfx" data-f="all">Показать всё · '+total+'</button></div>'
+    +'<div class="mflist">'+rows+'</div>';
 }
 function fmtShort(dt){return dt.getDate()+' '+MONTHS[dt.getMonth()].slice(0,3);}
 function applyFilter(){
-  // карточки фильтра
-  const ft=document.getElementById('foodToggle');if(ft)ft.classList.toggle('on',foodOn);
-  document.querySelectorAll('#filters [data-f]').forEach(el=>{
-    const f=el.dataset.f,v=el.dataset.v;
-    el.classList.toggle('on',(f==='all'&&filter.mode==='all')||(f===filter.mode&&String(filter.v)===String(v)));
-  });
+  // строка фильтра над картой
+  const ft=document.getElementById('foodToggle');if(ft)ft.classList.toggle('act',foodOn);
   // строки списка (только маршрутные точки; еда — отдельный раздел ниже)
   P.forEach(p=>{if(p.cat==='food')return;const li=document.querySelector('li[data-id="'+p.id+'"]');if(li)li.classList.toggle('hiddenrow',!matchesPrimary(p));});
   // карточки дней
@@ -1363,6 +1435,13 @@ if(typeof requestIdleCallback==='function'){requestIdleCallback(initMap,{timeout
     {rootMargin:'0px 0px -8% 0px',threshold:.08});
   targets.forEach(t=>io.observe(t));
 })();
+
+/* клик вне фильтра — список закрывается */
+document.addEventListener('click',e=>{
+  if(!fopen)return;
+  if(e.target.closest('#filters'))return;
+  fopen=null;buildFilters();applyFilter();
+});
 
 /* подсветка текущего раздела в нижней панели */
 (function navHighlight(){
