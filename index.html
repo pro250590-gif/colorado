@@ -135,8 +135,8 @@ h2.big{font-size:clamp(26px,6.4vw,38px);margin:11px 4px 0}
 
 /* ── КАРТА ── */
 .mapbox{position:relative;border-radius:var(--r);overflow:hidden;box-shadow:var(--sh3);border:1px solid var(--cardline)}
-#map{height:min(56vh,520px);min-height:330px;z-index:1}
-.mapph{height:min(56vh,520px);min-height:330px;display:grid;place-items:center;text-align:center;padding:28px;
+#map{height:min(37vh,340px);min-height:215px;z-index:1}
+.mapph{height:min(37vh,340px);min-height:215px;display:grid;place-items:center;text-align:center;padding:28px;
   color:var(--mut);font-size:14.5px;background:#e8ede9}
 .pin{display:flex;align-items:center;justify-content:center;border-radius:50%;color:#fff;font-weight:800;
   font-family:"Plus Jakarta Sans",sans-serif;border:2.5px solid #fff;box-shadow:0 5px 14px rgba(20,32,27,.45);line-height:1}
@@ -766,6 +766,9 @@ header.hero h1 em{background:none!important;-webkit-background-clip:border-box!i
 .cwhy{display:block;font:400 14px/1.55 "Inter",sans-serif;color:#5c5f72;margin-top:7px}
 .cnote{background:#f6f2ff;border:1px solid #e6ddfb;border-radius:12px;padding:11px 13px;font:500 13px/1.5 "Inter",sans-serif;color:#4a3a7a;margin-top:12px}
 .cnote b{color:#3b2a8f}
+.mapbar{display:none!important}
+.leaflet-control-attribution{font-size:8px!important;background:rgba(255,255,255,.55)!important;color:#9a9aad!important;padding:1px 5px!important;opacity:.7}
+.leaflet-control-attribution a{color:#9a9aad!important}
 </style>
 </head>
 <body>
@@ -1328,7 +1331,7 @@ function initMap(){
     const streets=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'});
     const relief=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',{maxZoom:18,attribution:'© Esri'});
     const sat=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:18,attribution:'© Esri'});
-    map=L.map('map',{layers:[light],scrollWheelZoom:false,zoomControl:true}).setView([38.5,-107.3],7);
+    map=L.map('map',{layers:[light],scrollWheelZoom:false,zoomControl:true}).setView([38.5,-107.3],7);map.attributionControl.setPrefix('');
     map.on('click',()=>map.scrollWheelZoom.enable());
     L.control.layers({'Карта':light,'Улицы':streets,'Рельеф':relief,'Спутник':sat},null,{position:'topright'}).addTo(map);
     L.control.scale({position:'bottomleft',metric:true,imperial:true,maxWidth:140}).addTo(map);
