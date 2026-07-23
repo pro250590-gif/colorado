@@ -610,6 +610,37 @@ input.money.perunit{max-width:62px;padding:7px 6px;text-align:center;margin:0 1p
   .hf{width:58px}.hf input{font-size:13px;padding:8px 4px}
   .hdot{width:44px;height:44px}
 }
+/* ── БЮДЖЕТ: группы-карточки ── */
+.bgroup{background:var(--card);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid var(--cardline);border-radius:var(--r2);box-shadow:var(--sh1);margin:0 0 11px;overflow:hidden}
+.bghead{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--line2)}
+.bgmed{flex:none;width:42px;height:42px;border-radius:14px;color:#fff;display:grid;place-items:center;position:relative;overflow:hidden;box-shadow:var(--sh1),inset 0 1px 0 rgba(255,255,255,.42)}
+.bgmed::after{content:"";position:absolute;inset:0;border-radius:14px;background:radial-gradient(120% 78% at 14% 8%,rgba(255,255,255,.4),rgba(255,255,255,0) 58%)}
+.bgmed .i{position:relative;z-index:2}
+.bgt{flex:1;min-width:0}
+.bgt b{display:block;font:800 16px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:-.035em}
+.bgt span{display:block;font:700 10px/1 "Inter",sans-serif;text-transform:uppercase;letter-spacing:.1em;color:var(--mut);margin-top:6px}
+.bgsum{flex:none;font:800 16px/1 "Plus Jakarta Sans",sans-serif;color:var(--green2);letter-spacing:-.03em}
+.brow{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line2)}
+.brow:last-child{border-bottom:0}
+.binfo{flex:1;min-width:0}
+.binfo b{display:block;font:700 14.5px/1.2 "Plus Jakarta Sans",sans-serif;letter-spacing:-.02em}
+.binfo span{display:block;font:500 11.5px/1.35 "Inter",sans-serif;color:var(--mut);margin-top:5px}
+.binfo span .cf,.binfo span .est{margin-left:2px}
+.binfo .cf{color:var(--green3)}.binfo .est{color:#8a6316;font-weight:800}
+.bfield{flex:none;display:flex;align-items:center;gap:4px}
+.bfield input{width:74px;border:1.5px solid rgba(217,106,18,.4);border-radius:11px;background:linear-gradient(180deg,#fff,#fff6ec);padding:9px 8px;font:800 14px/1 "Plus Jakarta Sans",sans-serif;color:var(--ink);text-align:right}
+.bfield input:focus{outline:2px solid rgba(217,106,18,.28);border-color:var(--orange2)}
+.bfield .bx{font:700 10px/1 "Inter",sans-serif;color:var(--mut)}
+.bsum{flex:none;min-width:58px;text-align:right;font:800 14px/1 "Plus Jakarta Sans",sans-serif;color:var(--ink)}
+/* большой итог поездки */
+.grandtot{border-radius:var(--r2);padding:20px;margin-top:14px;color:#fff;background:linear-gradient(150deg,var(--green2),#0a2a20);box-shadow:var(--sh2);position:relative;overflow:hidden}
+.grandtot::before{content:"";position:absolute;inset:0;background:radial-gradient(120% 70% at 12% 6%,rgba(255,255,255,.2),rgba(255,255,255,0) 56%)}
+.gt-main{display:flex;align-items:baseline;justify-content:space-between;position:relative;z-index:2}
+.gt-main span{font:600 13px/1 "Inter",sans-serif;opacity:.85}
+.gt-main b{font:800 30px/1 "Plus Jakarta Sans",sans-serif;color:var(--orange1);letter-spacing:-.04em}
+.gt-sub{display:flex;gap:10px;margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,.16);position:relative;z-index:2}
+.gt-sub span{flex:1;font:600 11px/1 "Inter",sans-serif;opacity:.8;display:flex;flex-direction:column;gap:7px;text-transform:uppercase;letter-spacing:.06em}
+.gt-sub b{font:800 19px/1 "Plus Jakarta Sans",sans-serif;color:#fff;opacity:1;letter-spacing:-.03em}
 </style>
 </head>
 <body>
@@ -665,14 +696,7 @@ input.money.perunit{max-width:62px;padding:7px 6px;text-align:center;margin:0 1p
   <p class="maphint">Настоящая карта: кнопки + / − для зума, линейка масштаба (км/мили) внизу слева, выбор вида (карта / улицы / рельеф / спутник) справа вверху. Нажми на точку — описание и ссылка на Google Maps.</p>
 </div></section>
 
-<section id="s-stay"><div class="wrap">
-  <div class="eyebrow">Ночёвки</div>
-  <h2 class="big">Жильё: ночи и стоимость</h2>
-  <p class="lede">Ставь число ночей стрелками. Цену вписывай за ночь или всю сумму — второе поле посчитается само. Всё сразу идёт в бюджет.</p>
-  <div class="planner" id="planner"></div>
-  <div style="height:14px"></div>
-  <div class="bases" id="baseCards"></div>
-</div></section>
+
 
 <section id="s-days"><div class="wrap">
   <div class="eyebrow">День за днём</div>
@@ -711,38 +735,15 @@ input.money.perunit{max-width:62px;padding:7px 6px;text-align:center;margin:0 1p
 
 <section id="s-money"><div class="wrap">
   <div class="eyebrow">Деньги</div>
-  <h2 class="big">Бюджет поездки</h2>
-  <p class="lede">Клик по числу — впиши своё, итог пересчитается и сохранится. Жильё считается в разделе «Ночёвки» и попадает сюда в общий итог.</p>
-  <div class="tblwrap"><table id="budgetTbl">
-    <thead><tr><th style="width:40%">Статья</th><th>Детали</th><th class="num" style="width:110px">Сумма, $</th></tr></thead>
-    <tbody>
-      <tr class="grp"><td colspan="3"><svg class="i i-sm" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.9 19.3 15.8 11l3.6-3.6a2.1 2.1 0 1 0-3-3L12.8 8 4.6 6.2a1 1 0 0 0-.9 1.7l4.9 3.1-2 3H3.6l-.9 2 3.8 1 1 3.8 2-.9v-3l3-2 3.1 5a1 1 0 0 0 1.7-.9Z"/></svg> Перелёт (American, туда-обратно)</td></tr>
-      <tr><td>Билеты, 2 человека</td><td>Basic Economy <span class="cf"><svg class="i i-sm" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> с твоего скриншота</span></td><td class="num"><input class="money" data-k="a1" value="1250.60"></td></tr>
-      <tr><td>Багаж</td><td>2 чел × 2 стороны × $50 <span class="cf"><svg class="i i-sm" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span></td><td class="num"><input class="money" data-k="a2" value="200"></td></tr>
-      <tr class="grp"><td colspan="3"><svg class="i i-sm" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17H3.6a.6.6 0 0 1-.6-.6V12l2.2-5.4A1 1 0 0 1 6.1 6h11.8a1 1 0 0 1 .9.6L21 12v4.4a.6.6 0 0 1-.6.6H19M5 17a2 2 0 1 0 4 0M15 17a2 2 0 1 0 4 0M9 17h6"/></svg> Машина</td></tr>
-      <tr data-per="day"><td>Аренда машины</td><td>SUV · <input class="money perunit" data-k="c1rate" value="90"> $ × <b data-days>10</b> дн.</td><td class="num" data-sum="c1">—</td></tr>
-      <tr><td>Возврат в другом городе</td><td>Дуранго → Денвер <span class="est">~ $100-150</span></td><td class="num"><input class="money" data-k="c2" value="130"></td></tr>
-      <tr><td>Бензин</td><td>~1 150 км гор <span class="est">~ оценка</span></td><td class="num"><input class="money" data-k="c3" value="120"></td></tr>
-      <tr class="grp"><td colspan="3"><svg class="i i-sm" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-      <tr class="grp"><td colspan="3"><svg class="i i-sm" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5V7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2.5a2.5 2.5 0 0 0 0 5V17a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2.5a2.5 2.5 0 0 0 0-5Z"/></svg> Входы и активности · на двоих</td></tr>
-      <tr><td>Поезд Durango &amp; Silverton</td><td>открытый вагон ~$144×2 +сбор <span class="est">~</span></td><td class="num"><input class="money" data-k="t1" value="311"></td></tr>
-      <tr><td>Mesa Verde</td><td>$30/машина <span class="cf"><svg class="i i-sm" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span></td><td class="num"><input class="money" data-k="t2" value="30"></td></tr>
-      <tr><td>Black Canyon</td><td>$30/машина <span class="cf"><svg class="i i-sm" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span></td><td class="num"><input class="money" data-k="t3" value="30"></td></tr>
-      <tr><td>Maroon Bells</td><td>шаттл $16×2 <span class="cf"><svg class="i i-sm" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span></td><td class="num"><input class="money" data-k="t4" value="32"></td></tr>
-      <tr><td>Ouray Hot Springs</td><td>$26×2 <span class="cf"><svg class="i i-sm" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span></td><td class="num"><input class="money" data-k="t5" value="52"></td></tr>
-      <tr><td>Box Canyon Falls</td><td>$8×2 <span class="cf"><svg class="i i-sm" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span></td><td class="num"><input class="money" data-k="t6" value="16"></td></tr>
-      <tr><td>Гондола в Аспене</td><td>$40×2 <span class="cf"><svg class="i i-sm" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span></td><td class="num"><input class="money" data-k="t7" value="80"></td></tr>
-      <tr><td>Джип-тур Yankee Boy</td><td>~$125×2 <span class="est">~ опц.</span></td><td class="num"><input class="money" data-k="t8" value="250"></td></tr>
-      <tr class="grp"><td colspan="3"><svg class="i i-sm" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7a3 3 0 0 0 3 3v10M6 2v7M9 2v7M18 2c-1.6 2-2.4 4.2-2.4 6.4 0 1.9.9 3.1 2.4 3.4V22"/></svg> Еда</td></tr>
-      <tr data-per="day"><td>Еда и кафе</td><td>на двоих · <input class="money perunit" data-k="f1rate" value="90"> $ × <b data-days>10</b> дн.</td><td class="num" data-sum="f1">—</td></tr>
-    </tbody>
-    <tfoot>
-      <tr class="tot"><td colspan="2">ИТОГО на двоих</td><td class="num" id="sumAll">—</td></tr>
-      <tr class="tot2"><td colspan="2">На человека</td><td class="num" id="sumPer">—</td></tr>
-    </tfoot>
-  </table></div>
-  <div class="budgbar"><button class="btn" id="resetBudget"><svg class="i i-sm" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 2.6-6.4M3 3v5h5"/></svg> Сбросить</button>
-    <span class="counter"><span class="cf"><svg class="i i-sm" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span> подтверждено · <span class="est">~</span> оценка · <span class="tbd">?</span> ждём данных</span></div>
+  <h2 class="big">Бюджет и жильё</h2>
+  <p class="lede">Всё в одном месте: ночи и стоимость жилья, билеты, машина, входы и еда. Меняешь ночи или цены — итог считается сам.</p>
+  <div class="planner" id="planner"></div>
+  <div id="budgetBox"></div>
+  <div class="grandtot">
+    <div class="gt-main"><span>Вся поездка · на двоих</span><b id="sumAll">—</b></div>
+    <div class="gt-sub"><span>На человека<b id="sumPer">—</b></span><span>В день<b id="sumDay">—</b></span></div>
+  </div>
+  <div class="budgbar"><button class="btn" id="resetBudget"><svg class="i i-sm" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 2.6-6.4M3 3v5h5"/></svg> Сбросить суммы</button></div>
 </div></section>
 
 <section id="s-tips"><div class="wrap">
@@ -806,7 +807,7 @@ input.money.perunit{max-width:62px;padding:7px 6px;text-align:center;margin:0 1p
 <nav class="bottomnav">
   <a href="#s-map" aria-label="Карта"><svg class="i" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14M15 6v14"/></svg>Карта</a>
   <a href="#s-days" aria-label="Дни"><svg class="i" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>Дни</a>
-  <a href="#s-stay" aria-label="Ночёвки"><svg class="i" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20v-8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v8M2 16h20M6 10V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v4"/></svg>Ночёвки</a>
+  
   <a href="#s-food" aria-label="Еда"><svg class="i" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7a3 3 0 0 0 3 3v10M6 2v7M9 2v7M18 2c-1.6 2-2.4 4.2-2.4 6.4 0 1.9.9 3.1 2.4 3.4V22"/></svg>Еда</a>
   <a href="#s-money" aria-label="Бюджет"><svg class="i" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0 0 4h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5"/><path d="M17.5 13h.01"/></svg>Бюджет</a>
 </nav>
@@ -1586,45 +1587,237 @@ function wireButtons(){
 
 /* ================= БЮДЖЕТ ================= */
 const BKEY='co-trip-2026-budget';const DEF={};
-function money(n){return '$'+n.toLocaleString('en-US',{maximumFractionDigits:0});}
+function money(n){return '$'+Math.round(n).toLocaleString('en-US').replace(/,/g,' ');}
 /* строки жилья: одна на базу, ночи берутся из планировщика */
 /* жильё переехало в раздел «Ночёвки» — здесь ничего не строим */
 function buildBudgetStay(){}
-/* обновляем числа ночей и дней в бюджете, не трогая введённые цены */
+/* число дней в строках «за день» обновляем при смене ночей */
 function refreshBudgetCounts(){
-  const tn=totalNights(),td=tn+1;
-  BASES.forEach(b=>{const el=document.querySelector('[data-bn="'+b.id+'"]');
-    if(el)el.textContent=b.nights;
-    const w=document.querySelector('[data-bw="'+b.id+'"]');if(w)w.textContent=nights(b.nights);});
-  document.querySelectorAll('[data-days]').forEach(el=>el.textContent=td);
-  const hd=document.getElementById('bStayHead');
-  if(hd)hd.textContent='Жильё · '+tn+' '+nights(tn);
+  if(typeof calcBudget==='function')calcBudget();
+}
+/* ================= БЮДЖЕТ: группы-карточки ================= */
+const BUDGET=[
+ {g:'Перелёт',ic:'plane',c:'#5a4bb5',c2:'#3b3080',items:[
+   {k:'a1',nm:'Билеты · 2 человека',sub:'American, туда-обратно · Basic Economy',v:1250.60,ok:1},
+   {k:'a2',nm:'Багаж',sub:'2 чел × 2 стороны × $50',v:200,ok:1},
+ ]},
+ {g:'Машина',ic:'car',c:'#a1663a',c2:'#6f4227',items:[
+   {k:'c1',nm:'Аренда машины',per:'day',rate:90,sub:'SUV · цена за день'},
+   {k:'c2',nm:'Возврат в другом городе',sub:'Дуранго → Денвер',v:130,est:1},
+   {k:'c3',nm:'Бензин',sub:'~1 150 км по горам',v:120,est:1},
+ ]},
+ {g:'Входы и активности',ic:'ticket',c:'#d96a12',c2:'#b0530c',note:'на двоих',items:[
+   {k:'t1',nm:'Поезд Durango & Silverton',sub:'открытый вагон ~$144×2 +сбор',v:311,est:1},
+   {k:'t2',nm:'Mesa Verde',sub:'$30 / машина',v:30,ok:1},
+   {k:'t3',nm:'Black Canyon',sub:'$30 / машина',v:30,ok:1},
+   {k:'t4',nm:'Maroon Bells',sub:'шаттл $16 × 2',v:32,ok:1},
+   {k:'t5',nm:'Ouray Hot Springs',sub:'$26 × 2',v:52,ok:1},
+   {k:'t6',nm:'Box Canyon Falls',sub:'$8 × 2',v:16,ok:1},
+   {k:'t7',nm:'Гондола в Аспене',sub:'$40 × 2',v:80,ok:1},
+   {k:'t8',nm:'Джип-тур Yankee Boy',sub:'опция · ~$125 × 2',v:250,est:1},
+ ]},
+ {g:'Еда',ic:'food',c:'#12855e',c2:'#0a6047',items:[
+   {k:'f1',nm:'Еда и кафе',per:'day',rate:90,sub:'на двоих · цена за день'},
+ ]},
+];
+function buildBudget(){
+  const host=document.getElementById('budgetBox');if(!host)return;
+  let saved={};try{saved=JSON.parse(localStorage.getItem(BKEY))||{};}catch(e){}
+  host.innerHTML=BUDGET.map(gr=>{
+    const rows=gr.items.map(it=>{
+      const val=saved[it.k]!==undefined?saved[it.k]:it.v;
+      if(it.per==='day'){
+        const rate=saved[it.k+'rate']!==undefined?saved[it.k+'rate']:it.rate;
+        return '<div class="brow" data-per="day">'
+          +'<span class="binfo"><b>'+it.nm+'</b><span>'+it.sub+' × <b data-days>'+(totalNights()+1)+'</b> дн.</span></span>'
+          +'<span class="bfield"><input class="money perunit" data-k="'+it.k+'rate" inputmode="decimal" value="'+rate+'"><span class="bx">$/дн</span></span>'
+          +'<span class="bsum" data-sum="'+it.k+'">—</span></div>';
+      }
+      const tag=it.ok?'<span class="cf">'+ic('check','i-sm')+'</span>':(it.est?'<span class="est">~</span>':'');
+      return '<div class="brow">'
+        +'<span class="binfo"><b>'+it.nm+'</b><span>'+it.sub+' '+tag+'</span></span>'
+        +'<span class="bfield"><input class="money" data-k="'+it.k+'" inputmode="decimal" value="'+val+'"><span class="bx">$</span></span></div>';
+    }).join('');
+    return '<div class="bgroup">'
+      +'<div class="bghead"><span class="bgmed" style="background:linear-gradient(150deg,'+gr.c+','+gr.c2+')">'+ic(gr.ic)+'</span>'
+      +'<span class="bgt"><b>'+gr.g+'</b>'+(gr.note?'<span>'+gr.note+'</span>':'')+'</span>'
+      +'<span class="bgsum" data-gsum="'+gr.g+'">—</span></div>'
+      +rows+'</div>';
+  }).join('');
+  host.querySelectorAll('input.money').forEach(i=>{
+    i.addEventListener('input',calcBudget);
+    i.addEventListener('focus',()=>i.select());
+  });
   calcBudget();
 }
-function calcBudget(){let sum=0;
-  /* строки «цена за единицу × количество» считаем сами */
-  document.querySelectorAll('#budgetTbl tr[data-per]').forEach(tr=>{
-    const inp=tr.querySelector('input.perunit'),out=tr.querySelector('[data-sum]');
-    if(!inp||!out)return;
-    const rate=parseFloat(inp.value)||0;
-    const qty=tr.dataset.per==='night'
-      ? (BASES.find(b=>b.id===tr.dataset.base)||{nights:0}).nights
-      : totalNights()+1;
-    const v=rate*qty;out.textContent=v?money(v):'—';sum+=v;
+function calcBudget(){
+  let sum=0;const days=totalNights()+1;
+  document.querySelectorAll('#budgetBox .brow[data-per="day"]').forEach(row=>{
+    const inp=row.querySelector('input.perunit'),out=row.querySelector('[data-sum]');
+    const rate=parseFloat(inp.value)||0,v=rate*days;
+    if(out)out.textContent=v?money(v):'—';
+    const dd=row.querySelector('[data-days]');if(dd)dd.textContent=days;
   });
-  document.querySelectorAll('#budgetTbl tbody input.money:not(.perunit)').forEach(i=>sum+=parseFloat(i.value)||0);
-  sum+=(typeof hotelTotal==='function'?hotelTotal():0);   /* жильё из раздела Ночёвки */
-  document.getElementById('sumAll').textContent=money(sum);document.getElementById('sumPer').textContent=money(sum/2);
-  const mnT=document.getElementById('tMoney');
-  if(mnT&&sum>0)mnT.textContent='$'+Math.round(sum/2).toLocaleString('en-US').replace(/,/g,' ');
-  const o={};document.querySelectorAll('input.money').forEach(i=>o[i.dataset.k]=i.value);try{localStorage.setItem(BKEY,JSON.stringify(o));}catch(e){}}
+  BUDGET.forEach(gr=>{
+    let gsum=0;
+    gr.items.forEach(it=>{
+      if(it.per==='day'){const r=document.querySelector('.perunit[data-k="'+it.k+'rate"]');gsum+=(parseFloat(r&&r.value)||0)*days;}
+      else{const f=document.querySelector('#budgetBox input.money[data-k="'+it.k+'"]');gsum+=parseFloat(f&&f.value)||0;}
+    });
+    const gel=document.querySelector('[data-gsum="'+gr.g+'"]');if(gel)gel.textContent=money(gsum);
+    sum+=gsum;
+  });
+  sum+=(typeof hotelTotal==='function'?hotelTotal():0);
+  const o={};document.querySelectorAll('#budgetBox input.money').forEach(i=>o[i.dataset.k]=i.value);
+  BASES.forEach((b,i)=>o['h'+(i+1)+'rate']=HRATE[i]||0);
+  try{localStorage.setItem(BKEY,JSON.stringify(o));}catch(e){}
+  document.getElementById('sumAll').textContent=money(sum);
+  document.getElementById('sumPer').textContent=money(Math.round(sum/2));
+  const sd=document.getElementById('sumDay');if(sd)sd.textContent=money(Math.round(sum/days));
+  const mn=document.getElementById('tMoney');if(mn&&sum>0)mn.textContent='$'+Math.round(sum/2).toLocaleString('en-US').replace(/,/g,' ');
+}
 function wireBudget(){
-  document.querySelectorAll('input.money').forEach(i=>DEF[i.dataset.k]=i.value);
+  buildBudget();
+  const rb=document.getElementById('resetBudget');
+  if(rb)rb.addEventListener('click',()=>{try{localStorage.removeItem(BKEY);}catch(e){}
+    BASES.forEach((b,i)=>HRATE[i]=0);buildBudget();renderStays();});
+}
+
+/* ================= СТАРТ ================= */
+loadPlan();
+['tileIc1|clock','tileIc2|pin','tileIc3|money','tileIc4|tree'].forEach(p=>{const [id,ico]=p.split('|');const el=document.getElementById(id);if(el)el.innerHTML=ic(ico);});
+buildElev();buildFilters();buildDays();buildFood();buildBases();buildPlanner();wireButtons();wireBudget();buildBudgetStay();
+recomputeDates();
+syncChecks();applyFilter();
+if(typeof requestIdleCallback==='function'){requestIdleCallback(initMap,{timeout:1500});}else{setTimeout(initMap,60);}
+
+
+/* появление блоков при прокрутке — сдержанно, одна волна */
+(function reveal(){
+  if(!('IntersectionObserver' in window))return;
+  const targets=[...document.querySelectorAll('section .base, section details.day, .foodcity, .planner, .mapbox, .tblwrap, details.acc')];
+  targets.forEach(t=>t.classList.add('rise'));
+  const io=new IntersectionObserver((es,o)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');o.unobserve(e.target);}});},
+    {rootMargin:'0px 0px -8% 0px',threshold:.08});
+  targets.forEach(t=>io.observe(t));
+})();
+
+/* клик вне фильтра — список закрывается */
+document.addEventListener('click',e=>{
+  if(!fopen)return;
+  if(e.target.closest('#filters'))return;
+  fopen=null;buildFilters();applyFilter();
+});
+
+/* подсветка текущего раздела в нижней панели */
+(function navHighlight(){
+  const links=[...document.querySelectorAll('.bottomnav a')];
+  if(!links.length||!('IntersectionObserver' in window))return;
+  const byId={};links.forEach(a=>byId[a.getAttribute('href').slice(1)]=a);
+  const secs=Object.keys(byId).map(id=>document.getElementById(id)).filter(Boolean);
+  const io=new IntersectionObserver(es=>{
+    es.forEach(e=>{if(e.isIntersecting){links.forEach(l=>l.classList.remove('on'));
+      const a=byId[e.target.id];if(a)a.classList.add('on');}});
+  },{rootMargin:'-45% 0px -50% 0px'});
+  secs.forEach(s=>io.observe(s));
+})();
+</script>
+</body>
+</html>
++Math.round(n).toLocaleString('en-US').replace(/,/g,' ');}
+/* строки жилья: одна на базу, ночи берутся из планировщика */
+/* жильё переехало в раздел «Ночёвки» — здесь ничего не строим */
+function buildBudgetStay(){}
+/* число дней в строках «за день» обновляем при смене ночей */
+function refreshBudgetCounts(){
+  if(typeof calcBudget==='function')calcBudget();
+}
+/* ================= БЮДЖЕТ: группы-карточки ================= */
+const BUDGET=[
+ {g:'Перелёт',ic:'plane',c:'#5a4bb5',c2:'#3b3080',items:[
+   {k:'a1',nm:'Билеты · 2 человека',sub:'American, туда-обратно · Basic Economy',v:1250.60,ok:1},
+   {k:'a2',nm:'Багаж',sub:'2 чел × 2 стороны × $50',v:200,ok:1},
+ ]},
+ {g:'Машина',ic:'car',c:'#a1663a',c2:'#6f4227',items:[
+   {k:'c1',nm:'Аренда машины',per:'day',rate:90,sub:'SUV · цена за день'},
+   {k:'c2',nm:'Возврат в другом городе',sub:'Дуранго → Денвер',v:130,est:1},
+   {k:'c3',nm:'Бензин',sub:'~1 150 км по горам',v:120,est:1},
+ ]},
+ {g:'Входы и активности',ic:'ticket',c:'#d96a12',c2:'#b0530c',note:'на двоих',items:[
+   {k:'t1',nm:'Поезд Durango & Silverton',sub:'открытый вагон ~$144×2 +сбор',v:311,est:1},
+   {k:'t2',nm:'Mesa Verde',sub:'$30 / машина',v:30,ok:1},
+   {k:'t3',nm:'Black Canyon',sub:'$30 / машина',v:30,ok:1},
+   {k:'t4',nm:'Maroon Bells',sub:'шаттл $16 × 2',v:32,ok:1},
+   {k:'t5',nm:'Ouray Hot Springs',sub:'$26 × 2',v:52,ok:1},
+   {k:'t6',nm:'Box Canyon Falls',sub:'$8 × 2',v:16,ok:1},
+   {k:'t7',nm:'Гондола в Аспене',sub:'$40 × 2',v:80,ok:1},
+   {k:'t8',nm:'Джип-тур Yankee Boy',sub:'опция · ~$125 × 2',v:250,est:1},
+ ]},
+ {g:'Еда',ic:'food',c:'#12855e',c2:'#0a6047',items:[
+   {k:'f1',nm:'Еда и кафе',per:'day',rate:90,sub:'на двоих · цена за день'},
+ ]},
+];
+function buildBudget(){
+  const host=document.getElementById('budgetBox');if(!host)return;
   let saved={};try{saved=JSON.parse(localStorage.getItem(BKEY))||{};}catch(e){}
-  document.querySelectorAll('input.money').forEach(i=>{if(saved[i.dataset.k]!==undefined)i.value=saved[i.dataset.k];
-    i.setAttribute('inputmode','decimal');i.addEventListener('input',calcBudget);i.addEventListener('focus',()=>i.select());});
-  document.getElementById('resetBudget').addEventListener('click',()=>{document.querySelectorAll('input.money').forEach(i=>i.value=DEF[i.dataset.k]);calcBudget();});
+  host.innerHTML=BUDGET.map(gr=>{
+    const rows=gr.items.map(it=>{
+      const val=saved[it.k]!==undefined?saved[it.k]:it.v;
+      if(it.per==='day'){
+        const rate=saved[it.k+'rate']!==undefined?saved[it.k+'rate']:it.rate;
+        return '<div class="brow" data-per="day">'
+          +'<span class="binfo"><b>'+it.nm+'</b><span>'+it.sub+' × <b data-days>'+(totalNights()+1)+'</b> дн.</span></span>'
+          +'<span class="bfield"><input class="money perunit" data-k="'+it.k+'rate" inputmode="decimal" value="'+rate+'"><span class="bx">$/дн</span></span>'
+          +'<span class="bsum" data-sum="'+it.k+'">—</span></div>';
+      }
+      const tag=it.ok?'<span class="cf">'+ic('check','i-sm')+'</span>':(it.est?'<span class="est">~</span>':'');
+      return '<div class="brow">'
+        +'<span class="binfo"><b>'+it.nm+'</b><span>'+it.sub+' '+tag+'</span></span>'
+        +'<span class="bfield"><input class="money" data-k="'+it.k+'" inputmode="decimal" value="'+val+'"><span class="bx">$</span></span></div>';
+    }).join('');
+    return '<div class="bgroup">'
+      +'<div class="bghead"><span class="bgmed" style="background:linear-gradient(150deg,'+gr.c+','+gr.c2+')">'+ic(gr.ic)+'</span>'
+      +'<span class="bgt"><b>'+gr.g+'</b>'+(gr.note?'<span>'+gr.note+'</span>':'')+'</span>'
+      +'<span class="bgsum" data-gsum="'+gr.g+'">—</span></div>'
+      +rows+'</div>';
+  }).join('');
+  host.querySelectorAll('input.money').forEach(i=>{
+    i.addEventListener('input',calcBudget);
+    i.addEventListener('focus',()=>i.select());
+  });
   calcBudget();
+}
+function calcBudget(){
+  let sum=0;const days=totalNights()+1;
+  document.querySelectorAll('#budgetBox .brow[data-per="day"]').forEach(row=>{
+    const inp=row.querySelector('input.perunit'),out=row.querySelector('[data-sum]');
+    const rate=parseFloat(inp.value)||0,v=rate*days;
+    if(out)out.textContent=v?money(v):'—';
+    const dd=row.querySelector('[data-days]');if(dd)dd.textContent=days;
+  });
+  BUDGET.forEach(gr=>{
+    let gsum=0;
+    gr.items.forEach(it=>{
+      if(it.per==='day'){const r=document.querySelector('.perunit[data-k="'+it.k+'rate"]');gsum+=(parseFloat(r&&r.value)||0)*days;}
+      else{const f=document.querySelector('#budgetBox input.money[data-k="'+it.k+'"]');gsum+=parseFloat(f&&f.value)||0;}
+    });
+    const gel=document.querySelector('[data-gsum="'+gr.g+'"]');if(gel)gel.textContent=money(gsum);
+    sum+=gsum;
+  });
+  sum+=(typeof hotelTotal==='function'?hotelTotal():0);
+  const o={};document.querySelectorAll('#budgetBox input.money').forEach(i=>o[i.dataset.k]=i.value);
+  BASES.forEach((b,i)=>o['h'+(i+1)+'rate']=HRATE[i]||0);
+  try{localStorage.setItem(BKEY,JSON.stringify(o));}catch(e){}
+  document.getElementById('sumAll').textContent=money(sum);
+  document.getElementById('sumPer').textContent=money(Math.round(sum/2));
+  const sd=document.getElementById('sumDay');if(sd)sd.textContent=money(Math.round(sum/days));
+  const mn=document.getElementById('tMoney');if(mn&&sum>0)mn.textContent='$'+Math.round(sum/2).toLocaleString('en-US').replace(/,/g,' ');
+}
+function wireBudget(){
+  buildBudget();
+  const rb=document.getElementById('resetBudget');
+  if(rb)rb.addEventListener('click',()=>{try{localStorage.removeItem(BKEY);}catch(e){}
+    BASES.forEach((b,i)=>HRATE[i]=0);buildBudget();renderStays();});
 }
 
 /* ================= СТАРТ ================= */
