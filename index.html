@@ -1445,7 +1445,11 @@ function buildCities(){
 
   /* дни-аккордеоны: открыт только один */
   host.querySelectorAll('.cday').forEach(det=>det.addEventListener('toggle',()=>{
-    if(det.open)host.querySelectorAll('.cday[open]').forEach(o=>{if(o!==det)o.open=false;});
+    if(!det.open)return;
+    host.querySelectorAll('.cday[open]').forEach(o=>{if(o!==det)o.open=false;});
+    /* остальные закрылись — подводим открытый день к верху (под липкие шапки) */
+    requestAnimationFrame(()=>{const top=det.getBoundingClientRect().top+window.scrollY-116;
+      window.scrollTo({top:Math.max(0,top),behavior:'smooth'});});
   }));
   /* подсветка активного города в степпере при прокрутке */
   if('IntersectionObserver' in window){
