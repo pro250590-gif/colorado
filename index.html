@@ -1347,9 +1347,9 @@ function initMap(){
     const el=document.getElementById('map');el.innerHTML='';
     /* современные стили карты (MapTiler, вектор) */
     const MTK='tmZBlSimSfpJvOPnNch8';
-    const mt=(style)=>L.tileLayer('https://api.maptiler.com/maps/'+style+'/{z}/{x}/{y}.png?key='+MTK,{maxZoom:20,tileSize:512,zoomOffset:-1,attribution:'© MapTiler © OpenStreetMap'});
+    const mt=(style)=>L.tileLayer('https://api.maptiler.com/maps/'+style+'/{z}/{x}/{y}@2x.png?key='+MTK,{maxZoom:20,tileSize:512,zoomOffset:-1,crossOrigin:true,attribution:'© MapTiler © OpenStreetMap'});
     const mStreets=mt('streets-v4'),mTopo=mt('topo-v4'),mLand=mt('landscape-v4'),mWinter=mt('winter-v4'),mOcean=mt('ocean-v4'),mHybrid=mt('hybrid');
-    map=L.map('map',{layers:[mStreets],scrollWheelZoom:false,zoomControl:false,dragging:false,touchZoom:true,doubleClickZoom:true,boxZoom:false,keyboard:false,minZoom:3,maxZoom:14}).setView([38.5,-107.3],6);map.attributionControl.setPrefix('');
+    map=L.map('map',{layers:[mStreets],scrollWheelZoom:false,zoomControl:false,dragging:true,tap:false,touchZoom:true,doubleClickZoom:true,boxZoom:false,keyboard:false,minZoom:3,maxZoom:14}).setView([38.5,-107.3],6);map.attributionControl.setPrefix('');
     L.control.zoom({position:'bottomright'}).addTo(map);
     L.control.layers({'Улицы':mStreets,'Топо':mTopo,'Ландшафт':mLand,'Зима':mWinter,'Океан':mOcean,'Спутник':mHybrid},null,{position:'topright'}).addTo(map);
     L.control.scale({position:'bottomleft',metric:true,imperial:true,maxWidth:140}).addTo(map);
