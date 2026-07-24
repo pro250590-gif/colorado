@@ -1461,6 +1461,11 @@ function startCarAnim(path){
     const f=seg[i]?(t-acc)/seg[i]:0,a=path[i],b=path[i+1]||a;
     carMarker.setLatLng([a[0]+(b[0]-a[0])*f,a[1]+(b[1]-a[1])*f]);},40);
 }
+/* самолётик летит от a к b и повторяет (как рейс) */
+const planeTimers=[];
+function animPlane(marker,a,bb,period){if(!marker)return;let t=0;const step=40/(period||6000);
+  planeTimers.push(setInterval(()=>{if(!marker)return;t+=step;if(t>1)t=0;
+    marker.setLatLng([a[0]+(bb[0]-a[0])*t,a[1]+(bb[1]-a[1])*t]);},40));}
 function mapFallback(msg){const el=document.getElementById('map');if(el)el.innerHTML='<div class="mapph">'+ic('map','i-lg')+' <b>'+(msg||'Карта не загрузилась')+'</b><br>Открой страницу по обычной ссылке (Netlify/GitHub) в браузере при интернете. Список и ссылки на Google Maps работают всегда.</div>';}
 function popupHTML(nm,q,why,label,color,photo){
   return '<div style="min-width:200px;max-width:250px">'
@@ -1481,18 +1486,20 @@ function initMap(){
     map=L.map('map',{layers:[light],scrollWheelZoom:false,zoomControl:false,dragging:false,touchZoom:true,doubleClickZoom:true,boxZoom:false,keyboard:false,minZoom:3,maxZoom:14}).setView([38.5,-107.3],6);map.attributionControl.setPrefix('');
     L.control.zoom({position:'bottomright'}).addTo(map);
     L.control.layers({'Карта':light,'Улицы':streets,'Рельеф':relief,'Спутник':sat},null,{position:'topright'}).addTo(map);
-    L.control.scale({position:'bottomleft',metric:true,imperial:true,maxWidth:140}).addTo(map);
     /* города-счётчики (вид 1C): круг с числом мест + подпись цветом базы; клик — раскрыть точки города */
     BASES.forEach(b=>{const cnt=P.filter(x=>x.cat!=='food'&&x.base===b.id).length;
       baseMarkers[b.id]=L.marker([b.lat,b.lng],{icon:L.divIcon({className:'',iconSize:[70,74],iconAnchor:[23,23],
         html:'<div class="citymk" style="--c:'+b.color+'"><div class="circ"><b>'+cnt+'</b><span>мест</span></div><div class="lab">'+shortName(b.name)+'</div></div>'})});
       baseMarkers[b.id].on('click',()=>{filter={mode:'base',v:b.id};fopen=null;buildFilters();applyFilter();fitVisible();});});
-    /* точки-места: чистые пины (вид 1B), показываются при выборе города/дня */
-    P.forEach(p=>{const c=p.cat==='food'?'#c1462a':(DCOL[p.d]||'#2f9e6f');const sz=p.star?26:21;
-      const glyph=p.cat==='food'?'':(p.d||'');
-      const icon=L.divIcon({className:'',iconSize:[sz,sz],iconAnchor:[sz/2,sz/2],
-        html:'<div class="ptpin" style="background:'+c+';width:'+sz+'px;height:'+sz+'px;font-size:'+(p.star?14:11)+'px">'+glyph+'</div>'});
-      markers[p.id]=L.marker([p.lat,p.lng],{icon:icon}).bindPopup(popupHTML(p.nm,p.q,p.why,p.d?('День '+p.d):(CATS[p.cat]?CATS[p.cat].l:''),c,PHOTO[p.id]?pimg(p.id,'l'):null));});
+    /* точки-места: булавки С ФОТО (как раньше) — показываются при выборе города/дня/типа */
+    P.forEach(p=>{const c=p.cat==='food'?'#c1462a':(DCOL[p.d]||'#2f9e6f');const ph=PHOTO[p.id];let icon;
+      if(ph){icon=L.divIcon({className:'',iconSize:[52,60],iconAnchor:[26,60],popupAnchor:[0,-56],
+        html:'<div class="photopin"><div class="ph" style="background-image:url('+pimg(p.id,'p')+')"></div>'
+            +'<div class="badge" style="background:'+c+'">'+(p.d||'')+'</div><div class="tip"></div></div>'});
+      }else{const glyph=p.cat==='food'?'':(p.d||'');const sz=p.star?28:22;
+        icon=L.divIcon({className:'',iconSize:[sz,sz],iconAnchor:[sz/2,sz/2],
+          html:'<div class="pin" style="background:'+c+';width:'+sz+'px;height:'+sz+'px;font-size:'+(p.star?15:12)+'px">'+glyph+'</div>'});}
+      markers[p.id]=L.marker([p.lat,p.lng],{icon:icon}).bindPopup(popupHTML(p.nm,p.q,p.why,p.d?('День '+p.d):(CATS[p.cat]?CATS[p.cat].l:''),c,ph?pimg(p.id,'l'):null));});
     /* маршрут: тоньше, цвета баз (без чёрного); переезды сплошные, радиалки тонкий пунктир */
     const legCol={4:'#12855e',6:'#d96a12',9:'#5a4bb5'};
     function drawLine(o){const isLeg=o.type==='leg';const col=isLeg?(legCol[o.days[0]]||o.color):o.color;const w=isLeg?4.5:2.6;
@@ -1507,10 +1514,15 @@ function initMap(){
     /* дуги перелётов до реального Майами (уходят за ЮВ край; видно целиком при отзуме) */
     decoLayer.addLayer(L.polyline([MIA,DUR],{color:'#9aa0b4',weight:2,opacity:.8,dashArray:'2,8',lineCap:'round'}));
     decoLayer.addLayer(L.polyline([DEN,MIA],{color:'#9aa0b4',weight:2,opacity:.8,dashArray:'2,8',lineCap:'round'}));
-    /* самолётики — в открытом ЮВ-поле карты, в стороне от городов, но в кадре */
-    decoLayer.addLayer(L.marker([37.35,-105.25],{icon:L.divIcon({className:'',iconSize:[28,28],iconAnchor:[14,14],html:planeHTML(-128,'#12855e')})}));
-    decoLayer.addLayer(L.marker([38.75,-104.55],{icon:L.divIcon({className:'',iconSize:[28,28],iconAnchor:[14,14],html:planeHTML(128,'#5a4bb5')})}));
+    /* самолётики ЛЕТЯТ ПО ПУНКТИРНОЙ ЛИНИИ (видимый участок у Колорадо) и двигаются, как машинка */
+    const onLine=(A,B,f)=>[A[0]+(B[0]-A[0])*f,A[1]+(B[1]-A[1])*f];
+    const arrPlane=L.marker(onLine(DUR,MIA,0.03),{icon:L.divIcon({className:'',iconSize:[28,28],iconAnchor:[14,14],html:planeHTML(-118,'#12855e')})});
+    const depPlane=L.marker(onLine(DEN,MIA,0.005),{icon:L.divIcon({className:'',iconSize:[28,28],iconAnchor:[14,14],html:planeHTML(118,'#5a4bb5')})});
+    decoLayer.addLayer(arrPlane);decoLayer.addLayer(depPlane);
     decoLayer.addLayer(L.marker(MIA,{icon:L.divIcon({className:'',iconSize:[84,24],iconAnchor:[42,12],html:'<div class="miamichip">✈ Майами</div>'})}));
+    /* прилёт: из-за края к Дуранго; вылет: от Денвера к краю. Петля, как рейсы */
+    animPlane(arrPlane,onLine(DUR,MIA,0.06),onLine(DUR,MIA,0.004),7000);
+    animPlane(depPlane,onLine(DEN,MIA,0.004),onLine(DEN,MIA,0.05),7000);
     /* машинка едет по переездам Дуранго→Урей→Аспен→Денвер */
     const carPath=[].concat(LINES[0].pts.slice().reverse(),LINES[1].pts.slice().reverse(),LINES[2].pts.slice().reverse());
     carMarker=L.marker(carPath[0],{icon:L.divIcon({className:'',iconSize:[38,38],iconAnchor:[19,19],
@@ -1518,15 +1530,6 @@ function initMap(){
     startCarAnim(carPath);
     const legs=lineLayers.filter(l=>[4,6,9].some(d=>l.days.indexOf(d)>=0)).map(l=>l.layer);
     FULL=L.featureGroup(legs).getBounds().pad(0.08);map.fitBounds(FULL);
-    /* кнопка «рейс до Майами»: отъезжает и показывает перелёт целиком, затем назад к Колорадо */
-    const FlightCtl=L.Control.extend({options:{position:'bottomleft'},onAdd:function(){
-      const btn=L.DomUtil.create('button','flightbtn');btn.type='button';btn.innerHTML='✈ рейс до Майами';
-      L.DomEvent.disableClickPropagation(btn);let out=false;
-      L.DomEvent.on(btn,'click',function(e){L.DomEvent.preventDefault(e);out=!out;
-        if(out){map.fitBounds(L.latLngBounds([25.3,-80.0],[40.4,-108.6]),{padding:[14,14]});btn.innerHTML='← Колорадо';}
-        else{map.fitBounds(FULL);btn.innerHTML='✈ рейс до Майами';}});
-      return btn;}});
-    map.addControl(new FlightCtl());
     applyFilter();
   }catch(err){mapFallback('Карта не отрисовалась');}
 }
