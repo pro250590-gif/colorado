@@ -2092,13 +2092,17 @@ function cloudSave(){if(!sb||_applying)return;clearTimeout(_cloudTimer);
 async function cloudSync(session){if(!sb||!session)return;
   try{const{data,error}=await sb.from('user_plans').select('plan,updated_at').eq('user_id',session.user.id).maybeSingle();
     if(error)return;
-    if(data&&data.plan){
+    /* ЖЁСТКАЯ защита от цикла: не более ОДНОЙ загрузки-перезагрузки на вкладку */
+    const synced=sessionStorage.getItem('cloudSynced')==='1';
+    if(data&&data.plan&&!synced){
       const cloudTs=data.updated_at?new Date(data.updated_at).getTime():0,lts=localTs();
-      if(cloudTs>lts+1500){ /* облако новее (правки с другого устройства) — загружаем */
+      if(cloudTs>lts+3000){ /* облако заметно новее (правки с другого устройства) — грузим один раз */
+        try{sessionStorage.setItem('cloudSynced','1');}catch(e){}
         _applying=true;CLOUD_KEYS.forEach(k=>{if(data.plan[k]!=null)localStorage.setItem(k,data.plan[k]);});
-        _rawSet('co-trip-ts',String(cloudTs));location.reload();
-      }else cloudSave(); /* локальное свежее/равно — сохраняем локальное */
-    }else cloudSave(); /* в облаке пусто — первое сохранение */
+        _rawSet('co-trip-ts',String(cloudTs));location.reload();return;
+      }
+    }
+    cloudSave(); /* локальное свежее/равно/уже synced — просто сохраняем локальное */
   }catch(e){}}
 /* перехват записи наших ключей → отметка времени + авто-сохранение */
 localStorage.setItem=function(k,v){_rawSet(k,v);if(!_applying&&CLOUD_KEYS.indexOf(k)>=0){_rawSet('co-trip-ts',String(Date.now()));cloudSave();}};
@@ -2121,7 +2125,7 @@ localStorage.setItem=function(k,v){_rawSet(k,v);if(!_applying&&CLOUD_KEYS.indexO
     if(s){btn.textContent='Выйти';btn.dataset.state='in';btn.title=s.user.email||'';}
     else{btn.textContent='Войти';btn.dataset.state='out';btn.title='';}}catch(e){}}
   btn.addEventListener('click',async()=>{
-    if(btn.dataset.state==='in'){await sb.auth.signOut();refresh();}else open();});
+    if(btn.dataset.state==='in'){try{sessionStorage.removeItem('cloudSynced');}catch(e){}await sb.auth.signOut();refresh();}else open();});
   submit.addEventListener('click',async()=>{
     const e=(email.value||'').trim(),p=pass.value||'';
     if(!e||!p){err.style.color='';err.textContent='Введи email и пароль';return;}
