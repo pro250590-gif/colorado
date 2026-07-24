@@ -867,13 +867,13 @@ header.hero h1 em{background:none!important;-webkit-background-clip:border-box!i
 .mapbar{display:none!important}
 /* ═══ ЕДА: гид по городам (вкладки → ленты по категориям → карточки с переключателем) ═══ */
 .ftabnav{margin:26px 0 24px}
-.ftabs{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;padding:5px 2px 8px}
+.ftabs{display:flex;gap:11px;overflow-x:auto;scrollbar-width:none;padding:7px 3px 8px}
 .ftabs::-webkit-scrollbar{display:none}
-.ftabnav.wrapped .ftabs{flex-wrap:wrap;overflow:hidden;transition:max-height .28s ease}
-.ftabmore{display:none;margin-top:13px;border:1.5px dashed rgba(124,92,255,.55);background:#f3eefe;color:#5b3fc4;font:800 12px/1 "Plus Jakarta Sans",sans-serif;padding:10px 16px;border-radius:999px;cursor:pointer;transition:background .2s}
+.ftabnav.wrapped .ftabs{flex-wrap:wrap;overflow:visible}
+.ftabmore{display:none;margin-top:16px;border:1.5px dashed rgba(124,92,255,.55);background:#f3eefe;color:#5b3fc4;font:800 12px/1 "Plus Jakarta Sans",sans-serif;padding:10px 16px;border-radius:999px;cursor:pointer;transition:background .2s}
 .ftabmore:hover{background:#ece4fc}
-.ftab{flex:none;border:1.5px solid rgba(124,92,255,.42);cursor:pointer;font:800 12.5px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:-.02em;padding:11px 17px;border-radius:999px;background:#fff;color:#5b3fc4;box-shadow:0 4px 11px -5px rgba(90,60,180,.38);transition:.2s}
-.ftab.on{background:linear-gradient(150deg,#7a5cf0,#5b3fc4);color:#fff;border-color:transparent;box-shadow:0 8px 17px -5px rgba(124,92,255,.6)}
+.ftab{flex:none;border:1.5px solid rgba(124,92,255,.42);cursor:pointer;font:800 12.5px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:-.02em;padding:11px 17px;border-radius:999px;background:#fff;color:#5b3fc4;box-shadow:0 4px 11px -5px rgba(90,60,180,.35);transition:.2s}
+.ftab.on{background:linear-gradient(150deg,#7a5cf0,#5b3fc4);color:#fff;border-color:transparent;box-shadow:0 7px 15px -6px rgba(124,92,255,.55)}
 .fnote{background:#f2effc;border:1px solid #e6ddfb;border-radius:16px;padding:15px 17px;font:500 13px/1.6 "Inter",sans-serif;color:#514c6e;margin-bottom:24px}
 .fnote b{color:#5b3fc4;font-weight:700}
 .fcity.hide{display:none}
@@ -991,6 +991,7 @@ input.money:focus,.hpill:focus-within,.bfield input:focus{outline:2px solid rgba
 section h2.big{margin-bottom:4px}
 .tblwrap{margin-top:16px}
 #s-drive .eyebrow+h2.big,#s-drive h2.big{margin-bottom:0}
+#s-tips h2.big{margin-bottom:22px}
 /* ── КАРТОЧКА СТАРТА ПОЕЗДКИ (в начале ленты) ── */
 .startcard{display:flex;align-items:center;gap:13px;background:#fff;border:1px solid #e8e9f2;border-radius:18px;padding:14px 16px;margin:0 18px 4px;box-shadow:0 10px 24px -16px rgba(27,30,46,.3)}
 #s-route .startcard{margin:14px 0 11px}
@@ -1944,16 +1945,20 @@ function buildFood(){
 /* на компьютере: сворачиваем вкладки городов до одного ряда + кнопка раскрытия; на телефоне — свайп */
 function fitFoodTabs(){
   const nav=document.querySelector('#foodGrid .ftabnav');if(!nav)return;
-  const ftabs=nav.querySelector('.ftabs');const btn=nav.querySelector('.ftabmore');
-  const tabs=nav.querySelectorAll('.ftab');if(!tabs.length||!ftabs||!btn)return;
+  const btn=nav.querySelector('.ftabmore');
+  const tabs=[...nav.querySelectorAll('.ftab')];if(!tabs.length||!btn)return;
   nav.classList.add('wrapped');
-  const pt=parseFloat(getComputedStyle(ftabs).paddingTop)||0;
-  const oneRow=Math.ceil(tabs[0].offsetHeight+pt+2);
-  ftabs.style.maxHeight='';               // мерим натуральную высоту
-  const overflow=ftabs.scrollHeight>oneRow+8;
-  ftabs.style.maxHeight=(foodTabsOpen||!overflow)?'':(oneRow+'px');
-  btn.style.display=overflow?'inline-block':'none';
-  btn.textContent=foodTabsOpen?'Свернуть ▴':'Показать все города ▾';
+  tabs.forEach(t=>{t.style.display='';});          // показать все и измерить первый ряд
+  const top0=tabs[0].offsetTop;
+  const hidden=tabs.filter(t=>t.offsetTop>top0+4);
+  if(foodTabsOpen||!hidden.length){
+    btn.style.display=hidden.length?'inline-block':'none';
+    btn.textContent='Свернуть ▴';
+  }else{
+    hidden.forEach(t=>{t.style.display='none';});   // спрятать всё, что не в первом ряду
+    btn.style.display='inline-block';
+    btn.textContent='Показать все города ('+hidden.length+') ▾';
+  }
 }
 (function(){let rt=null;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(fitFoodTabs,180);});window.addEventListener('load',()=>setTimeout(fitFoodTabs,80));})();
 /* ================= ПЛАНИРОВЩИК НОЧЁВОК ================= */
