@@ -918,8 +918,8 @@ input.money:focus,.hf input:focus,.bfield input:focus{outline:2px solid rgba(91,
 .gt-cell+.gt-cell{border-left:1px solid rgba(255,255,255,.18)}
 .gt-cell i{font:700 10px/1.2 "Inter",sans-serif;font-style:normal;text-transform:uppercase;letter-spacing:.06em;opacity:.72;white-space:nowrap}
 .gt-cell b{font:800 23px/1 "Plus Jakarta Sans",sans-serif;color:#fff;letter-spacing:-.03em;white-space:nowrap;max-width:100%}
-.gt-total b{font-size:29px;color:#c3b0fb!important;letter-spacing:-.04em}
-@media(max-width:380px){.gt-cell{padding:0 6px}.gt-cell i{font-size:9px;letter-spacing:.02em}.gt-cell b{font-size:20px}.gt-total b{font-size:24px}}
+.gt-total b{color:#c3b0fb!important}
+@media(max-width:380px){.gt-cell{padding:0 6px}.gt-cell i{font-size:9px;letter-spacing:.02em}.gt-cell b{font-size:20px}}
 /* ── ОТСТУПЫ между блоками ── */
 #budgetBox{margin-top:16px}
 .plannote{margin:14px 2px 4px!important}
@@ -956,8 +956,8 @@ section h2.big{margin-bottom:4px}
 .b3box{flex:none;display:inline-flex;align-items:center;gap:4px;border:1.5px solid rgba(91,63,196,.35);background:linear-gradient(180deg,#fff,#f6f3ff);border-radius:12px;padding:8px 10px}
 .b3box:focus-within{outline:2px solid rgba(91,63,196,.28);border-color:#5b3fc4}
 .brow3 .b3box input{border:none!important;background:none!important;outline:none!important;box-shadow:none!important;margin:0!important;padding:0!important;max-width:none!important;text-align:right;font:800 14px/1 "Plus Jakarta Sans",sans-serif;color:#1b1e2e;font-variant-numeric:tabular-nums;-moz-appearance:textfield}
-.brow3 .b3box.b3rate input{width:38px}
-.brow3 .b3box.b3total input{width:52px}
+.brow3 .b3box.b3rate input{width:4.5ch}
+.brow3 .b3box.b3total input{width:4.5ch}
 .b3u{font:600 11px/1 "Inter",sans-serif;color:#8b8fa3}
 </style>
 </head>
@@ -1978,15 +1978,20 @@ function buildBudget(){
     const fixed=row.querySelector('input.money:not(.perunit)');
     if(per&&rate&&tot){
       /* двусторонний пересчёт: за ед. ↔ всего */
-      rate.addEventListener('input',()=>{const q=itemQty(per,totalNights()+1);tot.value=Math.round((parseFloat(rate.value)||0)*q);sumBudget();});
-      tot.addEventListener('input',()=>{const q=itemQty(per,totalNights()+1);rate.value=q?Math.round(((parseFloat(tot.value)||0)/q)*100)/100:0;sumBudget();});
+      rate.addEventListener('input',()=>{const q=itemQty(per,totalNights()+1);tot.value=Math.round((parseFloat(rate.value)||0)*q);sizeInput(rate);sizeInput(tot);sumBudget();});
+      tot.addEventListener('input',()=>{const q=itemQty(per,totalNights()+1);rate.value=q?Math.round(((parseFloat(tot.value)||0)/q)*100)/100:0;sizeInput(rate);sizeInput(tot);sumBudget();});
     }else if(fixed){
-      fixed.addEventListener('input',sumBudget);
+      fixed.addEventListener('input',()=>{sizeInput(fixed);sumBudget();});
     }
     row.querySelectorAll('input').forEach(i=>i.addEventListener('focus',()=>i.select()));
   });
   calcBudget();
+  sizeMoneyInputs();
 }
+/* авто-ширина поля ввода бюджета под число (цифры моноширинные → 1 символ = 1ch); запас под большие суммы и будущие валюты */
+function sizeInput(i){if(!i)return;const s=(i.value&&i.value.length)?String(i.value):(i.placeholder||'0');
+  i.style.width=Math.min(12,Math.max(3.5,s.length+0.6))+'ch';}
+function sizeMoneyInputs(){document.querySelectorAll('#budgetBox .b3box input').forEach(sizeInput);}
 function itemQty(per,days){return per==='day'?days:per==='person'?PEOPLE:per==='personday'?PEOPLE*days:1;}
 /* кнопка брони под группой бюджета */
 function groupBook(g){
@@ -2033,17 +2038,16 @@ function sumBudget(){
   const mn=document.getElementById('tMoney');if(mn&&sum>0)mn.textContent='$'+Math.round(sum/PEOPLE).toLocaleString('en-US').replace(/,/g,' ');
   if(typeof requestAnimationFrame==='function')requestAnimationFrame(fitSums);else fitSums();
 }
-/* подгоняет размер шрифта итоговых сумм, чтобы крупные числа ($1 000 000) влезали в колонку */
+/* подгоняет размер шрифта итоговых сумм под самую крупную из трёх — ЕДИНЫЙ размер для всех, чтобы не скакал */
 function fitSums(){
-  ['sumDay','sumPer','sumAll'].forEach(id=>{
-    const b=document.getElementById(id);if(!b)return;
-    b.style.fontSize='';
-    const cell=b.parentElement;if(!cell)return;const cs=getComputedStyle(cell);
-    const avail=cell.clientWidth-parseFloat(cs.paddingLeft||0)-parseFloat(cs.paddingRight||0);
-    if(avail<=0)return;
-    let fs=parseFloat(getComputedStyle(b).fontSize),guard=0;
-    while(b.scrollWidth>avail&&fs>9&&guard<60){fs-=1;b.style.fontSize=fs+'px';guard++;}
-  });
+  const els=['sumDay','sumPer','sumAll'].map(id=>document.getElementById(id)).filter(Boolean);
+  if(!els.length)return;
+  els.forEach(b=>b.style.fontSize='');
+  const overflow=b=>{const c=b.parentElement;if(!c)return false;const cs=getComputedStyle(c);
+    const avail=c.clientWidth-parseFloat(cs.paddingLeft||0)-parseFloat(cs.paddingRight||0);
+    return avail>0&&b.scrollWidth>avail;};
+  let fs=parseFloat(getComputedStyle(els[0]).fontSize),guard=0;
+  while(els.some(overflow)&&fs>9&&guard<60){fs-=1;els.forEach(b=>b.style.fontSize=fs+'px');guard++;}
 }
 (function(){let t=null;window.addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(fitSums,180);});})();
 function wireBudget(){
