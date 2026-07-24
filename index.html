@@ -841,6 +841,28 @@ header.hero h1 em{background:none!important;-webkit-background-clip:border-box!i
 .cnote{background:#f6f2ff;border:1px solid #e6ddfb;border-radius:12px;padding:11px 13px;font:500 13px/1.5 "Inter",sans-serif;color:#4a3a7a;margin-top:12px}
 .cnote b{color:#3b2a8f}
 .mapbar{display:none!important}
+/* ═══ КАРТА: оверлей на телефоне / закреплённый сайдбар на компьютере ═══ */
+#mapShell{position:fixed;inset:0;z-index:2000;display:none}
+body.mapopen{overflow:hidden}
+body.mapopen #mapShell{display:block}
+.mapscrim{position:absolute;inset:0;background:rgba(20,25,40,.5);-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}
+.mappanel{position:absolute;left:12px;right:12px;top:calc(12px + env(safe-area-inset-top));
+  bottom:calc(78px + env(safe-area-inset-bottom));border-radius:22px;overflow:hidden;background:#fff;
+  box-shadow:0 24px 64px rgba(15,10,40,.5);animation:mappop .28s cubic-bezier(.2,.8,.2,1)}
+@keyframes mappop{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:none}}
+.mapclose{position:absolute;right:12px;top:12px;z-index:1200;width:40px;height:40px;border-radius:50%;
+  background:#fff;border:0;box-shadow:0 4px 14px rgba(0,0,0,.28);display:grid;place-items:center;cursor:pointer;color:#201a3a}
+.mapclose .i{width:20px;height:20px}
+.mapbox{height:100%}
+.mappanel #map,.mappanel .mapph{height:100%!important;min-height:0!important}
+@media(min-width:1000px){
+  body{padding-right:40vw}
+  #mapShell{display:block!important;position:fixed;top:0;right:0;left:auto;bottom:0;width:40vw;height:100vh;z-index:60}
+  body.mapopen{overflow:auto}
+  .mapscrim,.mapclose{display:none}
+  .mappanel{position:absolute;inset:0;left:0;top:0;right:0;bottom:0;border-radius:0;animation:none;
+    border-left:1px solid var(--cardline);box-shadow:-16px 0 44px -26px rgba(20,25,60,.5)}
+}
 .leaflet-control-attribution{font-size:8px!important;background:rgba(255,255,255,.55)!important;color:#9a9aad!important;padding:1px 5px!important;opacity:.7}
 .leaflet-control-attribution a{color:#9a9aad!important}
 /* ══ ЕДИНЫЙ ФИОЛЕТОВЫЙ СТИЛЬ для Еды и Бюджета ══ */
@@ -998,11 +1020,10 @@ section h2.big{margin-bottom:4px}
 
 
 
-<section id="s-map"><div class="wrap">
-  <div class="eyebrow">Карта</div>
-  <h2 class="big">Маршрут, точки и фильтры</h2>
-  <p class="lede">Фильтры ниже управляют картой и списком: выбери день, базу или категорию — на карте останутся только нужные точки. Галочка у места показывает/прячет его на карте, а ссылка на Google Maps в списке работает всегда.</p>
-
+<aside id="mapShell" aria-hidden="true">
+  <div class="mapscrim" id="mapScrim"></div>
+  <div class="mappanel">
+    <button class="mapclose" id="mapClose" type="button" aria-label="Закрыть карту"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
   <div class="mapbox">
     <!-- фильтр живёт на самой карте: строка сверху, список выпадает поверх -->
     <div class="filters" id="filters"></div>
@@ -1014,9 +1035,9 @@ section h2.big{margin-bottom:4px}
       <button class="btn" id="fitAll"><svg class="i i-sm" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg> Вся карта</button>
       <span class="counter">На карте: <b id="cnt">0</b></span>
     </div>
-  </div>
-  
-</div></section>
+  </div><!-- .mapbox -->
+  </div><!-- .mappanel -->
+</aside>
 
 
 
@@ -1129,7 +1150,7 @@ section h2.big{margin-bottom:4px}
 </div></footer>
 
 <nav class="bottomnav">
-  <a href="#s-map" aria-label="Карта"><svg class="i" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14M15 6v14"/></svg>Карта</a>
+  <a href="#" id="navMap" aria-label="Карта"><svg class="i" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14M15 6v14"/></svg>Карта</a>
   <a href="#cities" aria-label="Дни"><svg class="i" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>Дни</a>
   
   <a href="#s-food" aria-label="Еда"><svg class="i" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7a3 3 0 0 0 3 3v10M6 2v7M9 2v7M18 2c-1.6 2-2.4 4.2-2.4 6.4 0 1.9.9 3.1 2.4 3.4V22"/></svg>Еда</a>
@@ -2046,7 +2067,7 @@ if(typeof requestIdleCallback==='function'){requestIdleCallback(initMap,{timeout
 /* появление блоков при прокрутке — сдержанно, одна волна */
 (function reveal(){
   if(!('IntersectionObserver' in window))return;
-  const targets=[...document.querySelectorAll('section .base, section details.day, .foodcity, .planner, .mapbox, .tblwrap, details.acc')];
+  const targets=[...document.querySelectorAll('section .base, section details.day, .foodcity, .planner, .tblwrap, details.acc')];
   targets.forEach(t=>t.classList.add('rise'));
   const io=new IntersectionObserver((es,o)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');o.unobserve(e.target);}});},
     {rootMargin:'0px 0px -8% 0px',threshold:.08});
@@ -2071,6 +2092,28 @@ document.addEventListener('click',e=>{
       const a=byId[e.target.id];if(a)a.classList.add('on');}});
   },{rootMargin:'-45% 0px -50% 0px'});
   secs.forEach(s=>io.observe(s));
+})();
+
+/* ═══ Карта: оверлей на телефоне (открытие из меню) / сайдбар на компьютере ═══ */
+(function mapPanel(){
+  const nav=document.getElementById('navMap');
+  const shell=document.getElementById('mapShell');
+  const scrim=document.getElementById('mapScrim');
+  const closeBtn=document.getElementById('mapClose');
+  const isDesktop=()=>window.matchMedia('(min-width:1000px)').matches;
+  let firstShown=true;
+  function refit(){ if(!map)return; try{ map.invalidateSize(true); if(firstShown&&FULL){map.fitBounds(FULL);} firstShown=false; }catch(e){} }
+  function openMap(){ if(isDesktop())return;
+    document.body.classList.add('mapopen'); shell.setAttribute('aria-hidden','false'); if(nav)nav.classList.add('on');
+    requestAnimationFrame(()=>setTimeout(refit,90)); }
+  function closeMap(){ document.body.classList.remove('mapopen'); shell.setAttribute('aria-hidden','true'); if(nav)nav.classList.remove('on'); }
+  if(nav)nav.addEventListener('click',e=>{e.preventDefault();openMap();});
+  if(closeBtn)closeBtn.addEventListener('click',closeMap);
+  if(scrim)scrim.addEventListener('click',closeMap);
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.body.classList.contains('mapopen'))closeMap();});
+  let rt=null; window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{if(map){try{map.invalidateSize(true);}catch(e){}}},200);});
+  /* на компьютере карта видна сразу — дождёмся её инициализации и подгоним размер */
+  if(isDesktop()){let n=0;const iv=setInterval(()=>{n++;if(map){try{map.invalidateSize(true);if(FULL)map.fitBounds(FULL);}catch(e){}}if(map||n>50)clearInterval(iv);},150);}
 })();
 
 /* ================= АККАУНТ (Supabase: вход/регистрация) ================= */
