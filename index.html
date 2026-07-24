@@ -864,7 +864,7 @@ header.hero h1 em{background:none!important;-webkit-background-clip:border-box!i
 .fmoreBtn{width:100%;border:1.5px solid rgba(91,63,196,.4);background:#fff;color:#5b3fc4;border-radius:13px;padding:12px;font:800 12.5px/1 "Plus Jakarta Sans",sans-serif;cursor:pointer;margin-bottom:11px;transition:background .2s}
 .fmoreBtn:hover{background:#f6f3ff}
 @media(min-width:760px){.fgrid{grid-template-columns:repeat(3,1fr)}}
-.fcat{position:absolute;left:10px;top:10px;z-index:2;background:#fff;color:#5b3fc4;font:800 10px/1 "Plus Jakarta Sans",sans-serif;padding:5px 9px;border-radius:8px;letter-spacing:.02em;box-shadow:0 2px 6px rgba(90,60,180,.18)}
+.fcat{position:absolute;left:10px;top:10px;z-index:2;max-width:calc(100% - 66px);background:#fff;color:#5b3fc4;font:800 10px/1 "Plus Jakarta Sans",sans-serif;padding:5px 9px;border-radius:8px;letter-spacing:.02em;box-shadow:0 2px 6px rgba(90,60,180,.18);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ftile .cpsw{position:absolute;right:10px;top:9px;z-index:2;margin:0}
 .fcbody{padding:11px 12px 13px}
 .fcnm{font:800 14px/1.2 "Plus Jakarta Sans",sans-serif;letter-spacing:-.02em}
@@ -1812,16 +1812,20 @@ function foodLane(s){
   return 1;
 }
 /* заглушка (эмодзи + цвет) по типу заведения — фиксированный набор, подставляется автоматически */
-/* эмодзи-заглушка по типу заведения (плитка — единый фиолетовый стиль для всех) */
+/* заглушка по типу заведения — умная подстановка из набора; дефолт = тарелка с приборами */
 function foodCat(s){
   const t=((s.meal||'')+' '+(s.nm||'')).toLowerCase();
   if(/пивовар|brew|пиво|\bбар|pub|паб|салун|salo/.test(t))return '🍺';
   if(/вино|wine|коктейл|cocktail|виск|tavern|таверн/.test(t))return '🍷';
-  if(/десерт|морож|choc|шокол|cookie|печень|cream|sweet/.test(t))return '🍨';
-  if(/кофе|coffee|эспрессо|бариста/.test(t))return '☕';
-  if(/завтрак|бранч|brunch|breakfast|пекарн|bakery|булоч|панкейк|pancake/.test(t))return '🥐';
-  if(/ужин|dinner|стейк|steak|гриль|grill|bbq|ребра|ribs/.test(t))return '🥩';
-  if(/пицц|pizza|бургер|burger|тако|taco/.test(t))return '🍕';
+  if(/кофе|coffee|эспрессо|бариста|caf[eé]/.test(t))return '☕';
+  if(/десерт|морож|choc|шокол|cookie|печень|cream|sweet|gelato/.test(t))return '🍨';
+  if(/суши|sushi|ролл|японск|japan|рамен|ramen|нудл|noodle|лапш/.test(t))return '🍣';
+  if(/тако|taco|буррито|мексикан|mexic|burrito/.test(t))return '🌮';
+  if(/бургер|burger|гамбург/.test(t))return '🍔';
+  if(/пицц|pizza/.test(t))return '🍕';
+  if(/суп|soup|похлёбк|chowder/.test(t))return '🍲';
+  if(/завтрак|бранч|brunch|breakfast|пекарн|bakery|булоч|панкейк|pancake|выпечк|круассан/.test(t))return '🥐';
+  if(/ужин|dinner|стейк|steak|гриль|grill|bbq|ребра|ribs|мясо|chop/.test(t))return '🥩';
   return '🍽';
 }
 function buildFood(){
@@ -1834,16 +1838,16 @@ function buildFood(){
     +FOODCITIES.map((c,ci)=>{
       const order=c.spots.map((s,si)=>({s,si,l:foodLane(s)})).sort((a,b)=>a.l-b.l);
       const cards=order.map(({s,si},idx)=>{
-        const id=foodId(ci,si),fon=foodPicked.has(id),em=foodCat(s),lane=FOOD_LANES[foodLane(s)];
-        const veg=s.veg?'<span class="fchip vg">'+s.veg+'</span>':'';
+        const id=foodId(ci,si),fon=foodPicked.has(id),em=foodCat(s);
+        const mealLbl=(s.meal||'').split('/').map(x=>x.trim()).filter(Boolean).map(x=>x.charAt(0).toUpperCase()+x.slice(1)).join(' · ');
         return '<div class="fcard'+(fon?'':' off')+(idx>=MAXSHOW?' fhidden':'')+'" data-food="'+id+'">'
           +'<div class="ftile">'
-          +'<span class="fcat">'+lane+'</span>'
+          +'<span class="fcat">'+mealLbl+'</span>'
           +'<span class="cpsw'+(fon?' on':'')+'" data-food-sw="'+id+'" role="switch" aria-checked="'+fon+'" aria-label="показывать на карте" tabindex="0"><i></i></span>'
           +'<span class="ficon">'+em+'</span></div>'
           +'<div class="fcbody"><div class="fcnm"><a href="'+gmSearch(s.nm+' '+c.q)+'" target="_blank" rel="noopener">'+s.nm+'</a></div>'
           +'<div class="fcwhy">'+s.why+'</div>'
-          +'<div class="fcmeta"><span class="fchip pr">'+s.price+'</span>'+veg+'</div></div></div>';
+          +'<div class="fcmeta"><span class="fchip pr">'+s.price+'</span></div></div></div>';
       }).join('');
       const more=order.length>MAXSHOW
         ? '<button class="fmoreBtn" data-fmore="'+ci+'">Показать ещё '+(order.length-MAXSHOW)+'</button>' : '';
