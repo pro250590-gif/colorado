@@ -1517,14 +1517,16 @@ function buildCities(){
     sw.addEventListener('click',toggle);
     sw.addEventListener('keydown',e=>{if(e.key===' '||e.key==='Enter')toggle(e);});
   });
-  /* дни-аккордеоны: открыт только один */
-  host.querySelectorAll('.cday').forEach(det=>det.addEventListener('toggle',()=>{
-    if(!det.open)return;
-    host.querySelectorAll('.cday[open]').forEach(o=>{if(o!==det)o.open=false;});
-    /* остальные закрылись — подводим открытый день к верху (под липкие шапки) */
-    requestAnimationFrame(()=>{const top=det.getBoundingClientRect().top+window.scrollY-116;
-      window.scrollTo({top:Math.max(0,top),behavior:'smooth'});});
-  }));
+  /* дни-аккордеоны: открыт только один; скролл к верху ТОЛЬКО при клике пользователя */
+  host.querySelectorAll('.cday').forEach(det=>{
+    const sm=det.querySelector('summary');if(sm)sm.addEventListener('click',()=>{det._uc=true;});
+    det.addEventListener('toggle',()=>{
+      if(!det.open)return;
+      host.querySelectorAll('.cday[open]').forEach(o=>{if(o!==det)o.open=false;});
+      if(det._uc){det._uc=false;requestAnimationFrame(()=>{const top=det.getBoundingClientRect().top+window.scrollY-116;
+        window.scrollTo({top:Math.max(0,top),behavior:'smooth'});});}
+    });
+  });
   /* подсветка активного города в степпере при прокрутке */
   if('IntersectionObserver' in window){
     const links={};stepHost&&stepHost.querySelectorAll('.cst').forEach(a=>links[a.dataset.city]=a);
@@ -1779,13 +1781,16 @@ function buildFood(){
     sw.addEventListener('click',toggle);
     sw.addEventListener('keydown',e=>{if(e.key===' '||e.key==='Enter')toggle(e);});
   });
-  /* город еды: открыт только один — открываешь новый, прошлый закрывается, и подводим к верху */
-  host.querySelectorAll('.fooddet').forEach(det=>det.addEventListener('toggle',()=>{
-    if(!det.open)return;
-    host.querySelectorAll('.fooddet[open]').forEach(o=>{if(o!==det)o.open=false;});
-    requestAnimationFrame(()=>{const top=det.getBoundingClientRect().top+window.scrollY-116;
-      window.scrollTo({top:Math.max(0,top),behavior:'smooth'});});
-  }));
+  /* город еды: открыт только один; скролл к верху ТОЛЬКО при клике пользователя (не на автооткрытии) */
+  host.querySelectorAll('.fooddet').forEach(det=>{
+    const sm=det.querySelector('summary');if(sm)sm.addEventListener('click',()=>{det._uc=true;});
+    det.addEventListener('toggle',()=>{
+      if(!det.open)return;
+      host.querySelectorAll('.fooddet[open]').forEach(o=>{if(o!==det)o.open=false;});
+      if(det._uc){det._uc=false;requestAnimationFrame(()=>{const top=det.getBoundingClientRect().top+window.scrollY-116;
+        window.scrollTo({top:Math.max(0,top),behavior:'smooth'});});}
+    });
+  });
 }
 
 /* ================= ПЛАНИРОВЩИК НОЧЁВОК ================= */
@@ -2072,23 +2077,31 @@ const SB_URL='https://tyzlpuuhihhrnedlyrbt.supabase.co';
 const SB_KEY='sb_publishable_8OuyWLp3XqftHzXQbqyOOw_5CVW5nLN';
 let sb=null;
 try{if(window.supabase&&window.supabase.createClient)sb=window.supabase.createClient(SB_URL,SB_KEY);}catch(e){}
+/* сайт всегда открывается сверху (не восстанавливать прокрутку); авто-скролл аккордеонов — только после действия пользователя */
+try{if('scrollRestoration' in history)history.scrollRestoration='manual';}catch(e){}
+window.scrollTo(0,0);window.addEventListener('load',()=>window.scrollTo(0,0));
 /* ---- облачное сохранение плана (даты/цены/ночи/люди/выборы) ---- */
 const CLOUD_KEYS=['co-trip-2026-plan','co-trip-2026-budget','co-trip-2026-picks','co-trip-2026-food'];
+const _rawSet=localStorage.setItem.bind(localStorage);
 let _applying=false,_cloudTimer=null;
 function localBundle(){const o={};CLOUD_KEYS.forEach(k=>{const v=localStorage.getItem(k);if(v!=null)o[k]=v;});return o;}
+function localTs(){return parseInt(localStorage.getItem('co-trip-ts')||'0',10);}
 function cloudSave(){if(!sb||_applying)return;clearTimeout(_cloudTimer);
   _cloudTimer=setTimeout(async()=>{try{const{data}=await sb.auth.getSession();const s=data&&data.session;if(!s)return;
-    await sb.from('user_plans').upsert({user_id:s.user.id,plan:localBundle(),updated_at:new Date().toISOString()});}catch(e){}},1200);}
+    await sb.from('user_plans').upsert({user_id:s.user.id,plan:localBundle(),updated_at:new Date(localTs()||Date.now()).toISOString()});}catch(e){}},1200);}
 async function cloudSync(session){if(!sb||!session)return;
-  try{const{data,error}=await sb.from('user_plans').select('plan').eq('user_id',session.user.id).maybeSingle();
+  try{const{data,error}=await sb.from('user_plans').select('plan,updated_at').eq('user_id',session.user.id).maybeSingle();
     if(error)return;
-    if(data&&data.plan){const cloud=JSON.stringify(data.plan),local=JSON.stringify(localBundle());
-      if(cloud!==local){_applying=true;CLOUD_KEYS.forEach(k=>{if(data.plan[k]!=null)localStorage.setItem(k,data.plan[k]);});location.reload();}}
-    else{await sb.from('user_plans').upsert({user_id:session.user.id,plan:localBundle(),updated_at:new Date().toISOString()});}
+    if(data&&data.plan){
+      const cloudTs=data.updated_at?new Date(data.updated_at).getTime():0,lts=localTs();
+      if(cloudTs>lts+1500){ /* облако новее (правки с другого устройства) — загружаем */
+        _applying=true;CLOUD_KEYS.forEach(k=>{if(data.plan[k]!=null)localStorage.setItem(k,data.plan[k]);});
+        _rawSet('co-trip-ts',String(cloudTs));location.reload();
+      }else cloudSave(); /* локальное свежее/равно — сохраняем локальное */
+    }else cloudSave(); /* в облаке пусто — первое сохранение */
   }catch(e){}}
-/* перехват записи в localStorage наших ключей → авто-сохранение в облако */
-(function(){const _si=localStorage.setItem.bind(localStorage);
-  localStorage.setItem=function(k,v){_si(k,v);if(!_applying&&CLOUD_KEYS.indexOf(k)>=0)cloudSave();};})();
+/* перехват записи наших ключей → отметка времени + авто-сохранение */
+localStorage.setItem=function(k,v){_rawSet(k,v);if(!_applying&&CLOUD_KEYS.indexOf(k)>=0){_rawSet('co-trip-ts',String(Date.now()));cloudSave();}};
 (function authInit(){
   const btn=document.getElementById('authBtn'),ov=document.getElementById('authOv');
   if(!btn||!ov)return;
@@ -2118,8 +2131,12 @@ async function cloudSync(session){if(!sb||!session)return;
       if(mode==='in')res=await sb.auth.signInWithPassword({email:e,password:p});
       else res=await sb.auth.signUp({email:e,password:p});
       if(res.error){err.style.color='';err.textContent=res.error.message;}
-      else if(mode==='up'&&!res.data.session){err.style.color='#12855e';err.textContent='Аккаунт создан. Проверь почту и подтверди — потом войди.';setMode('in');}
-      else{close();refresh();}
+      else if(mode==='up'){ /* регистрация: не входим сразу — просим войти отдельно */
+        if(res.data.session){try{await sb.auth.signOut();}catch(e){}}
+        err.style.color='#12855e';
+        err.textContent=res.data.session?'Аккаунт создан! Теперь войди.':'Аккаунт создан. Подтверди почту и войди.';
+        pass.value='';setMode('in');}
+      else{close();refresh();} /* вход */
     }catch(ex){err.textContent='Ошибка сети: '+(ex.message||ex);}
     submit.disabled=false;});
   pass.addEventListener('keydown',e=>{if(e.key==='Enter')submit.click();});
