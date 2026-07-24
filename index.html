@@ -394,21 +394,17 @@ details.acc>summary .chev{color:#7c5cff}
 details.acc[open]{border-color:rgba(124,92,255,.32)}
 details.acc[open]>summary{border-bottom-color:rgba(124,92,255,.14)}
 .acc-body li::marker{color:#7c5cff}
-/* ═══ СВОДКА: карточки переездов (адаптивно, без обрезки на телефоне) ═══ */
-.drvgrid{display:grid;gap:11px;grid-template-columns:1fr;margin-top:16px}
-.drv{display:flex;gap:13px;align-items:flex-start;background:#fff;border:1px solid #ece7f7;border-radius:15px;padding:13px 15px;box-shadow:0 6px 16px -11px rgba(40,25,90,.3)}
-.drvd{flex:none;width:36px;height:36px;border-radius:11px;background:linear-gradient(150deg,#7a5cf0,#5b3fc4);color:#fff;display:grid;place-items:center;font:800 15px/1 "Plus Jakarta Sans",sans-serif}
-.drvi{flex:1;min-width:0}
-.drvi b{display:block;font:700 14.5px/1.3 "Plus Jakarta Sans",sans-serif;letter-spacing:-.02em;color:#1b1e2e;margin-bottom:10px}
-.drvs{display:flex;gap:18px;flex-wrap:wrap}
-.drvs>span{display:flex;flex-direction:column;gap:4px;font:800 13.5px/1 "Plus Jakarta Sans",sans-serif;color:#3a3550}
-.drvs>span>i{font:700 9px/1 "Inter",sans-serif;font-style:normal;text-transform:uppercase;letter-spacing:.09em;color:#9a94b5}
-.drvtot{background:linear-gradient(150deg,#5b3fc4,#2e2170);border-color:transparent}
-.drvtot .drvd{background:rgba(255,255,255,.18)}
-.drvtot .drvi b{color:#fff}
-.drvtot .drvs>span{color:#fff}
-.drvtot .drvs>span>i{color:rgba(255,255,255,.72)}
-@media(min-width:760px){.drvgrid{grid-template-columns:1fr 1fr}.drvtot{grid-column:1/-1}}
+/* ═══ СВОДКА: таблица переездов — вариант 3 (минимализм + фиолетовый акцент) ═══ */
+#s-drive .tblwrap{background:#fff;border:1px solid #ece7f7;box-shadow:0 12px 30px -18px rgba(50,35,110,.32)}
+#s-drive table{min-width:520px}
+#s-drive thead th{background:none!important;color:#5b3fc4;border-bottom:2px solid #efeafc;font:800 9.5px/1 "Plus Jakarta Sans",sans-serif;text-transform:uppercase;letter-spacing:.09em;padding:14px 16px;white-space:nowrap}
+#s-drive th.num,#s-drive td.num{text-align:right}
+#s-drive tbody td{border-bottom:1px solid #f3f1f9;padding:14px 16px;color:#2f2a4a}
+#s-drive tbody td:first-child{position:relative;font-weight:800;color:#5b3fc4}
+#s-drive tbody td:first-child::before{content:"";position:absolute;left:0;top:9px;bottom:9px;width:3px;border-radius:3px;background:#7c5cff}
+#s-drive td.num{font-variant-numeric:tabular-nums;font-weight:600}
+#s-drive tbody tr:last-child td{border-top:2px solid #7c5cff;border-bottom:0;font-weight:800;color:#5b3fc4}
+#s-drive tbody tr:last-child td:first-child::before{display:none}
 
 /* ── ТАБЛИЦЫ ── */
 .tblwrap{overflow-x:auto;border-radius:var(--r);background:var(--card);backdrop-filter:blur(20px);
