@@ -1508,7 +1508,7 @@ function initMap(){
       }else{const glyph=p.cat==='food'?'':(p.d||'');const sz=p.star?22:18;
         icon=L.divIcon({className:'',iconSize:[sz,sz],iconAnchor:[sz/2,sz/2],
           html:'<div class="pin" style="background:'+c+';width:'+sz+'px;height:'+sz+'px;font-size:'+(p.star?12:10)+'px">'+glyph+'</div>'});}
-      markers[p.id]=L.marker([p.lat,p.lng],{icon:icon}).bindPopup(popupHTML(p.nm,p.q,p.why,p.d?('День '+p.d):(CATS[p.cat]?CATS[p.cat].l:''),c,ph?pimg(p.id,'l'):null));});
+      markers[p.id]=L.marker([p.lat,p.lng],{icon:icon}).bindPopup(popupHTML(p.nm,p.q,p.why,p.d?('День '+p.d):(CATS[p.cat]?CATS[p.cat].l:''),c,ph?pimg(p.id,'l'):null),{autoPan:true,keepInView:true,autoPanPaddingTopLeft:L.point(14,60),autoPanPaddingBottomRight:L.point(14,18)});});
     /* маршрут: тоньше, цвета баз (без чёрного); переезды сплошные, радиалки тонкий пунктир */
     const legCol={4:'#12855e',6:'#d96a12',9:'#5a4bb5'};
     function drawLine(o){const isLeg=o.type==='leg';const col=isLeg?(legCol[o.days[0]]||o.color):o.color;const w=isLeg?4.5:2.6;
