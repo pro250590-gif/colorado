@@ -658,9 +658,9 @@ input.money.perunit{max-width:62px;padding:7px 6px;text-align:center;margin:0 1p
 .hn{min-width:52px;text-align:center;font:700 12px/1 "Inter",sans-serif;color:var(--ink2)}
 .hn b{font:800 13px/1 "Plus Jakarta Sans",sans-serif}
 .hmoney{flex:none;display:flex;gap:7px}
-.hf{display:flex;flex-direction:column;align-items:center;width:66px}
+.hf{display:flex;flex-direction:column;align-items:center;min-width:52px}
 .hf label{font:700 8px/1 "Inter",sans-serif;text-transform:uppercase;letter-spacing:.09em;color:var(--mut);margin-bottom:6px}
-.hf input{width:100%;border:1.5px solid rgba(217,106,18,.4);border-radius:11px;background:linear-gradient(180deg,#fff,#fff6ec);
+.hf input{width:5ch;border:1.5px solid rgba(217,106,18,.4);border-radius:11px;background:linear-gradient(180deg,#fff,#fff6ec);
   padding:9px 6px;font:800 14px/1 "Plus Jakarta Sans",sans-serif;color:var(--ink);text-align:center}
 .hf input:focus{outline:2px solid rgba(217,106,18,.28);border-color:var(--orange2)}
 .hf:last-child input{color:var(--green2)}
@@ -674,7 +674,7 @@ input.money.perunit{max-width:62px;padding:7px 6px;text-align:center;margin:0 1p
 .staytot b{position:relative;z-index:2}
 .staytot .hsum{font:800 22px/1 "Plus Jakarta Sans",sans-serif;color:var(--orange1)}
 @media(max-width:400px){
-  .hf{width:58px}.hf input{font-size:13px;padding:8px 4px}
+  .hf{min-width:46px}.hf input{font-size:13px;padding:8px 4px}
   .hdot{width:44px;height:44px}
 }
 /* ── БЮДЖЕТ: группы-карточки ── */
@@ -1896,18 +1896,19 @@ function wireHotelInputs(){
   document.querySelectorAll('#stayList .hrate').forEach(inp=>{
     inp.addEventListener('input',()=>{const i=+inp.dataset.hi,rate=parseFloat(inp.value)||0;
       saveHotelRate(i,rate);
-      const t=document.querySelector('.htot[data-hi="'+i+'"]');if(t)t.value=rate?rate*BASES[i].nights:'';
-      updateHotelSum();});
+      const t=document.querySelector('.htot[data-hi="'+i+'"]');if(t){t.value=rate?rate*BASES[i].nights:'';sizeInput(t);}
+      sizeInput(inp);updateHotelSum();});
     inp.addEventListener('focus',()=>inp.select());
   });
   document.querySelectorAll('#stayList .htot').forEach(inp=>{
     inp.addEventListener('input',()=>{const i=+inp.dataset.hi,tot=parseFloat(inp.value)||0;
       const rate=BASES[i].nights?Math.round(tot/BASES[i].nights):0;
       saveHotelRate(i,rate);
-      const r=document.querySelector('.hrate[data-hi="'+i+'"]');if(r)r.value=rate||'';
-      updateHotelSum();});
+      const r=document.querySelector('.hrate[data-hi="'+i+'"]');if(r){r.value=rate||'';sizeInput(r);}
+      sizeInput(inp);updateHotelSum();});
     inp.addEventListener('focus',()=>inp.select());
   });
+  document.querySelectorAll('#stayList .hf input').forEach(sizeInput);
 }
 function updateHotelSum(){
   const el=document.querySelector('#stayList .hsum');if(el)el.textContent=money(hotelTotal());
@@ -1988,10 +1989,14 @@ function buildBudget(){
   calcBudget();
   sizeMoneyInputs();
 }
-/* авто-ширина поля ввода бюджета под число (цифры моноширинные → 1 символ = 1ch); запас под большие суммы и будущие валюты */
-function sizeInput(i){if(!i)return;const s=(i.value&&i.value.length)?String(i.value):(i.placeholder||'0');
-  i.style.width=Math.min(12,Math.max(3.5,s.length+0.6))+'ch';}
-function sizeMoneyInputs(){document.querySelectorAll('#budgetBox .b3box input').forEach(sizeInput);}
+/* авто-ширина поля ввода под число (цифры моноширинные → 1 символ = 1ch); запас под большие суммы и будущие валюты */
+function sizeInput(i){if(!i)return;
+  const s=(i.value&&i.value.length)?String(i.value):(i.placeholder||'0');
+  const chars=Math.min(12,Math.max(3.2,s.length+0.6));
+  const cs=getComputedStyle(i);let extra=0;
+  if(cs.boxSizing==='border-box')extra=(parseFloat(cs.paddingLeft)||0)+(parseFloat(cs.paddingRight)||0)+(parseFloat(cs.borderLeftWidth)||0)+(parseFloat(cs.borderRightWidth)||0);
+  i.style.width=extra?('calc('+chars+'ch + '+extra+'px)'):(chars+'ch');}
+function sizeMoneyInputs(){document.querySelectorAll('#budgetBox .b3box input, #stayList .hf input').forEach(sizeInput);}
 function itemQty(per,days){return per==='day'?days:per==='person'?PEOPLE:per==='personday'?PEOPLE*days:1;}
 /* кнопка брони под группой бюджета */
 function groupBook(g){
