@@ -846,8 +846,12 @@ header.hero h1 em{background:none!important;-webkit-background-clip:border-box!i
 .cnote b{color:#3b2a8f}
 .mapbar{display:none!important}
 /* ═══ ЕДА: гид по городам (вкладки → ленты по категориям → карточки с переключателем) ═══ */
-.ftabs{display:flex;gap:9px;overflow-x:auto;scrollbar-width:none;padding:5px 2px 8px;margin:22px 0 18px}
+.ftabnav{margin:22px 0 18px}
+.ftabs{display:flex;gap:9px;overflow-x:auto;scrollbar-width:none;padding:5px 2px 8px}
 .ftabs::-webkit-scrollbar{display:none}
+.ftabnav.wrapped .ftabs{flex-wrap:wrap;overflow:hidden;transition:max-height .28s ease}
+.ftabmore{display:none;margin-top:8px;border:1.5px dashed rgba(124,92,255,.55);background:#f3eefe;color:#5b3fc4;font:800 12px/1 "Plus Jakarta Sans",sans-serif;padding:10px 16px;border-radius:999px;cursor:pointer;transition:background .2s}
+.ftabmore:hover{background:#ece4fc}
 .ftab{flex:none;border:1.5px solid rgba(124,92,255,.42);cursor:pointer;font:800 12.5px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:-.02em;padding:11px 17px;border-radius:999px;background:#fff;color:#5b3fc4;box-shadow:0 4px 11px -5px rgba(90,60,180,.38);transition:.2s}
 .ftab.on{background:linear-gradient(150deg,#7a5cf0,#5b3fc4);color:#fff;border-color:transparent;box-shadow:0 8px 17px -5px rgba(124,92,255,.6)}
 .fnote{background:#f2effc;border:1px solid #e6ddfb;border-radius:16px;padding:15px 17px;font:500 13px/1.6 "Inter",sans-serif;color:#514c6e;margin-bottom:24px}
@@ -1847,12 +1851,24 @@ function foodCat(s){
   if(/стейк|steak|\bchop|барбекю|\bbbq\b|ребра|ribs|гриль|grill|дичь|выдержанное мясо|dry-aged/.test(t))return 'steak';
   return 'plate';
 }
+/* приоритет города: где ЖИВЁМ (город-база) — вперёд, по числу ночей; проездные — в конец */
+function foodPriority(c){
+  const base=BASES.find(b=>b.id===c.base);
+  const nights=base?base.nights:0;
+  const primary=base?base.name.split(/[\/(]/)[0].trim().toLowerCase():'';
+  const isSleep=!!primary&&c.city.trim().toLowerCase()===primary;
+  return (isSleep?1000:0)+nights;
+}
+let foodTabsOpen=false;
 function buildFood(){
   const host=document.getElementById('foodGrid');
   const MAXSHOW=9;
+  const cities=FOODCITIES.map((c,ci)=>({c,ci})).sort((a,b)=>foodPriority(b.c)-foodPriority(a.c));
+  const activeCi=cities.length?cities[0].ci:0;
   host.innerHTML=
-    '<div class="ftabs" role="tablist">'+FOODCITIES.map((c,ci)=>
-      '<button class="ftab'+(ci===0?' on':'')+'" data-ftab="'+ci+'" role="tab">'+c.city+'</button>').join('')+'</div>'
+    '<div class="ftabnav"><div class="ftabs" role="tablist">'+cities.map(({c,ci})=>
+      '<button class="ftab'+(ci===activeCi?' on':'')+'" data-ftab="'+ci+'" role="tab">'+c.city+'</button>').join('')
+    +'</div><button class="ftabmore" type="button"></button></div>'
     +'<div class="fnote">Мы изучили отзывы на Google и TripAdvisor, убрали закрытые и туристические ловушки — и собрали места, которые любят <b>местные и путешественники</b>.</div>'
     +FOODCITIES.map((c,ci)=>{
       const order=c.spots.map((s,si)=>({s,si,l:foodLane(s)})).sort((a,b)=>a.l-b.l);
@@ -1870,7 +1886,7 @@ function buildFood(){
       }).join('');
       const more=order.length>MAXSHOW
         ? '<button class="fmoreBtn" data-fmore="'+ci+'">Показать ещё '+(order.length-MAXSHOW)+'</button>' : '';
-      return '<div class="fcity'+(ci===0?'':' hide')+'" data-fcity="'+ci+'"><div class="fgrid">'+cards+'</div>'+more
+      return '<div class="fcity'+(ci===activeCi?'':' hide')+'" data-fcity="'+ci+'"><div class="fgrid">'+cards+'</div>'+more
         +'<a class="fgm" href="'+gmSearch('restaurants '+c.q)+'" target="_blank" rel="noopener">'+ic('pin','i-sm')+'<span>Все рестораны — '+c.city+' на Google Maps</span></a></div>';
     }).join('');
   /* тумблеры еды: вкл/выкл заведение на карте (тот же переключатель, что у активностей) */
@@ -1891,13 +1907,36 @@ function buildFood(){
       host.querySelectorAll('.fcity').forEach(city=>city.classList.toggle('hide',city.dataset.fcity!==ci));
     });
   });
-  /* показать ещё (свыше 9) */
+  /* показать ещё карточки (свыше 9) */
   host.querySelectorAll('.fmoreBtn').forEach(btn=>{
     btn.addEventListener('click',()=>{const ci=btn.dataset.fmore;
       host.querySelectorAll('.fcity[data-fcity="'+ci+'"] .fcard.fhidden').forEach(c=>c.classList.remove('fhidden'));
       btn.remove();});
   });
+  /* кнопка «показать все города» / «свернуть» (на компьютере, где не помещаются) */
+  const moreBtn=host.querySelector('.ftabmore');
+  if(moreBtn)moreBtn.addEventListener('click',()=>{foodTabsOpen=!foodTabsOpen;fitFoodTabs();});
+  fitFoodTabs();
+  if(typeof requestAnimationFrame==='function')requestAnimationFrame(fitFoodTabs);
+  try{if(document.fonts&&document.fonts.ready)document.fonts.ready.then(fitFoodTabs);}catch(e){}
 }
+/* на компьютере: сворачиваем вкладки городов до одного ряда + кнопка раскрытия; на телефоне — свайп */
+function fitFoodTabs(){
+  const nav=document.querySelector('#foodGrid .ftabnav');if(!nav)return;
+  const ftabs=nav.querySelector('.ftabs');const btn=nav.querySelector('.ftabmore');
+  const tabs=nav.querySelectorAll('.ftab');if(!tabs.length||!ftabs||!btn)return;
+  const desktop=window.matchMedia('(min-width:760px)').matches;
+  if(!desktop){nav.classList.remove('wrapped');ftabs.style.maxHeight='';btn.style.display='none';return;}
+  nav.classList.add('wrapped');
+  const pt=parseFloat(getComputedStyle(ftabs).paddingTop)||0;
+  const oneRow=Math.ceil(tabs[0].offsetHeight+pt+2);
+  ftabs.style.maxHeight='';               // мерим натуральную высоту
+  const overflow=ftabs.scrollHeight>oneRow+8;
+  ftabs.style.maxHeight=(foodTabsOpen||!overflow)?'':(oneRow+'px');
+  btn.style.display=overflow?'inline-block':'none';
+  btn.textContent=foodTabsOpen?'Свернуть ▴':'Показать все города ▾';
+}
+(function(){let rt=null;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(fitFoodTabs,180);});window.addEventListener('load',()=>setTimeout(fitFoodTabs,80));})();
 /* ================= ПЛАНИРОВЩИК НОЧЁВОК ================= */
 /* ===== состояние плана: дата старта + ночи (редактируемо, сохраняется) ===== */
 const PKEY='co-trip-2026-plan';let startIso=START;let PEOPLE=2;
