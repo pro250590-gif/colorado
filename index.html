@@ -60,6 +60,32 @@ h1,h2,h3,h4{line-height:1.08;margin:0;font-family:"Plus Jakarta Sans","Inter",sa
 .topbar{position:sticky;top:0;z-index:60;background:rgba(246,242,234,.82);backdrop-filter:saturate(180%) blur(16px);
   -webkit-backdrop-filter:saturate(180%) blur(16px);border-bottom:1px solid rgba(255,255,255,.7)}
 .topbar .wrap{display:flex;align-items:center;gap:11px;height:56px}
+.topdate{margin-left:auto}
+.authbtn{flex:none;border:1.5px solid rgba(91,63,196,.4);background:linear-gradient(180deg,#fff,#f4f1ff);color:#5b3fc4;
+  font:800 12.5px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:-.02em;padding:9px 14px;border-radius:12px;cursor:pointer;
+  box-shadow:0 5px 13px -6px rgba(91,63,196,.5);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.authbtn:active{transform:scale(.97)}
+.authbtn[data-state=in]{background:linear-gradient(150deg,#7a5cf0,#5b3fc4);color:#fff;border-color:transparent}
+.authov{position:fixed;inset:0;z-index:4000;display:none}
+.authov.show{display:block}
+.authov .authbd{position:absolute;inset:0;background:rgba(20,25,40,.5);opacity:0;transition:opacity .2s}
+.authov.show .authbd{opacity:1}
+.authcard{position:absolute;left:50%;top:50%;transform:translate(-50%,-46%);width:min(360px,calc(100vw - 36px));
+  background:#fff;border-radius:22px;box-shadow:0 30px 70px -20px rgba(20,32,27,.55);padding:22px 20px 20px;opacity:0;transition:opacity .22s,transform .22s cubic-bezier(.2,.8,.2,1)}
+.authov.show .authcard{opacity:1;transform:translate(-50%,-50%)}
+.authx{position:absolute;top:12px;right:12px;width:32px;height:32px;border:0;background:rgba(20,32,27,.06);border-radius:50%;display:grid;place-items:center;color:#6b6f82;cursor:pointer}
+.authtitle{font:800 20px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:-.03em;margin-bottom:14px}
+.authtabs{display:flex;gap:6px;background:#f2f0fb;border-radius:12px;padding:4px;margin-bottom:16px}
+.authtab{flex:1;border:0;background:none;font:800 13px/1 "Plus Jakarta Sans",sans-serif;color:#8b8fa3;padding:10px;border-radius:9px;cursor:pointer}
+.authtab.on{background:#fff;color:#5b3fc4;box-shadow:0 3px 8px -3px rgba(20,32,27,.25)}
+.authlab{display:block;font:700 11.5px/1 "Inter",sans-serif;color:#6b6f82;margin-bottom:12px}
+.authlab input{display:block;width:100%;margin-top:7px;border:1.5px solid rgba(91,63,196,.3);border-radius:12px;padding:12px 13px;
+  font:600 15px/1 "Inter",sans-serif;color:#1b1e2e;background:linear-gradient(180deg,#fff,#f9f7ff)}
+.authlab input:focus{outline:2px solid rgba(91,63,196,.28);border-color:#5b3fc4}
+.autherr{font:600 12.5px/1.4 "Inter",sans-serif;color:#c1462a;min-height:16px;margin:2px 0 10px}
+.authsubmit{width:100%;border:0;background:linear-gradient(150deg,#7a5cf0,#5b3fc4);color:#fff;font:800 14.5px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:-.02em;padding:14px;border-radius:13px;cursor:pointer;box-shadow:0 8px 20px -8px rgba(91,63,196,.7)}
+.authsubmit:disabled{opacity:.6}
+.authhint{font:500 12px/1.4 "Inter",sans-serif;color:#8b8fa3;text-align:center;margin-top:12px}
 .brand{font-family:"Plus Jakarta Sans",sans-serif;font-weight:800;font-size:18px;letter-spacing:-.04em;
   display:flex;align-items:center;gap:9px}
 .brandmark{width:32px;height:32px;border-radius:12px;display:grid;place-items:center;flex:none;color:#fff;
@@ -917,7 +943,21 @@ section h2.big{margin-bottom:4px}
 <div class="topbar"><div class="wrap">
   <span class="brand"><span class="brandmark"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 3 4.5 8.5L17 7l5 14H2L8 3Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></span>Colorado<i>.</i></span>
   <span class="topdate" id="topDate">7–16 августа 2026</span>
+  <button class="authbtn" id="authBtn" style="display:none">Войти</button>
 </div></div>
+<div class="authov" id="authOv" aria-hidden="true">
+  <div class="authbd" data-authclose></div>
+  <div class="authcard" role="dialog" aria-modal="true" aria-label="Вход">
+    <button class="authx" data-authclose aria-label="закрыть"><svg class="i i-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    <div class="authtitle">Аккаунт</div>
+    <div class="authtabs"><button class="authtab on" data-mode="in">Вход</button><button class="authtab" data-mode="up">Регистрация</button></div>
+    <label class="authlab">Email<input type="email" id="authEmail" autocomplete="email" inputmode="email" placeholder="you@mail.com"></label>
+    <label class="authlab">Пароль<input type="password" id="authPass" autocomplete="current-password" placeholder="минимум 6 символов"></label>
+    <div class="autherr" id="authErr"></div>
+    <button class="authsubmit" id="authSubmit">Войти</button>
+    <p class="authhint" id="authHint">Нет аккаунта? Нажми «Регистрация».</p>
+  </div>
+</div>
 
 <div class="orb orb-1"></div><div class="orb orb-2"></div><div class="orb orb-3"></div><div class="glow"></div>
 
@@ -1097,6 +1137,7 @@ section h2.big{margin-bottom:4px}
 </nav>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" onerror="window.__lf=1"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" onerror="window.__sb=1"></script>
 <script src="trip-colorado.js"></script>
 <script>
 
@@ -2024,6 +2065,49 @@ document.addEventListener('click',e=>{
       const a=byId[e.target.id];if(a)a.classList.add('on');}});
   },{rootMargin:'-45% 0px -50% 0px'});
   secs.forEach(s=>io.observe(s));
+})();
+
+/* ================= АККАУНТ (Supabase: вход/регистрация) ================= */
+const SB_URL='https://tyzlpuuhihhrnedlyrbt.supabase.co';
+const SB_KEY='sb_publishable_8OuyWLp3XqftHzXQbqyOOw_5CVW5nLN';
+let sb=null;
+try{if(window.supabase&&window.supabase.createClient)sb=window.supabase.createClient(SB_URL,SB_KEY);}catch(e){}
+(function authInit(){
+  const btn=document.getElementById('authBtn'),ov=document.getElementById('authOv');
+  if(!btn||!ov)return;
+  if(!sb){btn.style.display='none';return;} /* облако недоступно — сайт работает как раньше */
+  btn.style.display='';
+  const email=document.getElementById('authEmail'),pass=document.getElementById('authPass'),
+        err=document.getElementById('authErr'),submit=document.getElementById('authSubmit'),hint=document.getElementById('authHint');
+  let mode='in';
+  const open=()=>{ov.classList.add('show');ov.setAttribute('aria-hidden','false');err.textContent='';err.style.color='';setTimeout(()=>email.focus(),60);};
+  const close=()=>{ov.classList.remove('show');ov.setAttribute('aria-hidden','true');};
+  function setMode(m){mode=m;document.querySelectorAll('.authtab').forEach(t=>t.classList.toggle('on',t.dataset.mode===m));
+    submit.textContent=m==='in'?'Войти':'Зарегистрироваться';pass.autocomplete=m==='in'?'current-password':'new-password';
+    err.textContent='';err.style.color='';hint.textContent=m==='in'?'Нет аккаунта? Нажми «Регистрация».':'Уже есть аккаунт? Нажми «Вход».';}
+  document.querySelectorAll('.authtab').forEach(t=>t.addEventListener('click',()=>setMode(t.dataset.mode)));
+  ov.querySelectorAll('[data-authclose]').forEach(x=>x.addEventListener('click',close));
+  async function refresh(){try{const{data}=await sb.auth.getSession();const s=data&&data.session;
+    if(s){btn.textContent='Выйти';btn.dataset.state='in';btn.title=s.user.email||'';}
+    else{btn.textContent='Войти';btn.dataset.state='out';btn.title='';}}catch(e){}}
+  btn.addEventListener('click',async()=>{
+    if(btn.dataset.state==='in'){await sb.auth.signOut();refresh();}else open();});
+  submit.addEventListener('click',async()=>{
+    const e=(email.value||'').trim(),p=pass.value||'';
+    if(!e||!p){err.style.color='';err.textContent='Введи email и пароль';return;}
+    if(mode==='up'&&p.length<6){err.style.color='';err.textContent='Пароль минимум 6 символов';return;}
+    submit.disabled=true;err.textContent='';err.style.color='';
+    try{let res;
+      if(mode==='in')res=await sb.auth.signInWithPassword({email:e,password:p});
+      else res=await sb.auth.signUp({email:e,password:p});
+      if(res.error){err.style.color='';err.textContent=res.error.message;}
+      else if(mode==='up'&&!res.data.session){err.style.color='#12855e';err.textContent='Аккаунт создан. Проверь почту и подтверди — потом войди.';setMode('in');}
+      else{close();refresh();}
+    }catch(ex){err.textContent='Ошибка сети: '+(ex.message||ex);}
+    submit.disabled=false;});
+  pass.addEventListener('keydown',e=>{if(e.key==='Enter')submit.click();});
+  try{sb.auth.onAuthStateChange(()=>refresh());}catch(e){}
+  refresh();
 })();
 </script>
 </body>
