@@ -1925,8 +1925,6 @@ function fitFoodTabs(){
   const nav=document.querySelector('#foodGrid .ftabnav');if(!nav)return;
   const ftabs=nav.querySelector('.ftabs');const btn=nav.querySelector('.ftabmore');
   const tabs=nav.querySelectorAll('.ftab');if(!tabs.length||!ftabs||!btn)return;
-  const desktop=window.matchMedia('(min-width:760px)').matches;
-  if(!desktop){nav.classList.remove('wrapped');ftabs.style.maxHeight='';btn.style.display='none';return;}
   nav.classList.add('wrapped');
   const pt=parseFloat(getComputedStyle(ftabs).paddingTop)||0;
   const oneRow=Math.ceil(tabs[0].offsetHeight+pt+2);
