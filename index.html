@@ -2072,6 +2072,23 @@ const SB_URL='https://tyzlpuuhihhrnedlyrbt.supabase.co';
 const SB_KEY='sb_publishable_8OuyWLp3XqftHzXQbqyOOw_5CVW5nLN';
 let sb=null;
 try{if(window.supabase&&window.supabase.createClient)sb=window.supabase.createClient(SB_URL,SB_KEY);}catch(e){}
+/* ---- облачное сохранение плана (даты/цены/ночи/люди/выборы) ---- */
+const CLOUD_KEYS=['co-trip-2026-plan','co-trip-2026-budget','co-trip-2026-picks','co-trip-2026-food'];
+let _applying=false,_cloudTimer=null;
+function localBundle(){const o={};CLOUD_KEYS.forEach(k=>{const v=localStorage.getItem(k);if(v!=null)o[k]=v;});return o;}
+function cloudSave(){if(!sb||_applying)return;clearTimeout(_cloudTimer);
+  _cloudTimer=setTimeout(async()=>{try{const{data}=await sb.auth.getSession();const s=data&&data.session;if(!s)return;
+    await sb.from('user_plans').upsert({user_id:s.user.id,plan:localBundle(),updated_at:new Date().toISOString()});}catch(e){}},1200);}
+async function cloudSync(session){if(!sb||!session)return;
+  try{const{data,error}=await sb.from('user_plans').select('plan').eq('user_id',session.user.id).maybeSingle();
+    if(error)return;
+    if(data&&data.plan){const cloud=JSON.stringify(data.plan),local=JSON.stringify(localBundle());
+      if(cloud!==local){_applying=true;CLOUD_KEYS.forEach(k=>{if(data.plan[k]!=null)localStorage.setItem(k,data.plan[k]);});location.reload();}}
+    else{await sb.from('user_plans').upsert({user_id:session.user.id,plan:localBundle(),updated_at:new Date().toISOString()});}
+  }catch(e){}}
+/* перехват записи в localStorage наших ключей → авто-сохранение в облако */
+(function(){const _si=localStorage.setItem.bind(localStorage);
+  localStorage.setItem=function(k,v){_si(k,v);if(!_applying&&CLOUD_KEYS.indexOf(k)>=0)cloudSave();};})();
 (function authInit(){
   const btn=document.getElementById('authBtn'),ov=document.getElementById('authOv');
   if(!btn||!ov)return;
@@ -2106,7 +2123,7 @@ try{if(window.supabase&&window.supabase.createClient)sb=window.supabase.createCl
     }catch(ex){err.textContent='Ошибка сети: '+(ex.message||ex);}
     submit.disabled=false;});
   pass.addEventListener('keydown',e=>{if(e.key==='Enter')submit.click();});
-  try{sb.auth.onAuthStateChange(()=>refresh());}catch(e){}
+  try{sb.auth.onAuthStateChange((ev,session)=>{refresh();if(session&&(ev==='SIGNED_IN'||ev==='INITIAL_SESSION'))cloudSync(session);});}catch(e){}
   refresh();
 })();
 </script>
