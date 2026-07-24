@@ -860,7 +860,10 @@ header.hero h1 em{background:none!important;-webkit-background-clip:border-box!i
 .ftile{position:relative;height:100px;display:grid;place-items:center;
   background:linear-gradient(150deg,#f3effd,#ddd1f6);
   box-shadow:inset 0 2px 5px rgba(255,255,255,.75),inset 0 -9px 18px rgba(124,92,255,.14)}
-.ftile .ficon{position:relative;z-index:1;font-size:44px;line-height:1;filter:drop-shadow(0 5px 8px rgba(90,60,180,.32))}
+.ftile .ficon{position:relative;z-index:1;width:60px;height:60px;display:grid;place-items:center}
+.ftile .fimg{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 5px 8px rgba(90,60,180,.3))}
+.ftile .femoji{display:none;font-size:44px;line-height:1;filter:drop-shadow(0 5px 8px rgba(90,60,180,.32))}
+.ftile .ficon.noimg .femoji{display:block}
 .fmoreBtn{width:100%;border:1.5px solid rgba(91,63,196,.4);background:#fff;color:#5b3fc4;border-radius:13px;padding:12px;font:800 12.5px/1 "Plus Jakarta Sans",sans-serif;cursor:pointer;margin-bottom:11px;transition:background .2s}
 .fmoreBtn:hover{background:#f6f3ff}
 @media(min-width:760px){.fgrid{grid-template-columns:repeat(3,1fr)}}
@@ -1812,21 +1815,37 @@ function foodLane(s){
   return 1;
 }
 /* заглушка (эмодзи + цвет) по типу заведения — фиксированный набор, подставляется автоматически */
-/* заглушка по типу заведения — умная подстановка из набора; дефолт = тарелка с приборами */
+/* иконки Fluent 3D (Microsoft, бесплатные, одинаковые на всех устройствах); эмодзи — запасной вариант */
+const F3D='https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets/';
+const FOOD_ICONS={
+  beer:{f:'Beer mug/3D/beer_mug_3d.png',e:'🍺'},
+  wine:{f:'Wine glass/3D/wine_glass_3d.png',e:'🍷'},
+  coffee:{f:'Hot beverage/3D/hot_beverage_3d.png',e:'☕'},
+  dessert:{f:'Ice cream/3D/ice_cream_3d.png',e:'🍨'},
+  sushi:{f:'Sushi/3D/sushi_3d.png',e:'🍣'},
+  taco:{f:'Taco/3D/taco_3d.png',e:'🌮'},
+  burger:{f:'Hamburger/3D/hamburger_3d.png',e:'🍔'},
+  pizza:{f:'Pizza/3D/pizza_3d.png',e:'🍕'},
+  soup:{f:'Pot of food/3D/pot_of_food_3d.png',e:'🍲'},
+  bakery:{f:'Croissant/3D/croissant_3d.png',e:'🥐'},
+  steak:{f:'Cut of meat/3D/cut_of_meat_3d.png',e:'🥩'},
+  plate:{f:'Fork and knife with plate/3D/fork_and_knife_with_plate_3d.png',e:'🍽️'}
+};
+/* заглушка по ТИПУ еды (из названия + описания), НЕ по времени приёма; дефолт = тарелка с приборами */
 function foodCat(s){
-  const t=((s.meal||'')+' '+(s.nm||'')).toLowerCase();
-  if(/пивовар|brew|пиво|\bбар|pub|паб|салун|salo/.test(t))return '🍺';
-  if(/вино|wine|коктейл|cocktail|виск|tavern|таверн/.test(t))return '🍷';
-  if(/кофе|coffee|эспрессо|бариста|caf[eé]/.test(t))return '☕';
-  if(/десерт|морож|choc|шокол|cookie|печень|cream|sweet|gelato/.test(t))return '🍨';
-  if(/суши|sushi|ролл|японск|japan|рамен|ramen|нудл|noodle|лапш/.test(t))return '🍣';
-  if(/тако|taco|буррито|мексикан|mexic|burrito/.test(t))return '🌮';
-  if(/бургер|burger|гамбург/.test(t))return '🍔';
-  if(/пицц|pizza/.test(t))return '🍕';
-  if(/суп|soup|похлёбк|chowder/.test(t))return '🍲';
-  if(/завтрак|бранч|brunch|breakfast|пекарн|bakery|булоч|панкейк|pancake|выпечк|круассан/.test(t))return '🥐';
-  if(/ужин|dinner|стейк|steak|гриль|grill|bbq|ребра|ribs|мясо|chop/.test(t))return '🥩';
-  return '🍽';
+  const t=((s.meal||'')+' '+(s.nm||'')+' '+(s.why||'')).toLowerCase();
+  if(/кофе|coffee|эспрессо|espresso|бариста|latte|капучино|обжарк/.test(t))return 'coffee';
+  if(/пивовар|brew|\bпиво\b|паб|\bpub\b|lager|\bale\b|\bipa\b|крафтов/.test(t))return 'beer';
+  if(/вино|\bwine\b|винотек|коктейл|cocktail|виск|whisk|tavern|таверн|салун|saloon|spirits|\bбар\b/.test(t))return 'wine';
+  if(/суши|sushi|ролл|японск|japan|рамен|ramen|нудл|noodle|лапш/.test(t))return 'sushi';
+  if(/тако|taco|буррито|burrito|мексикан|mexic|cocina/.test(t))return 'taco';
+  if(/пицц|pizza/.test(t))return 'pizza';
+  if(/бургер|burger|гамбург/.test(t))return 'burger';
+  if(/\bсуп\b|soup|похлёбк|chowder/.test(t))return 'soup';
+  if(/пекарн|bakery|выпечк|круассан|croissant|булоч|панкейк|pancake|донат|пончик|\bхлеб|bread/.test(t))return 'bakery';
+  if(/десерт|морож|шокол|\bchoc|cookie|печень|\bcream|gelato|конфет|пирожн|\bcake\b|торт|мармелад|ice cream/.test(t))return 'dessert';
+  if(/стейк|steak|\bchop|барбекю|\bbbq\b|ребра|ribs|гриль|grill|дичь|выдержанное мясо|dry-aged/.test(t))return 'steak';
+  return 'plate';
 }
 function buildFood(){
   const host=document.getElementById('foodGrid');
@@ -1838,13 +1857,13 @@ function buildFood(){
     +FOODCITIES.map((c,ci)=>{
       const order=c.spots.map((s,si)=>({s,si,l:foodLane(s)})).sort((a,b)=>a.l-b.l);
       const cards=order.map(({s,si},idx)=>{
-        const id=foodId(ci,si),fon=foodPicked.has(id),em=foodCat(s);
+        const id=foodId(ci,si),fon=foodPicked.has(id),ico=FOOD_ICONS[foodCat(s)]||FOOD_ICONS.plate;
         const mealLbl=(s.meal||'').split('/').map(x=>x.trim()).filter(Boolean).map(x=>x.charAt(0).toUpperCase()+x.slice(1)).join(' · ');
         return '<div class="fcard'+(fon?'':' off')+(idx>=MAXSHOW?' fhidden':'')+'" data-food="'+id+'">'
           +'<div class="ftile">'
           +'<span class="fcat">'+mealLbl+'</span>'
           +'<span class="cpsw'+(fon?' on':'')+'" data-food-sw="'+id+'" role="switch" aria-checked="'+fon+'" aria-label="показывать на карте" tabindex="0"><i></i></span>'
-          +'<span class="ficon">'+em+'</span></div>'
+          +'<span class="ficon"><img class="fimg" src="'+encodeURI(F3D+ico.f)+'" alt="" loading="lazy" onerror="this.closest(\'.ficon\').classList.add(\'noimg\');this.remove();"><span class="femoji">'+ico.e+'</span></span></div>'
           +'<div class="fcbody"><div class="fcnm"><a href="'+gmSearch(s.nm+' '+c.q)+'" target="_blank" rel="noopener">'+s.nm+'</a></div>'
           +'<div class="fcwhy">'+s.why+'</div>'
           +'<div class="fcmeta"><span class="fchip pr">'+s.price+'</span></div></div></div>';
