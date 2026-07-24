@@ -913,14 +913,13 @@ input.money:focus,.hf input:focus,.bfield input:focus{outline:2px solid rgba(91,
 .br2u b{color:#5b3fc4;font-weight:700}
 /* ── БОЛЬШОЙ ИТОГ — ровно и красиво ── */
 .grandtot{padding:20px 20px 18px}
-.gt-row3{display:grid;grid-template-columns:1fr 1fr 1.12fr;position:relative;z-index:2}
-.gt-cell{display:flex;flex-direction:column;gap:7px;padding:0 14px;min-width:0}
-.gt-cell:first-child{padding-left:0}
+.gt-row3{display:grid;grid-template-columns:1fr 1fr 1.1fr;position:relative;z-index:2}
+.gt-cell{display:flex;flex-direction:column;align-items:center;text-align:center;gap:7px;padding:0 8px;min-width:0}
 .gt-cell+.gt-cell{border-left:1px solid rgba(255,255,255,.18)}
 .gt-cell i{font:700 10px/1.2 "Inter",sans-serif;font-style:normal;text-transform:uppercase;letter-spacing:.06em;opacity:.72;white-space:nowrap}
-.gt-cell b{font:800 23px/1 "Plus Jakarta Sans",sans-serif;color:#fff;letter-spacing:-.03em;white-space:nowrap}
+.gt-cell b{font:800 23px/1 "Plus Jakarta Sans",sans-serif;color:#fff;letter-spacing:-.03em;white-space:nowrap;max-width:100%}
 .gt-total b{font-size:29px;color:#c3b0fb!important;letter-spacing:-.04em}
-@media(max-width:380px){.gt-cell{padding:0 9px}.gt-cell i{font-size:9px;letter-spacing:.02em}.gt-cell b{font-size:20px}.gt-total b{font-size:24px}}
+@media(max-width:380px){.gt-cell{padding:0 6px}.gt-cell i{font-size:9px;letter-spacing:.02em}.gt-cell b{font-size:20px}.gt-total b{font-size:24px}}
 /* ── ОТСТУПЫ между блоками ── */
 #budgetBox{margin-top:16px}
 .plannote{margin:14px 2px 4px!important}
@@ -2032,7 +2031,21 @@ function sumBudget(){
   document.getElementById('sumPer').textContent=money(Math.round(sum/PEOPLE));
   const sd=document.getElementById('sumDay');if(sd)sd.textContent=money(Math.round(sum/days));
   const mn=document.getElementById('tMoney');if(mn&&sum>0)mn.textContent='$'+Math.round(sum/PEOPLE).toLocaleString('en-US').replace(/,/g,' ');
+  if(typeof requestAnimationFrame==='function')requestAnimationFrame(fitSums);else fitSums();
 }
+/* подгоняет размер шрифта итоговых сумм, чтобы крупные числа ($1 000 000) влезали в колонку */
+function fitSums(){
+  ['sumDay','sumPer','sumAll'].forEach(id=>{
+    const b=document.getElementById(id);if(!b)return;
+    b.style.fontSize='';
+    const cell=b.parentElement;if(!cell)return;const cs=getComputedStyle(cell);
+    const avail=cell.clientWidth-parseFloat(cs.paddingLeft||0)-parseFloat(cs.paddingRight||0);
+    if(avail<=0)return;
+    let fs=parseFloat(getComputedStyle(b).fontSize),guard=0;
+    while(b.scrollWidth>avail&&fs>9&&guard<60){fs-=1;b.style.fontSize=fs+'px';guard++;}
+  });
+}
+(function(){let t=null;window.addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(fitSums,180);});})();
 function wireBudget(){
   buildBudget();
   /* сколько человек едет */
