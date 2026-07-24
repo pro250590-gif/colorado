@@ -1746,7 +1746,7 @@ function buildFood(){
   host.innerHTML=FOODCITIES.map((c,ci)=>{
     const base=BASES.find(b=>b.id===c.base);
     const col=base?base.color:'#d96a12',col2=BCOL2[c.base]||col;
-    return '<details class="fooddet" data-base="'+c.base+'"'+(ci===0?' open':'')+'>'
+    return '<details class="fooddet" data-base="'+c.base+'">'
       +'<summary><span class="fmed" style="background:linear-gradient(150deg,'+col+','+col2+')">'+ic('food')+'</span>'
       +'<span class="fhead"><h4>'+c.city+'</h4>'
       +'<span class="fsub">'+c.spots.length+' '+plural(c.spots.length,'место','места','мест')+'</span></span>'
@@ -2089,20 +2089,27 @@ function localTs(){return parseInt(localStorage.getItem('co-trip-ts')||'0',10);}
 function cloudSave(){if(!sb||_applying)return;clearTimeout(_cloudTimer);
   _cloudTimer=setTimeout(async()=>{try{const{data}=await sb.auth.getSession();const s=data&&data.session;if(!s)return;
     await sb.from('user_plans').upsert({user_id:s.user.id,plan:localBundle(),updated_at:new Date(localTs()||Date.now()).toISOString()});}catch(e){}},1200);}
+/* перерисовка НА МЕСТЕ (без перезагрузки!) после загрузки плана из облака */
+function reinit(){try{
+  loadPlan();
+  try{picked=new Set(JSON.parse(localStorage.getItem(KEY))||P.map(p=>p.id));}catch(e){picked=new Set(P.map(p=>p.id));}
+  try{const s=JSON.parse(localStorage.getItem(FKEY));if(Array.isArray(s))foodPicked=new Set(s);}catch(e){}
+  try{const s=JSON.parse(localStorage.getItem(BKEY))||{};BASES.forEach((b,i)=>HRATE[i]=parseFloat(s['h'+(i+1)+'rate'])||0);}catch(e){}
+  const sd=document.getElementById('startDate');if(sd)sd.value=startIso;
+  const pn=document.getElementById('pNum');if(pn)pn.textContent=PEOPLE;
+  buildRoute();buildDays();buildCities();buildFood();buildBases();buildPlanner();buildBudget();recomputeDates();syncChecks();applyFilter();
+}catch(e){}}
 async function cloudSync(session){if(!sb||!session)return;
   try{const{data,error}=await sb.from('user_plans').select('plan,updated_at').eq('user_id',session.user.id).maybeSingle();
     if(error)return;
-    /* ЖЁСТКАЯ защита от цикла: не более ОДНОЙ загрузки-перезагрузки на вкладку */
-    const synced=sessionStorage.getItem('cloudSynced')==='1';
-    if(data&&data.plan&&!synced){
+    if(data&&data.plan){
       const cloudTs=data.updated_at?new Date(data.updated_at).getTime():0,lts=localTs();
-      if(cloudTs>lts+3000){ /* облако заметно новее (правки с другого устройства) — грузим один раз */
-        try{sessionStorage.setItem('cloudSynced','1');}catch(e){}
+      if(cloudTs>lts+3000){ /* облако новее (правки с другого устройства) — грузим В МЕСТЕ, БЕЗ перезагрузки */
         _applying=true;CLOUD_KEYS.forEach(k=>{if(data.plan[k]!=null)localStorage.setItem(k,data.plan[k]);});
-        _rawSet('co-trip-ts',String(cloudTs));location.reload();return;
+        _rawSet('co-trip-ts',String(cloudTs));reinit();_applying=false;return;
       }
     }
-    cloudSave(); /* локальное свежее/равно/уже synced — просто сохраняем локальное */
+    cloudSave(); /* локальное свежее/равно — просто сохраняем локальное */
   }catch(e){}}
 /* перехват записи наших ключей → отметка времени + авто-сохранение */
 localStorage.setItem=function(k,v){_rawSet(k,v);if(!_applying&&CLOUD_KEYS.indexOf(k)>=0){_rawSet('co-trip-ts',String(Date.now()));cloudSave();}};
@@ -2125,7 +2132,7 @@ localStorage.setItem=function(k,v){_rawSet(k,v);if(!_applying&&CLOUD_KEYS.indexO
     if(s){btn.textContent='Выйти';btn.dataset.state='in';btn.title=s.user.email||'';}
     else{btn.textContent='Войти';btn.dataset.state='out';btn.title='';}}catch(e){}}
   btn.addEventListener('click',async()=>{
-    if(btn.dataset.state==='in'){try{sessionStorage.removeItem('cloudSynced');}catch(e){}await sb.auth.signOut();refresh();}else open();});
+    if(btn.dataset.state==='in'){await sb.auth.signOut();refresh();}else open();});
   submit.addEventListener('click',async()=>{
     const e=(email.value||'').trim(),p=pass.value||'';
     if(!e||!p){err.style.color='';err.textContent='Введи email и пароль';return;}
