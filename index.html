@@ -945,11 +945,11 @@ section h2.big{margin-bottom:4px}
 </header>
 
 <section id="s-route"><div class="wrap">
+  <div class="routewrap"><div class="routeline" id="routeLine"></div></div>
   <div class="eyebrow">Маршрут</div>
   <h2 class="big">Как добираешься</h2>
   <div class="startcard"><span class="scmed" id="scMedIcon"></span><span class="scin"><span class="sclbl">Старт поездки</span><span class="scsub">меняешь дату — все дни и брони пересчитываются</span></span><input type="date" id="startDate" class="scdate"></div>
   <div class="peoplebar"><span class="pl">Сколько человек едет</span><span class="pstep"><button class="stepbtn" id="pMinus" aria-label="меньше человек">−</button><span class="pnum"><b id="pNum">2</b></span><button class="stepbtn" id="pPlus" aria-label="больше человек">+</button></span></div>
-  <div class="routewrap"><div class="routeline" id="routeLine"></div></div>
 </div></section>
 
 <div class="citystep" id="cityStep"></div>
@@ -1969,6 +1969,11 @@ function buildFood(){
     sw.addEventListener('click',toggle);
     sw.addEventListener('keydown',e=>{if(e.key===' '||e.key==='Enter')toggle(e);});
   });
+  /* город еды: открыт только один — открываешь новый, прошлый закрывается */
+  host.querySelectorAll('.fooddet').forEach(det=>det.addEventListener('toggle',()=>{
+    if(!det.open)return;
+    host.querySelectorAll('.fooddet[open]').forEach(o=>{if(o!==det)o.open=false;});
+  }));
 }
 
 /* ================= ПЛАНИРОВЩИК НОЧЁВОК ================= */
@@ -2235,6 +2240,11 @@ syncChecks();applyFilter();
 try{document.documentElement.style.touchAction='pan-x pan-y';}catch(e){}
 /* блокируем зум СТРАНИЦЫ (iOS Safari); зум КАРТЫ — кнопки +/−, двойной тап и щипок Leaflet */
 ['gesturestart','gesturechange','gestureend'].forEach(ev=>document.addEventListener(ev,e=>e.preventDefault(),{passive:false}));
+/* блоки «Что занять заранее»: открыт только один */
+document.querySelectorAll('#s-tips .acc').forEach(det=>det.addEventListener('toggle',()=>{
+  if(!det.open)return;
+  document.querySelectorAll('#s-tips .acc[open]').forEach(o=>{if(o!==det)o.open=false;});
+}));
 if(typeof requestIdleCallback==='function'){requestIdleCallback(initMap,{timeout:1500});}else{setTimeout(initMap,60);}
 
 
