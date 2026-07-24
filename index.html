@@ -853,17 +853,16 @@ header.hero h1 em{background:none!important;-webkit-background-clip:border-box!i
 .fnote{background:#f2effc;border:1px solid #e6ddfb;border-radius:14px;padding:12px 15px;font:500 13px/1.55 "Inter",sans-serif;color:#514c6e;margin-bottom:16px}
 .fnote b{color:#5b3fc4;font-weight:700}
 .fcity.hide{display:none}
-.flane{margin-bottom:15px}
-.flanehd{display:flex;align-items:center;gap:8px;margin-bottom:9px}
-.flanehd b{font:800 15px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:-.02em;color:#1b1533}
-.fcarou{display:flex;gap:12px;overflow-x:auto;scrollbar-width:none;padding:2px 2px 8px;scroll-snap-type:x mandatory}
-.fcarou::-webkit-scrollbar{display:none}
-.fcard{flex:none;width:212px;scroll-snap-align:start;background:#fff;border:1px solid #ece7f7;border-radius:17px;overflow:hidden;box-shadow:0 8px 20px -12px rgba(40,25,90,.35);transition:opacity .2s}
+.fgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:12px}
+.fcard{background:#fff;border:1px solid #ece7f7;border-radius:17px;overflow:hidden;box-shadow:0 8px 20px -12px rgba(40,25,90,.35);transition:opacity .2s}
 .fcard.off{opacity:.5}
-.ftile{position:relative;height:106px;display:grid;place-items:center;color:rgba(255,255,255,.95)}
+.fcard.fhidden{display:none}
+.ftile{position:relative;height:100px;display:grid;place-items:center;color:rgba(255,255,255,.95)}
 .ftile::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.03),rgba(0,0,0,.16))}
-.ftile .ficon{position:relative;z-index:1}
-.ftile .ficon svg{width:42px;height:42px;filter:drop-shadow(0 3px 6px rgba(0,0,0,.3))}
+.ftile .ficon{position:relative;z-index:1;font-size:44px;line-height:1;filter:drop-shadow(0 4px 7px rgba(0,0,0,.32))}
+.fmoreBtn{width:100%;border:1.5px solid rgba(91,63,196,.4);background:#fff;color:#5b3fc4;border-radius:13px;padding:12px;font:800 12.5px/1 "Plus Jakarta Sans",sans-serif;cursor:pointer;margin-bottom:11px;transition:background .2s}
+.fmoreBtn:hover{background:#f6f3ff}
+@media(min-width:760px){.fgrid{grid-template-columns:repeat(3,1fr)}}
 .fcat{position:absolute;left:10px;top:10px;z-index:2;background:rgba(255,255,255,.92);color:#3a2f66;font:800 10px/1 "Plus Jakarta Sans",sans-serif;padding:5px 9px;border-radius:8px;letter-spacing:.02em}
 .ftile .cpsw{position:absolute;right:10px;top:9px;z-index:2;margin:0}
 .fcbody{padding:11px 12px 13px}
@@ -1799,7 +1798,7 @@ function saveFoodPicks(){try{localStorage.setItem(FKEY,JSON.stringify([...foodPi
 
 /* ================= ЕДА ================= */
 function gmSearch(q){return 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(q);}
-/* лента-категория по первому токену meal (Завтрак/Обед/Ужин/Кофе/Десерт/Бары) */
+/* лента-категория по первому токену meal (для сортировки: Завтрак→Обед→Ужин→Кофе→Десерт→Бары) */
 const FOOD_LANES=['Завтрак','Обед','Ужин','Кофе','Десерт','Бары'];
 function foodLane(s){
   const t=((s.meal||'').split('/')[0]||'').trim().toLowerCase();
@@ -1811,42 +1810,42 @@ function foodLane(s){
   if(/бар|паб|салун|пивовар/.test(t))return 5;
   return 1;
 }
-/* цвет+иконка плитки-заглушки по типу заведения (умная подстановка из фиксированного набора) */
+/* заглушка (эмодзи + цвет) по типу заведения — фиксированный набор, подставляется автоматически */
 function foodCat(s){
   const t=((s.meal||'')+' '+(s.nm||'')).toLowerCase();
-  if(/пивовар|brew|бар|pub|паб|салун|salo|коктейл|tavern|таверн|виск|вино|wine/.test(t))return {ic:'wine',c:'#d8a84a',c2:'#a8792a'};
-  if(/десерт|морож|choc|шокол|cookie|печень|cream|sweet/.test(t))return {ic:'food',c:'#d87c9c',c2:'#a8486a'};
-  if(/кофе|coffee|эспрессо|бариста/.test(t))return {ic:'coffee',c:'#b58a5a',c2:'#7c5230'};
-  if(/завтрак|бранч|brunch|breakfast|пекарн|bakery|булоч|панкейк|pancake/.test(t))return {ic:'coffee',c:'#e8a04a',c2:'#c76b2a'};
-  if(/ужин|dinner|стейк|steak|гриль|grill|bbq|ребра|ribs/.test(t))return {ic:'food',c:'#6faa5c',c2:'#356b3a'};
-  return {ic:'food',c:'#5aa0c8',c2:'#2f6e98'};
+  if(/пивовар|brew|пиво|\bбар|pub|паб|салун|salo/.test(t))return {em:'🍺',c:'#d8a84a',c2:'#a8792a'};
+  if(/вино|wine|коктейл|cocktail|виск|tavern|таверн/.test(t))return {em:'🍷',c:'#b0557a',c2:'#7c2f52'};
+  if(/десерт|морож|choc|шокол|cookie|печень|cream|sweet/.test(t))return {em:'🍨',c:'#d87c9c',c2:'#a8486a'};
+  if(/кофе|coffee|эспрессо|бариста/.test(t))return {em:'☕',c:'#b58a5a',c2:'#7c5230'};
+  if(/завтрак|бранч|brunch|breakfast|пекарн|bakery|булоч|панкейк|pancake/.test(t))return {em:'🥐',c:'#e8a04a',c2:'#c76b2a'};
+  if(/ужин|dinner|стейк|steak|гриль|grill|bbq|ребра|ribs/.test(t))return {em:'🥩',c:'#6faa5c',c2:'#356b3a'};
+  if(/пицц|pizza|бургер|burger|тако|taco/.test(t))return {em:'🍕',c:'#d97a4a',c2:'#a84f28'};
+  return {em:'🍽',c:'#5aa0c8',c2:'#2f6e98'};
 }
 function buildFood(){
   const host=document.getElementById('foodGrid');
+  const MAXSHOW=9;
   host.innerHTML=
     '<div class="ftabs" role="tablist">'+FOODCITIES.map((c,ci)=>
       '<button class="ftab'+(ci===0?' on':'')+'" data-ftab="'+ci+'" role="tab">'+c.city+'</button>').join('')+'</div>'
     +'<div class="fnote">Мы изучили отзывы на Google и TripAdvisor, убрали закрытые и туристические ловушки — и собрали места, которые любят <b>местные и путешественники</b>.</div>'
     +FOODCITIES.map((c,ci)=>{
-      const lanes=FOOD_LANES.map(()=>[]);
-      c.spots.forEach((s,si)=>{lanes[foodLane(s)].push({s,si});});
-      const lanesHtml=lanes.map((arr,li)=>{
-        if(!arr.length)return '';
-        const cards=arr.map(({s,si})=>{
-          const id=foodId(ci,si),fon=foodPicked.has(id),cat=foodCat(s);
-          const veg=s.veg?'<span class="fchip vg">'+s.veg+'</span>':'';
-          return '<div class="fcard'+(fon?'':' off')+'" data-food="'+id+'">'
-            +'<div class="ftile" style="background:linear-gradient(150deg,'+cat.c+','+cat.c2+')">'
-            +'<span class="fcat">'+FOOD_LANES[li]+'</span>'
-            +'<span class="cpsw'+(fon?' on':'')+'" data-food-sw="'+id+'" role="switch" aria-checked="'+fon+'" aria-label="показывать на карте" tabindex="0"><i></i></span>'
-            +'<span class="ficon">'+ic(cat.ic,'i-lg')+'</span></div>'
-            +'<div class="fcbody"><div class="fcnm"><a href="'+gmSearch(s.nm+' '+c.q)+'" target="_blank" rel="noopener">'+s.nm+'</a></div>'
-            +'<div class="fcwhy">'+s.why+'</div>'
-            +'<div class="fcmeta"><span class="fchip pr">'+s.price+'</span>'+veg+'</div></div></div>';
-        }).join('');
-        return '<div class="flane"><div class="flanehd"><b>'+FOOD_LANES[li]+'</b></div><div class="fcarou">'+cards+'</div></div>';
+      const order=c.spots.map((s,si)=>({s,si,l:foodLane(s)})).sort((a,b)=>a.l-b.l);
+      const cards=order.map(({s,si},idx)=>{
+        const id=foodId(ci,si),fon=foodPicked.has(id),cat=foodCat(s),lane=FOOD_LANES[foodLane(s)];
+        const veg=s.veg?'<span class="fchip vg">'+s.veg+'</span>':'';
+        return '<div class="fcard'+(fon?'':' off')+(idx>=MAXSHOW?' fhidden':'')+'" data-food="'+id+'">'
+          +'<div class="ftile" style="background:linear-gradient(150deg,'+cat.c+','+cat.c2+')">'
+          +'<span class="fcat">'+lane+'</span>'
+          +'<span class="cpsw'+(fon?' on':'')+'" data-food-sw="'+id+'" role="switch" aria-checked="'+fon+'" aria-label="показывать на карте" tabindex="0"><i></i></span>'
+          +'<span class="ficon">'+cat.em+'</span></div>'
+          +'<div class="fcbody"><div class="fcnm"><a href="'+gmSearch(s.nm+' '+c.q)+'" target="_blank" rel="noopener">'+s.nm+'</a></div>'
+          +'<div class="fcwhy">'+s.why+'</div>'
+          +'<div class="fcmeta"><span class="fchip pr">'+s.price+'</span>'+veg+'</div></div></div>';
       }).join('');
-      return '<div class="fcity'+(ci===0?'':' hide')+'" data-fcity="'+ci+'">'+lanesHtml
+      const more=order.length>MAXSHOW
+        ? '<button class="fmoreBtn" data-fmore="'+ci+'">Показать ещё '+(order.length-MAXSHOW)+'</button>' : '';
+      return '<div class="fcity'+(ci===0?'':' hide')+'" data-fcity="'+ci+'"><div class="fgrid">'+cards+'</div>'+more
         +'<a class="fgm" href="'+gmSearch('restaurants '+c.q)+'" target="_blank" rel="noopener">'+ic('pin','i-sm')+'<span>Все рестораны — '+c.city+' на Google Maps</span></a></div>';
     }).join('');
   /* тумблеры еды: вкл/выкл заведение на карте (тот же переключатель, что у активностей) */
@@ -1860,12 +1859,18 @@ function buildFood(){
     sw.addEventListener('click',toggle);
     sw.addEventListener('keydown',e=>{if(e.key===' '||e.key==='Enter')toggle(e);});
   });
-  /* вкладки городов: показываем один город */
+  /* вкладки городов */
   host.querySelectorAll('.ftab').forEach(tab=>{
     tab.addEventListener('click',()=>{const ci=tab.dataset.ftab;
       host.querySelectorAll('.ftab').forEach(t=>t.classList.toggle('on',t===tab));
       host.querySelectorAll('.fcity').forEach(city=>city.classList.toggle('hide',city.dataset.fcity!==ci));
     });
+  });
+  /* показать ещё (свыше 9) */
+  host.querySelectorAll('.fmoreBtn').forEach(btn=>{
+    btn.addEventListener('click',()=>{const ci=btn.dataset.fmore;
+      host.querySelectorAll('.fcity[data-fcity="'+ci+'"] .fcard.fhidden').forEach(c=>c.classList.remove('fhidden'));
+      btn.remove();});
   });
 }
 /* ================= ПЛАНИРОВЩИК НОЧЁВОК ================= */
