@@ -319,9 +319,11 @@ li.hiddenrow{display:none}
 .foodcity h4{font-size:21px;margin-bottom:13px;display:flex;align-items:center;gap:11px;letter-spacing:-.04em}
 .foodcity h4 .fb{width:38px;height:38px;border-radius:14px;flex:none;display:grid;place-items:center;color:#fff;
   box-shadow:var(--sh1),inset 0 1px 0 rgba(255,255,255,.4);position:relative}
-.mealbtns{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:15px}
-.mealbtn{font:700 12.5px/1 inherit;border:1px solid var(--cardline);background:rgba(255,255,255,.85);color:var(--ink2);
-  border-radius:999px;padding:11px 14px;white-space:nowrap;box-shadow:var(--sh1)}
+.mealbtns{display:flex;flex-wrap:nowrap;gap:6px;margin-bottom:15px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.mealbtns::-webkit-scrollbar{display:none}
+.mealbtn{font:700 11.5px/1 inherit;border:1px solid var(--cardline);background:rgba(255,255,255,.85);color:var(--ink2);
+  border-radius:999px;padding:8px 10px;white-space:nowrap;box-shadow:var(--sh1);flex:none;display:inline-flex;align-items:center;gap:4px}
+.mealbtn .i{flex:none}
 .mealbtn:hover{text-decoration:none;color:var(--orange3)}
 .mealbtn.all{background:linear-gradient(150deg,var(--orange1),var(--orange3));color:#fff;border-color:transparent}
 .foodlist{list-style:none;margin:0;padding:0}
@@ -556,6 +558,11 @@ a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{o
 .fsub{display:block;font:600 12px/1 "Inter",sans-serif;color:var(--mut);margin-top:6px}
 .food-body{padding:14px 16px 18px}
 .foodstops li{align-items:flex-start}
+/* иконка заведения на ~30% меньше, вровень с названием */
+.foodstops .pic{width:52px;height:52px}
+.foodstops .thumb{width:52px;height:52px;border-radius:16px}
+.foodstops .fico2 .i{width:28px;height:28px}
+.foodstops .sinfo{padding-top:2px}
 
 /* иконка заведения вместо фотографии */
 .fico2{display:grid;place-items:center;color:#fff;border:0;position:relative;overflow:hidden}
@@ -724,7 +731,7 @@ body{background:linear-gradient(168deg,#eef1f8,#e9edf6 60%,#e6eaf4)!important}
 .cday{display:flex;align-items:center;gap:13px;background:#fff;border:1px solid #e8e9f2;border-radius:15px;padding:11px;margin-bottom:9px;text-decoration:none;color:inherit}
 .cdph{width:66px;height:66px;border-radius:12px;background:#e5e7f0 center/cover no-repeat;flex:none}
 .cdtx{flex:1;min-width:0}
-.cdm{font:500 11px/1 "Inter",sans-serif;color:#8b8fa3}
+.cdm{font:500 10.5px/1 "Inter",sans-serif;color:#8b8fa3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.01em}
 .cdm b{color:#5b3fc4}
 .cdtx>b{display:block;font:700 15px/1.25 "Inter",sans-serif;letter-spacing:-.01em;margin-top:6px}
 .cgo{color:#5b3fc4;flex:none;background:rgba(91,63,196,.1);border-radius:50%;width:30px;height:30px;display:grid;place-items:center}
@@ -1827,10 +1834,10 @@ function buildFood(){
       +'<span class="cgo fchev">'+ic('chevron','i-sm')+'</span></summary>'
       +'<div class="food-body">'
       +'<div class="mealbtns">'
-      +'<a class="mealbtn all" href="'+gmSearch('restaurants '+c.q)+'" target="_blank" rel="noopener">'+ic('food','i-sm')+' Все на карте</a>'
-      +'<a class="mealbtn" href="'+gmSearch('breakfast '+c.q)+'" target="_blank" rel="noopener">'+ic('coffee','i-sm')+' Завтрак</a>'
-      +'<a class="mealbtn" href="'+gmSearch('lunch restaurants '+c.q)+'" target="_blank" rel="noopener">'+ic('food','i-sm')+' Обед</a>'
-      +'<a class="mealbtn" href="'+gmSearch('dinner restaurants '+c.q)+'" target="_blank" rel="noopener">'+ic('wine','i-sm')+' Ужин</a>'
+      +'<a class="mealbtn all" href="'+gmSearch('restaurants '+c.q)+'" target="_blank" rel="noopener">'+ic('pin','i-sm')+' На карте</a>'
+      +'<a class="mealbtn" href="'+gmSearch('breakfast '+c.q)+'" target="_blank" rel="noopener">Завтрак</a>'
+      +'<a class="mealbtn" href="'+gmSearch('lunch restaurants '+c.q)+'" target="_blank" rel="noopener">Обед</a>'
+      +'<a class="mealbtn" href="'+gmSearch('dinner restaurants '+c.q)+'" target="_blank" rel="noopener">Ужин</a>'
       +'</div>'
       +'<ul class="stops foodstops">'+c.spots.map((s,si)=>{
         const id=foodId(ci,si);
@@ -1839,8 +1846,7 @@ function buildFood(){
           +'<input type="checkbox" class="tick" data-ftick="'+id+'" aria-label="показать на карте"></span>'
           +'<span class="sinfo"><span class="snm"><a href="'+gmSearch(s.nm+' '+c.q)+'" target="_blank" rel="noopener">'+s.nm+'</a></span>'
           +'<span class="meta"><span class="mpill best">'+s.meal+'</span>'
-          +'<span class="mpill">'+s.price+'</span>'
-          +'<span class="mpill'+(/вег ok/i.test(s.veg)?' free':'')+'">'+s.veg+'</span></span>'
+          +'<span class="mpill">'+s.price+'</span></span>'
           +'<span class="why">'+s.why+'</span></span></li>';
       }).join('')+'</ul></div></details>';
   }).join('');
