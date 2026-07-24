@@ -589,6 +589,8 @@ a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{o
 .fsub{display:block;font:600 12px/1 "Inter",sans-serif;color:var(--mut);margin-top:6px}
 .food-body{padding:14px 16px 18px}
 .foodstops li{align-items:flex-start}
+.foodstops li.off .pic,.foodstops li.off .sinfo{opacity:.4;transition:opacity .2s}
+.foodstops .cpsw{align-self:flex-start;margin-top:12px}
 /* иконка заведения на ~30% меньше, вровень с названием */
 .foodstops .pic{width:52px;height:52px}
 .foodstops .thumb{width:52px;height:52px;border-radius:16px}
@@ -1946,22 +1948,26 @@ function buildFood(){
       +'</div>'
       +'<ul class="stops foodstops">'+c.spots.map((s,si)=>{
         const id=foodId(ci,si);
-        return '<li data-food="'+id+'">'
-          +'<span class="pic"><span class="thumb fico2" style="background:linear-gradient(150deg,'+col+','+col2+')">'+ic(foodIcon(s),'i-lg')+'</span>'
-          +'<input type="checkbox" class="tick" data-ftick="'+id+'" aria-label="показать на карте"></span>'
+        const fon=foodPicked.has(id);
+        return '<li data-food="'+id+'" class="'+(fon?'':'off')+'">'
+          +'<span class="pic"><span class="thumb fico2" style="background:linear-gradient(150deg,'+col+','+col2+')">'+ic(foodIcon(s),'i-lg')+'</span></span>'
           +'<span class="sinfo"><span class="snm"><a href="'+gmSearch(s.nm+' '+c.q)+'" target="_blank" rel="noopener">'+s.nm+'</a></span>'
           +'<span class="meta"><span class="mpill best">'+s.meal+'</span>'
           +'<span class="mpill">'+s.price+'</span></span>'
-          +'<span class="why">'+s.why+'</span></span></li>';
+          +'<span class="why">'+s.why+'</span></span>'
+          +'<span class="cpsw'+(fon?' on':'')+'" data-food-sw="'+id+'" role="switch" aria-checked="'+fon+'" aria-label="показывать на карте" tabindex="0"><i></i></span></li>';
       }).join('')+'</ul></div></details>';
   }).join('');
-  /* галочки еды */
-  host.querySelectorAll('[data-ftick]').forEach(b=>{
-    b.checked=foodPicked.has(b.dataset.ftick);
-    b.addEventListener('change',()=>{
-      b.checked?foodPicked.add(b.dataset.ftick):foodPicked.delete(b.dataset.ftick);
-      saveFoodPicks();applyFilter();
-    });
+  /* тумблеры еды: вкл/выкл заведение на карте */
+  host.querySelectorAll('.cpsw[data-food-sw]').forEach(sw=>{
+    const toggle=(e)=>{e.preventDefault();e.stopPropagation();const id=sw.dataset.foodSw;
+      if(foodPicked.has(id))foodPicked.delete(id);else foodPicked.add(id);
+      const on=foodPicked.has(id);saveFoodPicks();
+      sw.classList.toggle('on',on);sw.setAttribute('aria-checked',on);
+      const li=sw.closest('li');if(li)li.classList.toggle('off',!on);
+      applyFilter();};
+    sw.addEventListener('click',toggle);
+    sw.addEventListener('keydown',e=>{if(e.key===' '||e.key==='Enter')toggle(e);});
   });
 }
 
