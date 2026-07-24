@@ -135,8 +135,8 @@ h2.big{font-size:clamp(26px,6.4vw,38px);margin:11px 4px 0}
 
 /* ── КАРТА ── */
 .mapbox{position:relative;border-radius:var(--r);overflow:hidden;box-shadow:var(--sh3);border:1px solid var(--cardline)}
-#map{height:min(37vh,340px);min-height:215px;z-index:1}
-.mapph{height:min(37vh,340px);min-height:215px;display:grid;place-items:center;text-align:center;padding:28px;
+#map{height:min(48vh,442px);min-height:280px;z-index:1}
+.mapph{height:min(48vh,442px);min-height:280px;display:grid;place-items:center;text-align:center;padding:28px;
   color:var(--mut);font-size:14.5px;background:#e8ede9}
 .pin{display:flex;align-items:center;justify-content:center;border-radius:50%;color:#fff;font-weight:800;
   font-family:"Plus Jakarta Sans",sans-serif;border:2.5px solid #fff;box-shadow:0 5px 14px rgba(20,32,27,.45);line-height:1}
@@ -144,26 +144,26 @@ h2.big{font-size:clamp(26px,6.4vw,38px);margin:11px 4px 0}
 .basetip{background:rgba(20,32,27,.9);backdrop-filter:blur(10px);color:#fff;border:0;font-weight:700;font-size:11.5px;
   box-shadow:var(--sh2);border-radius:10px;padding:6px 11px}
 .basetip::before{border-right-color:rgba(20,32,27,.9)}
-.photopin{position:relative;width:56px;height:66px;filter:drop-shadow(0 8px 12px rgba(20,32,27,.45))}
-.photopin .ph{position:absolute;top:0;left:0;width:56px;height:56px;border-radius:50%;overflow:hidden;
+.photopin{position:relative;width:45px;height:53px;filter:drop-shadow(0 8px 12px rgba(20,32,27,.45))}
+.photopin .ph{position:absolute;top:0;left:0;width:45px;height:45px;border-radius:50%;overflow:hidden;
   border:3px solid #fff;background:#dde5e1 center/cover no-repeat}
 .photopin .tip{position:absolute;left:50%;bottom:0;transform:translateX(-50%);width:0;height:0;
-  border-left:8px solid transparent;border-right:8px solid transparent;border-top:12px solid #fff}
-.photopin .badge{position:absolute;top:-4px;right:-5px;min-width:21px;height:21px;border-radius:999px;color:#fff;
-  font:800 11px/21px "Plus Jakarta Sans",sans-serif;text-align:center;border:2.5px solid #fff;padding:0 4px;
+  border-left:6px solid transparent;border-right:6px solid transparent;border-top:10px solid #fff}
+.photopin .badge{position:absolute;top:-3px;right:-4px;min-width:17px;height:17px;border-radius:999px;color:#fff;
+  font:800 9px/17px "Plus Jakarta Sans",sans-serif;text-align:center;border:2px solid #fff;padding:0 3px;
   box-sizing:content-box;box-shadow:0 3px 8px rgba(0,0,0,.28)}
 /* ===== новые метки карты ===== */
 .citymk{display:flex;flex-direction:column;align-items:center;pointer-events:auto;cursor:pointer}
-.citymk .circ{width:46px;height:46px;border-radius:50%;background:var(--c);border:3.5px solid #fff;
+.citymk .circ{width:37px;height:37px;border-radius:50%;background:var(--c);border:3px solid #fff;
   box-shadow:0 6px 14px rgba(20,32,27,.4);display:grid;place-items:center;color:#fff;line-height:1;transition:transform .15s}
 .citymk:active .circ{transform:scale(.92)}
-.citymk .circ b{font:800 16px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:-.02em}
-.citymk .circ span{font:600 8px/1 "Inter",sans-serif;margin-top:1px;opacity:.9}
-.citymk .lab{margin-top:5px;background:var(--c);color:#fff;font:700 11px/1 "Plus Jakarta Sans",sans-serif;
-  padding:5px 9px;border-radius:8px;box-shadow:0 3px 7px rgba(20,32,27,.28);white-space:nowrap}
+.citymk .circ b{font:800 13px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:-.02em}
+.citymk .circ span{font:600 7px/1 "Inter",sans-serif;margin-top:1px;opacity:.9}
+.citymk .lab{margin-top:4px;background:var(--c);color:#fff;font:700 9.5px/1 "Plus Jakarta Sans",sans-serif;
+  padding:4px 7px;border-radius:7px;box-shadow:0 3px 7px rgba(20,32,27,.28);white-space:nowrap}
 .ptpin{display:flex;align-items:center;justify-content:center;border-radius:50%;color:#fff;font:800 12px/1 "Plus Jakarta Sans",sans-serif;
   border:2.5px solid #fff;box-shadow:0 4px 10px rgba(20,32,27,.4)}
-.carmk{width:38px;height:38px;border-radius:50%;background:#fff;border:2.5px solid var(--accent,#5b3fc4);
+.carmk{width:30px;height:30px;border-radius:50%;background:#fff;border:2px solid var(--accent,#5b3fc4);
   display:grid;place-items:center;box-shadow:0 6px 14px rgba(91,63,196,.45);color:#1b1e2e}
 .planemk{color:var(--pc,#5b3fc4);filter:drop-shadow(0 3px 5px rgba(20,32,27,.35))}
 .miamichip{background:#5b3fc4;color:#fff;font:700 11px/1 "Plus Jakarta Sans",sans-serif;padding:6px 10px;border-radius:8px;
@@ -1487,17 +1487,17 @@ function initMap(){
     L.control.layers({'Карта':light,'Улицы':streets,'Рельеф':relief,'Спутник':sat},null,{position:'topright'}).addTo(map);
     /* города-счётчики (вид 1C): круг с числом мест + подпись цветом базы; клик — раскрыть точки города */
     BASES.forEach(b=>{const cnt=P.filter(x=>x.cat!=='food'&&x.base===b.id).length;
-      baseMarkers[b.id]=L.marker([b.lat,b.lng],{icon:L.divIcon({className:'',iconSize:[70,74],iconAnchor:[23,23],
+      baseMarkers[b.id]=L.marker([b.lat,b.lng],{icon:L.divIcon({className:'',iconSize:[56,59],iconAnchor:[18,18],
         html:'<div class="citymk" style="--c:'+b.color+'"><div class="circ"><b>'+cnt+'</b><span>мест</span></div><div class="lab">'+shortName(b.name)+'</div></div>'})});
       baseMarkers[b.id].on('click',()=>{filter={mode:'base',v:b.id};fopen=null;buildFilters();applyFilter();fitVisible();});});
     /* точки-места: булавки С ФОТО (как раньше) — показываются при выборе города/дня/типа */
     P.forEach(p=>{const c=p.cat==='food'?'#c1462a':(DCOL[p.d]||'#2f9e6f');const ph=PHOTO[p.id];let icon;
-      if(ph){icon=L.divIcon({className:'',iconSize:[52,60],iconAnchor:[26,60],popupAnchor:[0,-56],
+      if(ph){icon=L.divIcon({className:'',iconSize:[42,48],iconAnchor:[21,48],popupAnchor:[0,-46],
         html:'<div class="photopin"><div class="ph" style="background-image:url('+pimg(p.id,'p')+')"></div>'
             +'<div class="badge" style="background:'+c+'">'+(p.d||'')+'</div><div class="tip"></div></div>'});
-      }else{const glyph=p.cat==='food'?'':(p.d||'');const sz=p.star?28:22;
+      }else{const glyph=p.cat==='food'?'':(p.d||'');const sz=p.star?22:18;
         icon=L.divIcon({className:'',iconSize:[sz,sz],iconAnchor:[sz/2,sz/2],
-          html:'<div class="pin" style="background:'+c+';width:'+sz+'px;height:'+sz+'px;font-size:'+(p.star?15:12)+'px">'+glyph+'</div>'});}
+          html:'<div class="pin" style="background:'+c+';width:'+sz+'px;height:'+sz+'px;font-size:'+(p.star?12:10)+'px">'+glyph+'</div>'});}
       markers[p.id]=L.marker([p.lat,p.lng],{icon:icon}).bindPopup(popupHTML(p.nm,p.q,p.why,p.d?('День '+p.d):(CATS[p.cat]?CATS[p.cat].l:''),c,ph?pimg(p.id,'l'):null));});
     /* маршрут: тоньше, цвета баз (без чёрного); переезды сплошные, радиалки тонкий пунктир */
     const legCol={4:'#12855e',6:'#d96a12',9:'#5a4bb5'};
@@ -1509,14 +1509,14 @@ function initMap(){
     /* самолёты Майами — Майами на СВОЁМ месте (Флорида, далеко ЮВ); видно при отдалении карты */
     decoLayer=L.layerGroup();
     const MIA=[25.7617,-80.1918],DUR=[37.2753,-107.8801],DEN=[39.7392,-104.9903];
-    const planeHTML=(rot,col)=>'<div class="planemk" style="--pc:'+col+';transform:rotate('+rot+'deg)"><svg width="28" height="28" viewBox="0 0 24 24" fill="'+col+'"><path d="M17.9 19.3 15.8 11l3.6-3.6a2.1 2.1 0 1 0-3-3L12.8 8 4.6 6.2a1 1 0 0 0-.9 1.7l4.9 3.1-2 3H3.6l-.9 2 3.8 1 1 3.8 2-.9v-3l3-2 3.1 5a1 1 0 0 0 1.7-.9Z"/></svg></div>';
+    const planeHTML=(rot,col)=>'<div class="planemk" style="--pc:'+col+';transform:rotate('+rot+'deg)"><svg width="22" height="22" viewBox="0 0 24 24" fill="'+col+'"><path d="M17.9 19.3 15.8 11l3.6-3.6a2.1 2.1 0 1 0-3-3L12.8 8 4.6 6.2a1 1 0 0 0-.9 1.7l4.9 3.1-2 3H3.6l-.9 2 3.8 1 1 3.8 2-.9v-3l3-2 3.1 5a1 1 0 0 0 1.7-.9Z"/></svg></div>';
     /* дуги перелётов до реального Майами (уходят за ЮВ край; видно целиком при отзуме) */
     decoLayer.addLayer(L.polyline([MIA,DUR],{color:'#9aa0b4',weight:2,opacity:.8,dashArray:'2,8',lineCap:'round'}));
     decoLayer.addLayer(L.polyline([DEN,MIA],{color:'#9aa0b4',weight:2,opacity:.8,dashArray:'2,8',lineCap:'round'}));
     /* самолётики ЛЕТЯТ ПО ПУНКТИРНОЙ ЛИНИИ (видимый участок у Колорадо) и двигаются, как машинка */
     const onLine=(A,B,f)=>[A[0]+(B[0]-A[0])*f,A[1]+(B[1]-A[1])*f];
-    const arrPlane=L.marker(onLine(DUR,MIA,0.03),{icon:L.divIcon({className:'',iconSize:[28,28],iconAnchor:[14,14],html:planeHTML(-118,'#12855e')})});
-    const depPlane=L.marker(onLine(DEN,MIA,0.005),{icon:L.divIcon({className:'',iconSize:[28,28],iconAnchor:[14,14],html:planeHTML(118,'#5a4bb5')})});
+    const arrPlane=L.marker(onLine(DUR,MIA,0.03),{icon:L.divIcon({className:'',iconSize:[22,22],iconAnchor:[11,11],html:planeHTML(-118,'#12855e')})});
+    const depPlane=L.marker(onLine(DEN,MIA,0.005),{icon:L.divIcon({className:'',iconSize:[22,22],iconAnchor:[11,11],html:planeHTML(118,'#5a4bb5')})});
     decoLayer.addLayer(arrPlane);decoLayer.addLayer(depPlane);
     decoLayer.addLayer(L.marker(MIA,{icon:L.divIcon({className:'',iconSize:[84,24],iconAnchor:[42,12],html:'<div class="miamichip">✈ Майами</div>'})}));
     /* прилёт: из-за края к Дуранго; вылет: от Денвера к краю. Петля, как рейсы */
@@ -1524,8 +1524,8 @@ function initMap(){
     animPlane(depPlane,onLine(DEN,MIA,0.004),onLine(DEN,MIA,0.05),7000);
     /* машинка едет по переездам Дуранго→Урей→Аспен→Денвер */
     const carPath=[].concat(LINES[0].pts.slice().reverse(),LINES[1].pts.slice().reverse(),LINES[2].pts.slice().reverse());
-    carMarker=L.marker(carPath[0],{icon:L.divIcon({className:'',iconSize:[38,38],iconAnchor:[19,19],
-      html:'<div class="carmk"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1b1e2e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg></div>'})});
+    carMarker=L.marker(carPath[0],{icon:L.divIcon({className:'',iconSize:[30,30],iconAnchor:[15,15],
+      html:'<div class="carmk"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1b1e2e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg></div>'})});
     startCarAnim(carPath);
     const legs=lineLayers.filter(l=>[4,6,9].some(d=>l.days.indexOf(d)>=0)).map(l=>l.layer);
     FULL=L.featureGroup(legs).getBounds().pad(0.08);map.fitBounds(FULL);
