@@ -448,7 +448,7 @@ footer a{color:var(--orange1);font-weight:600}
 @media(min-width:1000px){
   body{padding-bottom:0}
   .bottomnav{display:none}
-  .wrap{padding:0 60px}
+  .wrap{padding:0 72px}
 }
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
@@ -847,11 +847,11 @@ header.hero h1 em{background:none!important;-webkit-background-clip:border-box!i
 body.mapopen{overflow:hidden}
 body.mapopen #mapShell{display:block}
 .mapscrim{position:absolute;inset:0;background:rgba(20,25,40,.5);-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}
-.mappanel{position:absolute;left:12px;right:12px;top:calc(12px + env(safe-area-inset-top));
+.mappanel{position:absolute;left:12px;right:12px;top:calc(62px + env(safe-area-inset-top));
   bottom:calc(78px + env(safe-area-inset-bottom));border-radius:22px;overflow:hidden;background:#fff;
   box-shadow:0 24px 64px rgba(15,10,40,.5);animation:mappop .28s cubic-bezier(.2,.8,.2,1)}
 @keyframes mappop{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:none}}
-.mapclose{position:absolute;right:12px;top:12px;z-index:1200;width:40px;height:40px;border-radius:50%;
+.mapclose{position:absolute;right:16px;top:calc(10px + env(safe-area-inset-top));z-index:20;width:42px;height:42px;border-radius:50%;
   background:#fff;border:0;box-shadow:0 4px 14px rgba(0,0,0,.28);display:grid;place-items:center;cursor:pointer;color:#201a3a}
 .mapclose .i{width:20px;height:20px}
 .mapbox{height:100%}
@@ -1023,8 +1023,8 @@ section h2.big{margin-bottom:4px}
 
 <aside id="mapShell" aria-hidden="true">
   <div class="mapscrim" id="mapScrim"></div>
+  <button class="mapclose" id="mapClose" type="button" aria-label="Закрыть карту"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
   <div class="mappanel">
-    <button class="mapclose" id="mapClose" type="button" aria-label="Закрыть карту"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
   <div class="mapbox">
     <!-- фильтр живёт на самой карте: строка сверху, список выпадает поверх -->
     <div class="filters" id="filters"></div>
