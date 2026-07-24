@@ -1345,13 +1345,14 @@ function initMap(){
   if(typeof L==='undefined'){mapFallback('Карта не загрузилась');return;}
   try{
     const el=document.getElementById('map');el.innerHTML='';
-    const light=L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{maxZoom:19,attribution:'© OpenStreetMap, © CARTO'});
-    const streets=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'});
-    const relief=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',{maxZoom:18,attribution:'© Esri'});
-    const sat=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:18,attribution:'© Esri'});
-    map=L.map('map',{layers:[light],scrollWheelZoom:false,zoomControl:false,dragging:false,touchZoom:true,doubleClickZoom:true,boxZoom:false,keyboard:false,minZoom:3,maxZoom:14}).setView([38.5,-107.3],6);map.attributionControl.setPrefix('');
+    const positron=L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{maxZoom:20,subdomains:'abcd',attribution:'© OpenStreetMap, © CARTO'});
+    const voyager=L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{maxZoom:20,subdomains:'abcd',attribution:'© OpenStreetMap, © CARTO'});
+    const dark=L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:20,subdomains:'abcd',attribution:'© OpenStreetMap, © CARTO'});
+    const streets=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'© Esri'});
+    const sat=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'© Esri'});
+    map=L.map('map',{layers:[positron],scrollWheelZoom:false,zoomControl:false,dragging:false,touchZoom:true,doubleClickZoom:true,boxZoom:false,keyboard:false,minZoom:3,maxZoom:14}).setView([38.5,-107.3],6);map.attributionControl.setPrefix('');
     L.control.zoom({position:'bottomright'}).addTo(map);
-    L.control.layers({'Карта':light,'Улицы':streets,'Рельеф':relief,'Спутник':sat},null,{position:'topright'}).addTo(map);
+    L.control.layers({'Светлая':positron,'Классик':voyager,'Тёмная':dark,'Улицы':streets,'Спутник':sat},null,{position:'topright'}).addTo(map);
     L.control.scale({position:'bottomleft',metric:true,imperial:true,maxWidth:140}).addTo(map);
     /* города-счётчики (вид 1C): круг с числом мест + подпись цветом базы; клик — раскрыть точки города */
     BASES.forEach(b=>{const cnt=P.filter(x=>x.cat!=='food'&&x.base===b.id).length;
