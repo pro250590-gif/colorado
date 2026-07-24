@@ -1350,7 +1350,7 @@ function initMap(){
     const dark=L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:20,subdomains:'abcd',attribution:'© OpenStreetMap, © CARTO'});
     const streets=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'© Esri'});
     const sat=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'© Esri'});
-    map=L.map('map',{layers:[positron],scrollWheelZoom:false,zoomControl:false,dragging:false,touchZoom:true,doubleClickZoom:true,boxZoom:false,keyboard:false,minZoom:3,maxZoom:14}).setView([38.5,-107.3],6);map.attributionControl.setPrefix('');
+    map=L.map('map',{layers:[voyager],scrollWheelZoom:false,zoomControl:false,dragging:false,touchZoom:true,doubleClickZoom:true,boxZoom:false,keyboard:false,minZoom:3,maxZoom:14}).setView([38.5,-107.3],6);map.attributionControl.setPrefix('');
     L.control.zoom({position:'bottomright'}).addTo(map);
     L.control.layers({'Светлая':positron,'Классик':voyager,'Тёмная':dark,'Улицы':streets,'Спутник':sat},null,{position:'topright'}).addTo(map);
     L.control.scale({position:'bottomleft',metric:true,imperial:true,maxWidth:140}).addTo(map);
