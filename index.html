@@ -858,6 +858,7 @@ body.mapopen #mapShell{display:block}
 .mappanel #map,.mappanel .mapph{height:100%!important;min-height:0!important}
 @media(min-width:1000px){
   body{padding-right:40vw}
+  .citystep{padding-left:72px;padding-right:72px}
   #mapShell{display:block!important;position:fixed;top:0;right:0;left:auto;bottom:0;width:40vw;height:100vh;z-index:60}
   body.mapopen{overflow:auto}
   .mapscrim,.mapclose{display:none}
@@ -1016,6 +1017,21 @@ section h2.big{margin-bottom:4px}
   <div class="peoplebar"><span class="pl">Сколько человек едет</span><span class="pstep"><button class="stepbtn" id="pMinus" aria-label="меньше человек">−</button><span class="pnum"><b id="pNum">2</b></span><button class="stepbtn" id="pPlus" aria-label="больше человек">+</button></span></div>
 </div></section>
 
+<section id="s-money"><div class="wrap">
+  <div class="eyebrow">Деньги</div>
+  <h2 class="big">Бюджет и жильё</h2>
+  <p class="lede">Всё в одном месте: ночи и стоимость жилья, билеты, машина, входы и еда. Меняешь ночи или цены — итог считается сам.</p>
+  <div class="planner" id="planner"></div>
+  <div id="budgetBox"></div>
+  <div class="grandtot">
+    <div class="gt-top"><span id="gtWho">Вся поездка</span><b id="sumAll">—</b></div>
+    <div class="gt-row">
+      <div class="gt-cell"><i id="gtPerLabel">На человека</i><b id="sumPer">—</b></div>
+      <div class="gt-cell"><i>В день</i><b id="sumDay">—</b></div>
+    </div>
+  </div>
+</div></section>
+
 <div class="citystep" id="cityStep"></div>
 <div id="cities"></div>
 
@@ -1075,21 +1091,6 @@ section h2.big{margin-bottom:4px}
       <tr><td><b>Итого</b></td><td><b>Дуранго → Денвер</b></td><td class="num"><b>~1 150 км</b></td><td class="num"><b>~18 ч</b></td><td class="num"><b>10 дней</b></td></tr>
     </tbody>
   </table></div>
-</div></section>
-
-<section id="s-money"><div class="wrap">
-  <div class="eyebrow">Деньги</div>
-  <h2 class="big">Бюджет и жильё</h2>
-  <p class="lede">Всё в одном месте: ночи и стоимость жилья, билеты, машина, входы и еда. Меняешь ночи или цены — итог считается сам.</p>
-  <div class="planner" id="planner"></div>
-  <div id="budgetBox"></div>
-  <div class="grandtot">
-    <div class="gt-top"><span id="gtWho">Вся поездка</span><b id="sumAll">—</b></div>
-    <div class="gt-row">
-      <div class="gt-cell"><i id="gtPerLabel">На человека</i><b id="sumPer">—</b></div>
-      <div class="gt-cell"><i>В день</i><b id="sumDay">—</b></div>
-    </div>
-  </div>
 </div></section>
 
 <section id="s-tips"><div class="wrap">
