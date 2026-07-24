@@ -501,6 +501,19 @@ a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{o
   background:rgba(20,32,27,.06);color:var(--ink2)}
 .mfall.act{background:linear-gradient(150deg,var(--green1),var(--green3));color:#fff}
 .mffood.act{background:linear-gradient(150deg,var(--orange1),var(--orange3));color:#fff}
+/* лист-фильтр снизу (вариант 3A) — вне карты, докручивается до конца */
+.fsheet{position:fixed;inset:0;z-index:3000;display:none}
+.fsheet.show{display:block}
+.fsheet .fbd{position:absolute;inset:0;background:rgba(20,25,40,.42);opacity:0;transition:opacity .25s}
+.fsheet.show .fbd{opacity:1}
+.fsheet .fpanel{position:absolute;left:0;right:0;bottom:0;max-height:84vh;display:flex;flex-direction:column;
+  background:#fff;border-radius:24px 24px 0 0;box-shadow:0 -14px 44px -14px rgba(20,32,27,.5);
+  transform:translateY(101%);transition:transform .32s cubic-bezier(.2,.8,.2,1);padding-bottom:calc(8px + env(safe-area-inset-bottom))}
+.fsheet.show .fpanel{transform:none}
+.fsheet .fgrip{width:42px;height:4px;border-radius:999px;background:#d7dae6;margin:10px auto 0;flex:none}
+.fsheet .mflist{max-height:none;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.fsheet .mfhead{padding:12px 18px 10px}
+.fsheet .mfrow{padding:11px 18px}
 /* выпадающий список поверх карты */
 .mfdrop{margin-top:7px;border-radius:18px;overflow:hidden;background:rgba(255,255,255,.94);
   backdrop-filter:saturate(180%) blur(22px);-webkit-backdrop-filter:saturate(180%) blur(22px);
@@ -1657,22 +1670,29 @@ function buildFilters(){
       +'<button class="mfall'+(cur==='all'?' act':'')+'" data-f="all" title="показать все точки">'+ic('layers','i-sm')+'</button>'
       +tab('day')+tab('base')+tab('cat')
       +'<button class="mffood'+(foodOn?' act':'')+'" id="foodToggle" title="еда на карте">'+ic('food','i-sm')+'</button>'
-    +'</div>'
-    +'<div class="mfdrop'+(fopen?' show':'')+'" id="mfdrop">'+(fopen?dropList(fopen,total):'')+'</div>';
+    +'</div>';
 
   box.querySelectorAll('[data-seg]').forEach(b=>b.addEventListener('click',e=>{
     e.stopPropagation();fopen=(fopen===b.dataset.seg)?null:b.dataset.seg;buildFilters();applyFilter();}));
   box.querySelector('#foodToggle').addEventListener('click',e=>{e.stopPropagation();foodOn=!foodOn;fopen=null;buildFilters();applyFilter();});
-  box.querySelectorAll('[data-f]').forEach(el=>el.addEventListener('click',e=>{
-    e.stopPropagation();
-    const f=el.dataset.f,v=el.dataset.v;
+  const allBtn=box.querySelector('.mfall');
+  if(allBtn)allBtn.addEventListener('click',e=>{e.stopPropagation();filter={mode:'all',v:null};fopen=null;buildFilters();applyFilter();fitVisible();});
+  /* лист-фильтр снизу (3A) — вне карты, весь список докручивается */
+  let sheet=document.getElementById('filterSheet');
+  if(!sheet){sheet=document.createElement('div');sheet.className='fsheet';sheet.id='filterSheet';document.body.appendChild(sheet);}
+  const pick=(el)=>{const f=el.dataset.f,v=el.dataset.v;
     if(f==='all'){filter={mode:'all',v:null};}
     else{const nv=(f==='day')?+v:v;
-      if(filter.mode===f&&String(filter.v)===String(nv))filter={mode:'all',v:null};
-      else filter={mode:f,v:nv};}
-    fopen=null;                       /* выбрал — список закрылся, осталась карта */
-    buildFilters();applyFilter();fitVisible();
-  }));
+      if(filter.mode===f&&String(filter.v)===String(nv))filter={mode:'all',v:null};else filter={mode:f,v:nv};}
+    fopen=null;buildFilters();applyFilter();fitVisible();};
+  if(fopen){
+    sheet.innerHTML='<div class="fbd" data-close></div><div class="fpanel"><div class="fgrip"></div>'+dropList(fopen,total)+'</div>';
+    requestAnimationFrame(()=>sheet.classList.add('show'));
+    sheet.querySelector('[data-close]').addEventListener('click',()=>{fopen=null;buildFilters();});
+    sheet.querySelectorAll('[data-f]').forEach(el=>el.addEventListener('click',ev=>{ev.stopPropagation();pick(el);}));
+  }else if(sheet.classList.contains('show')){
+    sheet.classList.remove('show');setTimeout(()=>{if(!fopen)sheet.innerHTML='';},320);
+  }else{sheet.innerHTML='';}
 }
 /* строки выпадающего списка */
 function dropList(seg,total){
@@ -2187,7 +2207,7 @@ if(typeof requestIdleCallback==='function'){requestIdleCallback(initMap,{timeout
 /* клик вне фильтра — список закрывается */
 document.addEventListener('click',e=>{
   if(!fopen)return;
-  if(e.target.closest('#filters'))return;
+  if(e.target.closest('#filters')||e.target.closest('#filterSheet'))return;
   fopen=null;buildFilters();applyFilter();
 });
 
