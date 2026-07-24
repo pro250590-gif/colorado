@@ -2,6 +2,7 @@
 # Репозиторий публичный — всё остальное сюда не выкладываем.
 *
 !index.html
+!trip-colorado.js
 !.gitignore
 !img/
 !img/*.webp
