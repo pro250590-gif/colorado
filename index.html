@@ -913,14 +913,14 @@ input.money:focus,.hf input:focus,.bfield input:focus{outline:2px solid rgba(91,
 .br2u b{color:#5b3fc4;font-weight:700}
 /* ── БОЛЬШОЙ ИТОГ — ровно и красиво ── */
 .grandtot{padding:20px 20px 18px}
-.gt-top{display:flex;align-items:baseline;justify-content:space-between;gap:12px;position:relative;z-index:2}
-.gt-top span{font:600 13px/1.3 "Inter",sans-serif;opacity:.82}
-.gt-top b{font:800 32px/1 "Plus Jakarta Sans",sans-serif;color:#c3b0fb!important;letter-spacing:-.04em;white-space:nowrap}
-.gt-row{display:grid;grid-template-columns:1fr 1fr;margin-top:16px;padding-top:16px;border-top:1px solid rgba(255,255,255,.18);position:relative;z-index:2}
-.gt-cell{display:flex;flex-direction:column;gap:8px;padding-right:14px}
-.gt-cell+.gt-cell{padding-left:18px;padding-right:0;border-left:1px solid rgba(255,255,255,.18)}
-.gt-cell i{font:700 10px/1.2 "Inter",sans-serif;font-style:normal;text-transform:uppercase;letter-spacing:.1em;opacity:.72}
-.gt-cell b{font:800 22px/1 "Plus Jakarta Sans",sans-serif;color:#fff;letter-spacing:-.03em}
+.gt-row3{display:grid;grid-template-columns:1fr 1fr 1.12fr;position:relative;z-index:2}
+.gt-cell{display:flex;flex-direction:column;gap:7px;padding:0 14px;min-width:0}
+.gt-cell:first-child{padding-left:0}
+.gt-cell+.gt-cell{border-left:1px solid rgba(255,255,255,.18)}
+.gt-cell i{font:700 10px/1.2 "Inter",sans-serif;font-style:normal;text-transform:uppercase;letter-spacing:.06em;opacity:.72;white-space:nowrap}
+.gt-cell b{font:800 23px/1 "Plus Jakarta Sans",sans-serif;color:#fff;letter-spacing:-.03em;white-space:nowrap}
+.gt-total b{font-size:29px;color:#c3b0fb!important;letter-spacing:-.04em}
+@media(max-width:380px){.gt-cell{padding:0 9px}.gt-cell i{font-size:9px;letter-spacing:.02em}.gt-cell b{font-size:20px}.gt-total b{font-size:24px}}
 /* ── ОТСТУПЫ между блоками ── */
 #budgetBox{margin-top:16px}
 .plannote{margin:14px 2px 4px!important}
@@ -1057,10 +1057,10 @@ section h2.big{margin-bottom:4px}
   <div class="planner" id="planner"></div>
   <div id="budgetBox"></div>
   <div class="grandtot">
-    <div class="gt-top"><span id="gtWho">Вся поездка</span><b id="sumAll">—</b></div>
-    <div class="gt-row">
-      <div class="gt-cell"><i id="gtPerLabel">На человека</i><b id="sumPer">—</b></div>
+    <div class="gt-row3">
       <div class="gt-cell"><i>В день</i><b id="sumDay">—</b></div>
+      <div class="gt-cell"><i>На человека</i><b id="sumPer">—</b></div>
+      <div class="gt-cell gt-total"><i>Итого</i><b id="sumAll">—</b></div>
     </div>
   </div>
 </div></section>
@@ -2032,8 +2032,6 @@ function sumBudget(){
   document.getElementById('sumPer').textContent=money(Math.round(sum/PEOPLE));
   const sd=document.getElementById('sumDay');if(sd)sd.textContent=money(Math.round(sum/days));
   const mn=document.getElementById('tMoney');if(mn&&sum>0)mn.textContent='$'+Math.round(sum/PEOPLE).toLocaleString('en-US').replace(/,/g,' ');
-  const gm=document.getElementById('gtPerLabel');if(gm)gm.textContent='На человека ('+PEOPLE+')';
-  const gw=document.getElementById('gtWho');if(gw)gw.textContent='Вся поездка · на '+PEOPLE+' чел.';
 }
 function wireBudget(){
   buildBudget();
