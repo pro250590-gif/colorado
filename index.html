@@ -135,8 +135,8 @@ h2.big{font-size:clamp(26px,6.4vw,38px);margin:11px 4px 0}
 
 /* ── КАРТА ── */
 .mapbox{position:relative;border-radius:var(--r);overflow:hidden;box-shadow:var(--sh3);border:1px solid var(--cardline)}
-#map{height:min(48vh,442px);min-height:280px;z-index:1}
-.mapph{height:min(48vh,442px);min-height:280px;display:grid;place-items:center;text-align:center;padding:28px;
+#map{height:min(60vh,540px);min-height:350px;z-index:1}
+.mapph{height:min(60vh,540px);min-height:350px;display:grid;place-items:center;text-align:center;padding:28px;
   color:var(--mut);font-size:14.5px;background:#e8ede9}
 .pin{display:flex;align-items:center;justify-content:center;border-radius:50%;color:#fff;font-weight:800;
   font-family:"Plus Jakarta Sans",sans-serif;border:2.5px solid #fff;box-shadow:0 5px 14px rgba(20,32,27,.45);line-height:1}
@@ -1478,10 +1478,10 @@ function animPlane(marker,a,bb,period){if(!marker)return;let t=0;const step=40/(
 function mapFallback(msg){const el=document.getElementById('map');if(el)el.innerHTML='<div class="mapph">'+ic('map','i-lg')+' <b>'+(msg||'Карта не загрузилась')+'</b><br>Открой страницу по обычной ссылке (Netlify/GitHub) в браузере при интернете. Список и ссылки на Google Maps работают всегда.</div>';}
 function popupHTML(nm,q,why,label,color,photo){
   return '<div style="min-width:200px;max-width:250px">'
-    +(photo?'<img src="'+photo+'" alt="" loading="lazy" style="width:100%;height:118px;object-fit:cover;border-radius:11px;margin-bottom:9px;display:block">':'')
+    +(photo?'<img src="'+photo+'" alt="" loading="lazy" style="width:100%;height:88px;object-fit:cover;border-radius:11px;margin-bottom:8px;display:block">':'')
     +(label?'<div style="font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;color:'+color+'">'+label+'</div>':'')
     +'<b style="font-size:16px;display:block;margin:3px 0 5px;font-family:Fraunces,Georgia,serif;font-weight:600">'+nm+'</b>'
-    +'<div style="color:#5b5750;font-size:13px;line-height:1.5;max-height:120px;overflow:auto">'+why+'</div>'
+    +'<div style="color:#5b5750;font-size:12.5px;line-height:1.45;max-height:66px;overflow:auto">'+why+'</div>'
     +'<a href="'+gurl(q)+'" target="_blank" rel="noopener" style="display:inline-block;margin-top:10px;padding:9px 13px;background:#2f4f43;color:#fff;border-radius:10px;font-weight:600;font-size:13px;text-decoration:none">Открыть в Google Maps →</a></div>';
 }
 function initMap(){
@@ -1508,7 +1508,7 @@ function initMap(){
       }else{const glyph=p.cat==='food'?'':(p.d||'');const sz=p.star?22:18;
         icon=L.divIcon({className:'',iconSize:[sz,sz],iconAnchor:[sz/2,sz/2],
           html:'<div class="pin" style="background:'+c+';width:'+sz+'px;height:'+sz+'px;font-size:'+(p.star?12:10)+'px">'+glyph+'</div>'});}
-      markers[p.id]=L.marker([p.lat,p.lng],{icon:icon}).bindPopup(popupHTML(p.nm,p.q,p.why,p.d?('День '+p.d):(CATS[p.cat]?CATS[p.cat].l:''),c,ph?pimg(p.id,'l'):null),{autoPan:true,keepInView:true,autoPanPaddingTopLeft:L.point(14,60),autoPanPaddingBottomRight:L.point(14,18)});});
+      markers[p.id]=L.marker([p.lat,p.lng],{icon:icon}).bindPopup(popupHTML(p.nm,p.q,p.why,p.d?('День '+p.d):(CATS[p.cat]?CATS[p.cat].l:''),c,ph?pimg(p.id,'l'):null),{autoPan:true,keepInView:false,autoPanPaddingTopLeft:L.point(12,66),autoPanPaddingBottomRight:L.point(12,14)});});
     /* маршрут: тоньше, цвета баз (без чёрного); переезды сплошные, радиалки тонкий пунктир */
     const legCol={4:'#12855e',6:'#d96a12',9:'#5a4bb5'};
     function drawLine(o){const isLeg=o.type==='leg';const col=isLeg?(legCol[o.days[0]]||o.color):o.color;const w=isLeg?4.5:2.6;
