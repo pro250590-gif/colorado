@@ -846,14 +846,14 @@ header.hero h1 em{background:none!important;-webkit-background-clip:border-box!i
 .cnote b{color:#3b2a8f}
 .mapbar{display:none!important}
 /* ═══ ЕДА: гид по городам (вкладки → ленты по категориям → карточки с переключателем) ═══ */
-.ftabs{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;margin-bottom:13px}
+.ftabs{display:flex;gap:9px;overflow-x:auto;scrollbar-width:none;padding:5px 2px 8px;margin:22px 0 18px}
 .ftabs::-webkit-scrollbar{display:none}
-.ftab{flex:none;border:0;cursor:pointer;font:800 12.5px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:-.02em;padding:9px 15px;border-radius:999px;background:#efeafc;color:#6b5fb0;transition:background .2s,color .2s}
-.ftab.on{background:linear-gradient(150deg,#7a5cf0,#5b3fc4);color:#fff}
-.fnote{background:#f2effc;border:1px solid #e6ddfb;border-radius:14px;padding:12px 15px;font:500 13px/1.55 "Inter",sans-serif;color:#514c6e;margin-bottom:16px}
+.ftab{flex:none;border:1.5px solid rgba(124,92,255,.42);cursor:pointer;font:800 12.5px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:-.02em;padding:11px 17px;border-radius:999px;background:#fff;color:#5b3fc4;box-shadow:0 4px 11px -5px rgba(90,60,180,.38);transition:.2s}
+.ftab.on{background:linear-gradient(150deg,#7a5cf0,#5b3fc4);color:#fff;border-color:transparent;box-shadow:0 8px 17px -5px rgba(124,92,255,.6)}
+.fnote{background:#f2effc;border:1px solid #e6ddfb;border-radius:16px;padding:15px 17px;font:500 13px/1.6 "Inter",sans-serif;color:#514c6e;margin-bottom:24px}
 .fnote b{color:#5b3fc4;font-weight:700}
 .fcity.hide{display:none}
-.fgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:12px}
+.fgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:15px;margin-bottom:18px}
 .fcard{background:#fff;border:1px solid #ece7f7;border-radius:17px;overflow:hidden;box-shadow:0 8px 20px -12px rgba(40,25,90,.35);transition:opacity .2s}
 .fcard.off{opacity:.5}
 .fcard.fhidden{display:none}
@@ -878,7 +878,7 @@ header.hero h1 em{background:none!important;-webkit-background-clip:border-box!i
 .fchip{font:700 10px/1 "Inter",sans-serif;padding:4px 8px;border-radius:7px}
 .fchip.pr{background:#efeafc;color:#5b3fc4}
 .fchip.vg{background:#eaf6ee;color:#2f7a4d}
-.fgm{display:flex;align-items:center;justify-content:center;gap:8px;background:#fff;border:1.5px solid rgba(91,63,196,.4);border-radius:13px;padding:12px;font:800 12.5px/1 "Plus Jakarta Sans",sans-serif;color:#5b3fc4;text-decoration:none;margin-top:4px}
+.fgm{display:flex;align-items:center;justify-content:center;gap:8px;background:#fff;border:1.5px solid rgba(91,63,196,.4);border-radius:13px;padding:13px;font:800 12.5px/1 "Plus Jakarta Sans",sans-serif;color:#5b3fc4;text-decoration:none;margin-top:8px;box-shadow:0 4px 11px -6px rgba(90,60,180,.3)}
 .fgm svg{width:16px;height:16px;flex:none}
 .fgm:hover{background:#f6f3ff}
 /* ═══ КАРТА: оверлей на телефоне / закреплённый сайдбар на компьютере ═══ */
