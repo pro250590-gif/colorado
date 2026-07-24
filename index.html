@@ -1008,7 +1008,7 @@ section h2.big{margin-bottom:4px}
       <tr><td>7</td><td>Аспен ↔ Maroon Bells</td><td class="num">30 км</td><td class="num">30 мин</td><td class="num">весь день</td></tr>
       <tr><td>8</td><td>Аспен ↔ долины Castle Creek</td><td class="num">60 км</td><td class="num">1 ч</td><td class="num">весь день</td></tr>
       <tr><td>9</td><td>Аспен → Денвер (Independence Pass)</td><td class="num">260 км</td><td class="num">4 ч</td><td class="num">6–7 ч</td></tr>
-      <tr><td>10</td><td>Денвер → аэропорт DEN, вылет 12:47</td><td class="num">—</td><td class="num">30 мин</td><td class="num">утро</td></tr>
+      <tr><td>10</td><td>Денвер → аэропорт DEN, вылет</td><td class="num">—</td><td class="num">30 мин</td><td class="num">утро</td></tr>
       <tr><td><b>Итого</b></td><td><b>Дуранго → Денвер</b></td><td class="num"><b>~1 150 км</b></td><td class="num"><b>~18 ч</b></td><td class="num"><b>10 дней</b></td></tr>
     </tbody>
   </table></div>
@@ -1021,7 +1021,7 @@ section h2.big{margin-bottom:4px}
   <div class="planner" id="planner"></div>
   <div id="budgetBox"></div>
   <div class="grandtot">
-    <div class="gt-top"><span>Вся поездка · на двоих</span><b id="sumAll">—</b></div>
+    <div class="gt-top"><span id="gtWho">Вся поездка</span><b id="sumAll">—</b></div>
     <div class="gt-row">
       <div class="gt-cell"><i id="gtPerLabel">На человека</i><b id="sumPer">—</b></div>
       <div class="gt-cell"><i>В день</i><b id="sumDay">—</b></div>
@@ -1036,7 +1036,7 @@ section h2.big{margin-bottom:4px}
   <details class="acc" open><summary>Что бронировать заранее (по срочности)<span class="chev"><svg class="i i-sm" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9.5 18 6-6-6-6"/></svg></span></summary>
     <div class="acc-body">
       <ul>
-        <li><b>Меса-Верде (Cliff Palace) — критично.</b> Билеты открываются ровно за 14 дней в 08:00 MDT. День в парке 9 августа → релиз <b>26 июля, 17:00 Мск</b>. Разбирают за минуты, только <a href="https://www.recreation.gov/ticket/facility/233362" target="_blank" rel="noopener">recreation.gov</a>. В сам парк пускают и без билета.</li>
+        <li><b>Меса-Верде (Cliff Palace) — критично.</b> Билеты открываются ровно за 14 дней в 08:00 по местному времени (MDT). День в парке 9 августа → релиз <b>26 июля</b>. Разбирают за минуты, только <a href="https://www.recreation.gov/ticket/facility/233362" target="_blank" rel="noopener">recreation.gov</a>. В сам парк пускают и без билета.</li>
         <li><b>Maroon Bells — критично.</b> Август пик. Парковка $10 (только до 08:00 или после 17:00) либо шаттл $16. <a href="https://www.visitmaroonbells.com/" target="_blank" rel="noopener">visitmaroonbells.com</a>.</li>
         <li><b>Поезд Durango &amp; Silverton.</b> Открытые вагоны на август берут заранее. <a href="https://durangotrain.com/" target="_blank" rel="noopener">durangotrain.com</a>.</li>
         <li><b>Машина Дуранго → Денвер (one-way).</b> Сбор за возврат в другом городе ~$100-150. SUV разбирают первыми.</li>
@@ -1082,7 +1082,7 @@ section h2.big{margin-bottom:4px}
 </div></section>
 
 <footer><div class="wrap">
-  План на 7–16 августа 2026 · Дуранго → Урей → Аспен → Денвер · прилёт American в DRO 7 авг 16:17, вылет из DEN 16 авг 12:47.<br>
+  План на 7–16 августа 2026 · Дуранго → Урей → Аспен → Денвер · прилёт в DRO, вылет из DEN.<br>
   Фотографии мест — <a href="https://commons.wikimedia.org/" target="_blank" rel="noopener">Викисклад</a>, свободные лицензии.<br>
   Проверить перед выездом: <a href="https://www.cotrip.org/" target="_blank" rel="noopener">дороги CDOT</a> · <a href="https://durangotrain.com/" target="_blank" rel="noopener">поезд</a> · <a href="https://www.visitmaroonbells.com/" target="_blank" rel="noopener">Maroon Bells</a> · <a href="https://www.recreation.gov/ticket/facility/233362" target="_blank" rel="noopener">Mesa Verde</a>
 </div></footer>
@@ -1160,7 +1160,7 @@ const BASES=[
   desc:'Альпийская кульминация: Maroon Bells, ледниковые озёра, перевал Independence, города-призраки.',
   alt:'Аспен дорогой (от $450+). Basalt (20 мин) и Carbondale (40 мин) — те же горы за $110–160/ночь.'},
  {id:'den',name:'Денвер (у аэропорта)',emoji:'city',nights:1,color:BCOL.den,lat:39.7392,lng:-104.9903,q:'Denver, CO',
-  desc:'Только переночевать перед вылетом. Район аэропорта / Аврора — чтобы утром 16-го спокойно доехать к рейсу 12:47.',
+  desc:'Только переночевать перед вылетом. Район аэропорта / Аврора — чтобы утром спокойно доехать к рейсу.',
   alt:'Ищи отель с бесплатным shuttle до DEN — тогда можно сдать машину вечером 15-го и не платить лишний день аренды.'}
 ];
 const DAY_BASE={1:'dur',2:'dur',3:'dur',4:'our',5:'our',6:'asp',7:'asp',8:'asp',9:'den',10:'den'};
@@ -1168,12 +1168,12 @@ Object.keys(DAY_BASE).forEach(n=>DCOL[n]=BCOL[DAY_BASE[n]]);
 
 const ORD=['','первый','второй','третий','четвёртый','пятый','шестой','седьмой','восьмой','девятый','десятый','11-й','12-й','13-й','14-й'];
 const DAYS=[
- {n:1,title:'Прилёт в Дуранго',pill:'прилёт',leg:'American прилетает в 16:17 · аэропорт → город 25 мин',
-  note:'<b>Первый вечер спокойный.</b> Прилетаешь в 16:17, забираешь машину, заселяешься, гуляешь по Дуранго.'},
+ {n:1,title:'Прилёт в Дуранго',pill:'прилёт',leg:'прилёт в аэропорт DRO · до города 25 мин',
+  note:'<b>Первый вечер спокойный.</b> Прилетаешь, забираешь машину, заселяешься, гуляешь по Дуранго.'},
  {n:2,title:'Поезд Durango &amp; Silverton',pill:'поезд',leg:'отправление 08:15–09:45 от вокзала в центре Дуранго',
   note:'<b>Почему в начале:</b> при высокой пожароопасности поезд иногда останавливают. Раньше в блоке — есть куда пересесть.'},
  {n:3,title:'Меса-Верде — города в скалах',pill:'радиально',leg:'Дуранго → Меса-Верде 1 ч в одну сторону, ~85 км',
-  note:'<b>Билеты внутрь</b> появляются за 14 дней в 08:00 MDT. Для 9 авг — 26 июля, 17:00 Мск. В сам парк пускают и без билета.'},
+  note:'<b>Билеты внутрь</b> появляются за 14 дней в 08:00 по местному времени (MDT). Для 9 авг — 26 июля. В сам парк пускают и без билета.'},
  {n:4,title:'Million Dollar Highway: Дуранго → Урей',pill:'переезд',leg:'~120 км · 2 ч хода, закладывай 5–6 ч с остановками',note:''},
  {n:5,title:'Урей и Теллурайд',pill:'радиально',leg:'Урей ↔ Теллурайд ~1 ч 15 мин в одну сторону',
   note:'<b>Если плотно:</b> убери Yankee Boy — или наоборот Теллурайд, и посвяти день джип-туру и источникам.'},
@@ -1184,13 +1184,13 @@ const DAYS=[
   note:'<b>Про август:</b> после 13:00–14:00 грозы. Всё высокогорное — до обеда.'},
  {n:9,title:'Аспен → Денвер (Independence Pass)',pill:'переезд',leg:'~260 км · 4 ч хода, реально 6–7 ч с остановками',
   note:'<b>Ночуем у аэропорта Денвера.</b> Завтра ранний вылет — последнюю ночь лучше ближе к DEN.'},
- {n:10,title:'Денвер → вылет домой',pill:'финал',leg:'сдать машину · рейс American в Майами 12:47',
-  note:'<b>Выезжай к аэропорту к 10–11 утра.</b> Прилёт в Майами 19:00.'}
+ {n:10,title:'Денвер → вылет домой',pill:'финал',leg:'сдать машину · вылет из аэропорта DEN',
+  note:'<b>Выезжай к аэропорту заранее.</b> Заложи время на сдачу машины и досмотр.'}
 ];
 
 const P=[
- {id:'dro',d:1,base:'dur',cat:'transport',lat:37.1515,lng:-107.7538,nm:'Аэропорт Дуранго (DRO)',q:'Durango-La Plata County Airport',tag:['прилёт 16:17','t-easy'],
-  why:'Прилетаешь рейсом American в 16:17. Забираешь машину в аэропорту — и за 25 минут в Дуранго, засветло.'},
+ {id:'dro',d:1,base:'dur',cat:'transport',lat:37.1515,lng:-107.7538,nm:'Аэропорт Дуранго (DRO)',q:'Durango-La Plata County Airport',tag:['прилёт','t-easy'],
+  why:'Прилетаешь в аэропорт DRO. Забираешь машину — и за 25 минут в Дуранго. Прилетай засветло, чтобы спокойно заселиться.'},
  {id:'art',d:1,base:'dur',cat:'town',lat:37.2700,lng:-107.8790,nm:'Animas River Trail + Main Avenue',q:'Animas River Trail Durango',
   why:'Первый вечер: набережная вдоль реки через весь город и исторический центр Дуранго.'},
  {id:'lnh',d:1,base:'dur',cat:'nature',lat:37.2350,lng:-107.9200,nm:'Lake Nighthorse',q:'Lake Nighthorse',tag:['если есть силы','t-easy'],
@@ -1281,8 +1281,8 @@ const P=[
   why:'Съезд с I-70 на US-6. Последний альпийский перевал: седловина выше границы леса, снежники в августе. Прощальный вид перед Денвером.'},
  {id:'geo',d:9,base:'den',cat:'town',lat:39.7061,lng:-105.6972,nm:'Georgetown',q:'Georgetown, CO',tag:['30 мин','t-easy'],
   why:'Викторианский шахтёрский городок у I-70, весь центр — памятник. Последняя остановка перед Денвером.'},
- {id:'den',d:10,base:'den',cat:'transport',lat:39.8561,lng:-104.6737,nm:'Аэропорт Денвера (DEN)',q:'Denver International Airport',tag:['вылет 12:47','t-must'],star:1,
-  why:'Сдаёшь машину и улетаешь домой. Рейс American в Майами 12:47 (прилёт 19:00) — к аэропорту выехать утром, к 10–11.'},
+ {id:'den',d:10,base:'den',cat:'transport',lat:39.8561,lng:-104.6737,nm:'Аэропорт Денвера (DEN)',q:'Denver International Airport',tag:['вылет','t-must'],star:1,
+  why:'Сдаёшь машину и улетаешь домой из DEN. Выезжай к аэропорту заранее — заложи время на сдачу машины и досмотр.'},
 ];
 
 /* ЕДА — умная подборка знаковых мест по городам (проверено 2026; закрытые исключены) */
@@ -2210,6 +2210,7 @@ function sumBudget(){
   const sd=document.getElementById('sumDay');if(sd)sd.textContent=money(Math.round(sum/days));
   const mn=document.getElementById('tMoney');if(mn&&sum>0)mn.textContent='$'+Math.round(sum/PEOPLE).toLocaleString('en-US').replace(/,/g,' ');
   const gm=document.getElementById('gtPerLabel');if(gm)gm.textContent='На человека ('+PEOPLE+')';
+  const gw=document.getElementById('gtWho');if(gw)gw.textContent='Вся поездка · на '+PEOPLE+' чел.';
 }
 function wireBudget(){
   buildBudget();
