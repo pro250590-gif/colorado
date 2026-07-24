@@ -798,6 +798,13 @@ header.hero h1 em{background:none!important;-webkit-background-clip:border-box!i
 .cplaces{list-style:none;margin:0;padding:0}
 .cplaces li{padding:13px 0;border-top:1px solid #eef0f6}
 .cplaces li:first-child{border-top:0}
+.cpl-row{display:flex;align-items:flex-start;gap:12px}
+.cpl-main{flex:1;min-width:0;transition:opacity .2s}
+.cplaces li.off .cpl-main{opacity:.4}
+.cpsw{flex:none;width:46px;height:27px;border-radius:999px;background:#d5d8e6;position:relative;cursor:pointer;transition:background .2s;margin-top:2px}
+.cpsw.on{background:linear-gradient(150deg,#7a5cf0,#5b3fc4)}
+.cpsw i{position:absolute;top:3px;left:3px;width:21px;height:21px;border-radius:50%;background:#fff;box-shadow:0 2px 5px rgba(20,32,27,.3);transition:left .2s}
+.cpsw.on i{left:22px}
 .cpnm{font:700 16px/1.3 "Plus Jakarta Sans",sans-serif;letter-spacing:-.02em;display:block}
 .cpnm a{color:#1b1e2e;text-decoration:none;border-bottom:1.5px solid rgba(91,63,196,.35)}
 .cpnm a:hover{color:#5b3fc4}
@@ -1627,8 +1634,10 @@ function buildCities(){
         +'<span class="cgo">'+ic('chevron','i-sm')+'</span></summary>'
         +'<div class="cdaybody">'
         +(d.leg?'<div class="cleg"><b>'+d.pill+'</b> '+d.leg+'</div>':'')
-        +'<ul class="cplaces">'+list.map(p=>{const emo=p.star?'<span class="cstar">'+ic('star','i-sm')+'</span>':'';
-          return '<li><span class="cpnm">'+emo+'<a href="'+gurl(p.q)+'" target="_blank" rel="noopener">'+p.nm+'</a></span>'+metaStrip(p)+'<span class="cwhy">'+p.why+'</span></li>';}).join('')+'</ul>'
+        +'<ul class="cplaces">'+list.map(p=>{const emo=p.star?'<span class="cstar">'+ic('star','i-sm')+'</span>':'';const on=picked.has(p.id);
+          return '<li class="'+(on?'':'off')+'" data-pl="'+p.id+'"><div class="cpl-row"><div class="cpl-main">'
+            +'<span class="cpnm">'+emo+'<a href="'+gurl(p.q)+'" target="_blank" rel="noopener">'+p.nm+'</a></span>'+metaStrip(p)+'<span class="cwhy">'+p.why+'</span></div>'
+            +'<span class="cpsw'+(on?' on':'')+'" data-pl="'+p.id+'" role="switch" aria-checked="'+on+'" aria-label="показывать на карте" tabindex="0"><i></i></span></div></li>';}).join('')+'</ul>'
         +(d.note?'<div class="cnote">'+d.note+'</div>':'')+'</div></details>';}).join('')+'</div>';
 
     return '<section class="city" id="city-'+b.id+'"><div class="wrap">'
@@ -1637,6 +1646,17 @@ function buildCities(){
       +'<div class="ctl">'+arrival+carHire+stay+route+'</div></div></section>';
   }).join('');
 
+  /* тумблеры активностей: вкл/выкл место (на карте + тускнеет строка) */
+  host.querySelectorAll('.cpsw').forEach(sw=>{
+    const toggle=(e)=>{e.preventDefault();e.stopPropagation();const id=sw.dataset.pl;
+      if(picked.has(id))picked.delete(id);else picked.add(id);
+      const on=picked.has(id);savePicks();
+      sw.classList.toggle('on',on);sw.setAttribute('aria-checked',on);
+      const li=sw.closest('li');if(li)li.classList.toggle('off',!on);
+      syncChecks();applyFilter();};
+    sw.addEventListener('click',toggle);
+    sw.addEventListener('keydown',e=>{if(e.key===' '||e.key==='Enter')toggle(e);});
+  });
   /* дни-аккордеоны: открыт только один */
   host.querySelectorAll('.cday').forEach(det=>det.addEventListener('toggle',()=>{
     if(!det.open)return;
@@ -1879,8 +1899,10 @@ function dirURL(dayN){
 }
 function updateDirLinks(){document.querySelectorAll('[data-dir]').forEach(a=>{const u=dirURL(+a.dataset.dir);
   if(u){a.href=u;a.style.opacity='1';a.style.pointerEvents='auto';}else{a.href='#';a.style.opacity='.35';a.style.pointerEvents='none';}});}
-function syncChecks(){P.forEach(p=>{const b=document.querySelector('[data-tick="'+p.id+'"]');if(b)b.checked=picked.has(p.id);
-  const li=document.querySelector('li[data-id="'+p.id+'"]');if(li)li.style.opacity=picked.has(p.id)?'1':'.55';});}
+function syncChecks(){P.forEach(p=>{const on=picked.has(p.id);
+  const b=document.querySelector('[data-tick="'+p.id+'"]');if(b)b.checked=on;
+  const li=document.querySelector('li[data-id="'+p.id+'"]');if(li)li.style.opacity=on?'1':'.55';
+  const sw=document.querySelector('.cpsw[data-pl="'+p.id+'"]');if(sw){sw.classList.toggle('on',on);sw.setAttribute('aria-checked',on);const cli=sw.closest('li');if(cli)cli.classList.toggle('off',!on);}});}
 
 
 /* фото для заведения подбираем по типу кухни */
