@@ -1199,6 +1199,12 @@ function skyscanner(from,to,iso){
   const d=addDays(iso,0);const yy=String(d.getFullYear()).slice(2),mm=('0'+(d.getMonth()+1)).slice(-2),dd=('0'+d.getDate()).slice(-2);
   return 'https://www.skyscanner.ru/transport/flights/'+from.toLowerCase()+'/'+to.toLowerCase()+'/'+yy+mm+dd+'/';
 }
+/* весь перелёт одним поиском (мультигород/open-jaw): туда ORIGIN→1-й аэропорт, обратно последний аэропорт→ORIGIN */
+function flightSearch(){
+  const outAir=AIRPORT[BASES[0].id]||'',backAir=AIRPORT[BASES[BASES.length-1].id]||'';
+  const back=fmtISO(addDays(startIso,totalNights()));
+  return 'https://www.kayak.com/flights/'+ORIGIN.code+'-'+outAir+'/'+startIso+'/'+backAir+'-'+ORIGIN.code+'/'+back+'/'+PEOPLE+'adults?sort=price_a';
+}
 function fmtISO(d){return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);}
 /* ================= ПАРТНЁРСКИЕ ССЫЛКИ БРОНИ ================= */
 /* AFF — метки партнёрок; пусто = ссылки работают, но без нашего процента. Заполнить после регистрации. */
@@ -1229,14 +1235,14 @@ function buildRoute(){
     return '<span class="rseg">'+g+'</span>';
   };
   let html=pin(ORIGIN.city)
-    +seg('flight',skyscanner(ORIGIN.code,startAir,startIso));
+    +seg('flight',flightSearch());
   BASES.forEach((b,i)=>{
     const before=nightsBefore(b.id);
     const ci=addDays(startIso,before),co=addDays(startIso,before+b.nights);
     html+=city(shortName(b.name),dm(ci)+' – '+dm(co));
     if(i<BASES.length-1){const nx=BASES[i+1];html+=seg(SEGMENT[nx.id]||'car','');}
   });
-  html+=seg('flight',skyscanner(endAir,ORIGIN.code,endIso))
+  html+=seg('flight',flightSearch())
     +pin(ORIGIN.city);
   host.innerHTML=html;
 }
@@ -1407,7 +1413,7 @@ function buildCities(){
           +'<div class="cpt"><b>'+ORIGIN.city+'</b><span>'+ORIGIN.code+' · '+dm(ci)+'</span></div>'
           +'<div class="cmid"><div class="cic">'+ic('plane','i-sm')+'</div></div>'
           +'<div class="cpt r"><b>'+shortName(b.name)+'</b><span>'+(AIRPORT[b.id]||'')+' · '+dm(ci)+'</span></div></div>'
-          +'<a class="cbook" href="'+skyscanner(ORIGIN.code,AIRPORT[b.id]||'DRO',startIso)+'" target="_blank" rel="noopener">'+ic('plane','i-sm')+' Подобрать рейсы <small>Skyscanner</small></a></div></div>';
+          +'<a class="cbook" href="'+flightSearch()+'" target="_blank" rel="noopener">'+ic('plane','i-sm')+' Подобрать рейсы <small>туда+обратно</small></a></div></div>';
     }else{
       const pv=BASES[i-1];const seg=citySeg(b.id);
       arrival='<div class="cnode"><span class="cdot">'+ic(seg==='flight'?'plane':seg==='train'?'train':seg==='ferry'?'ferry':'car','i-sm')+'</span>'
@@ -1917,7 +1923,7 @@ function itemQty(per,days){return per==='day'?days:per==='person'?PEOPLE:per==='
 function groupBook(g){
   const ci=addDays(startIso,0),co=addDays(startIso,totalNights());
   let url,label,icon;
-  if(g==='Перелёт'){url=skyscanner(ORIGIN.code,AIRPORT[BASES[0].id]||'DRO',startIso);label='Подобрать билеты';icon='flight';}
+  if(g==='Перелёт'){url=flightSearch();label='Подобрать билеты (туда-обратно)';icon='flight';}
   else if(g==='Машина'){const en=s=>s.split(',')[0].trim();url=bookCar(en(BASES[0].q),en(BASES[BASES.length-1].q),ci,co);label='Забронировать машину';icon='car';}
   else if(g==='Входы и активности'){url=bookActivity(BASES[0].q+' tours tickets');label='Забронировать активности';icon='ticket';}
   else return '';
