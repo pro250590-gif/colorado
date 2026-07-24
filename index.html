@@ -850,18 +850,18 @@ section h2.big{margin-bottom:4px}
 .fooddet .cgo{color:#5b3fc4;background:rgba(91,63,196,.1);border-radius:50%;width:30px;height:30px;display:grid;place-items:center}
 .fooddet .cgo .i{width:20px;height:20px;stroke-width:2.4}
 /* ── ЕДИНЫЙ ВИД СТРОК БЮДЖЕТА ── */
-.brow3{padding:13px 16px;border-bottom:1px solid #eef0f6}
-.b3top{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.b3nm{font:700 15px/1.25 "Plus Jakarta Sans",sans-serif;letter-spacing:-.02em;flex:1;min-width:0}
-.b3field{flex:none;display:flex;align-items:center;gap:6px}
-.b3field input{width:82px;border:1.5px solid rgba(91,63,196,.35);border-radius:11px;background:linear-gradient(180deg,#fff,#f6f3ff);padding:9px 10px;font:800 14.5px/1 "Plus Jakarta Sans",sans-serif;text-align:right;color:#1b1e2e}
-.b3field input:focus{outline:2px solid rgba(91,63,196,.28);border-color:#5b3fc4}
-.b3u{font:700 11px/1 "Inter",sans-serif;color:#8b8fa3;min-width:26px}
-.b3bot{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-top:8px}
-.b3desc{font:500 12px/1.4 "Inter",sans-serif;color:#8b8fa3}
+.brow3{display:flex;align-items:center;gap:9px;padding:12px 16px;border-bottom:1px solid #eef0f6}
+.b3l{flex:1;min-width:0}
+.b3nm{display:block;font:700 15px/1.2 "Plus Jakarta Sans",sans-serif;letter-spacing:-.02em}
+.b3desc{display:block;font:500 11.5px/1.35 "Inter",sans-serif;color:#8b8fa3;margin-top:4px}
 .b3desc b{color:#5b3fc4;font-weight:700}
 .b3desc .cf{color:#5b3fc4}.b3desc .est{color:#8b8fa3;font-weight:800}
-.b3sum{font:800 14px/1 "Plus Jakarta Sans",sans-serif;color:#1b1e2e;white-space:nowrap;flex:none}
+.b3box{flex:none;display:inline-flex;align-items:center;gap:4px;border:1.5px solid rgba(91,63,196,.35);background:linear-gradient(180deg,#fff,#f6f3ff);border-radius:12px;padding:8px 10px}
+.b3box:focus-within{outline:2px solid rgba(91,63,196,.28);border-color:#5b3fc4}
+.brow3 .b3box input{border:none!important;background:none!important;outline:none!important;box-shadow:none!important;margin:0!important;padding:0!important;max-width:none!important;text-align:right;font:800 14px/1 "Plus Jakarta Sans",sans-serif;color:#1b1e2e;font-variant-numeric:tabular-nums;-moz-appearance:textfield}
+.brow3 .b3box.b3rate input{width:38px}
+.brow3 .b3box.b3total input{width:52px}
+.b3u{font:600 11px/1 "Inter",sans-serif;color:#8b8fa3}
 </style>
 </head>
 <body>
@@ -2005,27 +2005,27 @@ function buildBudget(){
   const host=document.getElementById('budgetBox');if(!host)return;
   let saved={};try{saved=JSON.parse(localStorage.getItem(BKEY))||{};}catch(e){}
   host.innerHTML=BUDGET.map(gr=>{
+    const days=totalNights()+1;
     const rows=gr.items.map(it=>{
       const val=saved[it.k]!==undefined?saved[it.k]:it.v;
       const per=it.per;
-      /* единый вид строки: название + поле сверху, описание + итог снизу */
-      let inputK,inputVal,unit,desc,showSum;
+      /* строка: слева название+описание, справа поле цены (за ед.) и поле «всего» — оба редактируемые */
       if(per==='day'||per==='person'||per==='personday'){
-        inputVal=saved[it.k+'rate']!==undefined?saved[it.k+'rate']:(it.rate!==undefined?it.rate:it.v);
-        inputK=it.k+'rate';showSum=true;
-        unit=per==='day'?'$/дн':'$/чел';
-        desc=per==='day'?('за день × <b data-days>'+(totalNights()+1)+'</b> дн.')
+        const rate=saved[it.k+'rate']!==undefined?saved[it.k+'rate']:(it.rate!==undefined?it.rate:it.v);
+        const unit=per==='day'?'$/дн':'$/чел';
+        const desc=per==='day'?('за день × <b data-days>'+days+'</b> дн.')
              :per==='person'?('на человека × <b data-ppl>'+PEOPLE+'</b> чел.')
-             :('на человека × <b data-ppl>'+PEOPLE+'</b> чел. × <b data-days>'+(totalNights()+1)+'</b> дн.');
-      }else{
-        inputVal=val;inputK=it.k;showSum=false;unit='$';
-        desc=it.sub+(it.ok?' <span class="cf">'+ic('check','i-sm')+'</span>':(it.est?' <span class="est">~</span>':''));
+             :('на человека × <b data-ppl>'+PEOPLE+'</b> чел. × <b data-days>'+days+'</b> дн.');
+        const totVal=Math.round((parseFloat(rate)||0)*itemQty(per,days));
+        return '<div class="brow3" data-per="'+per+'">'
+          +'<div class="b3l"><b class="b3nm">'+it.nm+'</b><span class="b3desc">'+desc+'</span></div>'
+          +'<span class="b3box b3rate"><input class="money perunit" data-k="'+it.k+'rate" inputmode="decimal" value="'+rate+'"><span class="b3u">'+unit+'</span></span>'
+          +'<span class="b3box b3total"><input class="btotal" data-k="'+it.k+'" inputmode="decimal" value="'+totVal+'"><span class="b3u">$</span></span></div>';
       }
-      return '<div class="brow3"'+(per?' data-per="'+per+'"':'')+'>'
-        +'<div class="b3top"><b class="b3nm">'+it.nm+'</b>'
-          +'<span class="b3field"><input class="money'+(per?' perunit':'')+'" data-k="'+inputK+'" inputmode="decimal" value="'+inputVal+'"><span class="b3u">'+unit+'</span></span></div>'
-        +'<div class="b3bot"><span class="b3desc">'+desc+'</span>'
-          +(showSum?'<span class="b3sum" data-sum="'+it.k+'">—</span>':'')+'</div></div>';
+      const desc=it.sub+(it.ok?' <span class="cf">'+ic('check','i-sm')+'</span>':(it.est?' <span class="est">~</span>':''));
+      return '<div class="brow3">'
+        +'<div class="b3l"><b class="b3nm">'+it.nm+'</b><span class="b3desc">'+desc+'</span></div>'
+        +'<span class="b3box b3total"><input class="money" data-k="'+it.k+'" inputmode="decimal" value="'+val+'"><span class="b3u">$</span></span></div>';
     }).join('');
     return '<div class="bgroup">'
       +'<div class="bghead"><span class="bgmed" style="background:linear-gradient(150deg,'+gr.c+','+gr.c2+')">'+ic(gr.ic)+'</span>'
@@ -2033,9 +2033,18 @@ function buildBudget(){
       +'<span class="bgsum" data-gsum="'+gr.g+'">—</span></div>'
       +rows+groupBook(gr.g)+'</div>';
   }).join('');
-  host.querySelectorAll('input.money').forEach(i=>{
-    i.addEventListener('input',calcBudget);
-    i.addEventListener('focus',()=>i.select());
+  host.querySelectorAll('.brow3').forEach(row=>{
+    const per=row.dataset.per;
+    const rate=row.querySelector('input.perunit'),tot=row.querySelector('input.btotal');
+    const fixed=row.querySelector('input.money:not(.perunit)');
+    if(per&&rate&&tot){
+      /* двусторонний пересчёт: за ед. ↔ всего */
+      rate.addEventListener('input',()=>{const q=itemQty(per,totalNights()+1);tot.value=Math.round((parseFloat(rate.value)||0)*q);sumBudget();});
+      tot.addEventListener('input',()=>{const q=itemQty(per,totalNights()+1);rate.value=q?Math.round(((parseFloat(tot.value)||0)/q)*100)/100:0;sumBudget();});
+    }else if(fixed){
+      fixed.addEventListener('input',sumBudget);
+    }
+    row.querySelectorAll('input').forEach(i=>i.addEventListener('focus',()=>i.select()));
   });
   calcBudget();
 }
@@ -2050,26 +2059,33 @@ function groupBook(g){
   else return '';
   return '<a class="bbook" href="'+url+'" target="_blank" rel="noopener">'+ic(icon,'i-sm')+'<span>'+label+'</span></a>';
 }
+/* пересчёт «всего» из «за ед.» + подписи множителей (при смене людей/дней) */
 function calcBudget(){
-  let sum=0;const days=totalNights()+1;
+  const days=totalNights()+1;
   document.querySelectorAll('#budgetBox .brow3[data-per]').forEach(row=>{
-    const inp=row.querySelector('input.perunit'),out=row.querySelector('[data-sum]');
-    const qty=itemQty(row.dataset.per,days),v=(parseFloat(inp.value)||0)*qty;
-    if(out)out.textContent=v?money(v):'—';
+    const rate=row.querySelector('input.perunit'),tot=row.querySelector('input.btotal');
+    if(rate&&tot)tot.value=Math.round((parseFloat(rate.value)||0)*itemQty(row.dataset.per,days));
     const dd=row.querySelector('[data-days]');if(dd)dd.textContent=days;
     const pp=row.querySelector('[data-ppl]');if(pp)pp.textContent=PEOPLE;
   });
+  sumBudget();
+}
+/* сумма групп + итоги + сохранение (поля «всего» — источник суммы) */
+function sumBudget(){
+  let sum=0;const days=totalNights()+1;
   BUDGET.forEach(gr=>{
     let gsum=0;
     gr.items.forEach(it=>{
-      if(it.per){const r=document.querySelector('.perunit[data-k="'+it.k+'rate"]');gsum+=(parseFloat(r&&r.value)||0)*itemQty(it.per,days);}
-      else{const f=document.querySelector('#budgetBox input.money[data-k="'+it.k+'"]');gsum+=parseFloat(f&&f.value)||0;}
+      const sel=it.per?'input.btotal[data-k="'+it.k+'"]':'#budgetBox input.money[data-k="'+it.k+'"]';
+      const f=document.querySelector(sel);gsum+=parseFloat(f&&f.value)||0;
     });
     const gel=document.querySelector('[data-gsum="'+gr.g+'"]');if(gel)gel.textContent=money(gsum);
     sum+=gsum;
   });
   sum+=(typeof hotelTotal==='function'?hotelTotal():0);
-  const o={};document.querySelectorAll('#budgetBox input.money').forEach(i=>o[i.dataset.k]=i.value);
+  const o={};
+  document.querySelectorAll('#budgetBox input.perunit').forEach(i=>o[i.dataset.k]=i.value);
+  document.querySelectorAll('#budgetBox input.money:not(.perunit)').forEach(i=>o[i.dataset.k]=i.value);
   BASES.forEach((b,i)=>o['h'+(i+1)+'rate']=HRATE[i]||0);
   try{localStorage.setItem(BKEY,JSON.stringify(o));}catch(e){}
   document.getElementById('sumAll').textContent=money(sum);
@@ -2085,7 +2101,7 @@ function wireBudget(){
     BASES.forEach((b,i)=>HRATE[i]=0);buildBudget();renderStays();});
   /* сколько человек едет */
   const pn=document.getElementById('pNum');if(pn)pn.textContent=PEOPLE;
-  const setPeople=(d)=>{PEOPLE=Math.max(1,Math.min(60,PEOPLE+d));if(pn)pn.textContent=PEOPLE;savePlan();calcBudget();buildCities();};
+  const setPeople=(d)=>{PEOPLE=Math.max(1,Math.min(60,PEOPLE+d));if(pn)pn.textContent=PEOPLE;savePlan();if(typeof renderStays==='function')renderStays();calcBudget();buildCities();};
   const pm=document.getElementById('pMinus'),pp=document.getElementById('pPlus');
   if(pm)pm.addEventListener('click',()=>setPeople(-1));
   if(pp)pp.addEventListener('click',()=>setPeople(1));
@@ -2099,6 +2115,10 @@ const sd0=document.getElementById('startDate');if(sd0){sd0.value=startIso;sd0.ad
 buildRoute();buildElev();buildFilters();buildDays();buildCities();buildFood();buildBases();buildPlanner();wireButtons();wireBudget();buildBudgetStay();
 recomputeDates();
 syncChecks();applyFilter();
+/* жёсткая блокировка масштабирования страницы: iOS Safari игнорит user-scalable=no,
+   поэтому глушим жест «щипок» (gesture*) и разрешаем только прокрутку (pan) */
+try{document.documentElement.style.touchAction='pan-x pan-y';}catch(e){}
+['gesturestart','gesturechange','gestureend'].forEach(ev=>document.addEventListener(ev,e=>e.preventDefault(),{passive:false}));
 if(typeof requestIdleCallback==='function'){requestIdleCallback(initMap,{timeout:1500});}else{setTimeout(initMap,60);}
 
 
