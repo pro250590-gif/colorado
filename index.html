@@ -660,9 +660,12 @@ input.money.perunit{max-width:62px;padding:7px 6px;text-align:center;margin:0 1p
 .hmoney{flex:none;display:flex;gap:7px}
 .hf{display:flex;flex-direction:column;align-items:center;min-width:52px}
 .hf label{font:700 8px/1 "Inter",sans-serif;text-transform:uppercase;letter-spacing:.09em;color:var(--mut);margin-bottom:6px}
-.hf input{width:5ch;border:1.5px solid rgba(217,106,18,.4);border-radius:11px;background:linear-gradient(180deg,#fff,#fff6ec);
-  padding:9px 6px;font:800 14px/1 "Plus Jakarta Sans",sans-serif;color:var(--ink);text-align:center}
-.hf input:focus{outline:2px solid rgba(217,106,18,.28);border-color:var(--orange2)}
+.hpill{display:inline-flex;align-items:center;gap:3px;border:1.5px solid rgba(217,106,18,.4);border-radius:11px;
+  background:linear-gradient(180deg,#fff,#fff6ec);padding:9px 9px}
+.hpill:focus-within{outline:2px solid rgba(217,106,18,.28);border-color:var(--orange2)}
+.hf input{width:6ch;border:0;background:none;outline:none;padding:0;margin:0;
+  font:800 14px/1 "Plus Jakarta Sans",sans-serif;color:var(--ink);text-align:right;font-variant-numeric:tabular-nums;-moz-appearance:textfield}
+.hu{font:600 11px/1 "Inter",sans-serif;color:#8b8fa3}
 .hf:last-child input{color:var(--green2)}
 /* итог жилья — как плашка снизу */
 .staytot{display:flex;align-items:center;justify-content:space-between;margin-top:15px;font-size:14.5px;color:#fff;
@@ -674,7 +677,7 @@ input.money.perunit{max-width:62px;padding:7px 6px;text-align:center;margin:0 1p
 .staytot b{position:relative;z-index:2}
 .staytot .hsum{font:800 22px/1 "Plus Jakarta Sans",sans-serif;color:var(--orange1)}
 @media(max-width:400px){
-  .hf{min-width:46px}.hf input{font-size:13px;padding:8px 4px}
+  .hf{min-width:46px}.hpill{padding:8px 7px}.hf input{font-size:13px}
   .hdot{width:44px;height:44px}
 }
 /* ── БЮДЖЕТ: группы-карточки ── */
@@ -879,8 +882,8 @@ section h2.big{font-family:"Fraunces",Georgia,serif!important;font-weight:600!im
 /* поля и степперы: оранжевые рамки → фиолет */
 .stepbtn{border-color:rgba(91,63,196,.35)!important;color:#5b3fc4!important;background:linear-gradient(180deg,#fff,#f5f2ff)!important}
 .stepbtn:active{background:linear-gradient(150deg,#7a5cf0,#5b3fc4)!important;color:#fff!important}
-input.money,.hf input,.bfield input{border-color:rgba(91,63,196,.35)!important;background:linear-gradient(180deg,#fff,#f6f3ff)!important}
-input.money:focus,.hf input:focus,.bfield input:focus{outline:2px solid rgba(91,63,196,.28)!important;border-color:#5b3fc4!important}
+input.money,.hpill,.bfield input{border-color:rgba(91,63,196,.35)!important;background:linear-gradient(180deg,#fff,#f6f3ff)!important}
+input.money:focus,.hpill:focus-within,.bfield input:focus{outline:2px solid rgba(91,63,196,.28)!important;border-color:#5b3fc4!important}
 .dateset input[type=date]{border-color:rgba(91,63,196,.35)!important;background:linear-gradient(180deg,#fff,#f6f3ff)!important}
 .dateset input[type=date]:focus{outline:2px solid rgba(91,63,196,.28)!important;border-color:#5b3fc4!important}
 .hf:last-child input{color:#5b3fc4!important}
@@ -956,8 +959,8 @@ section h2.big{margin-bottom:4px}
 .b3box{flex:none;display:inline-flex;align-items:center;gap:4px;border:1.5px solid rgba(91,63,196,.35);background:linear-gradient(180deg,#fff,#f6f3ff);border-radius:12px;padding:8px 10px}
 .b3box:focus-within{outline:2px solid rgba(91,63,196,.28);border-color:#5b3fc4}
 .brow3 .b3box input{border:none!important;background:none!important;outline:none!important;box-shadow:none!important;margin:0!important;padding:0!important;max-width:none!important;text-align:right;font:800 14px/1 "Plus Jakarta Sans",sans-serif;color:#1b1e2e;font-variant-numeric:tabular-nums;-moz-appearance:textfield}
-.brow3 .b3box.b3rate input{width:4.5ch}
-.brow3 .b3box.b3total input{width:4.5ch}
+.brow3 .b3box.b3rate input{width:6ch}
+.brow3 .b3box.b3total input{width:6ch}
 .b3u{font:600 11px/1 "Inter",sans-serif;color:#8b8fa3}
 </style>
 </head>
@@ -1871,8 +1874,8 @@ function renderStays(){
           +'<button class="stepbtn" data-nd="'+i+'" data-dir="1" aria-label="больше ночей">+</button></span>'
       +'</span>'
       +'<span class="hmoney">'
-        +'<span class="hf"><label>за ночь</label><input class="money hrate" data-hi="'+i+'" inputmode="decimal" value="'+(rate||'')+'" placeholder="0"></span>'
-        +'<span class="hf"><label>всего</label><input class="money htot" data-hi="'+i+'" inputmode="decimal" value="'+(tot||'')+'" placeholder="0"></span>'
+        +'<span class="hf"><label>за ночь</label><span class="hpill"><input class="hrate" data-hi="'+i+'" inputmode="decimal" value="'+(rate||'')+'" placeholder="0"><span class="hu">$</span></span></span>'
+        +'<span class="hf"><label>всего</label><span class="hpill"><input class="htot" data-hi="'+i+'" inputmode="decimal" value="'+(tot||'')+'" placeholder="0"><span class="hu">$</span></span></span>'
       +'</span>'
       +'<a class="hbook" href="'+bookHotel(b.q,ci,co,PEOPLE)+'" target="_blank" rel="noopener" title="подобрать жильё на Booking">'+ic('bed','i-sm')+'<span>Забронировать на Booking · '+dm(ci)+'–'+dm(co)+' · '+PEOPLE+' гост.</span></a>'
       +'</div>';
@@ -1992,7 +1995,7 @@ function buildBudget(){
 /* авто-ширина поля ввода под число (цифры моноширинные → 1 символ = 1ch); запас под большие суммы и будущие валюты */
 function sizeInput(i){if(!i)return;
   const s=(i.value&&i.value.length)?String(i.value):(i.placeholder||'0');
-  const chars=Math.min(12,Math.max(3.2,s.length+0.6));
+  const chars=Math.min(12,Math.max(6,s.length+0.6));
   const cs=getComputedStyle(i);let extra=0;
   if(cs.boxSizing==='border-box')extra=(parseFloat(cs.paddingLeft)||0)+(parseFloat(cs.paddingRight)||0)+(parseFloat(cs.borderLeftWidth)||0)+(parseFloat(cs.borderRightWidth)||0);
   i.style.width=extra?('calc('+chars+'ch + '+extra+'px)'):(chars+'ch');}
