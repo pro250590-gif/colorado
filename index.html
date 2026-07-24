@@ -1018,7 +1018,6 @@ section h2.big{margin-bottom:4px}
       <div class="gt-cell"><i>В день</i><b id="sumDay">—</b></div>
     </div>
   </div>
-  <div class="budgbar"><button class="btn" id="resetBudget"><svg class="i i-sm" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 2.6-6.4M3 3v5h5"/></svg> Сбросить суммы</button></div>
 </div></section>
 
 <section id="s-tips"><div class="wrap">
@@ -2186,9 +2185,6 @@ function sumBudget(){
 }
 function wireBudget(){
   buildBudget();
-  const rb=document.getElementById('resetBudget');
-  if(rb)rb.addEventListener('click',()=>{try{localStorage.removeItem(BKEY);}catch(e){}
-    BASES.forEach((b,i)=>HRATE[i]=0);buildBudget();renderStays();});
   /* сколько человек едет */
   const pn=document.getElementById('pNum');if(pn)pn.textContent=PEOPLE;
   const setPeople=(d)=>{PEOPLE=Math.max(1,Math.min(60,PEOPLE+d));if(pn)pn.textContent=PEOPLE;savePlan();if(typeof renderStays==='function')renderStays();calcBudget();buildCities();};
