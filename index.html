@@ -396,10 +396,15 @@ details.acc[open]>summary{border-bottom-color:rgba(124,92,255,.14)}
 .acc-body li::marker{color:#7c5cff}
 /* ═══ СВОДКА: таблица переездов — вариант 3 (минимализм + фиолетовый акцент) ═══ */
 #s-drive .tblwrap{background:#fff;border:1px solid #ece7f7;box-shadow:0 12px 30px -18px rgba(50,35,110,.32)}
-#s-drive table{min-width:520px}
-#s-drive thead th{background:none!important;color:#5b3fc4;border-bottom:2px solid #efeafc;font:800 9.5px/1 "Plus Jakarta Sans",sans-serif;text-transform:uppercase;letter-spacing:.09em;padding:14px 16px;white-space:nowrap}
+#s-drive table{min-width:0;width:100%;table-layout:fixed}
+#s-drive thead th{background:none!important;color:#5b3fc4;border-bottom:2px solid #efeafc;font:800 9.5px/1.25 "Plus Jakarta Sans",sans-serif;text-transform:uppercase;letter-spacing:.07em;padding:13px 12px}
 #s-drive th.num,#s-drive td.num{text-align:right}
-#s-drive tbody td{border-bottom:1px solid #f3f1f9;padding:14px 16px;color:#2f2a4a}
+#s-drive col.c-day{width:11%}#s-drive col.c-seg{width:31%}#s-drive col.c-num{width:19.3%}
+#s-drive td:first-child,#s-drive th:first-child{white-space:nowrap}
+#s-drive tbody td{border-bottom:1px solid #f3f1f9;padding:13px 12px;color:#2f2a4a;font-size:13.5px}
+#s-drive td,#s-drive th{overflow-wrap:break-word}
+#s-drive .ths{display:none}
+@media(max-width:560px){#s-drive th,#s-drive td{padding:10px 4px}#s-drive tbody td{font-size:11.5px}#s-drive thead th{font-size:8px;letter-spacing:.01em}#s-drive td.num{font-size:11px}#s-drive .thf{display:none}#s-drive .ths{display:inline}#s-drive tbody td:first-child{font-size:13px}}
 #s-drive tbody td:first-child{position:relative;font-weight:800;color:#5b3fc4}
 #s-drive tbody td:first-child::before{content:"";position:absolute;left:0;top:9px;bottom:9px;width:3px;border-radius:3px;background:#7c5cff}
 #s-drive td.num{font-variant-numeric:tabular-nums;font-weight:600}
@@ -1132,7 +1137,8 @@ section h2.big{margin-bottom:4px}
   <div class="eyebrow">Сводка</div>
   <h2 class="big">Переезды и время за рулём</h2>
   <div class="tblwrap"><table>
-    <thead><tr><th>День</th><th>Отрезок</th><th class="num">Расстояние</th><th class="num">Время</th><th class="num">С остановками</th></tr></thead>
+    <colgroup><col class="c-day"><col class="c-seg"><col class="c-num"><col class="c-num"><col class="c-num"></colgroup>
+    <thead><tr><th>День</th><th>Отрезок</th><th class="num"><span class="thf">Расстояние</span><span class="ths">Путь</span></th><th class="num">Время</th><th class="num"><span class="thf">С остановками</span><span class="ths">С ост.</span></th></tr></thead>
     <tbody>
       <tr><td>1</td><td>Прилёт DRO → Дуранго</td><td class="num">24 км</td><td class="num">25 мин</td><td class="num">вечер</td></tr>
       <tr><td>2</td><td>Поезд в Силвертон (без машины)</td><td class="num">—</td><td class="num">—</td><td class="num">6–9 ч</td></tr>
@@ -1144,7 +1150,7 @@ section h2.big{margin-bottom:4px}
       <tr><td>8</td><td>Аспен ↔ долины Castle Creek</td><td class="num">60 км</td><td class="num">1 ч</td><td class="num">весь день</td></tr>
       <tr><td>9</td><td>Аспен → Денвер (Independence Pass)</td><td class="num">260 км</td><td class="num">4 ч</td><td class="num">6–7 ч</td></tr>
       <tr><td>10</td><td>Денвер → аэропорт DEN, вылет</td><td class="num">—</td><td class="num">30 мин</td><td class="num">утро</td></tr>
-      <tr><td><b>Итого</b></td><td><b>Дуранго → Денвер</b></td><td class="num"><b>~1 150 км</b></td><td class="num"><b>~18 ч</b></td><td class="num"><b>10 дней</b></td></tr>
+      <tr><td><b>Σ</b></td><td><b>Дуранго → Денвер</b></td><td class="num"><b>~1 150 км</b></td><td class="num"><b>~18 ч</b></td><td class="num"><b>10 дней</b></td></tr>
     </tbody>
   </table></div>
 </div></section>
