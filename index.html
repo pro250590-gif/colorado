@@ -574,16 +574,16 @@ a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{o
 .fsheet .mfhead{padding:12px 18px 10px}
 .fsheet .mfrow{padding:11px 18px}
 /* выпадающий список поверх карты */
-.mfdrop{margin-top:7px;border-radius:18px;overflow:hidden;background:rgba(255,255,255,.94);
-  backdrop-filter:saturate(180%) blur(22px);-webkit-backdrop-filter:saturate(180%) blur(22px);
+.mfdrop{margin-top:7px;border-radius:18px;overflow:hidden;background:#fff;
   border:1px solid var(--cardline);box-shadow:var(--sh3);opacity:0;transform:translateY(-8px) scale(.985);
   pointer-events:none;transition:opacity .2s,transform .22s cubic-bezier(.2,.8,.2,1)}
 .mfdrop.show{opacity:1;transform:none;pointer-events:auto}
-.mfhead{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px 10px}
+.mfhead{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 15px 10px}
 .mfhead b{font:800 13px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:-.03em}
-.mfx{border:0;background:rgba(20,32,27,.06);border-radius:999px;padding:7px 11px;cursor:pointer;
-  font:700 10.5px/1 "Inter",sans-serif;color:var(--green2);white-space:nowrap}
-.mflist{max-height:min(46vh,330px);overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:6px}
+.mfx{border:1.5px solid rgba(124,92,255,.32)!important;background:#efeafc!important;border-radius:999px;padding:7px 12px;cursor:pointer;
+  font:800 10.5px/1 "Plus Jakarta Sans",sans-serif;color:#5b3fc4!important;white-space:nowrap}
+.cnt-v{color:#5b3fc4;font-weight:700}
+.mflist{max-height:min(72vh,600px);overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:6px}
 .mfrow{display:flex;align-items:center;gap:11px;width:100%;border:0;background:none;cursor:pointer;text-align:left;
   padding:8px 14px;border-top:1px solid rgba(20,32,27,.05)}
 .mfrow:first-child{border-top:0}
@@ -601,7 +601,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{o
 .mfrow.mfday{padding:12px 15px;align-items:flex-start}
 .mfdtx{flex:1;min-width:0}
 .mfdtx b{display:block;font:800 14px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:-.02em;color:#1b1e2e}
-.mfdtx span{display:block;font:500 12px/1 "Inter",sans-serif;color:var(--mut);margin-top:5px}
+.mfdtx span{display:block;font:500 12px/1 "Inter",sans-serif;color:var(--mut);margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mfrow.mfday.on{background:#f6f2ff;box-shadow:inset 3px 0 0 #7c5cff}
 .mfrow.on{background:rgba(47,190,134,.1)}
 .mfrow.on .mfck{background:linear-gradient(150deg,var(--green1),var(--green3));border-color:transparent;color:#fff}
@@ -630,7 +630,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{o
 /* кнопки на карте и в списке — тот же оранжевый контур */
 .tiny{color:var(--orange3);background:linear-gradient(180deg,#fff,#fff8f1)!important}
 .mealbtn{color:var(--ink2)}
-.mfx{color:var(--orange3);background:rgba(217,106,18,.1)}
+.mfx{color:#5b3fc4;background:#efeafc;border:1.5px solid rgba(124,92,255,.32)!important}
 
 /* ── ЕДА: города раскрываются, как дни ── */
 .foodgrid{display:block}
@@ -1730,30 +1730,22 @@ function buildFilters(){
     fopen=null;buildFilters();applyFilter();fitVisible();};
   if(fopen)box.querySelectorAll('.mfdrop [data-f]').forEach(el=>el.addEventListener('click',ev=>{ev.stopPropagation();pick(el);}));
 }
-/* строки выпадающего списка */
+/* строки выпадающего списка — единый минимал-стиль для всех меню (Дни/Базы/Типы), без фото */
+function fmtLong(dt){return dt.getDate()+' '+MONTHS[dt.getMonth()];}
 function dropList(seg,total){
-  const row=(o)=>'<button class="mfrow'+(o.on?' on':'')+'" data-f="'+o.f+'" data-v="'+o.v+'">'
-    +'<span class="mfth"'+(o.photo?' style="background-image:url('+o.photo+')"':'')+'>'
-    +(o.photo?'':'<span class="mfic" style="background:'+o.color+'">'+ic(o.icon||'pin','i-sm')+'</span>')
-    +'<span class="mfdot" style="background:'+o.color+'"></span></span>'
-    +'<span class="mftx"><b>'+o.title+'</b><span>'+o.sub+'</span></span>'
-    +'<span class="mfck">'+ic('check','i-sm')+'</span></button>';
-  let rows='';
-  if(seg==='day'){
-    rows=DAYS.map(d=>{const on=filter.mode==='day'&&filter.v===d.n,pts=dayPts(d.n);
-      return '<button class="mfrow mfday'+(on?' on':'')+'" data-f="day" data-v="'+d.n+'">'
-        +'<span class="mfdtx"><b>День '+d.n+'</b><span>'+fmtShort(dayDateFor(d.n))+' · '+pts+' '+plural(pts,'точка','точки','точек')+'</span></span></button>';}).join('');
-  }else if(seg==='base'){
-    rows=BASES.map((b,i)=>row({f:'base',v:b.id,on:filter.mode==='base'&&filter.v===b.id,photo:basePhoto(b.id),color:b.color,
-      title:shortName(b.name),sub:'база '+(i+1)+' · '+b.nights+' '+nights(b.nights)})).join('');
-  }else{
-    const ck=[['star','Главное','#f47b20','star'],['nature','Природа','#12855e','mountain'],['town','Города','#3d5a72','town'],
-              ['springs','Источники','#3d8bff','springs'],['transport','Транспорт','#a1663a','train']];
-    rows=ck.map(([k,l,c,i])=>row({f:'cat',v:k,on:filter.mode==='cat'&&filter.v===k,photo:'',color:c,icon:i,
-      title:l,sub:catPts(k)+' '+plural(catPts(k),'место','места','мест')})).join('');
+  const mrow=(f,v,on,title,sub)=>'<button class="mfrow mfday'+(on?' on':'')+'" data-f="'+f+'" data-v="'+v+'">'
+    +'<span class="mfdtx"><b>'+title+'</b><span>'+sub+'</span></span></button>';
+  let rows='',head='',allLabel='';
+  if(seg==='day'){head='Выбери день';allLabel='Все дни';
+    rows=DAYS.map(d=>{const pts=dayPts(d.n);
+      return mrow('day',d.n,filter.mode==='day'&&filter.v===d.n,'День '+d.n,fmtLong(dayDateFor(d.n))+' · <b class="cnt-v">'+pts+' '+plural(pts,'точка','точки','точек')+'</b>');}).join('');
+  }else if(seg==='base'){head='Выбери базу';allLabel='Все базы';
+    rows=BASES.map((b,i)=>mrow('base',b.id,filter.mode==='base'&&filter.v===b.id,shortName(b.name),'база '+(i+1)+' · '+b.nights+' '+nights(b.nights))).join('');
+  }else{head='Выбери тип';allLabel='Все типы';
+    const ck=[['star','Главное'],['nature','Природа'],['town','Города'],['springs','Источники'],['transport','Транспорт']];
+    rows=ck.map(([k,l])=>{const n=catPts(k);return mrow('cat',k,filter.mode==='cat'&&filter.v===k,l,'<b class="cnt-v">'+n+' '+plural(n,'место','места','мест')+'</b>');}).join('');
   }
-  return '<div class="mfhead"><b>'+(seg==='day'?'Выбери день':seg==='base'?'Выбери базу':'Выбери тип мест')+'</b>'
-    +'<button class="mfx" data-f="all">Показать всё · '+total+'</button></div>'
+  return '<div class="mfhead"><b>'+head+'</b><button class="mfx" data-f="all">'+allLabel+'</button></div>'
     +'<div class="mflist">'+rows+'</div>';
 }
 function fmtShort(dt){return dt.getDate()+' '+MONTHS[dt.getMonth()].slice(0,3);}
