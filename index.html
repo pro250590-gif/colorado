@@ -582,8 +582,8 @@ a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{o
 .mfhead b{font:800 13px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:-.03em}
 .mfx{border:1.5px solid rgba(124,92,255,.32)!important;background:#efeafc!important;border-radius:999px;padding:7px 12px;cursor:pointer;
   font:800 10.5px/1 "Plus Jakarta Sans",sans-serif;color:#5b3fc4!important;white-space:nowrap}
-.cnt-v{color:#5b3fc4;font-weight:700}
-.mflist{max-height:min(72vh,600px);overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:6px}
+.mfdtx .cnt-v{display:inline;color:#5b3fc4;font-weight:700}
+.mflist{max-height:min(calc(100vh - 310px),560px);overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:8px}
 .mfrow{display:flex;align-items:center;gap:11px;width:100%;border:0;background:none;cursor:pointer;text-align:left;
   padding:8px 14px;border-top:1px solid rgba(20,32,27,.05)}
 .mfrow:first-child{border-top:0}
@@ -1707,8 +1707,9 @@ function buildFilters(){
     const m={star:'Главное',nature:'Природа',town:'Города',springs:'Источники',transport:'Транспорт'};
     return m[cv]||'Типы';
   };
-  const tab=(seg)=>'<button class="mfb'+(cur===seg?' act':'')+(fopen===seg?' open':'')+'" data-seg="'+seg+'">'
-    +'<span>'+label(seg)+'</span>'+ic('chevron','i-sm')+'</button>';
+  const tab=(seg)=>{const act=fopen?(fopen===seg):(cur===seg);
+    return '<button class="mfb'+(act?' act':'')+(fopen===seg?' open':'')+'" data-seg="'+seg+'">'
+      +'<span>'+label(seg)+'</span>'+ic('chevron','i-sm')+'</button>';};
 
   box.innerHTML='<div class="mfbar">'
       +'<button class="mfall'+(cur==='all'?' act':'')+'" data-f="all" title="показать все точки">'+ic('layers','i-sm')+'</button>'
