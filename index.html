@@ -203,8 +203,28 @@ h2.big{font-size:clamp(26px,6.4vw,38px);margin:12px 4px 0}
   border-radius:11px;box-shadow:0 6px 15px -5px rgba(91,63,196,.65);cursor:pointer;margin-bottom:8px}
 .flightbtn:active{transform:scale(.96)}
 .leaflet-container{font-family:inherit}
-.leaflet-popup-content-wrapper{border-radius:20px;box-shadow:var(--sh3);border:1px solid var(--cardline);
-  background:rgba(255,255,255,.94);backdrop-filter:blur(18px)}
+.leaflet-popup-content-wrapper{border-radius:18px;padding:0;overflow:hidden;background:#fff;border:none;
+  box-shadow:0 20px 46px -14px rgba(50,35,110,.45);-webkit-backdrop-filter:none;backdrop-filter:none}
+.leaflet-popup-content{margin:0!important;width:auto!important;line-height:1.4}
+.leaflet-popup-tip{background:#fff;box-shadow:none}
+/* ── ПОПАП ТОЧКИ (вариант A: фото сверху + крестик на фото) ── */
+.mpop{width:272px}
+.mpop-ph{height:122px;background:linear-gradient(135deg,#b9a6f5,#7c5cff);background-size:cover;background-position:center}
+.mpop-ph[data-noph]{background:linear-gradient(135deg,#b9a6f5,#5b3fc4)}
+.mpop-bd{padding:13px 15px 15px}
+.mpop-eye{font:800 10px/1 'Plus Jakarta Sans','Inter',Segoe UI,sans-serif;letter-spacing:.14em;text-transform:uppercase}
+.mpop-nm{font-family:Fraunces,Georgia,serif;font-weight:600;font-size:17px;line-height:1.2;color:#1b1533;margin:6px 0 8px}
+.mpop-why{font-size:13px;line-height:1.5;color:#5c5872}
+.mpop-gm{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:13px;padding:12px;
+  background:linear-gradient(150deg,#7c5cff,#5b3fc4);color:#fff!important;font-weight:800;font-size:13px;
+  border-radius:12px;text-decoration:none;box-shadow:0 8px 18px -6px rgba(124,92,255,.6)}
+.mpop-gm .i{width:14px;height:14px;stroke-width:2.2}
+.mpop-gm:active{transform:scale(.98)}
+.leaflet-popup-close-button{width:32px!important;height:32px!important;top:9px!important;right:9px!important;
+  background:#fff!important;border-radius:50%!important;box-shadow:0 3px 10px rgba(30,15,60,.32)!important;
+  color:#2b2545!important;font:700 19px/30px 'Segoe UI',system-ui,sans-serif!important;text-align:center!important;
+  padding:0!important;z-index:10}
+.leaflet-popup-close-button:hover{color:#000!important;background:#fff!important}
 .leaflet-control-scale-line{font-size:10.5px;font-weight:700;color:var(--ink);border-color:rgba(20,32,27,.5)}
 .mapbar{display:flex;gap:8px;align-items:center;padding:12px;background:rgba(255,255,255,.88);
   backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-top:1px solid var(--line2);
@@ -1435,12 +1455,14 @@ function animPlane(marker,a,bb,period){if(!marker)return;let t=0;const step=40/(
     marker.setLatLng([a[0]+(bb[0]-a[0])*t,a[1]+(bb[1]-a[1])*t]);},40));}
 function mapFallback(msg){const el=document.getElementById('map');if(el)el.innerHTML='<div class="mapph">'+ic('map','i-lg')+' <b>'+(msg||'Карта не загрузилась')+'</b><br>Открой страницу по обычной ссылке (Netlify/GitHub) в браузере при интернете. Список и ссылки на Google Maps работают всегда.</div>';}
 function popupHTML(nm,q,why,label,color,photo){
-  return '<div style="min-width:200px;max-width:250px">'
-    +(photo?'<img src="'+photo+'" alt="" loading="lazy" style="width:100%;height:88px;object-fit:cover;border-radius:11px;margin-bottom:8px;display:block">':'')
-    +(label?'<div style="font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;color:'+color+'">'+label+'</div>':'')
-    +'<b style="font-size:16px;display:block;margin:3px 0 5px;font-family:Fraunces,Georgia,serif;font-weight:600">'+nm+'</b>'
-    +'<div style="color:#5b5750;font-size:12.5px;line-height:1.45;max-height:66px;overflow:auto">'+why+'</div>'
-    +'<a href="'+gurl(q)+'" target="_blank" rel="noopener" style="display:inline-block;margin-top:10px;padding:9px 13px;background:#2f4f43;color:#fff;border-radius:10px;font-weight:600;font-size:13px;text-decoration:none">Открыть в Google Maps →</a></div>';
+  return '<div class="mpop">'
+    +'<div class="mpop-ph"'+(photo?' style="background-image:url('+photo+')"':' data-noph="1"')+'></div>'
+    +'<div class="mpop-bd">'
+    +(label?'<div class="mpop-eye" style="color:'+color+'">'+label+'</div>':'')
+    +'<div class="mpop-nm">'+nm+'</div>'
+    +'<div class="mpop-why">'+why+'</div>'
+    +'<a class="mpop-gm" href="'+gurl(q)+'" target="_blank" rel="noopener">'+ic('pin','i-sm')+' Открыть в Google Maps →</a>'
+    +'</div></div>';
 }
 /* ── МАРКЕРЫ: приоритет ресторанов (пункт 5) ── */
 /* ресторан — капля-акцент с вилкой */
