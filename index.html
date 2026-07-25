@@ -191,6 +191,12 @@ h2.big{font-size:clamp(26px,6.4vw,38px);margin:12px 4px 0}
 .carmk{width:30px;height:30px;border-radius:50%;background:#fff;border:2px solid var(--accent,#5b3fc4);
   display:grid;place-items:center;box-shadow:0 6px 14px rgba(91,63,196,.45);color:#1b1e2e}
 .planemk{color:var(--pc,#5b3fc4);filter:drop-shadow(0 3px 5px rgba(20,32,27,.35))}
+/* пункт 5: ресторан-капля + точка маршрута кружком */
+.foodpin{position:relative;width:34px;height:43px}
+.foodpin .fpi{position:absolute;left:0;right:0;top:7px;display:flex;justify-content:center;color:#fff}
+.foodpin .fpi svg{width:16px;height:16px}
+.rpt{width:24px;height:24px;border-radius:50%;background:linear-gradient(150deg,#8c6ff0,#5b3fc4);color:#fff;border:2.5px solid #fff;display:flex;align-items:center;justify-content:center;font:800 11px/1 "Plus Jakarta Sans",sans-serif;box-shadow:0 3px 7px rgba(40,20,90,.32)}
+.cptdim{width:26px;height:26px;border-radius:50%;background:#b3a6dd;color:#fff;border:2.5px solid #fff;display:flex;align-items:center;justify-content:center;font:800 11px/1 "Plus Jakarta Sans",sans-serif;box-shadow:0 2px 6px rgba(40,20,90,.22)}
 .miamichip{background:#5b3fc4;color:#fff;font:700 11px/1 "Plus Jakarta Sans",sans-serif;padding:6px 10px;border-radius:8px;
   box-shadow:0 4px 10px rgba(91,63,196,.5);white-space:nowrap}
 .flightbtn{border:0;background:#5b3fc4;color:#fff;font:800 11.5px/1 "Plus Jakarta Sans",sans-serif;padding:9px 12px;
@@ -592,6 +598,11 @@ a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{o
 .mftx span{display:block;font:500 11px/1 "Inter",sans-serif;color:var(--mut);margin-top:5px}
 .mfck{width:24px;height:24px;border-radius:50%;flex:none;display:grid;place-items:center;color:transparent;
   border:1.5px solid rgba(20,32,27,.14)}
+.mfrow.mfday{padding:12px 15px;align-items:flex-start}
+.mfdtx{flex:1;min-width:0}
+.mfdtx b{display:block;font:800 14px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:-.02em;color:#1b1e2e}
+.mfdtx span{display:block;font:500 12px/1 "Inter",sans-serif;color:var(--mut);margin-top:5px}
+.mfrow.mfday.on{background:#f6f2ff;box-shadow:inset 3px 0 0 #7c5cff}
 .mfrow.on{background:rgba(47,190,134,.1)}
 .mfrow.on .mfck{background:linear-gradient(150deg,var(--green1),var(--green3));border-color:transparent;color:#fff}
 /* карта опускается ниже строки фильтра */
@@ -1431,6 +1442,39 @@ function popupHTML(nm,q,why,label,color,photo){
     +'<div style="color:#5b5750;font-size:12.5px;line-height:1.45;max-height:66px;overflow:auto">'+why+'</div>'
     +'<a href="'+gurl(q)+'" target="_blank" rel="noopener" style="display:inline-block;margin-top:10px;padding:9px 13px;background:#2f4f43;color:#fff;border-radius:10px;font-weight:600;font-size:13px;text-decoration:none">Открыть в Google Maps →</a></div>';
 }
+/* ── МАРКЕРЫ: приоритет ресторанов (пункт 5) ── */
+/* ресторан — капля-акцент с вилкой */
+function foodPinHTML(id){const s=(''+id).replace(/\W/g,'');
+  return '<div class="foodpin"><svg width="34" height="43" viewBox="0 0 40 52"><defs>'
+    +'<linearGradient id="fp'+s+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a48bff"/><stop offset="1" stop-color="#5b3fc4"/></linearGradient>'
+    +'<filter id="fg'+s+'" x="-45%" y="-45%" width="190%" height="190%"><feDropShadow dx="0" dy="0" stdDeviation="2" flood-color="#d9c6ff" flood-opacity="1"/></filter></defs>'
+    +'<path d="M20 2C10.6 2 3 9.6 3 19c0 12 17 31 17 31s17-19 17-31C37 9.6 29.4 2 20 2z" fill="url(#fp'+s+')" stroke="#fff" stroke-width="2.2" filter="url(#fg'+s+')"/></svg>'
+    +'<span class="fpi">'+ic('food','i-sm')+'</span></div>';}
+/* иконка точки маршрута: обычная (фото/точка) ИЛИ заметный кружок с днём, когда рестораны в приоритете */
+function markerIcon(p){
+  if(p.cat==='food')return L.divIcon({className:'',iconSize:[34,44],iconAnchor:[17,42],popupAnchor:[0,-40],html:foodPinHTML(p.id)});
+  if(foodOn)return L.divIcon({className:'',iconSize:[24,24],iconAnchor:[12,12],popupAnchor:[0,-12],html:'<div class="rpt">'+(p.d||'')+'</div>'});
+  const ph=PHOTO[p.id];
+  if(ph)return L.divIcon({className:'',iconSize:[42,48],iconAnchor:[21,48],popupAnchor:[0,-46],
+    html:'<div class="photopin"><div class="ph" style="background-image:url('+pimg(p.id,'p')+')"></div><div class="badge" style="background:#5b3fc4">'+(p.d||'')+'</div><div class="tip"></div></div>'});
+  const sz=p.star?22:18;
+  return L.divIcon({className:'',iconSize:[sz,sz],iconAnchor:[sz/2,sz/2],html:'<div class="pin" style="background:#5b3fc4;width:'+sz+'px;height:'+sz+'px;font-size:'+(p.star?12:10)+'px">'+(p.d||'')+'</div>'});
+}
+/* маркер-города: обычная капля ИЛИ мелкий нейтральный кружок, когда рестораны в приоритете */
+function cityIcon(b,cnt){
+  if(foodOn)return L.divIcon({className:'',iconSize:[26,26],iconAnchor:[13,13],popupAnchor:[0,-13],html:'<div class="cptdim">'+cnt+'</div>'});
+  return L.divIcon({className:'',iconSize:[46,58],iconAnchor:[23,55],
+    html:'<div class="citypin"><svg width="46" height="58" viewBox="0 0 40 52"><defs>'
+      +'<linearGradient id="rg-'+b.id+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a48bff"/><stop offset="1" stop-color="#5b3fc4"/></linearGradient>'
+      +'<filter id="gl-'+b.id+'" x="-45%" y="-45%" width="190%" height="190%"><feDropShadow dx="0" dy="0" stdDeviation="2.2" flood-color="#d9c6ff" flood-opacity="1"/></filter></defs>'
+      +'<path d="M20 2C10.6 2 3 9.6 3 19c0 12 17 31 17 31s17-19 17-31C37 9.6 29.4 2 20 2z" fill="url(#rg-'+b.id+')" stroke="#fff" stroke-width="2" filter="url(#gl-'+b.id+')"/>'
+      +'<text x="20" y="24.5" text-anchor="middle" font-family="Plus Jakarta Sans,Segoe UI,sans-serif" font-weight="800" font-size="16" fill="#fff">'+cnt+'</text></svg>'
+      +'<span class="cplab">'+shortName(b.name)+'</span></div>'});
+}
+function updateMarkerStyles(){
+  P.forEach(p=>{const mk=markers[p.id];if(mk)mk.setIcon(markerIcon(p));});
+  BASES.forEach(b=>{const mk=baseMarkers[b.id];if(mk){const cnt=P.filter(x=>x.cat!=='food'&&x.base===b.id).length;mk.setIcon(cityIcon(b,cnt));}});
+}
 /* ── ПАЛИТРА МАРШРУТА (фиолетовый градиент, динамически по числу сегментов) ── */
 function _h2r(h){h=h.replace('#','');return[parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)];}
 function _r2h(r,g,b){const x=v=>('0'+Math.round(v).toString(16)).slice(-2);return '#'+x(r)+x(g)+x(b);}
@@ -1454,24 +1498,11 @@ function initMap(){
     L.control.scale({position:'bottomleft',metric:true,imperial:true,maxWidth:140}).addTo(map);
     /* города — маркер-капля (pin) с числом мест внутри (без слова «мест»); клик — раскрыть точки города */
     BASES.forEach(b=>{const cnt=P.filter(x=>x.cat!=='food'&&x.base===b.id).length;
-      baseMarkers[b.id]=L.marker([b.lat,b.lng],{icon:L.divIcon({className:'',iconSize:[46,58],iconAnchor:[23,55],
-        html:'<div class="citypin">'
-          +'<svg width="46" height="58" viewBox="0 0 40 52"><defs>'
-          +'<linearGradient id="rg-'+b.id+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a48bff"/><stop offset="1" stop-color="#5b3fc4"/></linearGradient>'
-          +'<filter id="gl-'+b.id+'" x="-45%" y="-45%" width="190%" height="190%"><feDropShadow dx="0" dy="0" stdDeviation="2.2" flood-color="#d9c6ff" flood-opacity="1"/></filter></defs>'
-          +'<path d="M20 2C10.6 2 3 9.6 3 19c0 12 17 31 17 31s17-19 17-31C37 9.6 29.4 2 20 2z" fill="url(#rg-'+b.id+')" stroke="#fff" stroke-width="2" filter="url(#gl-'+b.id+')"/>'
-          +'<text x="20" y="24.5" text-anchor="middle" font-family="Plus Jakarta Sans,Segoe UI,sans-serif" font-weight="800" font-size="16" fill="#fff">'+cnt+'</text></svg>'
-          +'<span class="cplab">'+shortName(b.name)+'</span></div>'})});
+      baseMarkers[b.id]=L.marker([b.lat,b.lng],{icon:cityIcon(b,cnt)});
       baseMarkers[b.id].on('click',()=>{filter={mode:'base',v:b.id};fopen=null;buildFilters();applyFilter();fitVisible();});});
     /* точки-места: булавки С ФОТО (как раньше) — показываются при выборе города/дня/типа */
-    P.forEach(p=>{const c=p.cat==='food'?'#c1462a':'#5b3fc4';const ph=PHOTO[p.id];let icon;
-      if(ph){icon=L.divIcon({className:'',iconSize:[42,48],iconAnchor:[21,48],popupAnchor:[0,-46],
-        html:'<div class="photopin"><div class="ph" style="background-image:url('+pimg(p.id,'p')+')"></div>'
-            +'<div class="badge" style="background:'+c+'">'+(p.d||'')+'</div><div class="tip"></div></div>'});
-      }else{const glyph=p.cat==='food'?'':(p.d||'');const sz=p.star?22:18;
-        icon=L.divIcon({className:'',iconSize:[sz,sz],iconAnchor:[sz/2,sz/2],
-          html:'<div class="pin" style="background:'+c+';width:'+sz+'px;height:'+sz+'px;font-size:'+(p.star?12:10)+'px">'+glyph+'</div>'});}
-      markers[p.id]=L.marker([p.lat,p.lng],{icon:icon}).bindPopup(popupHTML(p.nm,p.q,p.why,p.d?('День '+p.d):(CATS[p.cat]?CATS[p.cat].l:''),c,ph?pimg(p.id,'l'):null),{autoPan:true,keepInView:false,autoPanPaddingTopLeft:L.point(12,66),autoPanPaddingBottomRight:L.point(12,14)});});
+    P.forEach(p=>{const c=p.cat==='food'?'#c1462a':'#5b3fc4';const ph=PHOTO[p.id];
+      markers[p.id]=L.marker([p.lat,p.lng],{icon:markerIcon(p)}).bindPopup(popupHTML(p.nm,p.q,p.why,p.d?('День '+p.d):(CATS[p.cat]?CATS[p.cat].l:''),c,ph?pimg(p.id,'l'):null),{autoPan:true,keepInView:false,autoPanPaddingTopLeft:L.point(12,66),autoPanPaddingBottomRight:L.point(12,14)});});
     /* маршрут: единый фиолетовый градиент светлый→тёмный по сегментам; радиалки — светлый фиолет пунктиром */
     const legLines=LINES.filter(o=>o.type==='leg').sort((a,b)=>((a.days&&a.days[0])||0)-((b.days&&b.days[0])||0));
     const nLeg=legLines.length;const legColorMap=new Map();
@@ -1683,29 +1714,21 @@ function buildFilters(){
       +'<button class="mfall'+(cur==='all'?' act':'')+'" data-f="all" title="показать все точки">'+ic('layers','i-sm')+'</button>'
       +tab('day')+tab('base')+tab('cat')
       +'<button class="mffood'+(foodOn?' act':'')+'" id="foodToggle" title="еда на карте">'+ic('food','i-sm')+'</button>'
-    +'</div>';
+    +'</div>'
+    +(fopen?'<div class="mfdrop show">'+dropList(fopen,total)+'</div>':'');
 
   box.querySelectorAll('[data-seg]').forEach(b=>b.addEventListener('click',e=>{
     e.stopPropagation();fopen=(fopen===b.dataset.seg)?null:b.dataset.seg;buildFilters();applyFilter();}));
-  box.querySelector('#foodToggle').addEventListener('click',e=>{e.stopPropagation();foodOn=!foodOn;fopen=null;buildFilters();applyFilter();});
+  box.querySelector('#foodToggle').addEventListener('click',e=>{e.stopPropagation();foodOn=!foodOn;fopen=null;buildFilters();applyFilter();if(typeof updateMarkerStyles==='function')updateMarkerStyles();});
   const allBtn=box.querySelector('.mfall');
   if(allBtn)allBtn.addEventListener('click',e=>{e.stopPropagation();filter={mode:'all',v:null};fopen=null;buildFilters();applyFilter();fitVisible();});
-  /* лист-фильтр снизу (3A) — вне карты, весь список докручивается */
-  let sheet=document.getElementById('filterSheet');
-  if(!sheet){sheet=document.createElement('div');sheet.className='fsheet';sheet.id='filterSheet';document.body.appendChild(sheet);}
+  /* обычный dropdown под строкой фильтра */
   const pick=(el)=>{const f=el.dataset.f,v=el.dataset.v;
     if(f==='all'){filter={mode:'all',v:null};}
     else{const nv=(f==='day')?+v:v;
       if(filter.mode===f&&String(filter.v)===String(nv))filter={mode:'all',v:null};else filter={mode:f,v:nv};}
     fopen=null;buildFilters();applyFilter();fitVisible();};
-  if(fopen){
-    sheet.innerHTML='<div class="fbd" data-close></div><div class="fpanel"><div class="fgrip"></div>'+dropList(fopen,total)+'</div>';
-    requestAnimationFrame(()=>sheet.classList.add('show'));
-    sheet.querySelector('[data-close]').addEventListener('click',()=>{fopen=null;buildFilters();});
-    sheet.querySelectorAll('[data-f]').forEach(el=>el.addEventListener('click',ev=>{ev.stopPropagation();pick(el);}));
-  }else if(sheet.classList.contains('show')){
-    sheet.classList.remove('show');setTimeout(()=>{if(!fopen)sheet.innerHTML='';},320);
-  }else{sheet.innerHTML='';}
+  if(fopen)box.querySelectorAll('.mfdrop [data-f]').forEach(el=>el.addEventListener('click',ev=>{ev.stopPropagation();pick(el);}));
 }
 /* строки выпадающего списка */
 function dropList(seg,total){
@@ -1717,8 +1740,9 @@ function dropList(seg,total){
     +'<span class="mfck">'+ic('check','i-sm')+'</span></button>';
   let rows='';
   if(seg==='day'){
-    rows=DAYS.map(d=>row({f:'day',v:d.n,on:filter.mode==='day'&&filter.v===d.n,photo:dayPhoto(d.n),color:DCOL[d.n],
-      title:'День '+d.n+' · '+d.title,sub:fmtShort(dayDateFor(d.n))+' · '+dayPts(d.n)+' '+plural(dayPts(d.n),'точка','точки','точек')})).join('');
+    rows=DAYS.map(d=>{const on=filter.mode==='day'&&filter.v===d.n,pts=dayPts(d.n);
+      return '<button class="mfrow mfday'+(on?' on':'')+'" data-f="day" data-v="'+d.n+'">'
+        +'<span class="mfdtx"><b>День '+d.n+'</b><span>'+fmtShort(dayDateFor(d.n))+' · '+pts+' '+plural(pts,'точка','точки','точек')+'</span></span></button>';}).join('');
   }else if(seg==='base'){
     rows=BASES.map((b,i)=>row({f:'base',v:b.id,on:filter.mode==='base'&&filter.v===b.id,photo:basePhoto(b.id),color:b.color,
       title:shortName(b.name),sub:'база '+(i+1)+' · '+b.nights+' '+nights(b.nights)})).join('');
