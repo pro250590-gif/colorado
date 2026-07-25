@@ -1485,8 +1485,8 @@ function initMap(){
     decoLayer=L.layerGroup();
     /* координаты АЭРОПОРТОВ (не центра города): DRO Дуранго-Ла-Плата, DEN Денвер Intl */
     const MIA=[25.7617,-80.1918],DUR=[37.1515,-107.7539],DEN=[39.8617,-104.6731];
-    /* самолёт-силуэт сбоку (как ✈️), по умолчанию носом ВПРАВО; поворачиваем по направлению линии */
-    const planeHTML=(rot)=>'<div class="planemk" style="transform:rotate('+rot+'deg)"><svg width="27" height="24" viewBox="0 0 576 512" fill="'+PLANE_COL+'"><path d="M482.3 192c34.2 0 93.7 29 93.7 64s-59.5 64-93.7 64l-116.6 0L392.7 495.6c-2.6 6.3-8.7 10.4-15.5 10.4l-39.7 0c-11.1 0-19-10.8-15.8-21.5L426.2 320 224 320l-51.7 80-44.3 0 32-96L128 208l44.3 0 51.7 80 202.2 0L321.7 21.5C318.5 10.8 326.4 0 337.5 0l39.7 0c6.8 0 12.9 4.1 15.5 10.4L459.4 192l22.9 0z"/></svg></div>';
+    /* эмодзи-самолёт ✈️ (на iPhone — сине-белый Apple). По умолчанию смотрит вправо-вверх (~45°), поэтому +45° к углу линии, чтобы летел строго вдоль пунктира */
+    const planeHTML=(rot)=>'<div class="planemk" style="transform:rotate('+(rot+45)+'deg);font-size:21px;line-height:1">✈️</div>';
     /* дуги перелётов до реального Майами (уходят за ЮВ край; видно целиком при отзуме) */
     decoLayer.addLayer(L.polyline([MIA,DUR],{color:'#9aa0b4',weight:2,opacity:.8,dashArray:'2,8',lineCap:'round'}));
     decoLayer.addLayer(L.polyline([DEN,MIA],{color:'#9aa0b4',weight:2,opacity:.8,dashArray:'2,8',lineCap:'round'}));
