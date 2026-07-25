@@ -1209,9 +1209,9 @@ section h2.big{margin-bottom:4px}
 </div></section>
 
 <footer><div class="wrap">
-  План на 7–16 августа 2026 · Дуранго → Урей → Аспен → Денвер · прилёт в DRO, вылет из DEN.<br>
+  <span id="footRoute"></span><br>
   Фотографии мест — <a href="https://commons.wikimedia.org/" target="_blank" rel="noopener">Викисклад</a>, свободные лицензии.<br>
-  Проверить перед выездом: <a href="https://www.cotrip.org/" target="_blank" rel="noopener">дороги CDOT</a> · <a href="https://durangotrain.com/" target="_blank" rel="noopener">поезд</a> · <a href="https://www.visitmaroonbells.com/" target="_blank" rel="noopener">Maroon Bells</a> · <a href="https://www.recreation.gov/ticket/facility/233362" target="_blank" rel="noopener">Mesa Verde</a>
+  <span id="footCheck"></span>
 </div></footer>
 
 <nav class="bottomnav">
@@ -1996,6 +1996,29 @@ function recomputeDates(){
   const td2=document.getElementById('topDate');
   if(td2){const s=addDays(startIso,0),e=addDays(startIso,tn);
     td2.textContent=s.getDate()+'–'+e.getDate()+' '+MONTHS[e.getMonth()]+' '+e.getFullYear();}
+  buildFooter();
+}
+/* футер строится из данных поездки (даты/маршрут/аэропорты + ссылки), а не хардкод — годится под любой маршрут */
+function buildFooter(){
+  const routeEl=document.getElementById('footRoute');
+  if(routeEl){
+    const tn=totalNights(),s=addDays(startIso,0),e=addDays(startIso,tn);
+    const dates=s.getDate()+'–'+e.getDate()+' '+MONTHS[e.getMonth()]+' '+e.getFullYear();
+    const route=BASES.map(b=>shortName(b.name)).join(' → ');
+    const arr=(typeof AIRPORT!=='undefined')?AIRPORT[BASES[0].id]:null;
+    const dep=(typeof AIRPORT!=='undefined')?AIRPORT[BASES[BASES.length-1].id]:null;
+    let air='';
+    if(arr&&dep&&arr!==dep)air=' · прилёт в '+arr+', вылет из '+dep;
+    else if(arr)air=' · аэропорт '+arr;
+    routeEl.textContent='План на '+dates+' · '+route+air+'.';
+  }
+  const checkEl=document.getElementById('footCheck');
+  if(checkEl){
+    if(typeof PRECHECK!=='undefined'&&PRECHECK.length){
+      checkEl.innerHTML='Проверить перед выездом: '+PRECHECK.map(p=>'<a href="'+p.url+'" target="_blank" rel="noopener">'+p.label+'</a>').join(' · ');
+      checkEl.style.display='';
+    }else checkEl.style.display='none';
+  }
 }
 function buildPlanner(){
   const host=document.getElementById('planner');

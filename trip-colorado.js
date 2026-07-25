@@ -228,6 +228,14 @@ const SEGMENT={dur:'flight',our:'car',asp:'car',den:'car'};
 
 const TRANSFER={our:{km:120,clean:'2 ч',stops:'5–6 ч'},asp:{km:330,clean:'5 ч',stops:'весь день'},den:{km:260,clean:'4 ч',stops:'6–7 ч'}};
 
+/* ссылки «проверить перед выездом» в футере — свои для каждого маршрута (пусто → строка скрывается) */
+const PRECHECK=[
+ {label:'дороги CDOT',url:'https://www.cotrip.org/'},
+ {label:'поезд',url:'https://durangotrain.com/'},
+ {label:'Maroon Bells',url:'https://www.visitmaroonbells.com/'},
+ {label:'Mesa Verde',url:'https://www.recreation.gov/ticket/facility/233362'}
+];
+
 const META={
  dro:{price:'—',dur:'приезд'},
  art:{price:'бесплатно',dur:'1–2 ч',best:'вечер'},
