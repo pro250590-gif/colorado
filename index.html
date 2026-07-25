@@ -179,14 +179,13 @@ h2.big{font-size:clamp(26px,6.4vw,38px);margin:12px 4px 0}
   font:800 9px/17px "Plus Jakarta Sans",sans-serif;text-align:center;border:2px solid #fff;padding:0 3px;
   box-sizing:content-box;box-shadow:0 3px 8px rgba(0,0,0,.28)}
 /* ===== новые метки карты ===== */
-.citymk{display:flex;flex-direction:column;align-items:center;pointer-events:auto;cursor:pointer}
-.citymk .circ{width:37px;height:37px;border-radius:50%;background:var(--c);border:3px solid #fff;
-  box-shadow:0 6px 14px rgba(20,32,27,.4);display:grid;place-items:center;color:#fff;line-height:1;transition:transform .15s}
-.citymk:active .circ{transform:scale(.92)}
-.citymk .circ b{font:800 13px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:-.02em}
-.citymk .circ span{font:600 7px/1 "Inter",sans-serif;margin-top:1px;opacity:.9}
-.citymk .lab{margin-top:4px;background:var(--c);color:#fff;font:700 9.5px/1 "Plus Jakarta Sans",sans-serif;
-  padding:4px 7px;border-radius:7px;box-shadow:0 3px 7px rgba(20,32,27,.28);white-space:nowrap}
+.citypin{position:relative;width:46px;display:flex;flex-direction:column;align-items:center;pointer-events:auto;cursor:pointer}
+.citypin svg{display:block;transition:transform .15s}
+.citypin:active svg{transform:scale(.93)}
+.citypin .cpnum{position:absolute;left:0;right:0;top:0;height:39px;display:flex;align-items:center;justify-content:center;
+  font:800 17px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:-.03em;color:#fff;pointer-events:none;text-shadow:0 1px 2px rgba(40,20,90,.35)}
+.citypin .cplab{margin-top:2px;background:rgba(255,255,255,.94);color:#4a2fb0;font:800 9.5px/1 "Plus Jakarta Sans",sans-serif;
+  padding:4px 7px;border-radius:7px;box-shadow:0 3px 7px rgba(50,30,110,.28);white-space:nowrap}
 .ptpin{display:flex;align-items:center;justify-content:center;border-radius:50%;color:#fff;font:800 12px/1 "Plus Jakarta Sans",sans-serif;
   border:2.5px solid #fff;box-shadow:0 4px 10px rgba(20,32,27,.4)}
 .carmk{width:30px;height:30px;border-radius:50%;background:#fff;border:2px solid var(--accent,#5b3fc4);
@@ -1432,6 +1431,15 @@ function popupHTML(nm,q,why,label,color,photo){
     +'<div style="color:#5b5750;font-size:12.5px;line-height:1.45;max-height:66px;overflow:auto">'+why+'</div>'
     +'<a href="'+gurl(q)+'" target="_blank" rel="noopener" style="display:inline-block;margin-top:10px;padding:9px 13px;background:#2f4f43;color:#fff;border-radius:10px;font-weight:600;font-size:13px;text-decoration:none">Открыть в Google Maps →</a></div>';
 }
+/* ── ПАЛИТРА МАРШРУТА (фиолетовый градиент, динамически по числу сегментов) ── */
+function _h2r(h){h=h.replace('#','');return[parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)];}
+function _r2h(r,g,b){const x=v=>('0'+Math.round(v).toString(16)).slice(-2);return '#'+x(r)+x(g)+x(b);}
+function _mix(c1,c2,t){const A=_h2r(c1),B=_h2r(c2),L=(a,b)=>a+(b-a)*t;return _r2h(L(A[0],B[0]),L(A[1],B[1]),L(A[2],B[2]));}
+const ROUTE_LIGHT='#E6C8FF',ROUTE_MED='#8C52D6',ROUTE_DEEP='#4B1E86';
+/* тёмный конец адаптивен: мало сегментов — светлее (med), много — темнее (deep) */
+function routeDarkEnd(n){return _mix(ROUTE_MED,ROUTE_DEEP,Math.max(0,Math.min(1,(n-8)/10)));}
+function routeColor(t,n){return _mix(ROUTE_LIGHT,routeDarkEnd(n),t);}
+const PLANE_COL='#7c5cff';/* один фирменный цвет для всех самолётов */
 function initMap(){
   if(typeof L==='undefined'){mapFallback('Карта не загрузилась');return;}
   try{
@@ -1444,10 +1452,16 @@ function initMap(){
     L.control.zoom({position:'bottomright'}).addTo(map);
     L.control.layers({'Улицы':mStreets,'Топо':mTopo,'Ландшафт':mLand,'Зима':mWinter,'Океан':mOcean,'Спутник':mHybrid},null,{position:'topright'}).addTo(map);
     L.control.scale({position:'bottomleft',metric:true,imperial:true,maxWidth:140}).addTo(map);
-    /* города-счётчики (вид 1C): круг с числом мест + подпись цветом базы; клик — раскрыть точки города */
+    /* города — маркер-капля (pin) с числом мест внутри (без слова «мест»); клик — раскрыть точки города */
     BASES.forEach(b=>{const cnt=P.filter(x=>x.cat!=='food'&&x.base===b.id).length;
-      baseMarkers[b.id]=L.marker([b.lat,b.lng],{icon:L.divIcon({className:'',iconSize:[56,59],iconAnchor:[18,18],
-        html:'<div class="citymk" style="--c:'+b.color+'"><div class="circ"><b>'+cnt+'</b><span>мест</span></div><div class="lab">'+shortName(b.name)+'</div></div>'})});
+      baseMarkers[b.id]=L.marker([b.lat,b.lng],{icon:L.divIcon({className:'',iconSize:[46,58],iconAnchor:[23,55],
+        html:'<div class="citypin">'
+          +'<svg width="46" height="58" viewBox="0 0 40 52"><defs>'
+          +'<linearGradient id="rg-'+b.id+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a48bff"/><stop offset="1" stop-color="#5b3fc4"/></linearGradient>'
+          +'<filter id="gl-'+b.id+'" x="-45%" y="-45%" width="190%" height="190%"><feDropShadow dx="0" dy="0" stdDeviation="2.2" flood-color="#d9c6ff" flood-opacity="1"/></filter></defs>'
+          +'<path d="M20 2C10.6 2 3 9.6 3 19c0 12 17 31 17 31s17-19 17-31C37 9.6 29.4 2 20 2z" fill="url(#rg-'+b.id+')" stroke="#fff" stroke-width="2" filter="url(#gl-'+b.id+')"/></svg>'
+          +'<span class="cpnum">'+cnt+'</span>'
+          +'<span class="cplab">'+shortName(b.name)+'</span></div>'})});
       baseMarkers[b.id].on('click',()=>{filter={mode:'base',v:b.id};fopen=null;buildFilters();applyFilter();fitVisible();});});
     /* точки-места: булавки С ФОТО (как раньше) — показываются при выборе города/дня/типа */
     P.forEach(p=>{const c=p.cat==='food'?'#c1462a':(DCOL[p.d]||'#2f9e6f');const ph=PHOTO[p.id];let icon;
@@ -1458,9 +1472,11 @@ function initMap(){
         icon=L.divIcon({className:'',iconSize:[sz,sz],iconAnchor:[sz/2,sz/2],
           html:'<div class="pin" style="background:'+c+';width:'+sz+'px;height:'+sz+'px;font-size:'+(p.star?12:10)+'px">'+glyph+'</div>'});}
       markers[p.id]=L.marker([p.lat,p.lng],{icon:icon}).bindPopup(popupHTML(p.nm,p.q,p.why,p.d?('День '+p.d):(CATS[p.cat]?CATS[p.cat].l:''),c,ph?pimg(p.id,'l'):null),{autoPan:true,keepInView:false,autoPanPaddingTopLeft:L.point(12,66),autoPanPaddingBottomRight:L.point(12,14)});});
-    /* маршрут: тоньше, цвета баз (без чёрного); переезды сплошные, радиалки тонкий пунктир */
-    const legCol={4:'#12855e',6:'#d96a12',9:'#5a4bb5'};
-    function drawLine(o){const isLeg=o.type==='leg';const col=isLeg?(legCol[o.days[0]]||o.color):o.color;const w=isLeg?4.5:2.6;
+    /* маршрут: единый фиолетовый градиент светлый→тёмный по сегментам; радиалки — светлый фиолет пунктиром */
+    const legLines=LINES.filter(o=>o.type==='leg').sort((a,b)=>((a.days&&a.days[0])||0)-((b.days&&b.days[0])||0));
+    const nLeg=legLines.length;const legColorMap=new Map();
+    legLines.forEach((o,i)=>{legColorMap.set(o,routeColor(nLeg>1?i/(nLeg-1):0,nLeg));});
+    function drawLine(o){const isLeg=o.type==='leg';const col=isLeg?(legColorMap.get(o)||ROUTE_MED):'#c9b4f2';const w=isLeg?4.5:2.6;
       L.polyline(o.pts,{color:'#fff',weight:w+3,opacity:.85,dashArray:o.dash,lineCap:'round',lineJoin:'round'}).addTo(map);
       const ln=L.polyline(o.pts,{color:col,weight:w,opacity:1,dashArray:o.dash,lineCap:'round',lineJoin:'round'}).addTo(map).bindTooltip(o.label,{sticky:true});
       lineLayers.push({days:o.days,layer:ln});}
@@ -1468,14 +1484,14 @@ function initMap(){
     /* самолёты Майами — Майами на СВОЁМ месте (Флорида, далеко ЮВ); видно при отдалении карты */
     decoLayer=L.layerGroup();
     const MIA=[25.7617,-80.1918],DUR=[37.2753,-107.8801],DEN=[39.7392,-104.9903];
-    const planeHTML=(rot,col)=>'<div class="planemk" style="--pc:'+col+';transform:rotate('+rot+'deg)"><svg width="22" height="22" viewBox="0 0 24 24" fill="'+col+'"><path d="M17.9 19.3 15.8 11l3.6-3.6a2.1 2.1 0 1 0-3-3L12.8 8 4.6 6.2a1 1 0 0 0-.9 1.7l4.9 3.1-2 3H3.6l-.9 2 3.8 1 1 3.8 2-.9v-3l3-2 3.1 5a1 1 0 0 0 1.7-.9Z"/></svg></div>';
+    const planeHTML=(rot)=>'<div class="planemk" style="transform:rotate('+rot+'deg)"><svg width="22" height="22" viewBox="0 0 24 24" fill="'+PLANE_COL+'"><path d="M17.9 19.3 15.8 11l3.6-3.6a2.1 2.1 0 1 0-3-3L12.8 8 4.6 6.2a1 1 0 0 0-.9 1.7l4.9 3.1-2 3H3.6l-.9 2 3.8 1 1 3.8 2-.9v-3l3-2 3.1 5a1 1 0 0 0 1.7-.9Z"/></svg></div>';
     /* дуги перелётов до реального Майами (уходят за ЮВ край; видно целиком при отзуме) */
     decoLayer.addLayer(L.polyline([MIA,DUR],{color:'#9aa0b4',weight:2,opacity:.8,dashArray:'2,8',lineCap:'round'}));
     decoLayer.addLayer(L.polyline([DEN,MIA],{color:'#9aa0b4',weight:2,opacity:.8,dashArray:'2,8',lineCap:'round'}));
     /* самолётики ЛЕТЯТ ПО ПУНКТИРНОЙ ЛИНИИ (видимый участок у Колорадо) и двигаются, как машинка */
     const onLine=(A,B,f)=>[A[0]+(B[0]-A[0])*f,A[1]+(B[1]-A[1])*f];
-    const arrPlane=L.marker(onLine(DUR,MIA,0.03),{icon:L.divIcon({className:'',iconSize:[22,22],iconAnchor:[11,11],html:planeHTML(-118,'#12855e')})});
-    const depPlane=L.marker(onLine(DEN,MIA,0.005),{icon:L.divIcon({className:'',iconSize:[22,22],iconAnchor:[11,11],html:planeHTML(118,'#5a4bb5')})});
+    const arrPlane=L.marker(onLine(DUR,MIA,0.03),{icon:L.divIcon({className:'',iconSize:[22,22],iconAnchor:[11,11],html:planeHTML(-118)})});
+    const depPlane=L.marker(onLine(DEN,MIA,0.005),{icon:L.divIcon({className:'',iconSize:[22,22],iconAnchor:[11,11],html:planeHTML(118)})});
     decoLayer.addLayer(arrPlane);decoLayer.addLayer(depPlane);
     decoLayer.addLayer(L.marker(MIA,{icon:L.divIcon({className:'',iconSize:[84,24],iconAnchor:[42,12],html:'<div class="miamichip">✈ Майами</div>'})}));
     /* прилёт: из-за края к Дуранго; вылет: от Денвера к краю. Петля, как рейсы */
