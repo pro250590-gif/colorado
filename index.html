@@ -1485,14 +1485,19 @@ function initMap(){
     decoLayer=L.layerGroup();
     /* координаты АЭРОПОРТОВ (не центра города): DRO Дуранго-Ла-Плата, DEN Денвер Intl */
     const MIA=[25.7617,-80.1918],DUR=[37.1515,-107.7539],DEN=[39.8617,-104.6731];
-    const planeHTML=(rot)=>'<div class="planemk" style="transform:rotate('+rot+'deg)"><svg width="22" height="22" viewBox="0 0 24 24" fill="'+PLANE_COL+'"><path d="M17.9 19.3 15.8 11l3.6-3.6a2.1 2.1 0 1 0-3-3L12.8 8 4.6 6.2a1 1 0 0 0-.9 1.7l4.9 3.1-2 3H3.6l-.9 2 3.8 1 1 3.8 2-.9v-3l3-2 3.1 5a1 1 0 0 0 1.7-.9Z"/></svg></div>';
+    /* самолёт-силуэт сбоку (как ✈️), по умолчанию носом ВПРАВО; поворачиваем по направлению линии */
+    const planeHTML=(rot)=>'<div class="planemk" style="transform:rotate('+rot+'deg)"><svg width="27" height="24" viewBox="0 0 576 512" fill="'+PLANE_COL+'"><path d="M482.3 192c34.2 0 93.7 29 93.7 64s-59.5 64-93.7 64l-116.6 0L392.7 495.6c-2.6 6.3-8.7 10.4-15.5 10.4l-39.7 0c-11.1 0-19-10.8-15.8-21.5L426.2 320 224 320l-51.7 80-44.3 0 32-96L128 208l44.3 0 51.7 80 202.2 0L321.7 21.5C318.5 10.8 326.4 0 337.5 0l39.7 0c6.8 0 12.9 4.1 15.5 10.4L459.4 192l22.9 0z"/></svg></div>';
     /* дуги перелётов до реального Майами (уходят за ЮВ край; видно целиком при отзуме) */
     decoLayer.addLayer(L.polyline([MIA,DUR],{color:'#9aa0b4',weight:2,opacity:.8,dashArray:'2,8',lineCap:'round'}));
     decoLayer.addLayer(L.polyline([DEN,MIA],{color:'#9aa0b4',weight:2,opacity:.8,dashArray:'2,8',lineCap:'round'}));
     /* самолётики ЛЕТЯТ ПО ПУНКТИРНОЙ ЛИНИИ (видимый участок у Колорадо) и двигаются, как машинка */
     const onLine=(A,B,f)=>[A[0]+(B[0]-A[0])*f,A[1]+(B[1]-A[1])*f];
-    const arrPlane=L.marker(onLine(DUR,MIA,0.03),{icon:L.divIcon({className:'',iconSize:[22,22],iconAnchor:[11,11],html:planeHTML(-118)})});
-    const depPlane=L.marker(onLine(DEN,MIA,0.005),{icon:L.divIcon({className:'',iconSize:[22,22],iconAnchor:[11,11],html:planeHTML(118)})});
+    /* угол линии на экране (0=восток, по часовой): dy вниз = a.lat−b.lat, dx вправо = b.lng−a.lng */
+    const planeRot=(a,b)=>Math.atan2(a[0]-b[0],b[1]-a[1])*180/Math.PI;
+    const rotArr=planeRot(onLine(DUR,MIA,0.06),onLine(DUR,MIA,0.004));/* летит К Дуранго */
+    const rotDep=planeRot(onLine(DEN,MIA,0.004),onLine(DEN,MIA,0.05));/* летит К Майами */
+    const arrPlane=L.marker(onLine(DUR,MIA,0.03),{icon:L.divIcon({className:'',iconSize:[27,24],iconAnchor:[13,12],html:planeHTML(rotArr)})});
+    const depPlane=L.marker(onLine(DEN,MIA,0.005),{icon:L.divIcon({className:'',iconSize:[27,24],iconAnchor:[13,12],html:planeHTML(rotDep)})});
     decoLayer.addLayer(arrPlane);decoLayer.addLayer(depPlane);
     decoLayer.addLayer(L.marker(MIA,{icon:L.divIcon({className:'',iconSize:[84,24],iconAnchor:[42,12],html:'<div class="miamichip">✈ Майами</div>'})}));
     /* прилёт: из-за края к Дуранго; вылет: от Денвера к краю. Петля, как рейсы */
