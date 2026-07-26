@@ -921,6 +921,9 @@ body{background:linear-gradient(168deg,#eef1f8,#e9edf6 60%,#e6eaf4)!important}
 .stbtn{border:1.5px solid rgba(20,32,27,.12);background:#fff;color:#6d7c74;border-radius:9px;padding:7px 10px;
   font:800 10.5px/1 "Plus Jakarta Sans",sans-serif;cursor:pointer}
 .stbtn.del{color:#b03a2b;border-color:rgba(192,57,43,.28)}
+.stbtn.add{align-self:flex-start;display:inline-flex;align-items:center;gap:6px;margin-top:10px;padding:9px 12px;
+  color:#5b3fc4;border-color:rgba(91,63,196,.35);background:#faf8ff;font-size:11px}
+.stbtn.add .i{width:14px;height:14px}
 .cbooklq{display:block;text-align:center;margin-top:9px;font:700 11.5px/1 "Inter",sans-serif;color:#8b8698;text-decoration:none}
 .cday{display:flex;align-items:center;gap:13px;background:#fff;border:1px solid #e8e9f2;border-radius:15px;padding:11px;margin-bottom:9px;text-decoration:none;color:inherit}
 .cdph{width:66px;height:66px;border-radius:12px;background:#e5e7f0 center/cover no-repeat;flex:none}
@@ -996,6 +999,10 @@ body{background:linear-gradient(168deg,#eef1f8,#e9edf6 60%,#e6eaf4)!important}
 .dssep{font:800 10.5px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:.11em;text-transform:uppercase;color:#5b3fc4;margin:16px 4px 9px}
 .dsform{display:flex;flex-direction:column;gap:8px;margin-bottom:4px}
 .dsform input{border:1.5px solid rgba(20,32,27,.12);border-radius:12px;padding:12px 13px;font:600 13px/1 "Inter",sans-serif;background:#fff;width:100%}
+/* два поля цены рядом: за ночь ↔ всего */
+.dstwo{display:flex;gap:8px}
+.dstwo label{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px}
+.dstwo label span{font:700 10px/1 "Inter",sans-serif;color:#8b8698;padding-left:3px}
 .dsform input:focus{outline:none;border-color:rgba(91,63,196,.55)}
 .dsgo{border:0;background:linear-gradient(150deg,#7a5cf0,#5b3fc4);color:#fff!important;border-radius:12px;padding:12px;
   font:800 12px/1 "Plus Jakarta Sans",sans-serif;cursor:pointer}
@@ -2038,8 +2045,10 @@ function buildCities(){
         : '<div class="cstay"><span class="cph"'+(basePhoto(b.id)?' style="background-image:url('+basePhoto(b.id)+')"':'')+'></span>'
           +'<span class="cin"><h3>Где остановиться</h3>'
           +'<span class="cmeta">'+shortName(b.name)+' · '+b.nights+' '+nights(b.nights)+' · '+dm(ci)+'–'+dm(co)+'<br>на '+guests+'</span>'
-          +'<a class="cbookl" href="'+bookHotel(b.q,ci,co,PEOPLE)+'" target="_blank" rel="noopener">Забронировать на Booking</a></span></div>'
-          +'<button class="cadd" data-stayadd="'+b.id+'">'+ic('bed','i-sm')+' У меня уже есть жильё</button>')
+          +'<a class="cbookl" href="'+bookHotel(b.q,ci,co,PEOPLE)+'" target="_blank" rel="noopener">Забронировать на Booking</a>'
+          /* кнопка внутри карточки, а не отдельной плашкой снизу — просьба клиента */
+          +'<button class="stbtn add" data-stayadd="'+b.id+'">'+ic('bed','i-sm')+' У меня уже есть жильё</button>'
+          +'</span></div>')
       +'</div>';
     /* маршрут по дням */
     const route='<div class="cnode"><span class="cdot">'+ic('cal','i-sm')+'</span>'
@@ -2599,10 +2608,19 @@ function addStaySheet(bid,id){
   sheet('<div class="dsh"><b>'+(p?'Изменить жильё':'У меня уже есть жильё')+'</b>'
       +'<span>'+shortName(b.name)+' · '+dm(ci)+'–'+dm(co)+' · '+b.nights+' '+nights(b.nights)+' · на '+PEOPLE+' '+plural(PEOPLE,'гостя','гостей','гостей')+'</span></div>'
     +'<div class="dsform"><input id="stNm" placeholder="Название или ссылка на жильё" autocomplete="off" value="'+esc(p?(p.q||p.nm):'')+'">'
-      +'<input id="stRate" placeholder="Цена за ночь, $ (по желанию)" inputmode="decimal" autocomplete="off" value="'+esc(rate)+'">'
+      +'<div class="dstwo">'
+        +'<label><span>Цена за ночь</span><input id="stRate" placeholder="$" inputmode="decimal" autocomplete="off" value="'+esc(rate)+'"></label>'
+        +'<label><span>Всего за '+b.nights+' '+nights(b.nights)+'</span><input id="stTot" placeholder="$" inputmode="decimal" autocomplete="off" value="'+esc(rate?Math.round(rate*b.nights):'')+'"></label>'
+      +'</div>'
       +'<button class="dsgo" data-staysave="'+bid+'"'+(id?' data-stayid="'+id+'"':'')+'>Сохранить</button>'
-      +'<span class="dshint">Заезд, выезд и число гостей уже известны — их не спрашиваем. Цена уйдёт в бюджет, в строку жилья этого города.</span></div>'
+      +'<span class="dshint">Заезд, выезд и число гостей уже известны — их не спрашиваем. Заполни любое из двух полей, второе посчитается. Цена уйдёт в бюджет, в строку жилья этого города.</span></div>'
     +'<button class="dscancel" data-dsclose="1">Отмена</button>');
+  /* два поля цены считают друг друга — как строки в бюджете */
+  const n=b.nights,rt=document.getElementById('stRate'),tt=document.getElementById('stTot');
+  if(rt&&tt){
+    rt.addEventListener('input',()=>{const v=parseFloat(rt.value)||0;tt.value=v?Math.round(v*n):'';});
+    tt.addEventListener('input',()=>{const v=parseFloat(tt.value)||0;rt.value=(v&&n)?Math.round(v/n):'';});
+  }
 }
 /* сохранить своё жильё: точку ищем как обычно, цену кладём в бюджет города */
 function saveStay(bid,id,val,rate){
