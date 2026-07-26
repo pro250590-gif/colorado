@@ -65,15 +65,14 @@ h1,h2,h3,h4{line-height:1.08;margin:0;font-family:"Plus Jakarta Sans","Inter",sa
 .siderail{display:none}
 .mfbico{display:none}
 #cities,#s-money,#s-food{scroll-margin-top:72px}
-.authbtn{flex:none;margin-left:auto;border:1.5px solid rgba(91,63,196,.4);background:linear-gradient(180deg,#fff,#f4f1ff);color:#5b3fc4;
+.authbtn{flex:none;border:1.5px solid rgba(91,63,196,.4);background:linear-gradient(180deg,#fff,#f4f1ff);color:#5b3fc4;
   font:800 12.5px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:-.02em;padding:9px 14px;border-radius:12px;cursor:pointer;
   box-shadow:0 5px 13px -6px rgba(91,63,196,.5);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .authbtn:active{transform:scale(.97)}
 /* состояние сохранения видно всегда: молча терять правки нельзя */
-.syncpill{flex:none;margin-left:auto;display:flex;align-items:center;gap:6px;border:1.5px solid #e5e6f5;background:#fff;
+.syncpill{flex:none;display:flex;align-items:center;gap:6px;border:1.5px solid #e5e6f5;background:#fff;
   color:#8b8698!important;font:800 11px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:-.02em;padding:8px 11px;
   border-radius:12px;cursor:pointer;max-width:190px;overflow:hidden;white-space:nowrap;-webkit-appearance:none;appearance:none}
-.syncpill+.authbtn{margin-left:8px}
 .syncpill .sdot{width:7px;height:7px;border-radius:50%;background:#c3c7d6;flex:none}
 .syncpill[data-s=ok]{border-color:rgba(18,133,94,.32);color:#0a6047!important}
 .syncpill[data-s=ok] .sdot{background:#12855e}
@@ -103,8 +102,10 @@ h1,h2,h3,h4{line-height:1.08;margin:0;font-family:"Plus Jakarta Sans","Inter",sa
 .authsubmit{width:100%;border:0;background:linear-gradient(150deg,#7a5cf0,#5b3fc4);color:#fff;font:800 14.5px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:-.02em;padding:14px;border-radius:13px;cursor:pointer;box-shadow:0 8px 20px -8px rgba(91,63,196,.7)}
 .authsubmit:disabled{opacity:.6}
 .authhint{font:500 12px/1.4 "Inter",sans-serif;color:#8b8fa3;text-align:center;margin-top:12px}
+/* бренд отжимает всё правое к краю — надёжнее, чем margin-left:auto на кнопках:
+   плашка сохранения может быть скрыта, и тогда «Войти» теряла свой auto и уезжала в центр */
 .brand{font-family:"Plus Jakarta Sans",sans-serif;font-weight:800;font-size:18px;letter-spacing:-.04em;
-  display:flex;align-items:center;gap:9px}
+  display:flex;align-items:center;gap:9px;margin-right:auto}
 .brandmark{width:32px;height:32px;border-radius:12px;display:grid;place-items:center;flex:none;color:#fff;
   background:linear-gradient(150deg,var(--green1),var(--green3));box-shadow:var(--sh1),inset 0 1px 0 rgba(255,255,255,.45)}
 .brand i{font-style:normal;color:var(--orange2)}
@@ -1078,7 +1079,14 @@ body{background:linear-gradient(168deg,#eef1f8,#e9edf6 60%,#e6eaf4)!important}
 .dssug{flex:none;font:800 9.5px/1 "Plus Jakarta Sans",sans-serif;background:#5b3fc4;color:#fff;border-radius:7px;padding:5px 7px}
 .dscancel{width:100%;border:0;background:#f4f5f9;color:var(--ink2)!important;border-radius:13px;padding:12px;
   font:800 12px/1 "Plus Jakarta Sans",sans-serif;margin-top:4px;cursor:pointer}
-@media(min-width:1000px){.dspanel{left:50%;right:auto;transform:translateX(-50%);width:460px;bottom:auto;top:50%;margin-top:-180px}}
+/* На компьютере лист центрируем по-настоящему. Раньше стоял сдвиг на −180 px от
+   середины — он годился только для короткого листа, а длинный уезжал за нижний край
+   экрана (жалоба клиента). Теперь высота ограничена окном, а прокрутка — внутри. */
+@media(min-width:1000px){
+  .dspanel{left:50%;right:auto;bottom:auto;top:50%;margin-top:0;width:460px;
+    transform:translate(-50%,-50%);max-height:88vh;display:flex;flex-direction:column}
+  .dspanel .dsbody{max-height:none;flex:1 1 auto;min-height:0}
+}
 .cdtx{flex:1;min-width:0}
 .cdm{font:500 10.5px/1 "Inter",sans-serif;color:#8b8fa3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.01em}
 .cdm b{color:#5b3fc4}
@@ -3752,14 +3760,14 @@ function syncUI(state,txt){
   pill.style.display=state==='off'?'none':'';
   pill.dataset.s=state;t.textContent=txt;
 }
+/* Времени НЕ показываем: у телефона и компьютера часы свои, и разные цифры сбивали
+   с толку (просьба клиента). Только состояние и кнопка «Сохранить». */
 function syncSay(){
   if(!_signedIn){syncUI('off','');return;}
-  if(_syncErr)return syncUI('bad','Не сохранилось');
-  if(dirty())return syncUI('go','Сохраняю…');
-  const p=pushedTs();
-  syncUI('ok',p?('Сохранено · '+hhmm(new Date(p))):'Сохранено');
+  if(_syncErr)return syncUI('bad','Ошибка');
+  if(dirty())return syncUI('go','Сохранить');
+  syncUI('ok','Сохранено');
 }
-function hhmm(d){return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);}
 let _signedIn=false;
 /* Пишем в облако. upsert может не сработать, если в таблице нет уникальности по
    user_id — тогда честно пробуем update, а если строки ещё нет, insert. */
@@ -3855,7 +3863,7 @@ localStorage.setItem=function(k,v){_rawSet(k,v);if(!_applying&&CLOUD_KEYS.indexO
     }
     syncUI('go','Сохраняю…');
     const ok=await cloudPush();
-    if(ok)syncUI('ok','Сохранено · '+hhmm(new Date()));
+    if(ok)syncUI('ok','Сохранено');
   });
   btn.addEventListener('click',async()=>{
     if(btn.dataset.state==='in'){await sb.auth.signOut();refresh();}else open();});
