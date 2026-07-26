@@ -195,6 +195,7 @@ h2.big{font-size:clamp(26px,6.4vw,38px);margin:12px 4px 0}
 .carmk{width:30px;height:30px;border-radius:50%;background:#fff;border:2px solid var(--accent,#5b3fc4);
   display:grid;place-items:center;box-shadow:0 6px 14px rgba(91,63,196,.45);color:#1b1e2e}
 .planemk{color:var(--pc,#5b3fc4);filter:drop-shadow(0 3px 5px rgba(20,32,27,.35))}
+.finflag svg{filter:drop-shadow(0 4px 6px rgba(50,30,110,.42))}
 /* пункт 5: ресторан-капля + точка маршрута кружком */
 .foodpin{position:relative;width:34px;height:43px}
 .foodpin .fpi{position:absolute;left:0;right:0;top:7px;display:flex;justify-content:center;color:#fff}
@@ -1631,6 +1632,13 @@ function initMap(){
     /* прилёт: из-за края к Дуранго; вылет: от Денвера к краю. Петля, как рейсы */
     animPlane(arrPlane,onLine(DUR,MIA,0.06),onLine(DUR,MIA,0.004),7000);
     animPlane(depPlane,onLine(DEN,MIA,0.004),onLine(DEN,MIA,0.05),7000);
+    /* ФИНИШ — клетчатый вымпел (ласточкин хвост) на последней базе, приподнят над каплей-городом */
+    const finB=BASES[BASES.length-1];
+    if(finB){const chp='<pattern id="chFin" width="7" height="7" patternUnits="userSpaceOnUse"><rect width="7" height="7" fill="#fff"/><rect width="3.5" height="3.5" fill="#1b1533"/><rect x="3.5" y="3.5" width="3.5" height="3.5" fill="#1b1533"/></pattern>';
+      const finHTML='<div class="finflag"><svg width="50" height="54" viewBox="0 0 50 54"><defs>'+chp+'</defs>'
+        +'<rect x="9" y="6" width="3.4" height="46" rx="1.7" fill="#5b3fc4"/><circle cx="10.7" cy="6" r="3" fill="#5b3fc4"/>'
+        +'<path d="M12.4 7.5 L43 7.5 L35 16 L43 24.5 L12.4 24.5 Z" fill="url(#chFin)" stroke="#1b1533" stroke-width="0.9"/></svg></div>';
+      decoLayer.addLayer(L.marker([finB.lat,finB.lng],{icon:L.divIcon({className:'',iconSize:[50,54],iconAnchor:[11,102],html:finHTML}),interactive:false,zIndexOffset:600}));}
     /* машинка едет по переездам Дуранго→Урей→Аспен→Денвер */
     const carPath=[].concat(LINES[0].pts.slice().reverse(),LINES[1].pts.slice().reverse(),LINES[2].pts.slice().reverse());
     carMarker=L.marker(carPath[0],{icon:L.divIcon({className:'',iconSize:[30,30],iconAnchor:[15,15],
