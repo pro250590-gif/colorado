@@ -928,11 +928,11 @@ body{background:linear-gradient(168deg,#eef1f8,#e9edf6 60%,#e6eaf4)!important}
 #toast .ttx b{display:block;font:800 12.5px/1.35 "Plus Jakarta Sans",sans-serif;letter-spacing:-.02em}
 #toast .ttx i{display:block;font-style:normal;font-size:11px;opacity:.72;margin-top:4px}
 #toast .tb:first-of-type{margin-left:auto}
-#toast .tb{flex:none;border:0;background:rgba(255,255,255,.16);color:#fff!important;border-radius:9px;padding:9px 11px;
-  font:800 11px/1 "Plus Jakarta Sans",sans-serif;cursor:pointer}
-#toast .tb.v{background:#7c5cff}
-#toast .tb.x{padding:9px;background:rgba(255,255,255,.1);display:grid;place-items:center}
-#toast .tb.x .i{width:14px;height:14px}
+#toast .tb{flex:none;border:0;background:rgba(255,255,255,.14);color:#fff!important;border-radius:11px;padding:11px 14px;
+  font:800 11.5px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:-.01em;cursor:pointer;transition:transform .15s,background .15s}
+#toast .tb:active{transform:scale(.96)}
+#toast .tb.v{background:linear-gradient(150deg,#8b6cf0,#6b45e0);box-shadow:0 6px 14px -6px rgba(124,92,255,.9)}
+#toast .tb.ok{background:transparent;border:1.5px solid rgba(255,255,255,.28)}
 @media(min-width:1000px){#toast{left:auto;right:calc(40vw + 18px);bottom:22px;max-width:520px}}
 /* лист «какой день убрать» */
 #daySheet{position:fixed;inset:0;z-index:4200;opacity:0;visibility:hidden;transition:opacity .22s,visibility .22s}
@@ -2602,9 +2602,10 @@ function toast(html,bid,prev){
   _undo={bid:bid,prev:prev};
   let el=document.getElementById('toast');
   if(!el){el=document.createElement('div');el.id='toast';document.body.appendChild(el);}
+  /* два понятных слова вместо крестика: «Отменить» — вернуть как было, «Хорошо» — согласна */
   el.innerHTML='<span class="ttx">'+html+'</span>'
     +'<button class="tb v" data-undo="1">Отменить</button>'
-    +'<button class="tb x" data-tclose="1" aria-label="закрыть">'+ic('close','i-sm')+'</button>';
+    +'<button class="tb ok" data-tclose="1">Хорошо</button>';
   el.classList.add('on');
 }
 function hideToast(){const el=document.getElementById('toast');if(el)el.classList.remove('on');}
