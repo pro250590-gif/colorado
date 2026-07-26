@@ -911,6 +911,17 @@ body{background:linear-gradient(168deg,#eef1f8,#e9edf6 60%,#e6eaf4)!important}
 .cin h3{font:600 19px/1 "Fraunces",Georgia,serif}
 .cmeta{font:500 12px/1.4 "Inter",sans-serif;color:#8b8fa3;margin-top:6px}
 .cbookl{margin-top:auto;display:inline-flex;align-items:center;gap:6px;font:700 13px/1 "Inter",sans-serif;color:#5b3fc4;text-decoration:none;padding-top:10px}
+/* своё жильё: карточка вместо предложения искать, Booking понижен до второстепенной ссылки */
+.cstay.myst{border-color:rgba(91,63,196,.28);background:linear-gradient(160deg,#fff,#faf8ff)}
+.cstay .cph.b{display:grid;place-items:center;background:linear-gradient(150deg,#f3effd,#ddd1f6);color:#5b3fc4}
+.cstay .cph.b .i{width:26px;height:26px}
+.myst .cmeta b{color:#3b2a8f}
+.mystact{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:auto;padding-top:10px}
+.mystact .cbookl{padding-top:0}
+.stbtn{border:1.5px solid rgba(20,32,27,.12);background:#fff;color:#6d7c74;border-radius:9px;padding:7px 10px;
+  font:800 10.5px/1 "Plus Jakarta Sans",sans-serif;cursor:pointer}
+.stbtn.del{color:#b03a2b;border-color:rgba(192,57,43,.28)}
+.cbooklq{display:block;text-align:center;margin-top:9px;font:700 11.5px/1 "Inter",sans-serif;color:#8b8698;text-decoration:none}
 .cday{display:flex;align-items:center;gap:13px;background:#fff;border:1px solid #e8e9f2;border-radius:15px;padding:11px;margin-bottom:9px;text-decoration:none;color:inherit}
 .cdph{width:66px;height:66px;border-radius:12px;background:#e5e7f0 center/cover no-repeat;flex:none}
 /* свободный день — без фото, мягкая лавандовая плитка */
@@ -1924,6 +1935,13 @@ let filter={mode:'all',v:null};let foodOn=false;
 /* основной фильтр — только НЕ-еда (маршрутные точки) */
 function matchesPrimary(p){
   if(p.cat==='food')return false;
+  /* жильё привязано к городу, а не ко дню: показываем на все дни этого города */
+  if(isStay(p)){
+    if(filter.mode==='base')return p.base===filter.v;
+    if(filter.mode==='day'){const e=dayOf(filter.v);return !!e&&e.base===p.base;}
+    if(filter.mode==='cat')return false;
+    return true;
+  }
   if(!dayOf(p.d))return false;          /* место в «Ещё в городе» — на карте его нет */
   if(filter.mode==='all')return true;
   if(filter.mode==='day')return p.d===filter.v;
@@ -2001,12 +2019,28 @@ function buildCities(){
           +'<a class="cbook" href="'+bookCar(en(b.q),en(last.q),ci,tripEnd)+'" target="_blank" rel="noopener">'+ic('car','i-sm')+' Забронировать машину <small>Kayak</small></a></div></div>';
     }
     /* проживание */
+    /* Проживание: если жильё уже есть — показываем его, а Booking понижаем до «других вариантов» */
+    const mine=stayPlaces(b.id),guests=PEOPLE+' '+plural(PEOPLE,'гостя','гостей','гостей');
+    const stayCard=mine.map(h=>'<div class="cstay myst"><span class="cph b">'+ic('bed','i-sm')+'</span>'
+        +'<span class="cin"><h3>'+h.nm+'</h3>'
+        +'<span class="cmeta">'+shortName(b.name)+' · '+dm(ci)+'–'+dm(co)+' · '+b.nights+' '+nights(b.nights)+' · на '+guests
+        +(h.rate?'<br><b>$'+h.rate+' за ночь · $'+Math.round(h.rate*b.nights)+' всего</b>':'')
+        +(typeof h.lat==='number'?'':'<br>без точки на карте')+'</span>'
+        +'<span class="mystact"><a class="cbookl" href="'+gurl(h.q||h.nm)+'" target="_blank" rel="noopener">Открыть в Google Maps →</a>'
+          +'<button class="stbtn" data-stayedit="'+h.id+'" data-staybase="'+b.id+'">Изменить</button>'
+          +'<button class="stbtn del" data-delpl="'+h.id+'">Убрать</button></span></span></div>').join('');
     const stay='<div class="cnode"><span class="cdot">'+ic('bed','i-sm')+'</span>'
       +'<div class="clbl"><b>Проживание</b><span>Дни '+firstDay+'–'+lastDay+' · '+dm(ci)+'–'+dm(co)+' · '+b.nights+' '+nights(b.nights)+'</span></div>'
-      +'<div class="cstay"><span class="cph"'+(basePhoto(b.id)?' style="background-image:url('+basePhoto(b.id)+')"':'')+'></span>'
-        +'<span class="cin"><h3>Где остановиться</h3>'
-        +'<span class="cmeta">'+shortName(b.name)+' · '+b.nights+' '+nights(b.nights)+' · '+dm(ci)+'–'+dm(co)+'<br>на '+PEOPLE+' '+plural(PEOPLE,'гостя','гостей','гостей')+'</span>'
-        +'<a class="cbookl" href="'+bookHotel(b.q,ci,co,PEOPLE)+'" target="_blank" rel="noopener">Забронировать на Booking</a></span></div></div>';
+      +(mine.length
+        ? stayCard
+          +'<button class="cadd" data-stayadd="'+b.id+'">'+ic('plus','i-sm')+' Добавить ещё жильё</button>'
+          +'<a class="cbooklq" href="'+bookHotel(b.q,ci,co,PEOPLE)+'" target="_blank" rel="noopener">Посмотреть другие варианты на Booking</a>'
+        : '<div class="cstay"><span class="cph"'+(basePhoto(b.id)?' style="background-image:url('+basePhoto(b.id)+')"':'')+'></span>'
+          +'<span class="cin"><h3>Где остановиться</h3>'
+          +'<span class="cmeta">'+shortName(b.name)+' · '+b.nights+' '+nights(b.nights)+' · '+dm(ci)+'–'+dm(co)+'<br>на '+guests+'</span>'
+          +'<a class="cbookl" href="'+bookHotel(b.q,ci,co,PEOPLE)+'" target="_blank" rel="noopener">Забронировать на Booking</a></span></div>'
+          +'<button class="cadd" data-stayadd="'+b.id+'">'+ic('bed','i-sm')+' У меня уже есть жильё</button>')
+      +'</div>';
     /* маршрут по дням */
     const route='<div class="cnode"><span class="cdot">'+ic('cal','i-sm')+'</span>'
       +'<div class="clbl"><b>Маршрут</b><span>Дни '+firstDay+'–'+lastDay+'</span></div>'
@@ -2523,6 +2557,12 @@ const KINDS=[
 ];
 function kindOf(p){return (p&&p.kind&&KINDS.find(x=>x.k===p.kind))||KINDS[KINDS.length-1];}
 function stashTid(bid){return 's-'+bid;}
+/* ЖИЛЬЁ принадлежит ГОРОДУ, а не дню (решение совета): у него заезд, выезд и ночи.
+   Держим его как своё место с особым «днём» h-<город>: в дни оно не попадает,
+   на карте видно во все дни этого города, цена уходит в строку жилья в бюджете. */
+function homeTid(bid){return 'h-'+bid;}
+function stayPlaces(bid){return P.filter(p=>p.custom&&p.kind==='stay'&&p.d===homeTid(bid));}
+function isStay(p){return !!(p&&p.custom&&p.kind==='stay'&&p.d===homeTid(p.base));}
 function applyMoves(){
   P.forEach(p=>{if(p._d0===undefined)p._d0=p.d;p.d=(MOVED[p.id]!==undefined)?MOVED[p.id]:p._d0;});
 }
@@ -2550,8 +2590,56 @@ function deletePlace(id){
   savePlan();rerenderTrip();
   toast('<b>Удалили «'+p.nm+'»</b><i>это было твоё место, в маршруте его больше нет</i>',p.base,prev);
 }
+/* лист «У меня уже есть жильё» — им же правим уже добавленное */
+function addStaySheet(bid,id){
+  const b=baseById(bid),before=nightsBefore(bid);
+  const ci=addDays(startIso,before),co=addDays(startIso,before+b.nights);
+  const p=id?placeById(id):null,esc=s=>String(s||'').replace(/"/g,'&quot;');
+  const i=BASES.findIndex(x=>x.id===bid),rate=p?(p.rate||''):(hotelRate(i)||'');
+  sheet('<div class="dsh"><b>'+(p?'Изменить жильё':'У меня уже есть жильё')+'</b>'
+      +'<span>'+shortName(b.name)+' · '+dm(ci)+'–'+dm(co)+' · '+b.nights+' '+nights(b.nights)+' · на '+PEOPLE+' '+plural(PEOPLE,'гостя','гостей','гостей')+'</span></div>'
+    +'<div class="dsform"><input id="stNm" placeholder="Название или ссылка на жильё" autocomplete="off" value="'+esc(p?(p.q||p.nm):'')+'">'
+      +'<input id="stRate" placeholder="Цена за ночь, $ (по желанию)" inputmode="decimal" autocomplete="off" value="'+esc(rate)+'">'
+      +'<button class="dsgo" data-staysave="'+bid+'"'+(id?' data-stayid="'+id+'"':'')+'>Сохранить</button>'
+      +'<span class="dshint">Заезд, выезд и число гостей уже известны — их не спрашиваем. Цена уйдёт в бюджет, в строку жилья этого города.</span></div>'
+    +'<button class="dscancel" data-dsclose="1">Отмена</button>');
+}
+/* сохранить своё жильё: точку ищем как обычно, цену кладём в бюджет города */
+function saveStay(bid,id,val,rate){
+  const nm0=String(val||'').trim();if(!nm0)return;
+  const done=(nm,q,lat,lng)=>{
+    const i=BASES.findIndex(x=>x.id===bid);
+    let p=id?placeById(id):null;
+    if(p){p.nm=nm;p.q=q||nm;if(typeof lat==='number'){p.lat=lat;p.lng=lng;}p.rate=rate||0;
+      const c=CUSTOM.find(x=>x.id===id);if(c){c.nm=p.nm;c.q=p.q;c.lat=p.lat;c.lng=p.lng;c.rate=p.rate;}}
+    else{
+      const nid='h'+Date.now().toString(36)+Math.floor(Math.random()*1e3).toString(36);
+      p={id:nid,d:homeTid(bid),base:bid,cat:'town',kind:'stay',nm:nm,q:q||nm,why:'',lat:lat,lng:lng,rate:rate||0,custom:1,meta:{}};
+      CUSTOM.push(p);P.push(p);picked.add(nid);savePicks();
+    }
+    if(rate&&i>=0)saveHotelRate(i,rate);          /* цена — в строку жилья этого города */
+    savePlan();rerenderTrip();
+    if(map&&p.lat&&!markers[p.id])makeMarker(p);
+    toast('<b>'+(id?'Изменили жильё':'Записали жильё')+': «'+nm+'»</b>'
+      +(rate?'<i>$'+rate+' за ночь — цена ушла в бюджет</i>':(p.lat?'':'<i>без точки на карте — вставь ссылку, чтобы поставить метку</i>')),bid,null);
+  };
+  if(/^https?:\/\//i.test(nm0)){
+    const g=parseGmaps(nm0);
+    if(g.lat)return done(g.nm||'Жильё',g.addr||g.nm,g.lat,g.lng);
+    if(g.short&&!g.nm)return expandShort(nm0,res=>{const g2=res?parseGmaps(res.url||''):null;
+      if(g2&&g2.lat)return done(g2.nm||'Жильё',g2.addr||g2.nm,g2.lat,g2.lng);
+      if(g2&&(g2.nm||g2.addr))return geocode(g2.addr||g2.nm,r=>done(g2.nm||g2.addr,g2.addr||g2.nm,r&&r.lat,r&&r.lng));
+      done('Жильё',nm0);});
+    return geocode(g.addr||g.nm||nm0,r=>done(g.nm||'Жильё',g.addr||g.nm,r&&r.lat,r&&r.lng));
+  }
+  /* «Beaumont Hotel, Ouray, CO» → название до первой запятой, адрес целиком */
+  const c0=nm0.indexOf(','),nmShort=c0>0?nm0.slice(0,c0).trim():nm0;
+  geocode(nm0,r=>done(nmShort,nm0,r&&r.lat,r&&r.lng));
+}
 /* новое место руками или по ссылке из Google Maps */
 function addPlace(tid,d){
+  /* жильё, добавленное через день, уезжает в «Проживание» города — вход любой, место одно */
+  if(d&&d.kind==='stay'){const e0=dayOf(tid);if(e0){closeDaySheet();saveStay(e0.base,null,d.q||d.nm,0);return;}}
   const e=dayOf(tid);if(!e||!d||!d.nm)return;
   const id='u'+(Date.now().toString(36))+Math.floor(Math.random()*1e3).toString(36);
   const c={id:id,d:tid,base:e.base,cat:d.cat||'town',kind:d.kind||'other',nm:d.nm,q:d.q||d.nm,why:d.why||'',
@@ -3015,6 +3103,15 @@ document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)r
   if(t.dataset.mvto){closeDaySheet();movePlace(t.dataset.mvid,tidOf(t.dataset.mvto));}
   if(t.dataset.delpl){closeDaySheet();deletePlace(t.dataset.delpl);}
   if(t.dataset.kind){const box=t.parentNode;if(box)box.querySelectorAll('.dskind').forEach(b=>b.classList.toggle('on',b===t));}
+  if(t.dataset.stayadd){addStaySheet(t.dataset.stayadd);}
+  if(t.dataset.stayedit){addStaySheet(t.dataset.staybase,t.dataset.stayedit);}
+  if(t.dataset.staysave){
+    const v=((document.getElementById('stNm')||{}).value||'').trim();
+    if(!v){const i=document.getElementById('stNm');if(i)i.focus();return;}
+    const rate=Math.round(parseFloat((document.getElementById('stRate')||{}).value)||0);
+    t.textContent='Ищем на карте…';t.disabled=true;
+    closeDaySheet();saveStay(t.dataset.staysave,t.dataset.stayid||null,v,rate);
+  }
   if(t.dataset.edopen){editPlaceSheet(t.dataset.edopen);}
   if(t.dataset.edsave){
     const nm=((document.getElementById('edNm')||{}).value||'').trim();
