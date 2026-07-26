@@ -939,8 +939,8 @@ body{background:linear-gradient(168deg,#eef1f8,#e9edf6 60%,#e6eaf4)!important}
 .stbtn.fix{color:#5b3fc4;border-color:rgba(91,63,196,.35);background:#faf8ff}
 /* «Изменить» и «Убрать» — одинаковые, каждая на половину, вместе от края до края текста.
    Ссылка на карту уезжает отдельной строкой сверху, чтобы не сбивать пару. */
-.mystact{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:auto;padding-top:11px}
-.mystact .cbookl{grid-column:1/-1;padding-top:0;padding-bottom:1px;font-size:12.5px}
+.mystact{display:flex;align-items:center;gap:10px;margin-top:auto;padding-top:11px}
+.mystact .cbookl{flex:1;min-width:0;padding-top:0;font-size:12px;letter-spacing:-.02em}
 .stbtn{border:1.5px solid rgba(20,32,27,.12);background:#fff;color:#6d7c74;border-radius:9px;padding:7px 10px;
   font:800 10.5px/1 "Plus Jakarta Sans",sans-serif;cursor:pointer}
 .mystact .stbtn{display:flex;align-items:center;justify-content:center;text-align:center;width:100%;min-height:36px;
@@ -2075,14 +2075,11 @@ function buildCities(){
         +(typeof h.lat==='number'
           ? (h.approx?'<br><b class="apx">Точка примерная — центр города, поправь её</b>':'')
           : '<br><b class="nopt">Точки на карте нет — не нашли адрес</b>')+'</span>'
-        +'<span class="mystact"><a class="cbookl" href="'+gurl(h.q||h.nm)+'" target="_blank" rel="noopener">Открыть в Google Maps →</a>'
-          /* точка есть — даём и посмотреть, и поправить: адрес часто садится в центр города */
-          +(typeof h.lat==='number'
-            ? '<button class="stbtn fix" data-showmap="'+h.id+'">Показать на карте</button>'
-              +'<button class="stbtn fix" data-fixopen="'+h.id+'">Поправить точку</button>'
-            : '<button class="stbtn fix" data-fixopen="'+h.id+'">Поставить точку на карте</button>')
-          +'<button class="stbtn" data-stayedit="'+h.id+'" data-staybase="'+b.id+'">Изменить</button>'
-          +'<button class="stbtn del" data-delpl="'+h.id+'">Убрать</button></span></span></div>').join('');
+        /* на виду только ссылка на Google Maps, остальное — под «⋯» (просьба клиента:
+           четыре кнопки в карточке — это много) */
+        +'<span class="mystact"><a class="cbookl" href="'+gurl(h.q||h.nm)+'" target="_blank" rel="noopener">Открыть в Google Maps</a>'
+          +'<button class="cpmv" data-staymenu="'+h.id+'" aria-label="что сделать с жильём" title="что сделать с жильём">⋯</button>'
+        +'</span></span></div>').join('');
     const stay='<div class="cnode"><span class="cdot">'+ic('bed','i-sm')+'</span>'
       +'<div class="clbl"><b>Проживание</b><span>Дни '+firstDay+'–'+lastDay+' · '+dm(ci)+'–'+dm(co)+' · '+b.nights+' '+nights(b.nights)+'</span></div>'
       +(mine.length
@@ -3052,6 +3049,18 @@ function savePlaceEdit(id,nm,why,kind){
   toast('<b>Изменили «'+p.nm+'»</b>',p.base,prev);
 }
 /* «Поставить точку на карте» — для места, которому координаты не нашлись */
+/* Всё, что можно сделать с жильём — одним списком под «⋯»: в карточке место есть
+   только у ссылки на Google Maps (просьба клиента). */
+function stayMenuSheet(id){
+  const p=placeById(id);if(!p)return;
+  const b=baseById(p.base),has=typeof p.lat==='number';
+  sheet('<div class="dsh"><b>'+p.nm+'</b><span>'+(b?shortName(b.name):'')+' · твоё жильё</span></div>'
+    +(has?'<button class="dscancel alt" data-showmap="'+id+'">Показать на нашей карте</button>':'')
+    +'<button class="dscancel alt" data-fixopen="'+id+'">'+(has?'Поправить точку на карте':'Поставить точку на карте')+'</button>'
+    +'<button class="dscancel alt" data-stayedit="'+id+'" data-staybase="'+p.base+'">Изменить название и цену</button>'
+    +'<button class="dscancel del" data-delpl="'+id+'">Убрать это жильё</button>'
+    +'<button class="dscancel" data-dsclose="1">Отмена</button>');
+}
 /* Ставим точку САМИ, а не доверяемся геокодеру: карта с крестиком по центру —
    на телефоне двигать карту точнее, чем попадать пальцем в дом. */
 let fxMap=null;
@@ -3307,7 +3316,8 @@ document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)r
   if(t.id==='curBtn'){curSheet();}
   if(t.dataset.cur){setCur(t.dataset.cur);}
   if(t.dataset.curforce){forceCur(t.dataset.curforce);}
-  if(t.dataset.showmap&&window.showOnMap){showOnMap(t.dataset.showmap);}
+  if(t.dataset.staymenu){stayMenuSheet(t.dataset.staymenu);}
+  if(t.dataset.showmap&&window.showOnMap){closeDaySheet();showOnMap(t.dataset.showmap);}
   if(t.dataset.stayadd){addStaySheet(t.dataset.stayadd);}
   if(t.dataset.stayedit){addStaySheet(t.dataset.staybase,t.dataset.stayedit);}
   if(t.dataset.staysave){
