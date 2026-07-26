@@ -61,6 +61,12 @@ h1,h2,h3,h4{line-height:1.08;margin:0;font-family:"Plus Jakarta Sans","Inter",sa
   -webkit-backdrop-filter:saturate(180%) blur(16px);border-bottom:1px solid rgba(255,255,255,.7)}
 .topbar .wrap{display:flex;align-items:center;gap:11px;height:56px}
 .topdate{margin-left:auto}
+/* навигация в шапке (только десктоп; в телефоне — нижняя панель) */
+.topnav{display:none}
+.topnav a{font-size:13.5px;font-weight:700;color:#5c5872;padding:8px 13px;border-radius:10px;text-decoration:none;transition:background .15s,color .15s;letter-spacing:-.01em}
+.topnav a:hover{background:rgba(124,92,255,.1);color:#5b3fc4}
+.topnav a.on{color:#5b3fc4;background:#efeaff}
+#cities,#s-money,#s-food{scroll-margin-top:70px}
 .authbtn{flex:none;border:1.5px solid rgba(91,63,196,.4);background:linear-gradient(180deg,#fff,#f4f1ff);color:#5b3fc4;
   font:800 12.5px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:-.02em;padding:9px 14px;border-radius:12px;cursor:pointer;
   box-shadow:0 5px 13px -6px rgba(91,63,196,.5);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -511,6 +517,7 @@ footer a{color:#cbbcf9;font-weight:600}
 @media(min-width:1000px){
   body{padding-bottom:0}
   .bottomnav{display:none}
+  .topnav{display:flex;gap:4px;margin-left:16px}
   .wrap{padding:0 72px}
 }
 @media(prefers-reduced-motion:reduce){
@@ -1082,6 +1089,7 @@ section h2.big{margin-bottom:4px}
 
 <div class="topbar"><div class="wrap">
   <span class="brand"><span class="brandmark"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 3 4.5 8.5L17 7l5 14H2L8 3Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></span>Colorado<i>.</i></span>
+  <nav class="topnav"><a href="#cities">Дни</a><a href="#s-money">Бюджет</a><a href="#s-food">Еда</a></nav>
   <span class="topdate" id="topDate">7–16 августа 2026</span>
   <button class="authbtn" id="authBtn" style="display:none">Войти</button>
 </div></div>
@@ -2358,13 +2366,13 @@ document.addEventListener('click',e=>{
 
 /* подсветка текущего раздела в нижней панели */
 (function navHighlight(){
-  const links=[...document.querySelectorAll('.bottomnav a')];
+  const links=[...document.querySelectorAll('.bottomnav a, .topnav a')];
   if(!links.length||!('IntersectionObserver' in window))return;
-  const byId={};links.forEach(a=>byId[a.getAttribute('href').slice(1)]=a);
+  const byId={};links.forEach(a=>{const id=a.getAttribute('href').slice(1);if(!id)return;(byId[id]=byId[id]||[]).push(a);});
   const secs=Object.keys(byId).map(id=>document.getElementById(id)).filter(Boolean);
   const io=new IntersectionObserver(es=>{
     es.forEach(e=>{if(e.isIntersecting){links.forEach(l=>l.classList.remove('on'));
-      const a=byId[e.target.id];if(a)a.classList.add('on');}});
+      (byId[e.target.id]||[]).forEach(a=>a.classList.add('on'));}});
   },{rootMargin:'-45% 0px -50% 0px'});
   secs.forEach(s=>io.observe(s));
 })();
