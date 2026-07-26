@@ -1476,6 +1476,7 @@ const ICONS={
  tree:'<path d="M12 2 7 10h3l-4 6h5v6h2v-6h5l-4-6h3L12 2Z"/>',
  chevron:'<path d="m6 9 6 6 6-6"/>',
  fuel:'<path d="M4 21V5a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v16M3 21h11M4.5 9.5h8M15 6.5l3 1.9a2 2 0 0 1 1 1.7v6.4a1.75 1.75 0 0 0 3.5 0v-5.9h-2.5"/>',
+ shop:'<path d="M4 8h16l-1.2 11.2a2 2 0 0 1-2 1.8H7.2a2 2 0 0 1-2-1.8L4 8Z"/><path d="M8.5 8V6a3.5 3.5 0 0 1 7 0v2"/>',
  cal:'<path d="M3 8h18M7 3v4M17 3v4M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"/>',
  foodwine:'<path d="M2.6 2.3v4.3M5.9 2.3v4.3M9.2 2.3v4.3M2.6 6.6a3.3 3.3 0 0 0 6.6 0M5.9 9.9v11.8"/><path d="M12 3.2v17.6" opacity=".35"/><path d="M14.6 2.3h7.4l-1 5.5a2.85 2.85 0 0 1-5.4 0l-1-5.5Z"/><path d="M18.3 12v9.7M15.6 21.7h5.4"/>',
  layers:'<path d="m12 2 9 5-9 5-9-5 9-5ZM3 12l9 5 9-5M3 17l9 5 9-5"/>',
@@ -2482,15 +2483,15 @@ let MOVED={},CUSTOM=[];
    и есть его «лицо»: иконка на карте и подпись в карточке.
    ВАЖНО: это отдельное поле kind, а НЕ cat — cat:'food' у нас означает слой ресторанов
    на карте, такие места из дней исключаются. */
+/* Кафе и бар — это тот же ресторан, отдельные типы не нужны (правка клиента).
+   Вместо бара — «Магазин»: в дороге его отмечают чаще всего (продукты, вода, снаряжение).
+   Девять типов ложатся ровно в сетку три на три. */
 const KINDS=[
- {k:'eat',l:'Ресторан',ic:'food'},{k:'cafe',l:'Кафе',ic:'coffee'},{k:'bar',l:'Бар',ic:'wine'},
- {k:'stay',l:'Жильё',ic:'bed'},{k:'act',l:'Активность',ic:'ticket'},{k:'fuel',l:'Заправка',ic:'fuel'},
- {k:'nature',l:'Природа',ic:'mountain'},{k:'town',l:'Город',ic:'town'},{k:'transport',l:'Транспорт',ic:'train'}
+ {k:'eat',l:'Ресторан',ic:'food'},{k:'stay',l:'Жильё',ic:'bed'},{k:'act',l:'Активность',ic:'ticket'},
+ {k:'fuel',l:'Заправка',ic:'fuel'},{k:'shop',l:'Продукты',ic:'shop'},{k:'transport',l:'Транспорт',ic:'train'},
+ {k:'nature',l:'Природа',ic:'mountain'},{k:'town',l:'Город',ic:'town'},{k:'other',l:'Другое',ic:'pin'}
 ];
-/* «Другое» в списке не показываем: ничего не выбрала — значит оно и есть.
-   Так плитки ложатся ровно в три ряда по три, без дырки в конце. */
-const KIND_OTHER={k:'other',l:'Другое',ic:'pin'};
-function kindOf(p){return (p&&p.kind&&KINDS.find(x=>x.k===p.kind))||KIND_OTHER;}
+function kindOf(p){return (p&&p.kind&&KINDS.find(x=>x.k===p.kind))||KINDS[KINDS.length-1];}
 function stashTid(bid){return 's-'+bid;}
 function applyMoves(){
   P.forEach(p=>{if(p._d0===undefined)p._d0=p.d;p.d=(MOVED[p.id]!==undefined)?MOVED[p.id]:p._d0;});
@@ -2794,7 +2795,7 @@ function addPlaceSheet(tid){
     +'<div class="dssep">Новое место</div>'
     +'<div class="dsform"><input id="gmUrl" placeholder="Ссылка из Google Maps или название" autocomplete="off">'
       +'<input id="gmWhy" placeholder="Зачем сюда (по желанию)" autocomplete="off">'
-      +'<div class="dskinds">'+KINDS.map(x=>'<button class="dskind" data-kind="'+x.k+'">'
+      +'<div class="dskinds">'+KINDS.map(x=>'<button class="dskind'+(x.k==='other'?' on':'')+'" data-kind="'+x.k+'">'
         +ic(x.ic,'i-sm')+'<span>'+x.l+'</span></button>').join('')+'</div>'
       +'<button class="dsgo" data-gmadd="'+tid+'">Добавить место</button></div>'
     +(st.length?'<div class="dssep">Из «Ещё в городе» · '+st.length+'</div>'
