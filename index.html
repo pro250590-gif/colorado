@@ -890,6 +890,16 @@ body{background:linear-gradient(168deg,#eef1f8,#e9edf6 60%,#e6eaf4)!important}
 .cbookl{margin-top:auto;display:inline-flex;align-items:center;gap:6px;font:700 13px/1 "Inter",sans-serif;color:#5b3fc4;text-decoration:none;padding-top:10px}
 .cday{display:flex;align-items:center;gap:13px;background:#fff;border:1px solid #e8e9f2;border-radius:15px;padding:11px;margin-bottom:9px;text-decoration:none;color:inherit}
 .cdph{width:66px;height:66px;border-radius:12px;background:#e5e7f0 center/cover no-repeat;flex:none}
+/* свободный день — без фото, мягкая лавандовая плитка */
+.cdph.free{background:linear-gradient(150deg,#f3effd,#ddd1f6);display:grid;place-items:center;color:#8b6cf0;box-shadow:inset 0 0 0 1px rgba(124,92,255,.14)}
+.cdph.free .i{width:24px;height:24px}
+.cfree{list-style:none;padding:12px 13px;border:1.5px dashed rgba(91,63,196,.3);border-radius:12px;font:600 12px/1.45 "Inter",sans-serif;color:#8b8698;background:#faf9ff}
+/* ночи в городе — прямо в шапке города, над днями */
+.cnights{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:15px;padding:12px 14px;background:#fff;border:1px solid #eceef6;border-radius:15px;box-shadow:var(--sh1)}
+.cnl{font:800 12.5px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:-.02em;color:var(--ink2)}
+/* отложенные места города */
+.cmore{background:#fff;border:1px solid #eceef6;border-radius:15px;box-shadow:var(--sh1);padding:6px 13px 13px}
+.cmoren{font:600 11.5px/1.45 "Inter",sans-serif;color:#8b8698;background:#faf9ff;border-radius:11px;padding:10px 12px;margin-top:4px}
 .cdtx{flex:1;min-width:0}
 .cdm{font:500 10.5px/1 "Inter",sans-serif;color:#8b8fa3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.01em}
 .cdm b{color:#5b3fc4}
@@ -1582,7 +1592,9 @@ function buildRoute(){
 
 function buildElev(){
   const host=document.getElementById('elev');if(!host)return;
-  const ds=Object.keys(ALT).map(Number).sort((a,b)=>a-b);
+  /* только те дни, что есть в расписании — убрал ночь, точка ушла с профиля */
+  const ds=Object.keys(ALT).map(Number).filter(n=>!!dayOf(n)).sort((a,b)=>dispOf(a)-dispOf(b));
+  if(ds.length<2){host.innerHTML='';return;}
   const W=1000,H=100,lo=1400,hi=3800,pad=6;
   const x=i=>pad+i*(W-pad*2)/(ds.length-1);
   const y=v=>H-((v-lo)/(hi-lo))*(H-14)-7;
@@ -1591,14 +1603,14 @@ function buildElev(){
   const area=line+' L'+W.toFixed(1)+' '+H+' L0 '+H+' Z';
   let dots='';
   ds.forEach((d,i)=>{const [px,py]=pts[i];
-    dots+='<circle class="elevdot" data-goday="'+d+'" cx="'+px.toFixed(1)+'" cy="'+py.toFixed(1)+'" r="7" fill="'+(DCOL[d]||'#fff')+'" stroke="#fff" stroke-width="2.5"><title>День '+d+' · '+ALTNM[d]+' · '+mrs(ALT[d])+'</title></circle>';});
+    dots+='<circle class="elevdot" data-goday="'+d+'" cx="'+px.toFixed(1)+'" cy="'+py.toFixed(1)+'" r="7" fill="'+(DCOL[d]||'#fff')+'" stroke="#fff" stroke-width="2.5"><title>День '+dispOf(d)+' · '+ALTNM[d]+' · '+mrs(ALT[d])+'</title></circle>';});
   host.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" role="img" aria-label="Профиль высоты маршрута по дням">'
     +'<defs><linearGradient id="eg" x1="0" y1="0" x2="0" y2="1">'
     +'<stop offset="0%" stop-color="#f47b20" stop-opacity=".42"/><stop offset="100%" stop-color="#f47b20" stop-opacity="0"/></linearGradient></defs>'
     +'<path d="'+area+'" fill="url(#eg)"/>'
     +'<path d="'+line+'" fill="none" stroke="#14201b" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>'
     +dots+'</svg>'
-    +'<div class="cap"><span>старт '+mrs(ALT[1])+'</span><span>профиль высоты маршрута</span><span>пик '+mrs(Math.max.apply(null,ds.map(d=>ALT[d])))+'</span></div>';
+    +'<div class="cap"><span>старт '+mrs(ALT[ds[0]])+'</span><span>профиль высоты маршрута</span><span>пик '+mrs(Math.max.apply(null,ds.map(d=>ALT[d])))+'</span></div>';
   host.querySelectorAll('.elevdot').forEach(c=>c.addEventListener('click',()=>{
     const d=c.dataset.goday;const el=document.querySelector('details.day[data-day="'+d+'"]');
     if(el){el.open=true;el.scrollIntoView({behavior:'smooth',block:'center'});}
@@ -1780,7 +1792,7 @@ function foodVisible(f){
   if(!foodOn)return false;
   if(f.fid&&!foodPicked.has(f.fid))return false;
   if(filter.mode==='base')return f.base===filter.v;
-  if(filter.mode==='day')return f.base===DAY_BASE[filter.v];
+  if(filter.mode==='day'){const e=dayOf(filter.v);return !!e&&f.base===e.base;}
   return true; // «Всё» или категория → вся еда
 }
 function pinVisible(p){if(p.cat==='food')return foodVisible(p);return picked.has(p.id)&&matchesPrimary(p);}
@@ -1799,8 +1811,8 @@ function buildCities(){
   host.innerHTML=BASES.map((b,i)=>{
     const before=nightsBefore(b.id);
     const ci=addDays(startIso,before),co=addDays(startIso,before+b.nights);
-    const days=DAYS.filter(d=>DAY_BASE[d.n]===b.id);
-    const firstDay=days.length?days[0].n:1,lastDay=days.length?days[days.length-1].n:1;
+    const days=daysOfBase(b.id);
+    const firstDay=days.length?days[0].disp:1,lastDay=days.length?days[days.length-1].disp:1;
     /* прибытие: первый город — перелёт; остальные — переезд из предыдущего */
     let arrival;
     if(i===0){
@@ -1844,22 +1856,36 @@ function buildCities(){
     /* маршрут по дням */
     const route='<div class="cnode"><span class="cdot">'+ic('cal','i-sm')+'</span>'
       +'<div class="clbl"><b>Маршрут</b><span>Дни '+firstDay+'–'+lastDay+'</span></div>'
-      +days.map(d=>{const n=dayPts(d.n);const list=P.filter(p=>p.d===d.n&&p.cat!=='food');
-        return '<details class="cday" data-day="'+d.n+'"><summary class="cdaysum"><span class="cdph"'+(dayPhoto(d.n)?' style="background-image:url('+dayPhoto(d.n)+')"':'')+'></span>'
-        +'<span class="cdtx"><span class="cdm"><b>День '+d.n+'</b> · '+dm(dayDateFor(d.n))+' · '+n+' '+plural(n,'активность','активности','активностей')+'</span><b>'+d.title+'</b></span>'
+      +days.map(e=>{const d=e.tpl,n=dayPts(e.tid),list=P.filter(p=>p.d===e.tid&&p.cat!=='food'),ph=dayPhoto(e.tid);
+        return '<details class="cday" data-day="'+e.tid+'"><summary class="cdaysum"><span class="cdph'+(ph?'':' free')+'"'+(ph?' style="background-image:url('+ph+')"':'')+'>'+(ph?'':ic('sun','i-sm'))+'</span>'
+        +'<span class="cdtx"><span class="cdm"><b>День '+e.disp+'</b> · '+dm(e.date)+' · '+n+' '+plural(n,'активность','активности','активностей')+'</span><b>'+dayTitle(e)+'</b></span>'
         +'<span class="cgo">'+ic('chevron','i-sm')+'</span></summary>'
         +'<div class="cdaybody">'
-        +(d.leg?'<div class="cleg"><b>'+d.pill+'</b> '+d.leg+'</div>':'')
+        +(d&&d.leg?'<div class="cleg"><b>'+d.pill+'</b> '+d.leg+'</div>':'')
         +'<ul class="cplaces">'+list.map(p=>{const emo=p.star?'<span class="cstar">'+ic('star','i-sm')+'</span>':'';const on=picked.has(p.id);
           return '<li class="'+(on?'':'off')+'" data-pl="'+p.id+'"><div class="cpl-row"><div class="cpl-main">'
             +'<span class="cpnm">'+emo+'<a href="'+gurl(p.q)+'" target="_blank" rel="noopener">'+p.nm+'</a></span>'+metaStrip(p)+'<span class="cwhy">'+p.why+'</span></div>'
-            +'<span class="cpsw'+(on?' on':'')+'" data-pl="'+p.id+'" role="switch" aria-checked="'+on+'" aria-label="показывать на карте" tabindex="0"><i></i></span></div></li>';}).join('')+'</ul>'
-        +(d.note?'<div class="cnote">'+d.note+'</div>':'')+'</div></details>';}).join('')+'</div>';
+            +'<span class="cpsw'+(on?' on':'')+'" data-pl="'+p.id+'" role="switch" aria-checked="'+on+'" aria-label="показывать на карте" tabindex="0"><i></i></span></div></li>';}).join('')
+          +(list.length?'':'<li class="cfree">Свободный день — планы пока не заданы.</li>')+'</ul>'
+        +(d&&d.note?'<div class="cnote">'+d.note+'</div>':'')+'</div></details>';}).join('')+'</div>';
+    /* сколько ночей в городе — кнопки прямо здесь, над днями */
+    const nb='<div class="cnights"><span class="cnl">Ночей в городе</span>'
+      +'<span class="hstep"><button class="stepbtn" data-nd="'+i+'" data-dir="-1" aria-label="меньше ночей">−</button>'
+      +'<span class="hn"><b>'+b.nights+'</b> '+nights(b.nights)+'</span>'
+      +'<button class="stepbtn" data-nd="'+i+'" data-dir="1" aria-label="больше ночей">+</button></span></div>';
+    /* отложенные места города — ничего не теряется */
+    const sp=stashPlaces(b.id);
+    /* «в городе», а не «в Урее» — падежи не выведешь для произвольного названия */
+    const more=sp.length?('<div class="cnode"><span class="cdot">'+ic('layers','i-sm')+'</span>'
+      +'<div class="clbl"><b>Ещё в городе</b><span>'+shortName(b.name)+' · '+sp.length+' '+plural(sp.length,'место','места','мест')+' не поместились в дни</span></div>'
+      +'<div class="cmore"><ul class="cplaces">'+sp.map(p=>'<li data-pl="'+p.id+'"><div class="cpl-row"><div class="cpl-main">'
+        +'<span class="cpnm"><a href="'+gurl(p.q)+'" target="_blank" rel="noopener">'+p.nm+'</a></span>'+metaStrip(p)+'<span class="cwhy">'+p.why+'</span></div></div></li>').join('')
+      +'</ul><div class="cmoren">Добавь ночь в городе — появится свободный день, и места вернутся в него.</div></div></div>'):'';
 
     return '<section class="city" id="city-'+b.id+'"><div class="wrap">'
       +'<div class="chead"><span class="ckick">База '+(i+1)+' из '+BASES.length+' · '+dm(ci)+'–'+dm(co)+'</span>'
-      +'<h2>'+shortName(b.name)+'</h2><p>'+b.desc+'</p></div>'
-      +'<div class="ctl">'+arrival+carHire+stay+route+'</div></div></section>';
+      +'<h2>'+shortName(b.name)+'</h2><p>'+b.desc+'</p>'+nb+'</div>'
+      +'<div class="ctl">'+arrival+carHire+stay+route+more+'</div></div></section>';
   }).join('');
 
   /* тумблеры активностей: вкл/выкл место (на карте + тускнеет строка) */
@@ -1954,8 +1980,8 @@ function dropList(seg,total){
     +'<span class="mfdtx"><b>'+title+'</b><i class="mdash">—</i><span class="mmetric">'+metric+'</span></span></button>';
   let rows='',head='',allLabel='';
   if(seg==='day'){head='Выбери день';allLabel='Все дни';
-    rows=DAYS.map(d=>{const pts=dayPts(d.n);
-      return mrow('day',d.n,filter.mode==='day'&&filter.v===d.n,'День '+d.n,fmtLong(dayDateFor(d.n))+' · '+pts+' '+plural(pts,'точка','точки','точек'));}).join('');
+    rows=SCHED.map(e=>{const pts=dayPts(e.tid);
+      return mrow('day',e.tid,filter.mode==='day'&&filter.v===e.tid,'День '+e.disp,fmtLong(e.date)+' · '+pts+' '+plural(pts,'точка','точки','точек'));}).join('');
   }else if(seg==='base'){head='Выбери базу';allLabel='Все базы';
     rows=BASES.map((b,i)=>mrow('base',b.id,filter.mode==='base'&&filter.v===b.id,shortName(b.name),'база '+(i+1)+' · '+b.nights+' '+nights(b.nights))).join('');
   }else{head='Выбери тип';allLabel='Все типы';
@@ -1972,12 +1998,12 @@ function applyFilter(){
   // строки списка (только маршрутные точки; еда — отдельный раздел ниже)
   P.forEach(p=>{if(p.cat==='food')return;const li=document.querySelector('li[data-id="'+p.id+'"]');if(li)li.classList.toggle('hiddenrow',!matchesPrimary(p));});
   // карточки дней
-  DAYS.forEach(d=>{const card=document.querySelector('details.day[data-day="'+d.n+'"]');if(!card)return;
-    const anyVis=P.some(p=>p.d===d.n&&matchesPrimary(p));
-    const relevant=(filter.mode==='all')||(filter.mode==='day'&&filter.v===d.n)||(filter.mode==='base'&&filter.v===DAY_BASE[d.n])||(filter.mode==='cat'&&anyVis);
+  SCHED.forEach(e=>{const card=document.querySelector('details.day[data-day="'+e.tid+'"]');if(!card)return;
+    const anyVis=P.some(p=>p.d===e.tid&&matchesPrimary(p));
+    const relevant=(filter.mode==='all')||(filter.mode==='day'&&filter.v===e.tid)||(filter.mode==='base'&&filter.v===e.base)||(filter.mode==='cat'&&anyVis);
     card.style.display=relevant?'':'none';
-    if(filter.mode==='day'&&filter.v===d.n)card.open=true;
-    if(filter.mode==='base'&&filter.v===DAY_BASE[d.n])card.open=true;
+    if(filter.mode==='day'&&filter.v===e.tid)card.open=true;
+    if(filter.mode==='base'&&filter.v===e.base)card.open=true;
   });
   // карта: общий вид (all) = города-счётчики + самолёты + машинка; выбран город/день = точки-пины
   let shownPts=0;const overview=(filter.mode==='all');
@@ -1990,7 +2016,7 @@ function applyFilter(){
     if(show){if(!map.hasLayer(markers[p.id]))markers[p.id].addTo(map);shownPts++;}
     else{if(map.hasLayer(markers[p.id]))map.removeLayer(markers[p.id]);}});
   // линии
-  if(map)lineLayers.forEach(l=>{const show=(filter.mode==='all')||(filter.mode==='day'&&l.days.indexOf(filter.v)>=0)||(filter.mode==='base'&&l.days.some(dn=>DAY_BASE[dn]===filter.v));
+  if(map)lineLayers.forEach(l=>{const show=(filter.mode==='all')||(filter.mode==='day'&&l.days.indexOf(filter.v)>=0)||(filter.mode==='base'&&l.days.some(dn=>{const e=dayOf(dn);return e&&e.base===filter.v;}));
     if(show){if(!map.hasLayer(l.layer))l.layer.addTo(map);}else{if(map.hasLayer(l.layer))map.removeLayer(l.layer);}});
   const cntEl=document.getElementById('cnt');if(cntEl)cntEl.textContent=map?shownPts:0;
   fitVisible();
@@ -2016,15 +2042,16 @@ function metaStrip(p){
 }
 function buildDays(){
   const host=document.getElementById('days');let out='';
-  DAYS.forEach(d=>{
-    const c=DCOL[d.n];const list=P.filter(p=>p.d===d.n);
-    out+='<details class="day" id="day-'+d.n+'" data-day="'+d.n+'"'+(d.n===1?' open':'')+'>'
-      +'<summary class="day-head">'+'<span class="dnum" style="background:linear-gradient(150deg,'+c+','+(BCOL2[DAY_BASE[d.n]]||c)+')"><b>'+d.n+'</b><i>день</i></span>'
-      +'<span class="dhead-txt"><h3>'+d.title+'</h3><span class="dsub"><span class="ddate" data-daydate="'+d.n+'">'+dayDate(START,d.n)+'</span><span class="dalt">'+mrs(ALT[d.n])+'</span></span></span>'
+  SCHED.forEach(e=>{
+    const d=e.tpl||{title:dayTitle(e),pill:'свободный день',leg:'',note:''};
+    const c=DCOL[e.tid]||baseById(e.base).color;const list=P.filter(p=>p.d===e.tid);
+    out+='<details class="day" id="day-'+e.tid+'" data-day="'+e.tid+'"'+(e.disp===1?' open':'')+'>'
+      +'<summary class="day-head">'+'<span class="dnum" style="background:linear-gradient(150deg,'+c+','+(BCOL2[e.base]||c)+')"><b>'+e.disp+'</b><i>день</i></span>'
+      +'<span class="dhead-txt"><h3>'+d.title+'</h3><span class="dsub"><span class="ddate" data-daydate="'+e.tid+'">'+fmtDate(e.date)+'</span><span class="dalt">'+mrs(ALT[e.tid])+'</span></span></span>'
       +'<span class="dcount">'+list.length+' '+plural(list.length,'точка','точки','точек')+'</span><span class="chev"><svg class="i i-sm" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9.5 18 6-6-6-6"/></svg></span></summary>'
       +'<div class="day-body">'
-      +'<div class="leg"><span class="pill">'+d.pill+'</span> <b>'+d.leg+'</b><a class="dirlink" href="#" data-dir="'+d.n+'" target="_blank" rel="noopener">Маршрут в Google Maps →</a></div>'
-      +'<div class="daytools"><button class="tiny" data-dayon="'+d.n+'">Отметить день</button><button class="tiny" data-dayoff="'+d.n+'">Снять день</button></div>'
+      +'<div class="leg"><span class="pill">'+d.pill+'</span> <b>'+d.leg+'</b><a class="dirlink" href="#" data-dir="'+e.tid+'" target="_blank" rel="noopener">Маршрут в Google Maps →</a></div>'
+      +'<div class="daytools"><button class="tiny" data-dayon="'+e.tid+'">Отметить день</button><button class="tiny" data-dayoff="'+e.tid+'">Снять день</button></div>'
       +'<ul class="stops">'+list.map(p=>{const emo=p.star?'<span class="cemo star">'+ic('star','i-sm')+'</span>':'';
         return '<li data-id="'+p.id+'" data-cat="'+p.cat+'" data-day="'+p.d+'" data-base="'+p.base+'">'
         +'<span class="pic">'
@@ -2058,7 +2085,7 @@ function dirURL(dayN){
   const wp=sel.slice(1,-1).slice(0,8).map(p=>encodeURIComponent(p.q)).join('%7C');
   return 'https://www.google.com/maps/dir/?api=1&origin='+o+'&destination='+dst+(wp?'&waypoints='+wp:'')+'&travelmode=driving';
 }
-function updateDirLinks(){document.querySelectorAll('[data-dir]').forEach(a=>{const u=dirURL(+a.dataset.dir);
+function updateDirLinks(){document.querySelectorAll('a[data-dir]').forEach(a=>{const u=dirURL(tidOf(a.dataset.dir));
   if(u){a.href=u;a.style.opacity='1';a.style.pointerEvents='auto';}else{a.href='#';a.style.opacity='.35';a.style.pointerEvents='none';}});}
 function syncChecks(){P.forEach(p=>{const on=picked.has(p.id);
   const b=document.querySelector('[data-tick="'+p.id+'"]');if(b)b.checked=on;
@@ -2224,13 +2251,52 @@ function fitFoodTabs(){
 /* ================= ПЛАНИРОВЩИК НОЧЁВОК ================= */
 /* ===== состояние плана: дата старта + ночи (редактируемо, сохраняется) ===== */
 const PKEY='co-trip-2026-plan';let startIso=START;let PEOPLE=2;
-const baseDays={};BASES.forEach(b=>baseDays[b.id]=[]);
-Object.keys(DAY_BASE).forEach(d=>baseDays[DAY_BASE[d]].push(+d));
-Object.keys(baseDays).forEach(k=>baseDays[k].sort((a,b)=>a-b));
+/* ================= РАСПИСАНИЕ ДНЕЙ =================
+   Дни НЕ лежат готовым списком — они считаются из городов и ночей.
+   `d` у мест (P) и ключи ALT/LINES — это ID шаблона дня (бывший номер), а НЕ его позиция.
+   Слотов у города = его ночи; у последнего +1 на день вылета (он всегда в конце).
+   Шаблонов больше слотов — лишние уходят в «Ещё в городе» (STASH, ничего не теряется);
+   слотов больше — появляются свободные дни, которые наполняет пользователь. */
+let SCHED=[],STASH={},SCHED_BY={};
+function dayTpls(bid){return DAYS.filter(d=>DAY_BASE[d.n]===bid);}
+function buildSchedule(){
+  SCHED=[];STASH={};SCHED_BY={};
+  BASES.forEach((b,bi)=>{
+    const isLast=bi===BASES.length-1, tpls=dayTpls(b.id).slice();
+    const fin=isLast?(tpls.pop()||null):null;      /* день вылета — всегда последний */
+    const slots=Math.max(0,b.nights), use=tpls.slice(0,slots);
+    STASH[b.id]=tpls.slice(use.length);
+    use.forEach(t=>SCHED.push({tid:t.n,base:b.id,tpl:t}));
+    for(let k=use.length;k<slots;k++)SCHED.push({tid:'f-'+b.id+'-'+k,base:b.id,tpl:null});
+    if(fin)SCHED.push({tid:fin.n,base:b.id,tpl:fin,fin:1});
+  });
+  SCHED.forEach((e,i)=>{e.disp=i+1;e.date=addDays(startIso,i);SCHED_BY[e.tid]=e;});
+}
+function dayOf(tid){return SCHED_BY[tid]||null;}
+/* значения из data-атрибутов приходят строкой: '4' → 4, 'f-our-1' оставляем как есть */
+function tidOf(v){return (typeof v==='string'&&v!==''&&!isNaN(+v))?+v:v;}
+function dispOf(tid){const e=SCHED_BY[tid];return e?e.disp:0;}
+function daysOfBase(bid){return SCHED.filter(e=>e.base===bid);}
+function baseById(id){return BASES.find(b=>b.id===id)||BASES[0];}
+function dayTitle(e){return e.tpl?e.tpl.title:'Свободный день · '+shortName(baseById(e.base).name);}
+/* места отложенных дней — лежат в городе и ждут свободного дня */
+function stashPlaces(bid){const t=(STASH[bid]||[]).map(x=>x.n);return P.filter(p=>t.indexOf(p.d)>=0&&p.cat!=='food');}
+function stashCount(bid){return stashPlaces(bid).length;}
+/* меняем ночи в городе → пересобираем расписание и всё, что от дней зависит */
+function setNights(i,n){
+  const b=BASES[i];if(!b)return;
+  const v=Math.max(1,Math.min(30,n));if(v===b.nights)return;
+  b.nights=v;savePlan();rerenderTrip();
+}
+function rerenderTrip(){
+  buildSchedule();
+  renderStays();buildRoute();buildDays();buildCities();buildFilters();buildElev();
+  recomputeDates();refreshBudgetCounts();syncChecks();applyFilter();updateDirLinks();
+}
 function loadPlan(){try{const s=JSON.parse(localStorage.getItem(PKEY));if(s){if(s.start)startIso=s.start;if(typeof s.people==='number'&&s.people>=1)PEOPLE=s.people;if(Array.isArray(s.nights))BASES.forEach((b,i)=>{if(typeof s.nights[i]==='number'&&s.nights[i]>=1)b.nights=s.nights[i];});}}catch(e){}}
 function savePlan(){try{localStorage.setItem(PKEY,JSON.stringify({start:startIso,people:PEOPLE,nights:BASES.map(b=>b.nights)}));}catch(e){}}
 function nightsBefore(baseId){let s=0;for(const b of BASES){if(b.id===baseId)break;s+=b.nights;}return s;}
-function dayDateFor(dayN){const bid=DAY_BASE[dayN];const pos=baseDays[bid].indexOf(dayN);return addDays(startIso,nightsBefore(bid)+pos);}
+function dayDateFor(tid){const e=SCHED_BY[tid];return e?e.date:addDays(startIso,0);}
 function totalNights(){return BASES.reduce((s,b)=>s+b.nights,0);}
 /* в скобках показываем только латинское название (Ouray), русские уточнения не дублируем */
 function altName(s){const m=s.match(/\((.+?)\)/);return m&&/^[A-Za-z][A-Za-z .-]*$/.test(m[1])?m[1]:'';}
@@ -2239,8 +2305,9 @@ function dm(dt){return dt.getDate()+' '+MONTHS[dt.getMonth()].slice(0,3);}
 function plural(n,a,b,c){const x=n%10,y=n%100;if(x===1&&y!==11)return a;if(x>=2&&x<=4&&(y<10||y>=20))return b;return c;}
 function nights(n){const a=n%10,b=n%100;if(a===1&&b!==11)return'ночь';if(a>=2&&a<=4&&(b<10||b>=20))return'ночи';return'ночей';}
 function recomputeDates(){
-  DAYS.forEach(d=>{const el=document.querySelector('[data-daydate="'+d.n+'"]');if(el)el.textContent=fmtDate(dayDateFor(d.n));});
-  const tn=totalNights(), td=tn+1;
+  if(!SCHED.length)buildSchedule();
+  SCHED.forEach(e=>{const el=document.querySelector('[data-daydate="'+e.tid+'"]');if(el)el.textContent=fmtDate(e.date);});
+  const tn=totalNights(), td=SCHED.length;
 
   const dd=document.getElementById('tDays');
   if(dd)dd.textContent=tn+' '+nights(tn)+' · '+BASES.length+' '+plural(BASES.length,'база','базы','баз');
@@ -2335,9 +2402,9 @@ function updateHotelSum(){
 document.addEventListener('change',e=>{const id=e.target.dataset&&e.target.dataset.tick;if(!id)return;
   e.target.checked?picked.add(id):picked.delete(id);savePicks();syncChecks();applyFilter();});
 document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)return;
-  if(t.dataset.dayon){P.filter(p=>p.d===+t.dataset.dayon).forEach(p=>picked.add(p.id));savePicks();syncChecks();applyFilter();}
-  if(t.dataset.dayoff){P.filter(p=>p.d===+t.dataset.dayoff).forEach(p=>picked.delete(p.id));savePicks();syncChecks();applyFilter();}
-  if(t.dataset.nd!==undefined){const i=+t.dataset.nd,dir=+t.dataset.dir;BASES[i].nights=Math.max(1,Math.min(21,BASES[i].nights+dir));savePlan();renderStays();recomputeDates();refreshBudgetCounts();buildRoute();buildCities();}});
+  if(t.dataset.dayon){P.filter(p=>p.d===tidOf(t.dataset.dayon)).forEach(p=>picked.add(p.id));savePicks();syncChecks();applyFilter();}
+  if(t.dataset.dayoff){P.filter(p=>p.d===tidOf(t.dataset.dayoff)).forEach(p=>picked.delete(p.id));savePicks();syncChecks();applyFilter();}
+  if(t.dataset.nd!==undefined){const i=+t.dataset.nd,dir=+t.dataset.dir;setNights(i,BASES[i].nights+dir);}});
 function wireButtons(){
   document.getElementById('allOn').onclick=()=>{P.forEach(p=>picked.add(p.id));savePicks();syncChecks();applyFilter();};
   document.getElementById('allOff').onclick=()=>{picked.clear();savePicks();syncChecks();applyFilter();};
@@ -2485,7 +2552,8 @@ function wireBudget(){
 loadPlan();
 ['tileIc1|clock','tileIc2|pin','tileIc3|money','tileIc4|tree'].forEach(p=>{const [id,ico]=p.split('|');const el=document.getElementById(id);if(el)el.innerHTML=ic(ico);});
 const scMed=document.getElementById('scMedIcon');if(scMed)scMed.innerHTML=ic('cal','i-sm');
-const sd0=document.getElementById('startDate');if(sd0){sd0.value=startIso;sd0.addEventListener('change',e=>{startIso=e.target.value||START;savePlan();renderStays();recomputeDates();refreshBudgetCounts();buildRoute();buildCities();});}
+const sd0=document.getElementById('startDate');if(sd0){sd0.value=startIso;sd0.addEventListener('change',e=>{startIso=e.target.value||START;savePlan();rerenderTrip();});}
+buildSchedule();
 buildRoute();buildElev();buildFilters();buildDays();buildCities();buildFood();buildBases();buildPlanner();wireButtons();wireBudget();buildBudgetStay();
 /* линия маршрута считается от ширины экрана и ширины подписей — пересобираем после ресайза и загрузки шрифтов */
 let _rrt;addEventListener('resize',()=>{clearTimeout(_rrt);_rrt=setTimeout(buildRoute,160);});
@@ -2582,7 +2650,8 @@ function reinit(){try{
   try{const s=JSON.parse(localStorage.getItem(BKEY))||{};BASES.forEach((b,i)=>HRATE[i]=parseFloat(s['h'+(i+1)+'rate'])||0);}catch(e){}
   const sd=document.getElementById('startDate');if(sd)sd.value=startIso;
   const pn=document.getElementById('pNum');if(pn)pn.textContent=PEOPLE;
-  buildRoute();buildDays();buildCities();buildFood();buildBases();buildPlanner();buildBudget();recomputeDates();syncChecks();applyFilter();
+  buildSchedule();
+  buildRoute();buildDays();buildCities();buildFood();buildBases();buildPlanner();buildBudget();buildFilters();buildElev();recomputeDates();syncChecks();applyFilter();
 }catch(e){}}
 async function cloudSync(session){if(!sb||!session)return;
   try{const{data,error}=await sb.from('user_plans').select('plan,updated_at').eq('user_id',session.user.id).maybeSingle();
