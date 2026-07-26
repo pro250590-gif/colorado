@@ -953,8 +953,13 @@ body{background:linear-gradient(168deg,#eef1f8,#e9edf6 60%,#e6eaf4)!important}
 #daySheet.on{opacity:1;visibility:visible}
 .dsov{position:absolute;inset:0;background:rgba(20,32,27,.42);backdrop-filter:blur(2px)}
 .dspanel{position:absolute;left:12px;right:12px;bottom:calc(16px + env(safe-area-inset-bottom));background:#fff;border-radius:22px;
-  padding:16px 14px 14px;box-shadow:0 24px 60px -18px rgba(20,32,27,.6);max-height:80vh;overflow:auto}
-.dsh{margin:0 4px 12px}
+  padding:16px 14px 14px;box-shadow:0 24px 60px -18px rgba(20,32,27,.6)}
+.dsbody{max-height:76vh;overflow:auto;-webkit-overflow-scrolling:touch}
+.dsx{position:absolute;top:12px;right:12px;width:34px;height:34px;border-radius:50%;border:0;background:#f4f5f9;
+  color:var(--ink2)!important;display:grid;place-items:center;cursor:pointer;z-index:3}
+.dsx .i{width:16px;height:16px;stroke-width:2.4}
+.dsx:active{transform:scale(.94)}
+.dsh{margin:0 4px 12px;padding-right:42px}
 .dsh b{display:block;font:800 17px/1.2 "Plus Jakarta Sans",sans-serif;letter-spacing:-.03em}
 .dsh span{display:block;font:600 11.5px/1.4 "Inter",sans-serif;color:var(--mut);margin-top:5px}
 /* ВАЖНО: у <button> на iOS свой синий цвет текста — цвет задаём явно всем кнопкам листа */
@@ -2716,25 +2721,26 @@ function pickDaySheet(bid){
   const days=removableDays(bid);if(!days.length)return;
   const pick=autoRemovable(bid),sug=pick?pick.e.tid:null;
   const order=days.slice().sort((a,b)=>(a.tid===sug?-1:0)-(b.tid===sug?-1:0));
-  let el=document.getElementById('daySheet');
-  if(!el){el=document.createElement('div');el.id='daySheet';document.body.appendChild(el);}
-  el.innerHTML='<div class="dsov" data-dsclose="1"></div><div class="dspanel">'
-    +'<div class="dsh"><b>Какой день убрать?</b><span>'+shortName(baseById(bid).name)
+  sheet('<div class="dsh"><b>Какой день убрать?</b><span>'+shortName(baseById(bid).name)
       +' · поездка станет короче на день. Пока ничего не убрано</span></div>'
     +order.map(e=>{const n=dayPlaces(e).length,isSug=e.tid===sug;
       return '<button class="dsrow'+(isSug?' sug':'')+'" data-rmday="'+e.tid+'" data-rmbase="'+bid+'"><span class="cn">'+e.disp+'</span>'
         +'<span class="dst"><b>'+dayTitle(e)+'</b><span>'+dm(e.date)+' · '+n+' '+plural(n,'место','места','мест')
         +(isSug&&pick.why?' · '+pick.why:'')+'</span></span>'
         +(isSug?'<span class="dssug">предлагаем</span>':(dayWeight(e)===0?'<span class="dsfree">пусто</span>':''))+'</button>';}).join('')
-    +'<button class="dscancel" data-dsclose="1">Ничего не убирать</button></div>';
-  el.classList.add('on');
+    +'<button class="dscancel" data-dsclose="1">Ничего не убирать</button>');
 }
 function closeDaySheet(){const el=document.getElementById('daySheet');if(el)el.classList.remove('on');}
 /* общий лист снизу — для переноса и добавления места */
 function sheet(inner){
   let el=document.getElementById('daySheet');
   if(!el){el=document.createElement('div');el.id='daySheet';document.body.appendChild(el);}
-  el.innerHTML='<div class="dsov" data-dsclose="1"></div><div class="dspanel">'+inner+'</div>';
+  /* крестик в углу — чтобы закрыть сразу, не докручивая до «Отмены» */
+  /* Крестик — снаружи прокручиваемой части, поэтому он всегда на месте: список
+     «Ещё в городе» может быть длинным, и докручивать до «Отмены» неудобно. */
+  el.innerHTML='<div class="dsov" data-dsclose="1"></div><div class="dspanel">'
+    +'<button class="dsx" data-dsclose="1" aria-label="закрыть">'+ic('close','i-sm')+'</button>'
+    +'<div class="dsbody">'+inner+'</div></div>';
   el.classList.add('on');
 }
 function dayRow(e,attrs,note,cls){
