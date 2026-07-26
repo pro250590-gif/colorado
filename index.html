@@ -2822,6 +2822,35 @@ function tripCenter(){
 /* Порядок заходов: Photon (единственный бесплатный, кто знает номера домов) →
    Nominatim как дали → Nominatim без названия (для кафе: «Ice House…, 225 7th Ave» не
    находится, а «225 7th Ave» — да). Грубые попадания копим и отдаём последними. */
+/* Справочник адресов США (Бюро переписи, база TIGER): бесплатный, без ключа, знает
+   номера домов там, где OpenStreetMap пуст. Заголовка CORS у него нет, поэтому зовём
+   через JSONP — вставкой <script>. Браузеру это разрешено, прослойка не нужна.
+   Проверено: «73 Tamarron Drive, Durango, CO 81301» → 37.5016, −107.8148. */
+let _jsonpN=0;
+function censusGeo(q,cb){
+  const text=String(q||'').trim();
+  if(!/\d/.test(text)||typeof document==='undefined')return cb(null);  /* без номера дома искать нечего */
+  const name='__cg'+(++_jsonpN)+Date.now().toString(36);
+  const s=document.createElement('script');
+  let fired=false;
+  const fin=r=>{if(fired)return;fired=true;clearTimeout(to);
+    try{delete window[name];}catch(e){window[name]=undefined;}
+    if(s.parentNode)s.parentNode.removeChild(s);
+    cb(r);};
+  const to=setTimeout(()=>fin(null),9000);
+  window[name]=data=>{
+    try{
+      const m=(data&&data.result&&data.result.addressMatches)||[];
+      const hit=m.map(x=>({lat:+x.coordinates.y,lng:+x.coordinates.x,label:x.matchedAddress}))
+                 .filter(x=>geoNear(x.lat,x.lng))[0];
+      fin(hit?{lat:hit.lat,lng:hit.lng,exact:true,label:hit.label}:null);
+    }catch(e){fin(null);}
+  };
+  s.onerror=()=>fin(null);
+  s.src='https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?benchmark=Public_AR_Current&format=json'
+       +'&callback='+name+'&address='+encodeURIComponent(text);
+  document.head.appendChild(s);
+}
 function geocode(q,cb){
   let done=false,coarse=null;
   const fin=r=>{if(done)return;done=true;clearTimeout(to);cb(r);};
@@ -2861,7 +2890,10 @@ function geocode(q,cb){
   /* почтовый индекс сбивает Photon: с «81301» он находит дом 73 на ДРУГОЙ улице
      внутри этого индекса, без индекса — тот самый Tamarron Drive. Проверено запросами. */
   const noZip=String(q).replace(/,?\s*\b\d{5}(-\d{4})?\b/g,'').replace(/,\s*(USA|United States)\s*\.?$/i,'').replace(/,\s*$/,'').trim();
-  const chain=[n=>photon(noZip||q,n)];
+  /* сначала адресный справочник США: у него дом находится ТОЧНО, а не «где-то в городе» */
+  const chain=[n=>censusGeo(q,r=>r?fin(r):n())];
+  if(tail&&/\d/.test(tail))chain.push(n=>censusGeo(tail,r=>r?fin(r):n()));
+  chain.push(n=>photon(noZip||q,n));
   if(noZip&&noZip!==String(q).trim())chain.push(n=>photon(q,n));
   chain.push(n=>nomi(q,n));
   if(tail)chain.push(n=>nomi(tail,n));
