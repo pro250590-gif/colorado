@@ -203,6 +203,9 @@ h2.big{font-size:clamp(26px,6.4vw,38px);margin:12px 4px 0}
 .foodpin{position:relative;width:34px;height:43px}
 .foodpin .fpi{position:absolute;left:0;right:0;top:7px;display:flex;justify-content:center;color:#fff}
 .foodpin .fpi svg{width:16px;height:16px}
+/* своё место: та же капля, но с номером дня в уголке — видно и тип, и день */
+.kindpin .kpd{position:absolute;top:-2px;right:-3px;min-width:16px;height:16px;border-radius:999px;background:#fff;color:#5b3fc4;
+  font:800 9.5px/16px "Plus Jakarta Sans",sans-serif;text-align:center;padding:0 3px;box-shadow:0 2px 5px rgba(40,20,90,.3)}
 .rpt{width:24px;height:24px;border-radius:50%;background:linear-gradient(150deg,#8c6ff0,#5b3fc4);color:#fff;border:2.5px solid #fff;display:flex;align-items:center;justify-content:center;font:800 11px/1 "Plus Jakarta Sans",sans-serif;box-shadow:0 3px 7px rgba(40,20,90,.32)}
 .cptdim{width:26px;height:26px;border-radius:50%;background:#b3a6dd;color:#fff;border:2.5px solid #fff;display:flex;align-items:center;justify-content:center;font:800 11px/1 "Plus Jakarta Sans",sans-serif;box-shadow:0 2px 6px rgba(40,20,90,.22)}
 .miamichip{background:#5b3fc4;color:#fff;font:700 11px/1 "Plus Jakarta Sans",sans-serif;padding:6px 10px;border-radius:8px;
@@ -1776,10 +1779,21 @@ function foodPinHTML(id){const s=(''+id).replace(/\W/g,'');
     +'<filter id="fg'+s+'" x="-45%" y="-45%" width="190%" height="190%"><feDropShadow dx="0" dy="0" stdDeviation="2" flood-color="#d9c6ff" flood-opacity="1"/></filter></defs>'
     +'<path d="M20 2C10.6 2 3 9.6 3 19c0 12 17 31 17 31s17-19 17-31C37 9.6 29.4 2 20 2z" fill="url(#fp'+s+')" stroke="#fff" stroke-width="2.2" filter="url(#fg'+s+')"/></svg>'
     +'<span class="fpi">'+ic('food','i-sm')+'</span></div>';}
+/* своё место с выбранным типом — такая же капля, только иконка по типу и номер дня в бейдже:
+   решение совета (вариант C) — место остаётся в дне, но на карте видно, что это еда/заправка/жильё */
+function kindPinHTML(p){const s=(''+p.id).replace(/\W/g,''),dn=dispOf(p.d)||'';
+  return '<div class="foodpin kindpin"><svg width="34" height="43" viewBox="0 0 40 52"><defs>'
+    +'<linearGradient id="kp'+s+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a48bff"/><stop offset="1" stop-color="#5b3fc4"/></linearGradient>'
+    +'<filter id="kg'+s+'" x="-45%" y="-45%" width="190%" height="190%"><feDropShadow dx="0" dy="0" stdDeviation="2" flood-color="#d9c6ff" flood-opacity="1"/></filter></defs>'
+    +'<path d="M20 2C10.6 2 3 9.6 3 19c0 12 17 31 17 31s17-19 17-31C37 9.6 29.4 2 20 2z" fill="url(#kp'+s+')" stroke="#fff" stroke-width="2.2" filter="url(#kg'+s+')"/></svg>'
+    +'<span class="fpi">'+ic(kindOf(p).ic,'i-sm')+'</span>'
+    +(dn?'<span class="kpd">'+dn+'</span>':'')+'</div>';}
 /* иконка точки маршрута: обычная (фото/точка) ИЛИ заметный кружок с днём, когда рестораны в приоритете */
 function markerIcon(p){
   const dn=dispOf(p.d)||'';        /* на булавке — номер дня как в ленте, а не id шаблона */
   if(p.cat==='food')return L.divIcon({className:'',iconSize:[34,44],iconAnchor:[17,42],popupAnchor:[0,-40],html:foodPinHTML(p.id)});
+  if(p.custom&&kindOf(p).k!=='other')
+    return L.divIcon({className:'',iconSize:[34,44],iconAnchor:[17,42],popupAnchor:[0,-40],html:kindPinHTML(p)});
   if(foodOn)return L.divIcon({className:'',iconSize:[24,24],iconAnchor:[12,12],popupAnchor:[0,-12],html:'<div class="rpt">'+dn+'</div>'});
   /* без фото — та же булавка, но с лавандовой плашкой и иконкой типа: выглядит нарочно,
      а не «картинка пропала» (клиент так и прочла плоскую точку) */
@@ -1925,7 +1939,17 @@ function foodVisible(f){
   if(filter.mode==='day'){const e=dayOf(filter.v);return !!e&&f.base===e.base;}
   return true; // «Всё» или категория → вся еда
 }
-function pinVisible(p){if(p.cat==='food')return foodVisible(p);return picked.has(p.id)&&matchesPrimary(p);}
+/* свой ресторан попадает и в слой еды: человек отметил его как еду, значит при включённой
+   вилке он должен стоять рядом с нашими (вариант C совета). Из дня при этом не исчезает. */
+function customFoodVisible(p){
+  if(!foodOn||!p.custom||p.kind!=='eat')return false;
+  if(!picked.has(p.id)||!dayOf(p.d))return false;      /* с полки «Ещё в городе» не показываем */
+  if(filter.mode==='base')return p.base===filter.v;
+  if(filter.mode==='day'){const e=dayOf(filter.v);return !!e&&p.base===e.base;}
+  return true;
+}
+function pinVisible(p){if(p.cat==='food')return foodVisible(p);
+  return (picked.has(p.id)&&matchesPrimary(p))||customFoodVisible(p);}
 let fopen=null;                       /* какой список сейчас раскрыт над картой */
 /* фото для карточки: берём первый снимок из точек дня */
 /* ================= ЛЕНТА ПО ГОРОДАМ (Layla-style) ================= */
@@ -2153,7 +2177,8 @@ function applyFilter(){
   if(map){[decoLayer,carMarker].forEach(g=>{if(!g)return;
     if(overview){if(!map.hasLayer(g))g.addTo(map);}else{if(map.hasLayer(g))map.removeLayer(g);}});}
   P.forEach(p=>{if(!map||!markers[p.id])return;
-    const show=(p.cat==='food')?foodVisible(p):(!overview&&pinVisible(p));
+    /* свой ресторан при включённой вилке виден и в общем виде — как наша еда */
+    const show=(p.cat==='food')?foodVisible(p):((!overview&&pinVisible(p))||customFoodVisible(p));
     if(show){if(!map.hasLayer(markers[p.id]))markers[p.id].addTo(map);shownPts++;}
     else{if(map.hasLayer(markers[p.id]))map.removeLayer(markers[p.id]);}});
   // линии
