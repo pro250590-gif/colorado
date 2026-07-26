@@ -217,8 +217,12 @@ h2.big{font-size:clamp(26px,6.4vw,38px);margin:12px 4px 0}
 .leaflet-popup-tip{background:#fff;box-shadow:none}
 /* ── ПОПАП ТОЧКИ (вариант A: фото сверху + крестик на фото) ── */
 .mpop{width:272px}
-.mpop-ph{height:122px;background:linear-gradient(135deg,#b9a6f5,#7c5cff);background-size:cover;background-position:center}
+.mpop-ph{height:122px;background:linear-gradient(135deg,#b9a6f5,#7c5cff);background-size:cover;background-position:center;
+  display:grid;place-items:center}
 .mpop-ph[data-noph]{background:linear-gradient(135deg,#b9a6f5,#5b3fc4)}
+/* нет фото — в плашке иконка типа места, чтобы не было пустого прямоугольника */
+.mpop-ico{color:#fff;opacity:.95;filter:drop-shadow(0 3px 8px rgba(20,32,27,.3))}
+.mpop-ico .i{width:40px;height:40px;stroke-width:1.5}
 .mpop-bd{padding:13px 15px 15px}
 .mpop-eye{font:800 10px/1 'Plus Jakarta Sans','Inter',Segoe UI,sans-serif;letter-spacing:.14em;text-transform:uppercase}
 .mpop-nm{font-family:Fraunces,Georgia,serif;font-weight:600;font-size:17px;line-height:1.2;color:#1b1533;margin:6px 0 8px}
@@ -410,11 +414,12 @@ input[type=checkbox].tick:checked::after{content:"";position:absolute;left:8px;t
 .mpill.fixed{background:rgba(124,92,255,.13);color:#5b3fc4;border-color:transparent}
 .mpill.nopt{background:rgba(192,57,43,.1);color:#b03a2b;border-color:transparent}
 .mpill.kind{background:linear-gradient(150deg,#f3effd,#e3daf9);color:#4b2fa8;border-color:transparent}
-/* выбор типа своего места в листе добавления */
-.dskinds{display:flex;flex-wrap:wrap;gap:7px;margin:2px 0 2px}
-.dskind{display:flex;align-items:center;gap:5px;border:1.5px solid rgba(20,32,27,.1);background:#fff;color:var(--ink2)!important;
-  border-radius:11px;padding:9px 11px;font:700 11.5px/1 "Inter",sans-serif;cursor:pointer}
-.dskind .i{width:14px;height:14px}
+/* выбор типа своего места — ровная сетка 3×3, без рваных строк */
+.dskinds{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:2px 0}
+.dskind{display:flex;align-items:center;justify-content:center;gap:5px;border:1.5px solid rgba(20,32,27,.1);background:#fff;color:var(--ink2)!important;
+  border-radius:11px;padding:10px 6px;font:700 11px/1 "Inter",sans-serif;cursor:pointer;min-width:0}
+.dskind span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dskind .i{width:14px;height:14px;flex:none}
 .dskind.on{border-color:transparent;background:linear-gradient(150deg,#7a5cf0,#5b3fc4);color:#fff!important;
   box-shadow:0 6px 14px -8px rgba(91,63,196,.9)}
 .why{color:var(--ink2);font-size:14.5px;line-height:1.55;display:block;margin-top:8px}
@@ -1470,6 +1475,7 @@ const ICONS={
  info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.8h.01"/>',
  tree:'<path d="M12 2 7 10h3l-4 6h5v6h2v-6h5l-4-6h3L12 2Z"/>',
  chevron:'<path d="m6 9 6 6 6-6"/>',
+ fuel:'<path d="M4 21V5a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v16M3 21h11M4.5 9.5h8M15 6.5l3 1.9a2 2 0 0 1 1 1.7v6.4a1.75 1.75 0 0 0 3.5 0v-5.9h-2.5"/>',
  cal:'<path d="M3 8h18M7 3v4M17 3v4M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"/>',
  foodwine:'<path d="M2.6 2.3v4.3M5.9 2.3v4.3M9.2 2.3v4.3M2.6 6.6a3.3 3.3 0 0 0 6.6 0M5.9 9.9v11.8"/><path d="M12 3.2v17.6" opacity=".35"/><path d="M14.6 2.3h7.4l-1 5.5a2.85 2.85 0 0 1-5.4 0l-1-5.5Z"/><path d="M18.3 12v9.7M15.6 21.7h5.4"/>',
  layers:'<path d="m12 2 9 5-9 5-9-5 9-5ZM3 12l9 5 9-5M3 17l9 5 9-5"/>',
@@ -1733,7 +1739,7 @@ function animPlane(marker,a,bb,period){if(!marker)return;let t=0;const step=40/(
   planeTimers.push(setInterval(()=>{if(!marker)return;t+=step;if(t>1)t=0;
     marker.setLatLng([a[0]+(bb[0]-a[0])*t,a[1]+(bb[1]-a[1])*t]);},40));}
 function mapFallback(msg){const el=document.getElementById('map');if(el)el.innerHTML='<div class="mapph">'+ic('map','i-lg')+' <b>'+(msg||'Карта не загрузилась')+'</b><br>Открой страницу по обычной ссылке (Netlify/GitHub) в браузере при интернете. Список и ссылки на Google Maps работают всегда.</div>';}
-function popupHTML(nm,q,why,label,color,photo,foodicon){
+function popupHTML(nm,q,why,label,color,photo,foodicon,plate){
   const gm='<a class="mpop-gm" href="'+gurl(q)+'" target="_blank" rel="noopener">'+ic('pin','i-sm')+' Открыть в Google Maps →</a>';
   if(foodicon){/* вариант B — рестораны: 3D-иконка еды (как в разделе «Еда») слева, фото нет */
     const ico=FOOD_ICONS[foodicon]||FOOD_ICONS.plate;
@@ -1746,8 +1752,10 @@ function popupHTML(nm,q,why,label,color,photo,foodicon){
         +'</div></div>'
       +'<div class="mpop-bd mpopB-bd"><div class="mpop-why">'+why+'</div>'+gm+'</div></div>';
   }
+  /* нет фото — в плашке показываем иконку типа места, а не пустой фиолетовый прямоугольник */
   return '<div class="mpop">'
-    +'<div class="mpop-ph"'+(photo?' style="background-image:url('+photo+')"':' data-noph="1"')+'></div>'
+    +'<div class="mpop-ph"'+(photo?' style="background-image:url('+photo+')"':' data-noph="1"')+'>'
+      +(photo?'':'<span class="mpop-ico">'+ic(plate||'pin','i-lg')+'</span>')+'</div>'
     +'<div class="mpop-bd">'
     +(label?'<div class="mpop-eye" style="color:'+color+'">'+label+'</div>':'')
     +'<div class="mpop-nm">'+nm+'</div>'
@@ -1791,7 +1799,7 @@ function makeMarker(p){
   if(!map||!L||typeof p.lat!=='number'||typeof p.lng!=='number')return null;
   const c=p.cat==='food'?'#c1462a':'#5b3fc4',ph=PHOTO[p.id],dn=dispOf(p.d);
   markers[p.id]=L.marker([p.lat,p.lng],{icon:markerIcon(p)})
-    .bindPopup(popupHTML(p.nm,p.q,p.why,dn?('День '+dn):(CATS[p.cat]?CATS[p.cat].l:''),c,ph?pimg(p.id,'l'):null,p.cat==='food'?foodCat(p):null),
+    .bindPopup(popupHTML(p.nm,p.q,p.why,dn?('День '+dn):(CATS[p.cat]?CATS[p.cat].l:''),c,ph?pimg(p.id,'l'):null,p.cat==='food'?foodCat(p):null,p.custom?kindOf(p).ic:(CATS[p.cat]?CATS[p.cat].e:'pin')),
       {autoPan:true,keepInView:false,autoPanPaddingTopLeft:L.point(12,66),autoPanPaddingBottomRight:L.point(12,14)});
   return markers[p.id];
 }
@@ -1803,7 +1811,7 @@ function updateMarkerStyles(){
     if(!mk){if(typeof p.lat==='number'&&typeof p.lng==='number')makeMarker(p);return;}
     mk.setIcon(markerIcon(p));
     const dn=dispOf(p.d),c=p.cat==='food'?'#c1462a':'#5b3fc4',ph=PHOTO[p.id];
-    if(mk.setPopupContent)mk.setPopupContent(popupHTML(p.nm,p.q,p.why,dn?('День '+dn):(CATS[p.cat]?CATS[p.cat].l:''),c,ph?pimg(p.id,'l'):null,p.cat==='food'?foodCat(p):null));
+    if(mk.setPopupContent)mk.setPopupContent(popupHTML(p.nm,p.q,p.why,dn?('День '+dn):(CATS[p.cat]?CATS[p.cat].l:''),c,ph?pimg(p.id,'l'):null,p.cat==='food'?foodCat(p):null,p.custom?kindOf(p).ic:(CATS[p.cat]?CATS[p.cat].e:'pin')));
   });
   BASES.forEach(b=>{const mk=baseMarkers[b.id];if(mk){const cnt=P.filter(x=>x.cat!=='food'&&x.base===b.id).length;mk.setIcon(cityIcon(b,cnt));}});
 }
@@ -2476,10 +2484,13 @@ let MOVED={},CUSTOM=[];
    на карте, такие места из дней исключаются. */
 const KINDS=[
  {k:'eat',l:'Ресторан',ic:'food'},{k:'cafe',l:'Кафе',ic:'coffee'},{k:'bar',l:'Бар',ic:'wine'},
- {k:'stay',l:'Жильё',ic:'bed'},{k:'act',l:'Активность',ic:'ticket'},{k:'nature',l:'Природа',ic:'mountain'},
- {k:'town',l:'Город',ic:'town'},{k:'transport',l:'Транспорт',ic:'train'},{k:'other',l:'Другое',ic:'pin'}
+ {k:'stay',l:'Жильё',ic:'bed'},{k:'act',l:'Активность',ic:'ticket'},{k:'fuel',l:'Заправка',ic:'fuel'},
+ {k:'nature',l:'Природа',ic:'mountain'},{k:'town',l:'Город',ic:'town'},{k:'transport',l:'Транспорт',ic:'train'}
 ];
-function kindOf(p){return (p&&p.kind&&KINDS.find(x=>x.k===p.kind))||KINDS[KINDS.length-1];}
+/* «Другое» в списке не показываем: ничего не выбрала — значит оно и есть.
+   Так плитки ложатся ровно в три ряда по три, без дырки в конце. */
+const KIND_OTHER={k:'other',l:'Другое',ic:'pin'};
+function kindOf(p){return (p&&p.kind&&KINDS.find(x=>x.k===p.kind))||KIND_OTHER;}
 function stashTid(bid){return 's-'+bid;}
 function applyMoves(){
   P.forEach(p=>{if(p._d0===undefined)p._d0=p.d;p.d=(MOVED[p.id]!==undefined)?MOVED[p.id]:p._d0;});
@@ -2783,8 +2794,8 @@ function addPlaceSheet(tid){
     +'<div class="dssep">Новое место</div>'
     +'<div class="dsform"><input id="gmUrl" placeholder="Ссылка из Google Maps или название" autocomplete="off">'
       +'<input id="gmWhy" placeholder="Зачем сюда (по желанию)" autocomplete="off">'
-      +'<div class="dskinds">'+KINDS.map((x,i)=>'<button class="dskind'+(x.k==='other'?' on':'')+'" data-kind="'+x.k+'">'
-        +ic(x.ic,'i-sm')+x.l+'</button>').join('')+'</div>'
+      +'<div class="dskinds">'+KINDS.map(x=>'<button class="dskind" data-kind="'+x.k+'">'
+        +ic(x.ic,'i-sm')+'<span>'+x.l+'</span></button>').join('')+'</div>'
       +'<button class="dsgo" data-gmadd="'+tid+'">Добавить место</button></div>'
     +(st.length?'<div class="dssep">Из «Ещё в городе» · '+st.length+'</div>'
       +st.map(p=>'<button class="dsrow" data-mvto="'+tid+'" data-mvid="'+p.id+'"><span class="cn">'+ic('pin','i-sm')+'</span>'
