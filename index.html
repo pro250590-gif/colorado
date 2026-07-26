@@ -69,6 +69,19 @@ h1,h2,h3,h4{line-height:1.08;margin:0;font-family:"Plus Jakarta Sans","Inter",sa
   font:800 12.5px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:-.02em;padding:9px 14px;border-radius:12px;cursor:pointer;
   box-shadow:0 5px 13px -6px rgba(91,63,196,.5);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .authbtn:active{transform:scale(.97)}
+/* состояние сохранения видно всегда: молча терять правки нельзя */
+.syncpill{flex:none;margin-left:auto;display:flex;align-items:center;gap:6px;border:1.5px solid #e5e6f5;background:#fff;
+  color:#8b8698!important;font:800 11px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:-.02em;padding:8px 11px;
+  border-radius:12px;cursor:pointer;max-width:190px;overflow:hidden;white-space:nowrap;-webkit-appearance:none;appearance:none}
+.syncpill+.authbtn{margin-left:8px}
+.syncpill .sdot{width:7px;height:7px;border-radius:50%;background:#c3c7d6;flex:none}
+.syncpill[data-s=ok]{border-color:rgba(18,133,94,.32);color:#0a6047!important}
+.syncpill[data-s=ok] .sdot{background:#12855e}
+.syncpill[data-s=go]{border-color:rgba(91,63,196,.35);color:#5b3fc4!important}
+.syncpill[data-s=go] .sdot{background:#5b3fc4;animation:sblink 1s infinite}
+.syncpill[data-s=bad]{border-color:rgba(192,57,43,.4);color:#b03a2b!important;background:#fdeeec}
+.syncpill[data-s=bad] .sdot{background:#c0392b}
+@keyframes sblink{50%{opacity:.25}}
 .authbtn[data-state=in]{background:linear-gradient(150deg,#7a5cf0,#5b3fc4);color:#fff;border-color:transparent}
 .authov{position:fixed;inset:0;z-index:4000;display:none}
 .authov.show{display:block}
@@ -1307,6 +1320,7 @@ section h2.big{margin-bottom:4px}
 
 <div class="topbar"><div class="wrap">
   <span class="brand"><span class="brandmark"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 3 4.5 8.5L17 7l5 14H2L8 3Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></span>Colorado<i>.</i></span>
+  <button class="syncpill" id="syncPill" style="display:none" title="сохранение в аккаунте"><span class="sdot"></span><span id="syncTxt">—</span></button>
   <button class="authbtn" id="authBtn" style="display:none">Войти</button>
 </div></div>
 <nav class="siderail" aria-label="Разделы сайта">
@@ -3318,6 +3332,8 @@ document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)r
   if(t.id==='curBtn'){curSheet();}
   if(t.dataset.cur){setCur(t.dataset.cur);}
   if(t.dataset.curforce){forceCur(t.dataset.curforce);}
+  if(t.dataset.syncretry){closeDaySheet();_syncErr='';syncUI('go','Сохраняю…');
+    if(typeof cloudPush==='function')cloudPush().catch(e=>{_syncErr=(e&&e.message)||String(e);syncSay();});}
   if(t.dataset.staymenu){stayMenuSheet(t.dataset.staymenu);}
   if(t.dataset.showmap&&window.showOnMap){closeDaySheet();showOnMap(t.dataset.showmap);}
   if(t.dataset.stayadd){addStaySheet(t.dataset.stayadd);}
@@ -3723,9 +3739,51 @@ const _rawSet=localStorage.setItem.bind(localStorage);
 let _applying=false,_cloudTimer=null;
 function localBundle(){const o={};CLOUD_KEYS.forEach(k=>{const v=localStorage.getItem(k);if(v!=null)o[k]=v;});return o;}
 function localTs(){return parseInt(localStorage.getItem('co-trip-ts')||'0',10);}
-function cloudSave(){if(!sb||_applying)return;clearTimeout(_cloudTimer);
-  _cloudTimer=setTimeout(async()=>{try{const{data}=await sb.auth.getSession();const s=data&&data.session;if(!s)return;
-    await sb.from('user_plans').upsert({user_id:s.user.id,plan:localBundle(),updated_at:new Date(localTs()||Date.now()).toISOString()});}catch(e){}},1200);}
+/* Метка «что уже уехало в облако». Сравнивать часы двух устройств нельзя: они врут
+   друг относительно друга, и телефон затирался компьютером. Сравниваем своё «изменено»
+   со своим же «отправлено» — это честно и без чужих часов. */
+function pushedTs(){return parseInt(localStorage.getItem('co-trip-pushed')||'0',10);}
+function dirty(){return localTs()>pushedTs();}
+/* состояние сохранения — на экране, а не в консоли */
+let _syncErr='';
+function syncUI(state,txt){
+  const pill=document.getElementById('syncPill'),t=document.getElementById('syncTxt');
+  if(!pill||!t)return;
+  pill.style.display=state==='off'?'none':'';
+  pill.dataset.s=state;t.textContent=txt;
+}
+function syncSay(){
+  if(!_signedIn){syncUI('off','');return;}
+  if(_syncErr)return syncUI('bad','Не сохранилось');
+  if(dirty())return syncUI('go','Сохраняю…');
+  const p=pushedTs();
+  syncUI('ok',p?('Сохранено · '+hhmm(new Date(p))):'Сохранено');
+}
+function hhmm(d){return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);}
+let _signedIn=false;
+/* Пишем в облако. upsert может не сработать, если в таблице нет уникальности по
+   user_id — тогда честно пробуем update, а если строки ещё нет, insert. */
+async function cloudPush(){
+  if(!sb)return false;
+  const{data}=await sb.auth.getSession();const s=data&&data.session;
+  if(!s){_syncErr='';return false;}
+  const stamp=localTs()||Date.now();
+  const row={user_id:s.user.id,plan:localBundle(),updated_at:new Date(stamp).toISOString()};
+  let err=null;
+  const up=await sb.from('user_plans').upsert(row,{onConflict:'user_id'});
+  if(up.error){
+    const u2=await sb.from('user_plans').update({plan:row.plan,updated_at:row.updated_at}).eq('user_id',s.user.id).select('user_id');
+    if(u2.error)err=u2.error;
+    else if(!u2.data||!u2.data.length){const i2=await sb.from('user_plans').insert(row);if(i2.error)err=i2.error;}
+  }
+  if(err){_syncErr=err.message||String(err);syncSay();return false;}
+  _syncErr='';
+  _rawSet('co-trip-pushed',String(stamp));
+  syncSay();
+  return true;
+}
+function cloudSave(){if(!sb||_applying)return;clearTimeout(_cloudTimer);syncSay();
+  _cloudTimer=setTimeout(()=>{cloudPush().catch(e=>{_syncErr=(e&&e.message)||String(e);syncSay();});},1200);}
 /* перерисовка НА МЕСТЕ (без перезагрузки!) после загрузки плана из облака */
 function reinit(){try{
   loadPlan();
@@ -3738,18 +3796,31 @@ function reinit(){try{
   buildSchedule();
   buildRoute();buildDays();buildCities();buildFood();buildBases();buildPlanner();buildBudget();buildFilters();buildElev();recomputeDates();syncChecks();applyFilter();
 }catch(e){}}
-async function cloudSync(session){if(!sb||!session)return;
-  try{const{data,error}=await sb.from('user_plans').select('plan,updated_at').eq('user_id',session.user.id).maybeSingle();
-    if(error)return;
-    if(data&&data.plan){
-      const cloudTs=data.updated_at?new Date(data.updated_at).getTime():0,lts=localTs();
-      if(cloudTs>lts+3000){ /* облако новее (правки с другого устройства) — грузим В МЕСТЕ, БЕЗ перезагрузки */
-        _applying=true;CLOUD_KEYS.forEach(k=>{if(data.plan[k]!=null)localStorage.setItem(k,data.plan[k]);});
-        _rawSet('co-trip-ts',String(cloudTs));reinit();_applying=false;return;
+async function cloudSync(session){
+  if(!sb||!session)return;
+  _signedIn=true;syncSay();
+  try{
+    /* .limit(1) вместо .maybeSingle(): если строк случайно две, maybeSingle отдаёт
+       ошибку и облако молча перестаёт читаться — именно так правки и «пропадали» */
+    const{data,error}=await sb.from('user_plans').select('plan,updated_at').eq('user_id',session.user.id)
+      .order('updated_at',{ascending:false}).limit(1);
+    if(error){_syncErr=error.message||'не читается';syncSay();return;}
+    const row=data&&data[0];
+    if(row&&row.plan&&!dirty()){
+      /* своих несохранённых правок нет → берём облако, оно главное */
+      const same=CLOUD_KEYS.every(k=>(row.plan[k]==null?null:row.plan[k])===localStorage.getItem(k));
+      if(!same){
+        _applying=true;
+        CLOUD_KEYS.forEach(k=>{if(row.plan[k]!=null)_rawSet(k,row.plan[k]);});
+        const cts=row.updated_at?new Date(row.updated_at).getTime():Date.now();
+        _rawSet('co-trip-ts',String(cts));_rawSet('co-trip-pushed',String(cts));
+        reinit();_applying=false;
       }
+      _syncErr='';syncSay();return;
     }
-    cloudSave(); /* локальное свежее/равно — просто сохраняем локальное */
-  }catch(e){}}
+    /* есть свои несохранённые правки (или в облаке пусто) — отправляем их */
+    await cloudPush();
+  }catch(e){_syncErr=(e&&e.message)||String(e);syncSay();}}
 /* перехват записи наших ключей → отметка времени + авто-сохранение */
 localStorage.setItem=function(k,v){_rawSet(k,v);if(!_applying&&CLOUD_KEYS.indexOf(k)>=0){_rawSet('co-trip-ts',String(Date.now()));cloudSave();}};
 (function authInit(){
@@ -3768,8 +3839,24 @@ localStorage.setItem=function(k,v){_rawSet(k,v);if(!_applying&&CLOUD_KEYS.indexO
   document.querySelectorAll('.authtab').forEach(t=>t.addEventListener('click',()=>setMode(t.dataset.mode)));
   ov.querySelectorAll('[data-authclose]').forEach(x=>x.addEventListener('click',close));
   async function refresh(){try{const{data}=await sb.auth.getSession();const s=data&&data.session;
-    if(s){btn.textContent='Выйти';btn.dataset.state='in';btn.title=s.user.email||'';}
-    else{btn.textContent='Войти';btn.dataset.state='out';btn.title='';}}catch(e){}}
+    if(s){btn.textContent='Выйти';btn.dataset.state='in';btn.title=s.user.email||'';_signedIn=true;}
+    else{btn.textContent='Войти';btn.dataset.state='out';btn.title='';_signedIn=false;}
+    syncSay();}catch(e){}}
+  /* нажатие на плашку: сохранить прямо сейчас, а если не вышло — показать причину */
+  const pill=document.getElementById('syncPill');
+  if(pill)pill.addEventListener('click',async()=>{
+    if(_syncErr){
+      const msg=_syncErr;
+      sheet('<div class="dsh"><b>Не сохраняется в аккаунт</b><span>Правки остались на этом устройстве, но в облако не уехали. Ответ сервера ниже — пришли его мне, и я починю.</span></div>'
+        +'<div class="dsform"><span class="dshint" style="user-select:text">'+String(msg).replace(/</g,'&lt;')+'</span>'
+        +'<button class="dsgo" data-syncretry="1">Попробовать ещё раз</button></div>'
+        +'<button class="dscancel" data-dsclose="1">Закрыть</button>');
+      return;
+    }
+    syncUI('go','Сохраняю…');
+    const ok=await cloudPush();
+    if(ok)syncUI('ok','Сохранено · '+hhmm(new Date()));
+  });
   btn.addEventListener('click',async()=>{
     if(btn.dataset.state==='in'){await sb.auth.signOut();refresh();}else open();});
   submit.addEventListener('click',async()=>{
