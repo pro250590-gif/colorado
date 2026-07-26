@@ -864,6 +864,8 @@ a.rglyph:active{transform:translate(-50%,-50%) scale(.9)}
 /* ── КНОПКИ БРОНИ (партнёрские) ── */
 .hbook{display:flex;align-items:center;gap:8px;width:100%;margin-top:2px;padding:11px 14px;border-radius:13px;text-decoration:none;background:linear-gradient(150deg,#1c9166,#0a6047);color:#fff;font:800 12px/1.2 "Plus Jakarta Sans",sans-serif;letter-spacing:-.02em;box-shadow:var(--sh1),inset 0 1px 0 rgba(255,255,255,.25)}
 .hbook .i{flex:none}
+/* «другие варианты» — то же место, но тише: своё жильё уже выбрано */
+.hbook.alt{background:#fff!important;border:1.5px solid #e5e6f5!important;color:#8b8698!important;box-shadow:none!important;font-weight:700}
 .hbook:active{transform:scale(.99)}
 .hrow{flex-wrap:wrap}
 .hbook span{flex:1}
@@ -932,10 +934,11 @@ body{background:linear-gradient(168deg,#eef1f8,#e9edf6 60%,#e6eaf4)!important}
 .mystact .cbookl{grid-column:1/-1;padding-top:0;padding-bottom:1px;font-size:12.5px}
 .stbtn{border:1.5px solid rgba(20,32,27,.12);background:#fff;color:#6d7c74;border-radius:9px;padding:7px 10px;
   font:800 10.5px/1 "Plus Jakarta Sans",sans-serif;cursor:pointer}
-.mystact .stbtn{display:flex;align-items:center;justify-content:center;width:100%;height:36px;
-  padding:0 6px;border-radius:11px;font-size:11px;-webkit-appearance:none;appearance:none}
-/* «поставить точку» — не в паре, значит во всю ширину над ней */
+.mystact .stbtn{display:flex;align-items:center;justify-content:center;text-align:center;width:100%;min-height:36px;
+  padding:6px;border-radius:11px;font-size:11px;line-height:1.2;-webkit-appearance:none;appearance:none}
+/* одна «поставить точку» — во всю ширину; пара «показать»+«поправить» — по половине */
 .mystact .stbtn.fix{grid-column:1/-1}
+.mystact .stbtn.fix~.stbtn.fix,.mystact .stbtn.fix:has(~.stbtn.fix){grid-column:auto}
 .stbtn.del{color:#b03a2b;border-color:rgba(192,57,43,.28)}
 /* пустая карточка: Booking и «уже есть жильё» одной парой */
 .stacts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:auto;padding-top:11px}
@@ -1862,7 +1865,9 @@ function cityIcon(b,cnt){
 function makeMarker(p){
   if(!map||!L||typeof p.lat!=='number'||typeof p.lng!=='number')return null;
   const c=p.cat==='food'?'#c1462a':'#5b3fc4',ph=PHOTO[p.id],dn=dispOf(p.d);
-  markers[p.id]=L.marker([p.lat,p.lng],{icon:markerIcon(p)})
+  /* жильё поднимаем над булавками дней: адрес часто геокодится в центр города, и капля
+     оказывалась ровно под точками первого дня — клиент её там не нашла */
+  markers[p.id]=L.marker([p.lat,p.lng],{icon:markerIcon(p),zIndexOffset:isStay(p)?900:0})
     .bindPopup(popupHTML(p.nm,p.q,p.why,dn?('День '+dn):(CATS[p.cat]?CATS[p.cat].l:''),c,ph?pimg(p.id,'l'):null,p.cat==='food'?foodCat(p):null,p.custom?kindOf(p).ic:(CATS[p.cat]?CATS[p.cat].e:'pin')),
       {autoPan:true,keepInView:false,autoPanPaddingTopLeft:L.point(12,66),autoPanPaddingBottomRight:L.point(12,14)});
   return markers[p.id];
@@ -2060,7 +2065,11 @@ function buildCities(){
         +(h.rate?'<br><b>'+curSym()+h.rate+' за ночь · '+curSym()+Math.round(h.rate*b.nights)+' всего</b>':'')
         +(typeof h.lat==='number'?'':'<br><b class="nopt">Точки на карте нет — не нашли адрес</b>')+'</span>'
         +'<span class="mystact"><a class="cbookl" href="'+gurl(h.q||h.nm)+'" target="_blank" rel="noopener">Открыть в Google Maps →</a>'
-          +(typeof h.lat==='number'?'':'<button class="stbtn fix" data-fixopen="'+h.id+'">Поставить точку на карте</button>')
+          /* точка есть — даём и посмотреть, и поправить: адрес часто садится в центр города */
+          +(typeof h.lat==='number'
+            ? '<button class="stbtn fix" data-showmap="'+h.id+'">Показать на карте</button>'
+              +'<button class="stbtn fix" data-fixopen="'+h.id+'">Поправить точку</button>'
+            : '<button class="stbtn fix" data-fixopen="'+h.id+'">Поставить точку на карте</button>')
           +'<button class="stbtn" data-stayedit="'+h.id+'" data-staybase="'+b.id+'">Изменить</button>'
           +'<button class="stbtn del" data-delpl="'+h.id+'">Убрать</button></span></span></div>').join('');
     const stay='<div class="cnode"><span class="cdot">'+ic('bed','i-sm')+'</span>'
@@ -3120,7 +3129,9 @@ function renderStays(){
         +'<span class="hf"><label>за ночь</label><span class="hpill"><input class="hrate" data-hi="'+i+'" inputmode="decimal" value="'+(rate||'')+'" placeholder="0"><span class="hu">'+curSym()+'</span></span></span>'
         +'<span class="hf"><label>всего</label><span class="hpill"><input class="htot" data-hi="'+i+'" inputmode="decimal" value="'+(tot||'')+'" placeholder="0"><span class="hu">'+curSym()+'</span></span></span>'
       +'</span>'
-      +'<a class="hbook" href="'+bookHotel(b.q,ci,co,PEOPLE)+'" target="_blank" rel="noopener" title="подобрать жильё на Booking">'+ic('bed','i-sm')+'<span>Забронировать на Booking · '+dm(ci)+'–'+dm(co)+' · '+PEOPLE+' гост.</span></a>'
+      /* жильё в этом городе уже своё — Booking понижаем в «другие варианты», как в ленте */
+      +'<a class="hbook'+(stayPlaces(b.id).length?' alt':'')+'" href="'+bookHotel(b.q,ci,co,PEOPLE)+'" target="_blank" rel="noopener" title="подобрать жильё на Booking">'+ic('bed','i-sm')
+        +'<span>'+(stayPlaces(b.id).length?'Посмотреть другие варианты на Booking':'Забронировать на Booking')+' · '+dm(ci)+'–'+dm(co)+' · '+PEOPLE+' гост.</span></a>'
       +'</div>';
   }).join('');
   const tn=totalNights();
@@ -3186,6 +3197,7 @@ document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)r
   if(t.id==='curBtn'){curSheet();}
   if(t.dataset.cur){setCur(t.dataset.cur);}
   if(t.dataset.curforce){forceCur(t.dataset.curforce);}
+  if(t.dataset.showmap&&window.showOnMap){showOnMap(t.dataset.showmap);}
   if(t.dataset.stayadd){addStaySheet(t.dataset.stayadd);}
   if(t.dataset.stayedit){addStaySheet(t.dataset.staybase,t.dataset.stayedit);}
   if(t.dataset.staysave){
@@ -3548,6 +3560,19 @@ document.addEventListener('click',e=>{
     requestAnimationFrame(()=>setTimeout(refit,90)); }
   function closeMap(){ document.body.classList.remove('mapopen'); shell.setAttribute('aria-hidden','true'); if(nav)nav.classList.remove('on'); }
   if(nav)nav.addEventListener('click',e=>{e.preventDefault();openMap();});
+  /* «Показать на карте» из карточки: открыть карту, подъехать к точке и раскрыть подпись.
+     Без этого точка жилья теряется среди булавок дней — клиент искала её и не нашла. */
+  window.showOnMap=function(id){
+    const p=placeById(id);if(!p||typeof p.lat!=='number')return;
+    if(p.base){filter={mode:'base',v:p.base};buildFilters();applyFilter();}
+    openMap();
+    setTimeout(()=>{try{
+      if(!map)return;
+      map.invalidateSize(true);
+      map.setView([p.lat,p.lng],15,{animate:false});
+      const m=markers[id];if(m&&map.hasLayer(m))m.openPopup();
+    }catch(e){}},260);
+  };
   if(closeBtn)closeBtn.addEventListener('click',closeMap);
   if(scrim)scrim.addEventListener('click',closeMap);
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.body.classList.contains('mapopen'))closeMap();});
