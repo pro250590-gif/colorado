@@ -926,14 +926,25 @@ body{background:linear-gradient(168deg,#eef1f8,#e9edf6 60%,#e6eaf4)!important}
 .myst .cmeta b{color:#3b2a8f}
 .myst .cmeta b.nopt{color:#b03a2b}
 .stbtn.fix{color:#5b3fc4;border-color:rgba(91,63,196,.35);background:#faf8ff}
-.mystact{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:auto;padding-top:10px}
-.mystact .cbookl{padding-top:0}
+/* «Изменить» и «Убрать» — одинаковые, каждая на половину, вместе от края до края текста.
+   Ссылка на карту уезжает отдельной строкой сверху, чтобы не сбивать пару. */
+.mystact{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:auto;padding-top:11px}
+.mystact .cbookl{grid-column:1/-1;padding-top:0;padding-bottom:1px;font-size:12.5px}
 .stbtn{border:1.5px solid rgba(20,32,27,.12);background:#fff;color:#6d7c74;border-radius:9px;padding:7px 10px;
   font:800 10.5px/1 "Plus Jakarta Sans",sans-serif;cursor:pointer}
+.mystact .stbtn{display:flex;align-items:center;justify-content:center;width:100%;height:36px;
+  padding:0 6px;border-radius:11px;font-size:11px;-webkit-appearance:none;appearance:none}
+/* «поставить точку» — не в паре, значит во всю ширину над ней */
+.mystact .stbtn.fix{grid-column:1/-1}
 .stbtn.del{color:#b03a2b;border-color:rgba(192,57,43,.28)}
-.stbtn.add{align-self:flex-start;display:inline-flex;align-items:center;gap:6px;margin-top:10px;padding:9px 12px;
-  color:#5b3fc4;border-color:rgba(91,63,196,.35);background:#faf8ff;font-size:11px}
-.stbtn.add .i{width:14px;height:14px}
+/* пустая карточка: Booking и «уже есть жильё» одной парой */
+.stacts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:auto;padding-top:11px}
+.stacts .sbtn{display:flex;align-items:center;justify-content:center;height:38px;padding:0 6px;
+  border:1.5px solid transparent;border-radius:11px;text-decoration:none;cursor:pointer;white-space:nowrap;
+  font:800 10.5px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:-.02em;-webkit-appearance:none;appearance:none}
+.stacts .sbtn.pri{background:linear-gradient(150deg,#7a5cf0,#5b3fc4);color:#fff!important;box-shadow:0 6px 14px -9px rgba(91,63,196,.9)}
+.stacts .sbtn.sec{background:#fff;border-color:rgba(91,63,196,.32);color:#5b3fc4!important}
+.stacts .sbtn:active{transform:scale(.99)}
 .cbooklq{display:block;text-align:center;margin-top:9px;font:700 11.5px/1 "Inter",sans-serif;color:#8b8698;text-decoration:none}
 .cday{display:flex;align-items:center;gap:13px;background:#fff;border:1px solid #e8e9f2;border-radius:15px;padding:11px;margin-bottom:9px;text-decoration:none;color:inherit}
 .cdph{width:66px;height:66px;border-radius:12px;background:#e5e7f0 center/cover no-repeat;flex:none}
@@ -1013,6 +1024,11 @@ body{background:linear-gradient(168deg,#eef1f8,#e9edf6 60%,#e6eaf4)!important}
 .dstwo{display:flex;gap:8px}
 .dstwo label{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px}
 .dstwo label span{font:700 10px/1 "Inter",sans-serif;color:#8b8698;padding-left:3px}
+/* значок валюты внутри поля — рамка одна на значок и число */
+.dspill{display:flex!important;align-items:center;gap:0;padding:0!important;border:1.5px solid rgba(20,32,27,.12);border-radius:12px;background:#fff;overflow:hidden}
+.dspill b{flex:none;padding:0 2px 0 13px;font:800 13px/1 "JetBrains Mono",ui-monospace,monospace;color:#5b3fc4}
+.dspill input{border:0!important;border-radius:0!important;padding:12px 13px 12px 5px!important;background:none!important}
+.dspill:focus-within{border-color:rgba(91,63,196,.55)}
 .dsform input:focus{outline:none;border-color:rgba(91,63,196,.55)}
 .dsgo{border:0;background:linear-gradient(150deg,#7a5cf0,#5b3fc4);color:#fff!important;border-radius:12px;padding:12px;
   font:800 12px/1 "Plus Jakarta Sans",sans-serif;cursor:pointer}
@@ -1330,7 +1346,6 @@ section h2.big{margin-bottom:4px}
   <h2 class="big">Как добираешься</h2>
   <div class="startcard"><span class="scmed" id="scMedIcon"></span><span class="scin"><span class="sclbl">Старт поездки</span><span class="scsub">меняешь дату — все дни и брони пересчитываются</span></span><input type="date" id="startDate" class="scdate"></div>
   <div class="peoplebar"><span class="pl">Сколько человек едет</span><span class="pstep"><button class="stepbtn" id="pMinus" aria-label="меньше человек">−</button><span class="pnum"><b id="pNum">2</b></span><button class="stepbtn" id="pPlus" aria-label="больше человек">+</button></span></div>
-  <div class="peoplebar"><span class="pl">Валюта поездки<span class="plsub">все цены покажем в ней</span></span><button class="curbtn" id="curBtn"><b>$</b><span>USD</span></button></div>
 </div></section>
 
 <div class="citystep" id="cityStep"></div>
@@ -2057,9 +2072,11 @@ function buildCities(){
         : '<div class="cstay"><span class="cph"'+(basePhoto(b.id)?' style="background-image:url('+basePhoto(b.id)+')"':'')+'></span>'
           +'<span class="cin"><h3>Где остановиться</h3>'
           +'<span class="cmeta">'+shortName(b.name)+' · '+b.nights+' '+nights(b.nights)+' · '+dm(ci)+'–'+dm(co)+'<br>на '+guests+'</span>'
-          +'<a class="cbookl" href="'+bookHotel(b.q,ci,co,PEOPLE)+'" target="_blank" rel="noopener">Забронировать на Booking</a>'
-          /* кнопка внутри карточки, а не отдельной плашкой снизу — просьба клиента */
-          +'<button class="stbtn add" data-stayadd="'+b.id+'">'+ic('bed','i-sm')+' У меня уже есть жильё</button>'
+          /* обе кнопки — одна пара: один рост, одна ширина, один стиль (просьба клиента) */
+          +'<span class="stacts">'
+            +'<a class="sbtn pri" href="'+bookHotel(b.q,ci,co,PEOPLE)+'" target="_blank" rel="noopener">Booking</a>'
+            +'<button class="sbtn sec" data-stayadd="'+b.id+'">Уже есть жильё</button>'
+          +'</span>'
           +'</span></div>')
       +'</div>';
     /* маршрут по дням */
@@ -2620,9 +2637,10 @@ function addStaySheet(bid,id){
   sheet('<div class="dsh"><b>'+(p?'Изменить жильё':'У меня уже есть жильё')+'</b>'
       +'<span>'+shortName(b.name)+' · '+dm(ci)+'–'+dm(co)+' · '+b.nights+' '+nights(b.nights)+' · на '+PEOPLE+' '+plural(PEOPLE,'гостя','гостей','гостей')+'</span></div>'
     +'<div class="dsform"><input id="stNm" placeholder="Название или ссылка на жильё" autocomplete="off" value="'+esc(p?(p.q||p.nm):'')+'">'
+      /* значок валюты стоит в самом поле: иначе видно голое число и непонятно, чего оно */
       +'<div class="dstwo">'
-        +'<label><span>Цена за ночь</span><input id="stRate" placeholder="'+curSym()+'" inputmode="decimal" autocomplete="off" value="'+esc(rate)+'"></label>'
-        +'<label><span>Всего за '+b.nights+' '+nights(b.nights)+'</span><input id="stTot" placeholder="'+curSym()+'" inputmode="decimal" autocomplete="off" value="'+esc(rate?Math.round(rate*b.nights):'')+'"></label>'
+        +'<label><span>Цена за ночь</span><span class="dspill"><b>'+curSym()+'</b><input id="stRate" placeholder="0" inputmode="decimal" autocomplete="off" value="'+esc(rate)+'"></span></label>'
+        +'<label><span>Всего за '+b.nights+' '+nights(b.nights)+'</span><span class="dspill"><b>'+curSym()+'</b><input id="stTot" placeholder="0" inputmode="decimal" autocomplete="off" value="'+esc(rate?Math.round(rate*b.nights):'')+'"></span></label>'
       +'</div>'
       +'<button class="dsgo" data-staysave="'+bid+'"'+(id?' data-stayid="'+id+'"':'')+'>Сохранить</button>'
       +'<span class="dshint">Заезд, выезд и число гостей уже известны — их не спрашиваем. Заполни любое из двух полей, второе посчитается. Цена уйдёт в бюджет, в строку жилья этого города.</span></div>'
@@ -2953,6 +2971,28 @@ function fixPointSheet(id){
     +'<button class="dscancel" data-dsclose="1">Отмена</button>');
 }
 /* поставить координаты уже добавленному месту и вывести его на карту */
+/* Своё место могло сохраниться без координат: в тот момент адрес не нашёлся или
+   геокодер не ответил. Пробуем ещё раз при открытии сайта — молча, по одному запросу
+   раз в секунду (Nominatim просит не частить). Не нашли — карточка честно скажет,
+   что точки нет, и предложит поставить её руками. */
+let _bfDone=false;
+function backfillPoints(){
+  if(_bfDone)return;_bfDone=true;
+  const need=P.filter(p=>p.custom&&typeof p.lat!=='number'&&(p.q||p.nm));
+  if(!need.length)return;
+  let i=0,any=false;
+  const step=()=>{
+    if(i>=need.length){if(any){savePicks();savePlan();rerenderTrip();}return;}
+    const p=need[i++];
+    geocode(p.q||p.nm,r=>{
+      if(r){p.lat=r.lat;p.lng=r.lng;
+        const c=CUSTOM.find(x=>x.id===p.id);if(c){c.lat=r.lat;c.lng=r.lng;}
+        picked.add(p.id);if(map)makeMarker(p);any=true;}
+      setTimeout(step,1200);
+    });
+  };
+  setTimeout(step,1500);
+}
 function setPoint(id,lat,lng,q){
   const p=placeById(id);if(!p)return false;
   if(typeof lat!=='number'||typeof lng!=='number')return false;
@@ -3450,6 +3490,7 @@ let _rrt;addEventListener('resize',()=>{clearTimeout(_rrt);_rrt=setTimeout(build
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(buildRoute);
 recomputeDates();
 syncChecks();applyFilter();
+backfillPoints();
 /* жёсткая блокировка масштабирования страницы: iOS Safari игнорит user-scalable=no,
    поэтому глушим жест «щипок» (gesture*) и разрешаем только прокрутку (pan) */
 try{document.documentElement.style.touchAction='pan-x pan-y';}catch(e){}
