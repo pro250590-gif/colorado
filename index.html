@@ -2306,28 +2306,23 @@ const PKEY='co-trip-2026-plan';let startIso=START;let PEOPLE=2;
    Слотов у города = его ночи; у последнего +1 на день вылета (он всегда в конце).
    Шаблонов больше слотов — лишние уходят в «Ещё в городе» (STASH, ничего не теряется);
    слотов больше — появляются свободные дни, которые наполняет пользователь. */
-let SCHED=[],STASH={},SCHED_BY={},ORDER={};
+let SCHED=[],STASH={},SCHED_BY={},HIDDEN={};
 function dayTpls(bid){return DAYS.filter(d=>DAY_BASE[d.n]===bid);}
-/* ORDER — порядок дней внутри города; меняется, когда пользователь убирает конкретный день
-   (убранный уезжает в конец очереди). Первый день города (прилёт/переезд) и день вылета
-   закреплены и убраться не могут — иначе до города не доехать и домой не улететь. */
+/* HIDDEN — какие дни города убраны. Порядок дней НЕ меняется: убрали второй день,
+   вернули — он снова второй, а не последний. Первый день города (прилёт/переезд)
+   и день вылета закреплены и убраться не могут. */
 function pinsOf(bid){
   const t=dayTpls(bid),isLast=BASES.length&&BASES[BASES.length-1].id===bid;
   return {first:t[0]||null,last:(isLast&&t.length>1)?t[t.length-1]:null};
 }
-function orderOf(bid){
-  const t=dayTpls(bid),pin=pinsOf(bid),ids=Array.isArray(ORDER[bid])?ORDER[bid]:[];
-  const mid=t.filter(x=>x!==pin.first&&x!==pin.last);
-  const sorted=ids.map(id=>mid.find(x=>x.n===id)).filter(Boolean);
-  mid.forEach(x=>{if(sorted.indexOf(x)<0)sorted.push(x);});
-  return (pin.first?[pin.first]:[]).concat(sorted);
-}
+function hiddenOf(bid){return Array.isArray(HIDDEN[bid])?HIDDEN[bid]:[];}
 function buildSchedule(){
   SCHED=[];STASH={};SCHED_BY={};
   BASES.forEach(b=>{
-    const pin=pinsOf(b.id),list=orderOf(b.id);
+    const tpls=dayTpls(b.id),pin=pinsOf(b.id),hid=hiddenOf(b.id);
+    const list=tpls.filter(t=>t!==pin.last&&(t===pin.first||hid.indexOf(t.n)<0));
     const slots=Math.max(0,b.nights), use=list.slice(0,slots);
-    STASH[b.id]=list.slice(use.length);
+    STASH[b.id]=tpls.filter(t=>t!==pin.last&&use.indexOf(t)<0);   /* скрытые + не влезшие */
     use.forEach(t=>SCHED.push({tid:t.n,base:b.id,tpl:t,pin:t===pin.first?1:0}));
     for(let k=use.length;k<slots;k++)SCHED.push({tid:'f-'+b.id+'-'+k,base:b.id,tpl:null});
     if(pin.last)SCHED.push({tid:pin.last.n,base:b.id,tpl:pin.last,fin:1,pin:1});
@@ -2403,17 +2398,22 @@ function applyNights(i,n){
     while(b.nights>v&&g++<40){const pick=autoRemovable(b.id);if(!pick)break;if(!removeDayCore(b.id,pick.e.tid))break;}
     savePlan();rerenderTrip();return;
   }
-  b.nights=v;savePlan();rerenderTrip();
+  /* добавили ночь: сначала возвращаем убранный день на его место, и только потом свободный */
+  while(b.nights<v){b.nights++;const hid=hiddenOf(b.id);if(hid.length)HIDDEN[b.id]=hid.slice(1);}
+  savePlan();rerenderTrip();
 }
-function planState(){return {nights:BASES.map(b=>b.nights),order:JSON.parse(JSON.stringify(ORDER))};}
-function restoreState(s){BASES.forEach((b,i)=>{if(typeof s.nights[i]==='number')b.nights=s.nights[i];});ORDER=s.order||{};savePlan();rerenderTrip();}
+function planState(){return {nights:BASES.map(b=>b.nights),hidden:JSON.parse(JSON.stringify(HIDDEN))};}
+function restoreState(s){BASES.forEach((b,i)=>{if(typeof s.nights[i]==='number')b.nights=s.nights[i];});HIDDEN=s.hidden||{};savePlan();rerenderTrip();}
 /* ядро: убрать день из расписания (без перерисовки), чтобы можно было убрать несколько подряд.
-   Убранный день уезжает в конец очереди города и попадает в «Ещё в городе». */
+   День помечается скрытым и попадает в «Ещё в городе». Своё место в очереди он сохраняет. */
 function removeDayCore(bid,tid){
   const i=BASES.findIndex(b=>b.id===bid),e=dayOf(tid);
   if(i<0||!e||e.pin||BASES[i].nights<=1)return null;
   const info={disp:e.disp,free:!e.tpl,title:e.tpl?e.tpl.title:''};
-  if(e.tpl){const pin=pinsOf(bid),mid=orderOf(bid).filter(x=>x!==pin.first).map(x=>x.n).filter(x=>x!==tid);mid.push(tid);ORDER[bid]=mid;}
+  if(e.tpl){
+    const ord=dayTpls(bid).map(t=>t.n);
+    HIDDEN[bid]=hiddenOf(bid).concat([tid]).sort((a,b)=>ord.indexOf(a)-ord.indexOf(b));
+  }
   BASES[i].nights--;
   buildSchedule();                      /* следующий шаг должен видеть актуальные дни */
   return info;
@@ -2468,8 +2468,8 @@ function rerenderTrip(){
   renderStays();buildRoute();buildDays();buildCities();buildFilters();buildElev();
   recomputeDates();refreshBudgetCounts();syncChecks();applyFilter();updateDirLinks();
 }
-function loadPlan(){try{const s=JSON.parse(localStorage.getItem(PKEY));if(s){if(s.start)startIso=s.start;if(typeof s.people==='number'&&s.people>=1)PEOPLE=s.people;if(Array.isArray(s.nights))BASES.forEach((b,i)=>{if(typeof s.nights[i]==='number'&&s.nights[i]>=1)b.nights=s.nights[i];});if(s.order&&typeof s.order==='object')ORDER=s.order;}}catch(e){}}
-function savePlan(){try{localStorage.setItem(PKEY,JSON.stringify({start:startIso,people:PEOPLE,nights:BASES.map(b=>b.nights),order:ORDER}));}catch(e){}}
+function loadPlan(){try{const s=JSON.parse(localStorage.getItem(PKEY));if(s){if(s.start)startIso=s.start;if(typeof s.people==='number'&&s.people>=1)PEOPLE=s.people;if(Array.isArray(s.nights))BASES.forEach((b,i)=>{if(typeof s.nights[i]==='number'&&s.nights[i]>=1)b.nights=s.nights[i];});if(s.hidden&&typeof s.hidden==='object')HIDDEN=s.hidden;}}catch(e){}}
+function savePlan(){try{localStorage.setItem(PKEY,JSON.stringify({start:startIso,people:PEOPLE,nights:BASES.map(b=>b.nights),hidden:HIDDEN}));}catch(e){}}
 function nightsBefore(baseId){let s=0;for(const b of BASES){if(b.id===baseId)break;s+=b.nights;}return s;}
 function dayDateFor(tid){const e=SCHED_BY[tid];return e?e.date:addDays(startIso,0);}
 function totalNights(){return BASES.reduce((s,b)=>s+b.nights,0);}
