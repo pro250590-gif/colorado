@@ -408,6 +408,7 @@ input[type=checkbox].tick:checked::after{content:"";position:absolute;left:8px;t
 /* важность и время: «если время» уходит первым, «по расписанию» не трогаем при раскладке */
 .mpill.spare{background:rgba(20,32,27,.06);color:#7c8697;border-color:transparent}
 .mpill.fixed{background:rgba(124,92,255,.13);color:#5b3fc4;border-color:transparent}
+.mpill.nopt{background:rgba(192,57,43,.1);color:#b03a2b;border-color:transparent}
 .why{color:var(--ink2);font-size:14.5px;line-height:1.55;display:block;margin-top:8px}
 .tag{display:inline-block;font:800 9px/1 "Inter",sans-serif;letter-spacing:.1em;text-transform:uppercase;border-radius:7px;
   padding:4px 8px;margin-left:7px;vertical-align:2px;white-space:nowrap}
@@ -2152,6 +2153,8 @@ function metaStrip(p){
   const m=META[p.id]||p.meta;if(!m)return '';
   const pr=prioOf(p),wh=whenOf(p);
   let out='<span class="meta">';
+  /* своё место без координат на карту попасть не может — говорим об этом прямо */
+  if(p.custom&&typeof p.lat!=='number')out+='<span class="mpill nopt">'+ic('pin','i-sm')+' нет точки на карте</span>';
   if(pr==='must')out+='<span class="mpill must">'+ic('star','i-sm')+' обязательно</span>';
   if(pr==='spare')out+='<span class="mpill spare">'+ic('clock','i-sm')+' если время</span>';
   if(wh==='fixed')out+='<span class="mpill fixed">'+ic('ticket','i-sm')+' по расписанию</span>';
@@ -2493,7 +2496,9 @@ function addPlace(tid,d){
   CUSTOM.push(c);P.push(c);
   if(typeof d.lat==='number'&&typeof d.lng==='number'){picked.add(id);savePicks();if(map&&!markers[id])makeMarker(c);}
   savePlan();rerenderTrip();
-  toast('<b>Добавили «'+c.nm+'» в День '+e.disp+'</b>'+(c.lat?'':'<i>без точки на карте — в ссылке не было координат</i>'),e.base,null);
+  toast('<b>Добавили «'+c.nm+'» в День '+e.disp+'</b>'
+    +(c.lat?'<i>точка на карте есть — видно при выборе города или дня</i>'
+           :'<i>точку на карте не нашли: открой «⋯» у места и нажми «Поставить точку на карте»</i>'),e.base,null);
 }
 /* ── МОЖНО ЛИ ПЕРЕНЕСТИ МЕСТО В ЭТОТ ДЕНЬ ──
    Меса-Верде нельзя посмотреть из Аспена: это 330 км. Считаем настоящее расстояние
@@ -2721,8 +2726,31 @@ function movePlaceSheet(id){
     +(far.length?'<button class="dsmore" data-farshow="1" data-farn="'+far.length+'">Показать дальние дни · '+far.length+'</button>'
       +'<div class="dsfar"><div class="dssep">Далеко от этого места</div>'+far.map(e=>row(e,true)).join('')+'</div>':'')
     +(p.d===stashTid(p.base)?'':'<button class="dscancel alt" data-mvto="'+stashTid(p.base)+'" data-mvid="'+id+'">Убрать в «Ещё в городе»</button>')
+    +(typeof p.lat!=='number'?'<button class="dscancel alt" data-fixopen="'+id+'">Поставить точку на карте</button>':'')
     +(p.custom?'<button class="dscancel del" data-delpl="'+id+'">Удалить место совсем</button>':'')
     +'<button class="dscancel" data-dsclose="1">Отмена</button>');
+}
+/* «Поставить точку на карте» — для места, которому координаты не нашлись */
+function fixPointSheet(id){
+  const p=placeById(id);if(!p)return;
+  sheet('<div class="dsh"><b>Поставить точку на карте</b><span>'+p.nm+'</span></div>'
+    +'<div class="dssep">Где это</div>'
+    +'<div class="dsform"><input id="fxq" placeholder="Ссылка из Google Maps или адрес" autocomplete="off" value="'+String(p.q||p.nm||'').replace(/"/g,'&quot;')+'">'
+      +'<button class="dsgo" data-fixpt="'+id+'">Найти точку</button>'
+      +'<span class="dshint">Надёжнее всего ссылка на место из Google Maps: в ней есть адрес. По адресу точка находится почти всегда.</span></div>'
+    +'<button class="dscancel" data-dsclose="1">Отмена</button>');
+}
+/* поставить координаты уже добавленному месту и вывести его на карту */
+function setPoint(id,lat,lng,q){
+  const p=placeById(id);if(!p)return false;
+  if(typeof lat!=='number'||typeof lng!=='number')return false;
+  p.lat=lat;p.lng=lng;if(q)p.q=q;
+  const c=CUSTOM.find(x=>x.id===id);if(c){c.lat=lat;c.lng=lng;if(q)c.q=q;}
+  picked.add(id);savePicks();savePlan();
+  if(map&&!markers[id])makeMarker(p);
+  rerenderTrip();
+  toast('<b>«'+p.nm+'» теперь на карте</b><i>смотри в дне '+(dispOf(p.d)||'')+' — выбери город или день, чтобы увидеть точки</i>',p.base,null);
+  return true;
 }
 /* «Добавить место в день» — три способа */
 function addPlaceSheet(tid){
@@ -2898,6 +2926,26 @@ document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)r
       t.textContent=on?'Скрыть дальние дни':('Показать дальние дни · '+(t.dataset.farn||''));}}
   if(t.dataset.mvto){closeDaySheet();movePlace(t.dataset.mvid,tidOf(t.dataset.mvto));}
   if(t.dataset.delpl){closeDaySheet();deletePlace(t.dataset.delpl);}
+  if(t.dataset.fixopen){fixPointSheet(t.dataset.fixopen);}
+  if(t.dataset.fixpt){
+    const id=t.dataset.fixpt,f=document.getElementById('fxq'),v=(f&&f.value||'').trim();
+    if(!v){if(f)f.focus();return;}
+    const done=(lat,lng,q)=>{closeDaySheet();
+      if(!setPoint(id,lat,lng,q))alert('Точку найти не удалось. Попробуй вставить ссылку на место из Google Maps — в ней есть адрес.');};
+    if(/^https?:\/\//i.test(v)){
+      const g=parseGmaps(v);
+      if(g.lat)return done(g.lat,g.lng,g.addr||g.nm);
+      if(g.short&&!g.nm){t.textContent='Разворачиваю ссылку…';t.disabled=true;
+        return expandShort(v,res=>{const g2=res?parseGmaps(res.url||''):null;
+          if(g2&&g2.lat)return done(g2.lat,g2.lng,g2.addr||g2.nm);
+          if(g2&&(g2.addr||g2.nm))return geocode(g2.addr||g2.nm,r=>done(r&&r.lat,r&&r.lng,g2.addr||g2.nm));
+          done(null,null);});}
+      t.textContent='Ищем точку…';t.disabled=true;
+      return geocode(g.addr||g.nm||v,r=>done(r&&r.lat,r&&r.lng,g.addr||g.nm));
+    }
+    t.textContent='Ищем точку…';t.disabled=true;
+    geocode(v,r=>done(r&&r.lat,r&&r.lng,v));
+  }
   if(t.dataset.addto){addPlaceSheet(tidOf(t.dataset.addto));}
   if(t.dataset.gmadd){
     const inp=document.getElementById('gmUrl'),val=(inp&&inp.value||'').trim(),tid=tidOf(t.dataset.gmadd);
