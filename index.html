@@ -2765,9 +2765,31 @@ function movePlaceSheet(id){
     +(far.length?'<button class="dsmore" data-farshow="1" data-farn="'+far.length+'">Показать дальние дни · '+far.length+'</button>'
       +'<div class="dsfar"><div class="dssep">Далеко от этого места</div>'+far.map(e=>row(e,true)).join('')+'</div>':'')
     +(p.d===stashTid(p.base)?'':'<button class="dscancel alt" data-mvto="'+stashTid(p.base)+'" data-mvid="'+id+'">Убрать в «Ещё в городе»</button>')
+    +(p.custom?'<button class="dscancel alt" data-edopen="'+id+'">Изменить название и подпись</button>':'')
     +(typeof p.lat!=='number'?'<button class="dscancel alt" data-fixopen="'+id+'">Поставить точку на карте</button>':'')
     +(p.custom?'<button class="dscancel del" data-delpl="'+id+'">Удалить место совсем</button>':'')
     +'<button class="dscancel" data-dsclose="1">Отмена</button>');
+}
+/* Правка своего места: название, подпись и тип. Без неё опечатку можно было
+   исправить только удалив место и добавив заново. */
+function editPlaceSheet(id){
+  const p=placeById(id);if(!p||!p.custom)return;
+  const esc=s=>String(s||'').replace(/"/g,'&quot;');
+  sheet('<div class="dsh"><b>Изменить место</b><span>'+p.nm+'</span></div>'
+    +'<div class="dsform"><input id="edNm" placeholder="Название места" autocomplete="off" value="'+esc(p.nm)+'">'
+      +'<input id="edWhy" placeholder="Зачем сюда (по желанию)" autocomplete="off" value="'+esc(p.why)+'">'
+      +'<div class="dskinds">'+KINDS.map(x=>'<button class="dskind'+(kindOf(p).k===x.k?' on':'')+'" data-kind="'+x.k+'">'
+        +ic(x.ic,'i-sm')+'<span>'+x.l+'</span></button>').join('')+'</div>'
+      +'<button class="dsgo" data-edsave="'+id+'">Сохранить</button></div>'
+    +'<button class="dscancel" data-dsclose="1">Отмена</button>');
+}
+function savePlaceEdit(id,nm,why,kind){
+  const p=placeById(id);if(!p||!p.custom)return;
+  const prev=planState();
+  p.nm=nm||p.nm;p.why=why||'';p.kind=kind||p.kind;
+  const c=CUSTOM.find(x=>x.id===id);if(c){c.nm=p.nm;c.why=p.why;c.kind=p.kind;}
+  savePlan();rerenderTrip();
+  toast('<b>Изменили «'+p.nm+'»</b>',p.base,prev);
 }
 /* «Поставить точку на карте» — для места, которому координаты не нашлись */
 function fixPointSheet(id){
@@ -2968,6 +2990,14 @@ document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)r
   if(t.dataset.mvto){closeDaySheet();movePlace(t.dataset.mvid,tidOf(t.dataset.mvto));}
   if(t.dataset.delpl){closeDaySheet();deletePlace(t.dataset.delpl);}
   if(t.dataset.kind){const box=t.parentNode;if(box)box.querySelectorAll('.dskind').forEach(b=>b.classList.toggle('on',b===t));}
+  if(t.dataset.edopen){editPlaceSheet(t.dataset.edopen);}
+  if(t.dataset.edsave){
+    const nm=((document.getElementById('edNm')||{}).value||'').trim();
+    if(!nm){const i=document.getElementById('edNm');if(i)i.focus();return;}
+    const why=((document.getElementById('edWhy')||{}).value||'').trim();
+    const kd=(document.querySelector('#daySheet .dskind.on')||{}).dataset;
+    closeDaySheet();savePlaceEdit(t.dataset.edsave,nm,why,(kd&&kd.kind)||'other');
+  }
   if(t.dataset.fixopen){fixPointSheet(t.dataset.fixopen);}
   if(t.dataset.fixpt){
     const id=t.dataset.fixpt,f=document.getElementById('fxq'),v=(f&&f.value||'').trim();
