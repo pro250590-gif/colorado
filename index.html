@@ -2544,33 +2544,45 @@ function nearestBaseKm(lat,lng){
   return BASES.reduce((m,b)=>Math.min(m,kmBetween(lat,lng,b.lat,b.lng)),1e9);
 }
 /* Короткую ссылку (maps.app.goo.gl) разворачивает наша функция на Supabase:
-   браузеру Google не даёт этого сделать. Функции нет или молчит — работаем как раньше. */
+   браузеру Google не даёт этого сделать. Функции нет или молчит — работаем как раньше.
+   Имена перебираем: функция опубликована как smart-action (имя по умолчанию в панели). */
+const GM_FNS=['smart-action','gmlink'];
 function expandShort(url,cb){
   if(typeof SB_URL!=='string'||!SB_URL)return cb(null);
   let done=false;const fin=r=>{if(done)return;done=true;cb(r);};
-  const to=setTimeout(()=>fin(null),9000);
-  try{
-    fetch(SB_URL+'/functions/v1/gmlink?u='+encodeURIComponent(url),{headers:{Accept:'application/json'}})
+  const to=setTimeout(()=>fin(null),10000);
+  const H={Accept:'application/json',apikey:SB_KEY,Authorization:'Bearer '+SB_KEY};
+  const tryN=i=>{
+    if(i>=GM_FNS.length){clearTimeout(to);return fin(null);}
+    fetch(SB_URL+'/functions/v1/'+GM_FNS[i]+'?u='+encodeURIComponent(url),{headers:H})
       .then(r=>r.ok?r.json():null)
-      .then(j=>{clearTimeout(to);fin(j&&j.url?j:null);})
-      .catch(()=>{clearTimeout(to);fin(null);});
-  }catch(e){clearTimeout(to);fin(null);}
+      .then(j=>{if(j&&j.url){clearTimeout(to);fin(j);}else tryN(i+1);})
+      .catch(()=>tryN(i+1));
+  };
+  try{tryN(0);}catch(e){clearTimeout(to);fin(null);}
 }
 function geocode(q,cb){
   let done=false;
   const fin=r=>{if(done)return;done=true;cb(r);};
-  const to=setTimeout(()=>fin(null),9000);
-  try{
+  const to=setTimeout(()=>fin(null),12000);
+  /* заходы по очереди: как дали → только адрес без названия. Второй нужен для кафе и
+     магазинов: «Ice House Coffee Shop, 225 7th Ave…» не находится, а «225 7th Ave…» — да. */
+  const tries=[q];
+  const c=String(q).indexOf(',');
+  if(c>0)tries.push(String(q).slice(c+1).trim());
+  const run=i=>{
+    if(i>=tries.length){clearTimeout(to);return fin(null);}
     fetch('https://nominatim.openstreetmap.org/search?format=json&limit=5&bounded=1&viewbox='+tripBox()
-      +'&q='+encodeURIComponent(q),{headers:{Accept:'application/json'}})
+      +'&q='+encodeURIComponent(tries[i]),{headers:{Accept:'application/json'}})
       .then(r=>r.json())
-      .then(a=>{clearTimeout(to);
-        if(!a||!a.length)return fin(null);
-        const best=a.map(x=>({lat:+x.lat,lng:+x.lon,km:nearestBaseKm(+x.lat,+x.lon)}))
-                    .sort((x,y)=>x.km-y.km)[0];
-        fin(best&&best.km<=200?{lat:best.lat,lng:best.lng}:null);})
-      .catch(()=>{clearTimeout(to);fin(null);});
-  }catch(e){clearTimeout(to);fin(null);}
+      .then(a=>{
+        const best=(a||[]).map(x=>({lat:+x.lat,lng:+x.lon,km:nearestBaseKm(+x.lat,+x.lon)}))
+                          .sort((x,y)=>x.km-y.km)[0];
+        if(best&&best.km<=200){clearTimeout(to);return fin({lat:best.lat,lng:best.lng});}
+        run(i+1);})
+      .catch(()=>run(i+1));
+  };
+  try{run(0);}catch(e){clearTimeout(to);fin(null);}
 }
 /* меняем ночи в городе → пересобираем расписание и всё, что от дней зависит.
    Минус — это «поездка короче»: система сама выбирает, какой день уходит, и говорит какой. */
