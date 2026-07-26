@@ -1135,7 +1135,7 @@ section h2.big{margin-bottom:4px}
 
 <header class="hero">
   <div class="wrap">
-    <div class="kicker">Юго-запад Колорадо · Август 2026</div>
+    <div class="kicker" id="heroDate">7–16 августа 2026</div>
     <h1>Дуранго → Урей<em>Аспен → Денвер</em></h1>
     <p class="sub">Десять дней поперёк Скалистых гор: паровоз на Силвертон, скальные города Меса-Верде, Million Dollar Highway без отбойников, Чёрный каньон и перевал Independence на 3 687 метрах.</p>
     <div class="bento">
@@ -2125,9 +2125,10 @@ function recomputeDates(){
   const nn=document.getElementById('tNights');if(nn)nn.textContent=tn+' '+nights(tn);
   const ns=document.getElementById('tNightsSub');
   if(ns)ns.textContent=td+' '+plural(td,'день','дня','дней')+' · '+BASES.length+' '+plural(BASES.length,'база','базы','баз');
-  const td2=document.getElementById('topDate');
-  if(td2){const s=addDays(startIso,0),e=addDays(startIso,tn);
-    td2.textContent=s.getDate()+'–'+e.getDate()+' '+MONTHS[e.getMonth()]+' '+e.getFullYear();}
+  {const s=addDays(startIso,0),e=addDays(startIso,tn);
+    const dstr=s.getDate()+'–'+e.getDate()+' '+MONTHS[e.getMonth()]+' '+e.getFullYear();
+    const td2=document.getElementById('topDate');if(td2)td2.textContent=dstr;
+    const hd=document.getElementById('heroDate');if(hd)hd.textContent=dstr;}
   buildFooter();
 }
 /* конфиг сервиса (не поездки): бренд и контакт для футера — общие для всех маршрутов */
