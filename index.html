@@ -2532,15 +2532,30 @@ function parseGmaps(url){
   }
   return out;
 }
-/* координаты по названию и адресу — бесплатно, без ключа, через OpenStreetMap */
+/* Координаты по названию — бесплатно и без ключа, через OpenStreetMap.
+   Поиск ограничиваем рамкой вокруг городов маршрута и берём точку, ближайшую к нему:
+   иначе «Box Canyon Falls» находится в Австралии, а «Twin Lakes» — в Нью-Мексико. */
+function tripBox(){
+  const la=BASES.map(b=>b.lat),lo=BASES.map(b=>b.lng),p=0.8,r=v=>Math.round(v*1e4)/1e4;
+  return [r(Math.min.apply(null,lo)-p),r(Math.max.apply(null,la)+p),
+          r(Math.max.apply(null,lo)+p),r(Math.min.apply(null,la)-p)].join(',');
+}
+function nearestBaseKm(lat,lng){
+  return BASES.reduce((m,b)=>Math.min(m,kmBetween(lat,lng,b.lat,b.lng)),1e9);
+}
 function geocode(q,cb){
   let done=false;
   const fin=r=>{if(done)return;done=true;cb(r);};
-  const to=setTimeout(()=>fin(null),8000);
+  const to=setTimeout(()=>fin(null),9000);
   try{
-    fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q='+encodeURIComponent(q),{headers:{Accept:'application/json'}})
+    fetch('https://nominatim.openstreetmap.org/search?format=json&limit=5&bounded=1&viewbox='+tripBox()
+      +'&q='+encodeURIComponent(q),{headers:{Accept:'application/json'}})
       .then(r=>r.json())
-      .then(a=>{clearTimeout(to);fin(a&&a.length?{lat:+a[0].lat,lng:+a[0].lon}:null);})
+      .then(a=>{clearTimeout(to);
+        if(!a||!a.length)return fin(null);
+        const best=a.map(x=>({lat:+x.lat,lng:+x.lon,km:nearestBaseKm(+x.lat,+x.lon)}))
+                    .sort((x,y)=>x.km-y.km)[0];
+        fin(best&&best.km<=200?{lat:best.lat,lng:best.lng}:null);})
       .catch(()=>{clearTimeout(to);fin(null);});
   }catch(e){clearTimeout(to);fin(null);}
 }
@@ -2670,10 +2685,11 @@ function addPlaceSheet(tid){
     +(st.length?'<div class="dssep">Из «Ещё в городе»</div>'
       +st.map(p=>'<button class="dsrow" data-mvto="'+tid+'" data-mvid="'+p.id+'"><span class="cn">'+ic('pin','i-sm')+'</span>'
         +'<span class="dst"><b>'+p.nm+'</b><span>'+(p.why||'').replace(/<[^>]+>/g,'').slice(0,60)+'</span></span></button>').join(''):'')
-    +'<div class="dssep">Ссылка из Google Maps</div>'
-    +'<div class="dsform"><input id="gmUrl" placeholder="Вставь ссылку на место" autocomplete="off">'
-      +'<button class="dsgo" data-gmadd="'+tid+'">Добавить по ссылке</button>'
-      +'<span class="dshint">Годится ссылка прямо из кнопки «Поделиться». Название возьмём из неё, а точку на карте найдём по адресу.</span></div>'
+    +'<div class="dssep">Из Google Maps</div>'
+    +'<div class="dsform"><input id="gmUrl" placeholder="Ссылка на место или его название" autocomplete="off">'
+      +'<button class="dsgo" data-gmadd="'+tid+'">Найти и добавить</button>'
+      +'<span class="dshint">Годится длинная ссылка из Google Maps — из неё возьмём название и адрес. '
+      +'Короткие ссылки вида maps.app.goo.gl браузер разворачивать не умеет, поэтому для них просто вставь название места — найдём по нему.</span></div>'
     +'<div class="dssep">Вручную</div>'
     +'<div class="dsform"><input id="mnNm" placeholder="Название места" autocomplete="off">'
       +'<input id="mnWhy" placeholder="Зачем сюда (по желанию)" autocomplete="off">'
@@ -2813,13 +2829,23 @@ document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)r
   if(t.dataset.mvto){closeDaySheet();movePlace(t.dataset.mvid,tidOf(t.dataset.mvto));}
   if(t.dataset.addto){addPlaceSheet(tidOf(t.dataset.addto));}
   if(t.dataset.gmadd){
-    const inp=document.getElementById('gmUrl'),url=(inp&&inp.value||'').trim(),tid=tidOf(t.dataset.gmadd);
-    if(!url){if(inp)inp.focus();return;}
-    const g=parseGmaps(url);
-    if(!g.nm&&!g.lat){alert(g.short
-      ? 'Это короткая ссылка. Открой её в браузере — она развернётся в полную, и скопируй адрес из строки.'
-      : 'Не получилось разобрать ссылку. Скопируй адрес страницы места из Google Maps.');return;}
-    if(g.lat){closeDaySheet();addPlace(tid,{nm:g.nm||'Место из Google Maps',q:g.addr||g.nm||url,lat:g.lat,lng:g.lng});return;}
+    const inp=document.getElementById('gmUrl'),val=(inp&&inp.value||'').trim(),tid=tidOf(t.dataset.gmadd);
+    if(!val){if(inp)inp.focus();return;}
+    /* Не ссылка, а просто название — ищем его на карте. Это же выход из положения
+       с короткими ссылками maps.app.goo.gl: развернуть их браузер не может (CORS). */
+    if(!/^https?:\/\//i.test(val)){
+      t.textContent='Ищем на карте…';t.disabled=true;
+      geocode(val,r=>{closeDaySheet();addPlace(tid,{nm:val,q:val,lat:r&&r.lat,lng:r&&r.lng});});
+      return;
+    }
+    const g=parseGmaps(val);
+    if(g.short&&!g.nm&&!g.lat){
+      alert('Короткую ссылку (maps.app.goo.gl) браузер развернуть не может — так устроена его защита.\n\nВставь вместо неё название места, например «Durango Wildlife Museum», — я найду его на карте сама.');
+      if(inp){inp.value='';inp.focus();}
+      return;
+    }
+    if(!g.nm&&!g.lat){alert('Не получилось разобрать ссылку. Вставь название места — найду по нему.');return;}
+    if(g.lat){closeDaySheet();addPlace(tid,{nm:g.nm||'Место из Google Maps',q:g.addr||g.nm||val,lat:g.lat,lng:g.lng});return;}
     /* координат в ссылке нет — ищем точку по названию и адресу */
     t.textContent='Ищем на карте…';t.disabled=true;
     geocode(g.addr||g.nm,r=>{closeDaySheet();
