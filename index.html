@@ -808,15 +808,13 @@ input.money.perunit{max-width:62px;padding:7px 6px;text-align:center;margin:0 1p
 .routecard{background:#fff;border:1px solid #eceef6;border-radius:var(--r2);box-shadow:var(--sh1);padding:14px 14px 12px}
 .routeline{position:relative}
 .rsvg{display:block;width:100%;overflow:visible}
-.rlab{position:absolute;white-space:nowrap;transform:translateX(-50%);text-align:center;pointer-events:none}
+.rlab{position:absolute;white-space:nowrap;text-align:center;pointer-events:none}
 .rlab b{display:block;font:800 12.5px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:-.035em;color:var(--ink)}
 .rlab span{display:block;font:600 10px/1 "Inter",sans-serif;color:var(--mut);margin-top:5px}
 .rlab.gh b{font-size:11.5px;color:#9aa3b2}
+.rlab.sm b{font-size:11px}
 .rlab.solo b{font-size:19px;letter-spacing:-.04em}
 .rlab.solo span{font-size:11px;margin-top:6px}
-.rlab.l,.rlab.r{transform:none}
-.rlab.l{text-align:left}
-.rlab.r{text-align:right}
 .rnode{position:absolute;width:11px;height:11px;margin:-5.5px 0 0 -5.5px;border-radius:50%;background:linear-gradient(160deg,#8b6cf0,#5b3fc4);box-shadow:0 0 0 3px #fff,0 0 0 5.5px rgba(91,63,196,.15)}
 .rnode.solo{width:14px;height:14px;margin:-7px 0 0 -7px;box-shadow:0 0 0 3.5px #fff,0 0 0 7px rgba(91,63,196,.16)}
 .rnode.gh{width:8px;height:8px;margin:-4px 0 0 -4px;background:#c6cbd8;box-shadow:0 0 0 3px #fff}
@@ -1482,22 +1480,35 @@ function buildRoute(){
   });
   stops.push({gh:1,name:ORIGIN.city});
   const solo=BASES.length===1;
-  const R=36,padL=10,padR=10;
+  const R=36,padL=10,padR=10,TIN=22;   /* TIN — отступ узлов от дуги: подписи не лезут в поворот */
   const FN=solo?'800 19px "Plus Jakarta Sans",sans-serif':'800 12.5px "Plus Jakarta Sans",sans-serif';
+  const FS='800 11px "Plus Jakarta Sans",sans-serif';        /* мелкий кегль — предпоследняя мера перед обрезкой */
   const FG='800 11.5px "Plus Jakarta Sans",sans-serif';
   const FD=solo?'600 11px "Inter",sans-serif':'600 10px "Inter",sans-serif';
+  let small=false;
+  const fontOf=st=>st.gh?FG:(small?FS:FN);
   const subOf=st=>st.gh?'':(solo?st.dates+' · '+st.nights+' '+nights(st.nights):st.dates);
   const split=t=>{if(!t)return[stops];const k=Math.ceil(BASES.length/2);return[stops.slice(0,k+1),stops.slice(k+1)];};
-  const labW=(st,nm,dates)=>Math.max(txtW(nm(st),st.gh?FG:FN),dates?txtW(subOf(st),FD):0);
+  const labW=(st,nm,dates)=>Math.max(txtW(nm(st),fontOf(st)),dates?txtW(subOf(st),FD):0);
+  /* узлы: первая строка слева направо, вторая — обратно */
+  const place=t=>{
+    const xB=W-padR-(t?R+TIN:0),out=[];
+    split(t).forEach((row,ri)=>{const k=row.length;
+      row.forEach((st,i)=>{const f=k>1?i/(k-1):.5;
+        out.push({st:st,x:ri===0?padL+(xB-padL)*f:xB-(xB-padL)*f,row:ri});});});
+    return out;
+  };
+  /* подпись центрируется по узлу, но не вылезает за карточку — крайние прижимаются */
+  const ext=(p,nm,dates)=>{const w=labW(p.st,nm,dates);const l=Math.max(-12,Math.min(p.x-w/2,W+12-w));return[l,l+w];};
   /* влезает ли раскладка: соседние подписи не должны наезжать друг на друга */
   const fits=(t,dates,nm)=>{
-    const xB=W-padR-(t?R:0);
-    return split(t).every(row=>{
-      const k=row.length;if(k<2)return true;
-      const step=(xB-padL)/(k-1);
-      for(let i=0;i<k-1;i++) if(labW(row[i],nm,dates)/2+labW(row[i+1],nm,dates)/2+9>step)return false;
-      return true;
-    });
+    const P=place(t);
+    for(let i=0;i<P.length-1;i++){
+      if(P[i].row!==P[i+1].row)continue;
+      const A=ext(P[i],nm,dates),B=ext(P[i+1],nm,dates),lo=A[0]<B[0]?A:B,hi=A[0]<B[0]?B:A;
+      if(lo[1]+9>hi[0])return false;
+    }
+    return true;
   };
   /* сначала пробуем одну строку с датами, потом виток, потом жертвуем датами, в конце режем названия */
   const asis=st=>st.name;
@@ -1507,27 +1518,22 @@ function buildRoute(){
     if(!fits(true,true,asis)){
       dates=false;
       if(!fits(true,false,asis)){
-        const xB=W-padR-R;
-        split(true).forEach(row=>{const k=row.length,step=k>1?(xB-padL)/(k-1):xB-padL;
-          row.forEach(st=>{st.lim=Math.min(st.lim||1e9,Math.max(40,step-10));});});
-        nm=st=>clip(st.name,st.gh?FG:FN,st.lim||60);
+        small=true;
+        if(!fits(true,false,asis)){
+          const xB=W-padR-R-TIN;
+          split(true).forEach(row=>{const k=row.length,step=k>1?(xB-padL)/(k-1):xB-padL;
+            row.forEach(st=>{st.lim=Math.min(st.lim||1e9,Math.max(40,step-9));});});
+          nm=st=>clip(st.name,fontOf(st),st.lim||60);
+        }
       }
     }
   }
-  const yTop=solo?56:42;
-  const rowY=[yTop,yTop+2*R];
-  const xA=padL, xB=W-padR-(two?R:0);
-  const rows=split(two);
-  /* координаты узлов: первая строка слева направо, вторая — обратно */
-  const P=[];
-  rows.forEach((row,ri)=>{
-    const k=row.length,y=rowY[ri];
-    row.forEach((st,i)=>{
-      const t=k>1?i/(k-1):.5;
-      P.push({st:st,x:ri===0?xA+(xB-xA)*t:xB-(xB-xA)*t,y:y,row:ri});
-    });
-  });
-  const H=rowY[rows.length-1]+30;
+  /* подписи у всех одинаково — над линией; высота блока: имя (+ даты) */
+  const labH=st=>st.gh?12:(solo?42:(dates?28:13));
+  const yTop=12+labH({}),rowY=[yTop,yTop+2*R];
+  const P=place(two);
+  P.forEach(p=>{p.y=rowY[p.row];});
+  const H=rowY[two?1:0]+16;
   const segType=i=>(i===0||i===P.length-2)?'flight':(SEGMENT[P[i+1].st.id]||'car');
   const dash=t=>t==='flight'?'stroke="#c6cbd8" stroke-width="2" stroke-dasharray="3 4"':'stroke="url(#rgrad)" stroke-width="3"';
   const glyph=(x,y,t)=>{
@@ -1550,23 +1556,22 @@ function buildRoute(){
             +'<path d="M'+q(mid+11*dir)+' '+a.y+'H'+q(b.x)+'" '+st+'/>';
         deco+=glyph(mid,a.y,t);
       } else svg+='<path d="M'+q(a.x)+' '+a.y+'H'+q(b.x)+'" '+st+'/>';
-    } else {                                  /* виток: полукруг вправо, иконка в вершине */
-      const cy=(a.y+b.y)/2,s68=Math.sin(68*Math.PI/180),c68=Math.cos(68*Math.PI/180);
-      svg+='<path d="M'+q(a.x)+' '+a.y+'A'+R+' '+R+' 0 0 1 '+q(a.x+R*s68)+' '+q(cy-R*c68)+'" '+st+'/>'
-          +'<path d="M'+q(a.x+R*s68)+' '+q(cy+R*c68)+'A'+R+' '+R+' 0 0 1 '+q(b.x)+' '+b.y+'" '+st+'/>';
-      deco+=glyph(a.x+R+1,cy,t);
+    } else {                                  /* виток: узлы отходят от дуги, чтобы подписи в неё не лезли */
+      const cy=(a.y+b.y)/2,xc=a.x+TIN,s68=Math.sin(68*Math.PI/180),c68=Math.cos(68*Math.PI/180);
+      svg+='<path d="M'+q(a.x)+' '+a.y+'H'+q(xc)+'" '+st+'/>'
+          +'<path d="M'+q(xc)+' '+a.y+'A'+R+' '+R+' 0 0 1 '+q(xc+R*s68)+' '+q(cy-R*c68)+'" '+st+'/>'
+          +'<path d="M'+q(xc+R*s68)+' '+q(cy+R*c68)+'A'+R+' '+R+' 0 0 1 '+q(xc)+' '+b.y+'" '+st+'/>'
+          +'<path d="M'+q(xc)+' '+b.y+'H'+q(b.x)+'" '+st+'/>';
+      deco+=glyph(xc+R+1,cy,t);
     }
   }
   svg+='</svg>';
   P.forEach(p=>{
     const gh=p.st.gh;
-    let cls='rlab'+(gh?' gh':'')+(solo&&!gh?' solo':''),pos;
-    if(p.x<40){cls+=' l';pos='left:'+q(Math.max(0,p.x-8))+'px';}
-    else if(p.x>W-40){cls+=' r';pos='right:'+q(Math.max(0,W-p.x-8))+'px';}
-    else pos='left:'+q(p.x)+'px';
-    const top=gh?p.y+13:p.y-(solo?54:(dates?40:26));
+    const cls='rlab'+(gh?' gh':'')+(solo&&!gh?' solo':'')+(small&&!gh?' sm':'');
+    const top=p.y-12-labH(p.st);              /* все подписи над линией, низом к одной высоте */
     const sub=gh||!dates?'':subOf(p.st);
-    deco+='<span class="'+cls+'" style="'+pos+';top:'+q(top)+'px"><b>'+nm(p.st)+'</b>'+(sub?'<span>'+sub+'</span>':'')+'</span>'
+    deco+='<span class="'+cls+'" style="left:'+q(ext(p,nm,dates)[0])+'px;top:'+q(top)+'px"><b>'+nm(p.st)+'</b>'+(sub?'<span>'+sub+'</span>':'')+'</span>'
       +'<span class="rnode'+(gh?' gh':'')+(solo&&!gh?' solo':'')+'" style="left:'+q(p.x)+'px;top:'+p.y+'px"></span>';
   });
   const tn=totalNights();
