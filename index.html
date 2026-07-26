@@ -940,7 +940,9 @@ body{background:linear-gradient(168deg,#eef1f8,#e9edf6 60%,#e6eaf4)!important}
 /* «Изменить» и «Убрать» — одинаковые, каждая на половину, вместе от края до края текста.
    Ссылка на карту уезжает отдельной строкой сверху, чтобы не сбивать пару. */
 .mystact{display:flex;align-items:center;gap:10px;margin-top:auto;padding-top:11px}
-.mystact .cbookl{flex:1;min-width:0;padding-top:0;font-size:12px;letter-spacing:-.02em}
+/* margin-top:auto достался от базового .cbookl и в строке прижимал ссылку к низу,
+   отменяя align-items:center — текст оказывался ниже «⋯». Гасим его. */
+.mystact .cbookl{flex:1;min-width:0;margin-top:0;padding-top:0;font-size:12px;letter-spacing:-.02em;line-height:1.2}
 .stbtn{border:1.5px solid rgba(20,32,27,.12);background:#fff;color:#6d7c74;border-radius:9px;padding:7px 10px;
   font:800 10.5px/1 "Plus Jakarta Sans",sans-serif;cursor:pointer}
 .mystact .stbtn{display:flex;align-items:center;justify-content:center;text-align:center;width:100%;min-height:36px;
