@@ -177,6 +177,9 @@ h2.big{font-size:clamp(26px,6.4vw,38px);margin:12px 4px 0}
 .photopin{position:relative;width:45px;height:53px;filter:drop-shadow(0 8px 12px rgba(20,32,27,.45))}
 .photopin .ph{position:absolute;top:0;left:0;width:45px;height:45px;border-radius:50%;overflow:hidden;
   border:3px solid #fff;background:#dde5e1 center/cover no-repeat}
+/* место без фото — лавандовая плашка с иконкой типа, а не пустой кружок */
+.photopin .ph.noph{background:linear-gradient(150deg,#f3effd,#ddd1f6);display:grid;place-items:center;color:#7c5cff}
+.photopin .ph.noph .i{width:20px;height:20px;stroke-width:1.9}
 .photopin .tip{position:absolute;left:50%;bottom:0;transform:translateX(-50%);width:0;height:0;
   border-left:6px solid transparent;border-right:6px solid transparent;border-top:10px solid #fff}
 .photopin .badge{position:absolute;top:-3px;right:-4px;min-width:17px;height:17px;border-radius:999px;color:#fff;
@@ -901,7 +904,15 @@ body{background:linear-gradient(168deg,#eef1f8,#e9edf6 60%,#e6eaf4)!important}
 .cnights{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:15px;padding:12px 14px;background:#fff;border:1px solid #eceef6;border-radius:15px;box-shadow:var(--sh1)}
 .cnl{font:800 12.5px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:-.02em;color:var(--ink2)}
 /* отложенные места города */
-.cmore{background:#fff;border:1px solid #eceef6;border-radius:15px;box-shadow:var(--sh1);padding:6px 13px 13px}
+.cmore{background:#fff;border:1px solid #eceef6;border-radius:15px;box-shadow:var(--sh1)}
+.cmoresum{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 13px;cursor:pointer;list-style:none}
+.cmoresum::-webkit-details-marker{display:none}
+.cmoresum b{font:800 12.5px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:-.02em;color:var(--ink2)}
+.cmore .cgo{transition:transform .25s}
+.cmore[open] .cgo{transform:rotate(180deg)}
+.cmore .lclose,.cmore[open] .lopen{display:none}
+.cmore[open] .lclose{display:block}
+.cmorebody{padding:0 13px 13px}
 .cmoren{font:600 11.5px/1.45 "Inter",sans-serif;color:#8b8698;background:#faf9ff;border-radius:11px;padding:10px 12px;margin-top:4px}
 /* «убрать этот день» — на самой карточке дня, осознанный выбор */
 .crm{display:flex;align-items:center;gap:6px;margin-top:12px;padding:9px 12px;border:1.5px solid rgba(20,32,27,.1);background:#fff;border-radius:11px;
@@ -1744,11 +1755,13 @@ function markerIcon(p){
   const dn=dispOf(p.d)||'';        /* на булавке — номер дня как в ленте, а не id шаблона */
   if(p.cat==='food')return L.divIcon({className:'',iconSize:[34,44],iconAnchor:[17,42],popupAnchor:[0,-40],html:foodPinHTML(p.id)});
   if(foodOn)return L.divIcon({className:'',iconSize:[24,24],iconAnchor:[12,12],popupAnchor:[0,-12],html:'<div class="rpt">'+dn+'</div>'});
+  /* без фото — та же булавка, но с лавандовой плашкой и иконкой типа: выглядит нарочно,
+     а не «картинка пропала» (клиент так и прочла плоскую точку) */
   const ph=PHOTO[p.id];
-  if(ph)return L.divIcon({className:'',iconSize:[42,48],iconAnchor:[21,48],popupAnchor:[0,-46],
-    html:'<div class="photopin"><div class="ph" style="background-image:url('+pimg(p.id,'p')+')"></div><div class="badge" style="background:#5b3fc4">'+dn+'</div><div class="tip"></div></div>'});
-  const sz=p.star?22:18;
-  return L.divIcon({className:'',iconSize:[sz,sz],iconAnchor:[sz/2,sz/2],html:'<div class="pin" style="background:#5b3fc4;width:'+sz+'px;height:'+sz+'px;font-size:'+(p.star?12:10)+'px">'+dn+'</div>'});
+  const inner=ph?'<div class="ph" style="background-image:url('+pimg(p.id,'p')+')"></div>'
+                :'<div class="ph noph">'+ic(CATS[p.cat]?CATS[p.cat].e:'pin','i-sm')+'</div>';
+  return L.divIcon({className:'',iconSize:[42,48],iconAnchor:[21,48],popupAnchor:[0,-46],
+    html:'<div class="photopin">'+inner+'<div class="badge" style="background:#5b3fc4">'+dn+'</div><div class="tip"></div></div>'});
 }
 /* маркер-города: обычная капля ИЛИ мелкий нейтральный кружок, когда рестораны в приоритете */
 function cityIcon(b,cnt){
@@ -1770,8 +1783,16 @@ function makeMarker(p){
       {autoPan:true,keepInView:false,autoPanPaddingTopLeft:L.point(12,66),autoPanPaddingBottomRight:L.point(12,14)});
   return markers[p.id];
 }
+/* после переносов и смены дней метки надо переодеть: номер дня в них зашивается при создании */
 function updateMarkerStyles(){
-  P.forEach(p=>{const mk=markers[p.id];if(mk)mk.setIcon(markerIcon(p));});
+  if(!map)return;
+  P.forEach(p=>{
+    const mk=markers[p.id];
+    if(!mk){if(typeof p.lat==='number'&&typeof p.lng==='number')makeMarker(p);return;}
+    mk.setIcon(markerIcon(p));
+    const dn=dispOf(p.d),c=p.cat==='food'?'#c1462a':'#5b3fc4',ph=PHOTO[p.id];
+    if(mk.setPopupContent)mk.setPopupContent(popupHTML(p.nm,p.q,p.why,dn?('День '+dn):(CATS[p.cat]?CATS[p.cat].l:''),c,ph?pimg(p.id,'l'):null,p.cat==='food'?foodCat(p):null));
+  });
   BASES.forEach(b=>{const mk=baseMarkers[b.id];if(mk){const cnt=P.filter(x=>x.cat!=='food'&&x.base===b.id).length;mk.setIcon(cityIcon(b,cnt));}});
 }
 /* ── ПАЛИТРА МАРШРУТА (фиолетовый градиент, динамически по числу сегментов) ── */
@@ -1863,6 +1884,7 @@ let filter={mode:'all',v:null};let foodOn=false;
 /* основной фильтр — только НЕ-еда (маршрутные точки) */
 function matchesPrimary(p){
   if(p.cat==='food')return false;
+  if(!dayOf(p.d))return false;          /* место в «Ещё в городе» — на карте его нет */
   if(filter.mode==='all')return true;
   if(filter.mode==='day')return p.d===filter.v;
   if(filter.mode==='base')return p.base===filter.v;
@@ -1966,10 +1988,14 @@ function buildCities(){
     /* «в городе», а не «в Урее» — падежи не выведешь для произвольного названия */
     const more=sp.length?('<div class="cnode"><span class="cdot">'+ic('layers','i-sm')+'</span>'
       +'<div class="clbl"><b>Ещё в городе</b><span>'+shortName(b.name)+' · '+sp.length+' '+plural(sp.length,'место','места','мест')+' не поместились в дни</span></div>'
-      +'<div class="cmore"><ul class="cplaces">'+sp.map(p=>'<li data-pl="'+p.id+'"><div class="cpl-row"><div class="cpl-main">'
+      +'<details class="cmore"><summary class="cmoresum">'
+        +'<b class="lopen">Показать '+sp.length+' '+plural(sp.length,'место','места','мест')+'</b>'
+        +'<b class="lclose">Свернуть список</b>'
+        +'<span class="cgo">'+ic('chevron','i-sm')+'</span></summary>'
+      +'<div class="cmorebody"><ul class="cplaces">'+sp.map(p=>'<li data-pl="'+p.id+'"><div class="cpl-row"><div class="cpl-main">'
         +'<span class="cpnm"><a href="'+gurl(p.q)+'" target="_blank" rel="noopener">'+p.nm+'</a></span>'+metaStrip(p)+'<span class="cwhy">'+p.why+'</span></div>'
         +'<button class="cpup" data-mvopen="'+p.id+'">'+ic('plus','i-sm')+' в день</button></div></li>').join('')
-      +'</ul><div class="cmoren">Тап «в день» — место встанет в выбранный день. Вернёшь ночь — вернётся и убранный день.</div></div></div>'):'';
+      +'</ul><div class="cmoren">Тап «в день» — место встанет в выбранный день. Вернёшь ночь — вернётся и убранный день.</div></div></details></div>'):'';
 
     return '<section class="city" id="city-'+b.id+'"><div class="wrap">'
       +'<div class="chead"><span class="ckick">База '+(i+1)+' из '+BASES.length+' · '+dm(ci)+'–'+dm(co)+'</span>'
@@ -2655,7 +2681,7 @@ function addPlaceSheet(tid){
 function rerenderTrip(){
   buildSchedule();
   renderStays();buildRoute();buildDays();buildCities();buildFilters();buildElev();
-  recomputeDates();refreshBudgetCounts();syncChecks();applyFilter();updateDirLinks();
+  recomputeDates();refreshBudgetCounts();syncChecks();updateMarkerStyles();applyFilter();updateDirLinks();
 }
 function loadPlan(){try{const s=JSON.parse(localStorage.getItem(PKEY));if(s){if(s.start)startIso=s.start;if(typeof s.people==='number'&&s.people>=1)PEOPLE=s.people;if(Array.isArray(s.nights))BASES.forEach((b,i)=>{if(typeof s.nights[i]==='number'&&s.nights[i]>=1)b.nights=s.nights[i];});if(s.hidden&&typeof s.hidden==='object')HIDDEN=s.hidden;
   if(s.moved&&typeof s.moved==='object')MOVED=s.moved;
