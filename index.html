@@ -2543,6 +2543,19 @@ function tripBox(){
 function nearestBaseKm(lat,lng){
   return BASES.reduce((m,b)=>Math.min(m,kmBetween(lat,lng,b.lat,b.lng)),1e9);
 }
+/* Короткую ссылку (maps.app.goo.gl) разворачивает наша функция на Supabase:
+   браузеру Google не даёт этого сделать. Функции нет или молчит — работаем как раньше. */
+function expandShort(url,cb){
+  if(typeof SB_URL!=='string'||!SB_URL)return cb(null);
+  let done=false;const fin=r=>{if(done)return;done=true;cb(r);};
+  const to=setTimeout(()=>fin(null),9000);
+  try{
+    fetch(SB_URL+'/functions/v1/gmlink?u='+encodeURIComponent(url),{headers:{Accept:'application/json'}})
+      .then(r=>r.ok?r.json():null)
+      .then(j=>{clearTimeout(to);fin(j&&j.url?j:null);})
+      .catch(()=>{clearTimeout(to);fin(null);});
+  }catch(e){clearTimeout(to);fin(null);}
+}
 function geocode(q,cb){
   let done=false;
   const fin=r=>{if(done)return;done=true;cb(r);};
@@ -2840,8 +2853,17 @@ document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)r
     }
     const g=parseGmaps(val);
     if(g.short&&!g.nm&&!g.lat){
-      alert('Короткую ссылку (maps.app.goo.gl) браузер развернуть не может — так устроена его защита.\n\nВставь вместо неё название места, например «Durango Wildlife Museum», — я найду его на карте сама.');
-      if(inp){inp.value='';inp.focus();}
+      /* короткая ссылка: просим сервер её развернуть, потом действуем как с обычной */
+      t.textContent='Разворачиваю ссылку…';t.disabled=true;
+      expandShort(val,res=>{
+        const g2=res?parseGmaps(res.url||''):null;
+        if(g2&&g2.lat){closeDaySheet();addPlace(tid,{nm:g2.nm||'Место из Google Maps',q:g2.addr||g2.nm||val,lat:g2.lat,lng:g2.lng});return;}
+        if(g2&&(g2.nm||g2.addr)){t.textContent='Ищем на карте…';
+          geocode(g2.addr||g2.nm,r=>{closeDaySheet();addPlace(tid,{nm:g2.nm||g2.addr,q:g2.addr||g2.nm,lat:r&&r.lat,lng:r&&r.lng});});return;}
+        t.textContent='Найти и добавить';t.disabled=false;
+        alert('Не получилось развернуть короткую ссылку.\n\nВставь вместо неё название места, например «Durango Wildlife Museum», — найду его на карте.');
+        if(inp){inp.value='';inp.focus();}
+      });
       return;
     }
     if(!g.nm&&!g.lat){alert('Не получилось разобрать ссылку. Вставь название места — найду по нему.');return;}
