@@ -416,6 +416,7 @@ input[type=checkbox].tick:checked::after{content:"";position:absolute;left:8px;t
 .mpill.spare{background:rgba(20,32,27,.06);color:#7c8697;border-color:transparent}
 .mpill.fixed{background:rgba(124,92,255,.13);color:#5b3fc4;border-color:transparent}
 .mpill.nopt{background:rgba(192,57,43,.1);color:#b03a2b;border-color:transparent}
+.mpill.apx{background:rgba(168,99,10,.12);color:#a8630a;border-color:transparent}
 .mpill.kind{background:linear-gradient(150deg,#f3effd,#e3daf9);color:#4b2fa8;border-color:transparent}
 /* выбор типа своего места — ровная сетка 3×3, без рваных строк */
 .dskinds{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:2px 0}
@@ -927,6 +928,14 @@ body{background:linear-gradient(168deg,#eef1f8,#e9edf6 60%,#e6eaf4)!important}
 .cstay .cph.b .i{width:26px;height:26px}
 .myst .cmeta b{color:#3b2a8f}
 .myst .cmeta b.nopt{color:#b03a2b}
+.myst .cmeta b.apx{color:#a8630a}
+/* карта в листе: крестик по центру — двигаем карту, а не палец */
+.fxwrap{position:relative;margin:2px 0 10px;border-radius:14px;overflow:hidden;border:1.5px solid rgba(91,63,196,.25)}
+#fxmap{height:230px;background:#eef1f8}
+.fxcross{position:absolute;left:50%;top:50%;width:34px;height:34px;margin:-17px 0 0 -17px;pointer-events:none;z-index:500}
+.fxcross::before,.fxcross::after{content:"";position:absolute;background:#5b3fc4;box-shadow:0 0 0 1.5px rgba(255,255,255,.9)}
+.fxcross::before{left:50%;top:0;bottom:0;width:2px;margin-left:-1px}
+.fxcross::after{top:50%;left:0;right:0;height:2px;margin-top:-1px}
 .stbtn.fix{color:#5b3fc4;border-color:rgba(91,63,196,.35);background:#faf8ff}
 /* «Изменить» и «Убрать» — одинаковые, каждая на половину, вместе от края до края текста.
    Ссылка на карту уезжает отдельной строкой сверху, чтобы не сбивать пару. */
@@ -2063,7 +2072,9 @@ function buildCities(){
         +'<span class="cin"><h3>'+h.nm+'</h3>'
         +'<span class="cmeta">'+shortName(b.name)+' · '+dm(ci)+'–'+dm(co)+' · '+b.nights+' '+nights(b.nights)+' · на '+guests
         +(h.rate?'<br><b>'+curSym()+h.rate+' за ночь · '+curSym()+Math.round(h.rate*b.nights)+' всего</b>':'')
-        +(typeof h.lat==='number'?'':'<br><b class="nopt">Точки на карте нет — не нашли адрес</b>')+'</span>'
+        +(typeof h.lat==='number'
+          ? (h.approx?'<br><b class="apx">Точка примерная — центр города, поправь её</b>':'')
+          : '<br><b class="nopt">Точки на карте нет — не нашли адрес</b>')+'</span>'
         +'<span class="mystact"><a class="cbookl" href="'+gurl(h.q||h.nm)+'" target="_blank" rel="noopener">Открыть в Google Maps →</a>'
           /* точка есть — даём и посмотреть, и поправить: адрес часто садится в центр города */
           +(typeof h.lat==='number'
@@ -2286,6 +2297,7 @@ function metaStrip(p){
     if(k.k!=='other')out+='<span class="mpill kind">'+ic(k.ic,'i-sm')+' '+k.l+'</span>';}
   /* своё место без координат на карту попасть не может — говорим об этом прямо */
   if(p.custom&&typeof p.lat!=='number')out+='<span class="mpill nopt">'+ic('pin','i-sm')+' нет точки на карте</span>';
+  else if(p.custom&&p.approx)out+='<span class="mpill apx">'+ic('pin','i-sm')+' точка примерная</span>';
   if(pr==='must')out+='<span class="mpill must">'+ic('star','i-sm')+' обязательно</span>';
   if(pr==='spare')out+='<span class="mpill spare">'+ic('clock','i-sm')+' если время</span>';
   if(wh==='fixed')out+='<span class="mpill fixed">'+ic('ticket','i-sm')+' по расписанию</span>';
@@ -2664,23 +2676,26 @@ function addStaySheet(bid,id){
 /* сохранить своё жильё: точку ищем как обычно, цену кладём в бюджет города */
 function saveStay(bid,id,val,rate){
   const nm0=String(val||'').trim();if(!nm0)return;
-  const done=(nm,q,lat,lng)=>{
+  const done=(nm,q,lat,lng,exact)=>{
     const i=BASES.findIndex(x=>x.id===bid);
+    /* точка «в центре города» — не адрес. Помечаем и сразу зовём поставить вручную */
+    const approx=(typeof lat==='number')&&exact===false;
     let p=id?placeById(id):null;
-    if(p){p.nm=nm;p.q=q||nm;if(typeof lat==='number'){p.lat=lat;p.lng=lng;}p.rate=rate||0;
-      const c=CUSTOM.find(x=>x.id===id);if(c){c.nm=p.nm;c.q=p.q;c.lat=p.lat;c.lng=p.lng;c.rate=p.rate;}}
+    if(p){p.nm=nm;p.q=q||nm;if(typeof lat==='number'){p.lat=lat;p.lng=lng;p.approx=approx?1:0;}p.rate=rate||0;
+      const c=CUSTOM.find(x=>x.id===id);if(c){c.nm=p.nm;c.q=p.q;c.lat=p.lat;c.lng=p.lng;c.approx=p.approx;c.rate=p.rate;}}
     else{
       const nid='h'+Date.now().toString(36)+Math.floor(Math.random()*1e3).toString(36);
-      p={id:nid,d:homeTid(bid),base:bid,cat:'town',kind:'stay',nm:nm,q:q||nm,why:'',lat:lat,lng:lng,rate:rate||0,custom:1,meta:{}};
+      p={id:nid,d:homeTid(bid),base:bid,cat:'town',kind:'stay',nm:nm,q:q||nm,why:'',lat:lat,lng:lng,
+         approx:approx?1:0,rate:rate||0,custom:1,meta:{}};
       CUSTOM.push(p);P.push(p);picked.add(nid);savePicks();
     }
     if(rate&&i>=0)saveHotelRate(i,rate);          /* цена — в строку жилья этого города */
     savePlan();rerenderTrip();
     if(map&&p.lat&&!markers[p.id])makeMarker(p);
+    /* нет точки или точка примерная — не молчим и не делаем вид, что нашли: спрашиваем */
+    if(typeof p.lat!=='number'||approx)return fixPointSheet(p.id,approx?'approx':'none');
     toast('<b>'+(id?'Изменили жильё':'Записали жильё')+': «'+nm+'»</b>'
-      +(typeof p.lat!=='number'
-        ? '<i>адрес не нашли — нажми «Поставить точку на карте» в карточке</i>'
-        : (rate?'<i>'+curSym()+rate+' за ночь — цена ушла в бюджет</i>':'<i>метка на карте есть</i>')),bid,null);
+      +(rate?'<i>'+curSym()+rate+' за ночь — цена ушла в бюджет</i>':'<i>метка на карте есть</i>'),bid,null);
   };
   if(/^https?:\/\//i.test(nm0)){
     /* ссылка не из Google (Airbnb, сайт отеля) — точку по ней не найти, честно говорим об этом */
@@ -2689,16 +2704,16 @@ function saveStay(bid,id,val,rate){
       return done(host?('Жильё · '+host):'Жильё',nm0);
     }
     const g=parseGmaps(nm0);
-    if(g.lat)return done(g.nm||'Жильё',g.addr||g.nm,g.lat,g.lng);
+    if(g.lat)return done(g.nm||'Жильё',g.addr||g.nm,g.lat,g.lng,true);
     if(g.short&&!g.nm)return expandShort(nm0,res=>{const g2=res?parseGmaps(res.url||''):null;
-      if(g2&&g2.lat)return done(g2.nm||'Жильё',g2.addr||g2.nm,g2.lat,g2.lng);
-      if(g2&&(g2.nm||g2.addr))return geocode(g2.addr||g2.nm,r=>done(g2.nm||g2.addr,g2.addr||g2.nm,r&&r.lat,r&&r.lng));
+      if(g2&&g2.lat)return done(g2.nm||'Жильё',g2.addr||g2.nm,g2.lat,g2.lng,true);
+      if(g2&&(g2.nm||g2.addr))return geocode(g2.addr||g2.nm,r=>done(g2.nm||g2.addr,g2.addr||g2.nm,r&&r.lat,r&&r.lng,r&&r.exact));
       done('Жильё',nm0);});
-    return geocode(g.addr||g.nm||nm0,r=>done(g.nm||'Жильё',g.addr||g.nm,r&&r.lat,r&&r.lng));
+    return geocode(g.addr||g.nm||nm0,r=>done(g.nm||'Жильё',g.addr||g.nm,r&&r.lat,r&&r.lng,r&&r.exact));
   }
   /* «Beaumont Hotel, Ouray, CO» → название до первой запятой, адрес целиком */
   const c0=nm0.indexOf(','),nmShort=c0>0?nm0.slice(0,c0).trim():nm0;
-  geocode(nm0,r=>done(nmShort,nm0,r&&r.lat,r&&r.lng));
+  geocode(nm0,r=>done(nmShort,nm0,r&&r.lat,r&&r.lng,r&&r.exact));
 }
 /* новое место руками или по ссылке из Google Maps */
 function addPlace(tid,d){
@@ -2707,12 +2722,13 @@ function addPlace(tid,d){
   const e=dayOf(tid);if(!e||!d||!d.nm)return;
   const id='u'+(Date.now().toString(36))+Math.floor(Math.random()*1e3).toString(36);
   const c={id:id,d:tid,base:e.base,cat:d.cat||'town',kind:d.kind||'other',nm:d.nm,q:d.q||d.nm,why:d.why||'',
-    lat:d.lat,lng:d.lng,custom:1,meta:{}};
+    lat:d.lat,lng:d.lng,approx:(typeof d.lat==='number'&&d.approx)?1:0,custom:1,meta:{}};
   CUSTOM.push(c);P.push(c);
   if(typeof d.lat==='number'&&typeof d.lng==='number'){picked.add(id);savePicks();if(map&&!markers[id])makeMarker(c);}
   savePlan();rerenderTrip();
   toast('<b>Добавили «'+c.nm+'» в День '+e.disp+'</b>'
-    +(c.lat?'<i>точка на карте есть — видно при выборе города или дня</i>'
+    +(c.lat?(c.approx?'<i>точку поставили примерно — в центре города, поправь её через «⋯»</i>'
+                       :'<i>точка на карте есть — видно при выборе города или дня</i>')
            :'<i>точку на карте не нашли: открой «⋯» у места и нажми «Поставить точку на карте»</i>'),e.base,null);
 }
 /* ── МОЖНО ЛИ ПЕРЕНЕСТИ МЕСТО В ЭТОТ ДЕНЬ ──
@@ -2795,28 +2811,62 @@ function expandShort(url,cb){
   };
   try{tryN(0);}catch(e){clearTimeout(to);fin(null);}
 }
+/* «где-то в городе» — это НЕ найденный адрес. Такие ответы помечаем exact:false,
+   чтобы не выдавать центр Дуранго за дом на Tamarron Drive (жалоба клиента). */
+const COARSE=/^(city|town|village|hamlet|municipality|county|state|postcode|administrative|boundary|region|district|suburb|neighbourhood)$/;
+function geoNear(lat,lng){return isFinite(lat)&&isFinite(lng)&&nearestBaseKm(lat,lng)<=200;}
+function tripCenter(){
+  const la=BASES.map(b=>b.lat),lo=BASES.map(b=>b.lng),avg=a=>a.reduce((s,v)=>s+v,0)/a.length;
+  return {lat:avg(la),lng:avg(lo)};
+}
+/* Порядок заходов: Photon (единственный бесплатный, кто знает номера домов) →
+   Nominatim как дали → Nominatim без названия (для кафе: «Ice House…, 225 7th Ave» не
+   находится, а «225 7th Ave» — да). Грубые попадания копим и отдаём последними. */
 function geocode(q,cb){
-  let done=false;
-  const fin=r=>{if(done)return;done=true;cb(r);};
-  const to=setTimeout(()=>fin(null),12000);
-  /* заходы по очереди: как дали → только адрес без названия. Второй нужен для кафе и
-     магазинов: «Ice House Coffee Shop, 225 7th Ave…» не находится, а «225 7th Ave…» — да. */
-  const tries=[q];
-  const c=String(q).indexOf(',');
-  if(c>0)tries.push(String(q).slice(c+1).trim());
-  const run=i=>{
-    if(i>=tries.length){clearTimeout(to);return fin(null);}
-    fetch('https://nominatim.openstreetmap.org/search?format=json&limit=5&bounded=1&viewbox='+tripBox()
-      +'&q='+encodeURIComponent(tries[i]),{headers:{Accept:'application/json'}})
+  let done=false,coarse=null;
+  const fin=r=>{if(done)return;done=true;clearTimeout(to);cb(r);};
+  const to=setTimeout(()=>fin(coarse),15000);
+  const keep=h=>{if(h&&!coarse)coarse={lat:h.lat,lng:h.lng,exact:false,label:h.label};};
+  const photon=(text,next)=>{
+    const c=tripCenter();
+    fetch('https://photon.komoot.io/api/?limit=8&lat='+c.lat.toFixed(3)+'&lon='+c.lng.toFixed(3)
+      +'&q='+encodeURIComponent(text))
+      .then(r=>r.json())
+      .then(j=>{
+        const hits=(j&&j.features||[]).map(f=>({lat:f.geometry.coordinates[1],lng:f.geometry.coordinates[0],p:f.properties||{}}))
+          .filter(x=>geoNear(x.lat,x.lng))
+          .sort((x,y)=>nearestBaseKm(x.lat,x.lng)-nearestBaseKm(y.lat,y.lng));
+        const label=x=>[x.p.housenumber,x.p.street,x.p.name,x.p.city].filter(Boolean).join(', ');
+        const exact=hits.find(x=>x.p.housenumber||x.p.street||!COARSE.test(String(x.p.osm_value||'')));
+        if(exact)return fin({lat:exact.lat,lng:exact.lng,exact:true,label:label(exact)});
+        if(hits[0])keep({lat:hits[0].lat,lng:hits[0].lng,label:label(hits[0])});
+        next();
+      }).catch(next);
+  };
+  const nomi=(text,next)=>{
+    fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5&bounded=1&viewbox='+tripBox()
+      +'&q='+encodeURIComponent(text),{headers:{Accept:'application/json'}})
       .then(r=>r.json())
       .then(a=>{
-        const best=(a||[]).map(x=>({lat:+x.lat,lng:+x.lon,km:nearestBaseKm(+x.lat,+x.lon)}))
-                          .sort((x,y)=>x.km-y.km)[0];
-        if(best&&best.km<=200){clearTimeout(to);return fin({lat:best.lat,lng:best.lng});}
-        run(i+1);})
-      .catch(()=>run(i+1));
+        const hits=(a||[]).map(x=>({lat:+x.lat,lng:+x.lon,at:String(x.addresstype||x.type||''),label:x.display_name}))
+          .filter(x=>geoNear(x.lat,x.lng))
+          .sort((x,y)=>nearestBaseKm(x.lat,x.lng)-nearestBaseKm(y.lat,y.lng));
+        const exact=hits.find(x=>!COARSE.test(x.at));
+        if(exact)return fin({lat:exact.lat,lng:exact.lng,exact:true,label:exact.label});
+        if(hits[0])keep(hits[0]);
+        next();
+      }).catch(next);
   };
-  try{run(0);}catch(e){clearTimeout(to);fin(null);}
+  const c=String(q).indexOf(','),tail=c>0?String(q).slice(c+1).trim():'';
+  /* почтовый индекс сбивает Photon: с «81301» он находит дом 73 на ДРУГОЙ улице
+     внутри этого индекса, без индекса — тот самый Tamarron Drive. Проверено запросами. */
+  const noZip=String(q).replace(/,?\s*\b\d{5}(-\d{4})?\b/g,'').replace(/,\s*(USA|United States)\s*\.?$/i,'').replace(/,\s*$/,'').trim();
+  const chain=[n=>photon(noZip||q,n)];
+  if(noZip&&noZip!==String(q).trim())chain.push(n=>photon(q,n));
+  chain.push(n=>nomi(q,n));
+  if(tail)chain.push(n=>nomi(tail,n));
+  const run=i=>{if(i>=chain.length)return fin(coarse);chain[i](()=>run(i+1));};
+  try{run(0);}catch(e){fin(coarse);}
 }
 /* меняем ночи в городе → пересобираем расписание и всё, что от дней зависит.
    Минус — это «поездка короче»: система сама выбирает, какой день уходит, и говорит какой. */
@@ -2908,7 +2958,7 @@ function pickDaySheet(bid){
         +(isSug?'<span class="dssug">предлагаем</span>':(dayWeight(e)===0?'<span class="dsfree">пусто</span>':''))+'</button>';}).join('')
     +'<button class="dscancel" data-dsclose="1">Ничего не убирать</button>');
 }
-function closeDaySheet(){const el=document.getElementById('daySheet');if(el)el.classList.remove('on');}
+function closeDaySheet(){killFxMap();const el=document.getElementById('daySheet');if(el)el.classList.remove('on');}
 /* общий лист снизу — для переноса и добавления места */
 function sheet(inner){
   let el=document.getElementById('daySheet');
@@ -2970,15 +3020,43 @@ function savePlaceEdit(id,nm,why,kind){
   toast('<b>Изменили «'+p.nm+'»</b>',p.base,prev);
 }
 /* «Поставить точку на карте» — для места, которому координаты не нашлись */
-function fixPointSheet(id){
+/* Ставим точку САМИ, а не доверяемся геокодеру: карта с крестиком по центру —
+   на телефоне двигать карту точнее, чем попадать пальцем в дом. */
+let fxMap=null;
+function fixPointSheet(id,why){
   const p=placeById(id);if(!p)return;
-  sheet('<div class="dsh"><b>Поставить точку на карте</b><span>'+p.nm+'</span></div>'
-    +'<div class="dssep">Где это</div>'
+  const b=baseById(p.base)||BASES[0];
+  const has=typeof p.lat==='number';
+  const head=(why==='approx')
+    ? {t:'Точку поставили примерно',
+       s:'Точный адрес в открытых картах не нашёлся — точка стоит в центре города «'+shortName(b.name)+'». Подвинь карту так, чтобы крестик встал на дом, и нажми «Поставить сюда».'}
+    : has
+      ? {t:'Поправить точку',s:'Подвинь карту так, чтобы крестик встал на нужное место.'}
+      : {t:'Поставить точку на карте',
+         s:'Адрес не нашёлся. Подвинь карту так, чтобы крестик встал на нужное место, и нажми «Поставить сюда».'};
+  sheet('<div class="dsh"><b>'+head.t+'</b><span>'+head.s+'</span></div>'
+    +'<div class="fxwrap"><div id="fxmap"></div><span class="fxcross" aria-hidden="true"></span></div>'
+    +'<div class="dsform"><button class="dsgo" data-fixhere="'+id+'">Поставить сюда</button></div>'
+    +'<div class="dssep">Или попробовать по адресу</div>'
     +'<div class="dsform"><input id="fxq" placeholder="Ссылка из Google Maps или адрес" autocomplete="off" value="'+String(p.q||p.nm||'').replace(/"/g,'&quot;')+'">'
-      +'<button class="dsgo" data-fixpt="'+id+'">Найти точку</button>'
-      +'<span class="dshint">Надёжнее всего ссылка на место из Google Maps: в ней есть адрес. По адресу точка находится почти всегда.</span></div>'
+      +'<button class="dscancel alt" data-fixpt="'+id+'">Найти точку</button>'
+      +'<span class="dshint">Открытые карты знают не каждый дом: если адреса нет в базе, точка садится в центр города. Тогда ставь её крестиком — так надёжнее.</span></div>'
     +'<button class="dscancel" data-dsclose="1">Отмена</button>');
+  initFxMap(has?[p.lat,p.lng]:[b.lat,b.lng],has&&!p.approx?16:13);
 }
+function initFxMap(center,zoom){
+  const el=document.getElementById('fxmap');
+  if(!el||typeof L==='undefined')return;
+  try{if(fxMap){fxMap.remove();fxMap=null;}}catch(e){}
+  try{
+    fxMap=L.map(el,{zoomControl:true,attributionControl:false,scrollWheelZoom:true,tap:false});
+    L.tileLayer('https://api.maptiler.com/maps/streets-v4/{z}/{x}/{y}@2x.png?key=tmZBlSimSfpJvOPnNch8',
+      {maxZoom:20,tileSize:512,zoomOffset:-1,crossOrigin:true}).addTo(fxMap);
+    fxMap.setView(center,zoom||14);
+    setTimeout(()=>{try{fxMap.invalidateSize();}catch(e){}},120);
+  }catch(e){fxMap=null;}
+}
+function killFxMap(){try{if(fxMap){fxMap.remove();fxMap=null;}}catch(e){fxMap=null;}}
 /* поставить координаты уже добавленному месту и вывести его на карту */
 /* Своё место могло сохраниться без координат: в тот момент адрес не нашёлся или
    геокодер не ответил. Пробуем ещё раз при открытии сайта — молча, по одному запросу
@@ -3005,8 +3083,8 @@ function backfillPoints(){
 function setPoint(id,lat,lng,q){
   const p=placeById(id);if(!p)return false;
   if(typeof lat!=='number'||typeof lng!=='number')return false;
-  p.lat=lat;p.lng=lng;if(q)p.q=q;
-  const c=CUSTOM.find(x=>x.id===id);if(c){c.lat=lat;c.lng=lng;if(q)c.q=q;}
+  p.lat=lat;p.lng=lng;p.approx=0;if(q)p.q=q;   /* поставили руками — точка больше не примерная */
+  const c=CUSTOM.find(x=>x.id===id);if(c){c.lat=lat;c.lng=lng;c.approx=0;if(q)c.q=q;}
   picked.add(id);savePicks();savePlan();
   if(map&&!markers[id])makeMarker(p);
   rerenderTrip();
@@ -3216,6 +3294,12 @@ document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)r
     closeDaySheet();savePlaceEdit(t.dataset.edsave,nm,why,(kd&&kd.kind)||'other');
   }
   if(t.dataset.fixopen){fixPointSheet(t.dataset.fixopen);}
+  /* точка ставится крестиком — центром карты в листе */
+  if(t.dataset.fixhere){
+    const c=fxMap&&fxMap.getCenter();if(!c)return;
+    const id=t.dataset.fixhere,lat=c.lat,lng=c.lng;
+    closeDaySheet();setPoint(id,lat,lng);
+  }
   if(t.dataset.fixpt){
     const id=t.dataset.fixpt,f=document.getElementById('fxq'),v=(f&&f.value||'').trim();
     if(!v){if(f)f.focus();return;}
@@ -3246,7 +3330,7 @@ document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)r
        с короткими ссылками maps.app.goo.gl: развернуть их браузер не может (CORS). */
     if(!/^https?:\/\//i.test(val)){
       t.textContent='Ищем на карте…';t.disabled=true;
-      geocode(val,r=>{closeDaySheet();addPlace(tid,{nm:val,q:val,why:why,kind:kind,lat:r&&r.lat,lng:r&&r.lng});});
+      geocode(val,r=>{closeDaySheet();addPlace(tid,{nm:val,q:val,why:why,kind:kind,lat:r&&r.lat,lng:r&&r.lng,approx:r&&r.exact===false});});
       return;
     }
     const g=parseGmaps(val);
