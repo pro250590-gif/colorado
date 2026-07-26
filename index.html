@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="utf-8">
@@ -959,7 +959,8 @@ body{background:linear-gradient(168deg,#eef1f8,#e9edf6 60%,#e6eaf4)!important}
 .dsfree{flex:none;font:800 9.5px/1 "Plus Jakarta Sans",sans-serif;background:#e2f4ec;color:#0e6a4c;border-radius:7px;padding:5px 7px}
 .dsrow.sug{border-color:rgba(91,63,196,.5);background:#f8f6ff}
 .dsrow[disabled]{opacity:.55}
-.dssep{font:800 10px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:.11em;text-transform:uppercase;color:#9aa3b2;margin:14px 4px 9px}
+/* заголовки разделов в листе — фиолетовые, как эйбрау на страницах (клиент: «поярче») */
+.dssep{font:800 10.5px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:.11em;text-transform:uppercase;color:#5b3fc4;margin:16px 4px 9px}
 .dsform{display:flex;flex-direction:column;gap:8px;margin-bottom:4px}
 .dsform input{border:1.5px solid rgba(20,32,27,.12);border-radius:12px;padding:12px 13px;font:600 13px/1 "Inter",sans-serif;background:#fff;width:100%}
 .dsform input:focus{outline:none;border-color:rgba(91,63,196,.55)}
@@ -2727,19 +2728,19 @@ function movePlaceSheet(id){
 function addPlaceSheet(tid){
   const e=dayOf(tid);if(!e)return;
   const st=stashPlaces(e.base);
+  /* поля сверху, список отложенных мест — ниже (просьба клиента) */
   sheet('<div class="dsh"><b>Добавить место</b><span>День '+e.disp+' · '+dm(e.date)+' · '+shortName(baseById(e.base).name)+'</span></div>'
-    +(st.length?'<div class="dssep">Из «Ещё в городе»</div>'
-      +st.map(p=>'<button class="dsrow" data-mvto="'+tid+'" data-mvid="'+p.id+'"><span class="cn">'+ic('pin','i-sm')+'</span>'
-        +'<span class="dst"><b>'+p.nm+'</b><span>'+(p.why||'').replace(/<[^>]+>/g,'').slice(0,60)+'</span></span></button>').join(''):'')
-    +'<div class="dssep">Из Google Maps</div>'
-    +'<div class="dsform"><input id="gmUrl" placeholder="Ссылка на место или его название" autocomplete="off">'
-      +'<button class="dsgo" data-gmadd="'+tid+'">Найти и добавить</button>'
-      +'<span class="dshint">Годится длинная ссылка из Google Maps — из неё возьмём название и адрес. '
-      +'Короткие ссылки вида maps.app.goo.gl браузер разворачивать не умеет, поэтому для них просто вставь название места — найдём по нему.</span></div>'
+    +'<div class="dssep">Ссылка из Google Maps или название</div>'
+    +'<div class="dsform"><input id="gmUrl" placeholder="Вставь ссылку или напиши название" autocomplete="off">'
+      +'<input id="gmWhy" placeholder="Зачем сюда (по желанию)" autocomplete="off">'
+      +'<button class="dsgo" data-gmadd="'+tid+'">Найти и добавить</button></div>'
     +'<div class="dssep">Вручную</div>'
     +'<div class="dsform"><input id="mnNm" placeholder="Название места" autocomplete="off">'
       +'<input id="mnWhy" placeholder="Зачем сюда (по желанию)" autocomplete="off">'
       +'<button class="dsgo" data-mnadd="'+tid+'">Добавить</button></div>'
+    +(st.length?'<div class="dssep">Из «Ещё в городе» · '+st.length+'</div>'
+      +st.map(p=>'<button class="dsrow" data-mvto="'+tid+'" data-mvid="'+p.id+'"><span class="cn">'+ic('pin','i-sm')+'</span>'
+        +'<span class="dst"><b>'+p.nm+'</b><span>'+(p.why||'').replace(/<[^>]+>/g,'').slice(0,60)+'</span></span></button>').join(''):'')
     +'<button class="dscancel" data-dsclose="1">Отмена</button>');
 }
 /* Перерисовка пересобирает ленту целиком, поэтому раскрытые дни закрывались, страница
@@ -2903,12 +2904,13 @@ document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)r
   if(t.dataset.addto){addPlaceSheet(tidOf(t.dataset.addto));}
   if(t.dataset.gmadd){
     const inp=document.getElementById('gmUrl'),val=(inp&&inp.value||'').trim(),tid=tidOf(t.dataset.gmadd);
+    const why=((document.getElementById('gmWhy')||{}).value||'').trim();
     if(!val){if(inp)inp.focus();return;}
     /* Не ссылка, а просто название — ищем его на карте. Это же выход из положения
        с короткими ссылками maps.app.goo.gl: развернуть их браузер не может (CORS). */
     if(!/^https?:\/\//i.test(val)){
       t.textContent='Ищем на карте…';t.disabled=true;
-      geocode(val,r=>{closeDaySheet();addPlace(tid,{nm:val,q:val,lat:r&&r.lat,lng:r&&r.lng});});
+      geocode(val,r=>{closeDaySheet();addPlace(tid,{nm:val,q:val,why:why,lat:r&&r.lat,lng:r&&r.lng});});
       return;
     }
     const g=parseGmaps(val);
@@ -2917,9 +2919,9 @@ document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)r
       t.textContent='Разворачиваю ссылку…';t.disabled=true;
       expandShort(val,res=>{
         const g2=res?parseGmaps(res.url||''):null;
-        if(g2&&g2.lat){closeDaySheet();addPlace(tid,{nm:g2.nm||'Место из Google Maps',q:g2.addr||g2.nm||val,lat:g2.lat,lng:g2.lng});return;}
+        if(g2&&g2.lat){closeDaySheet();addPlace(tid,{nm:g2.nm||'Место из Google Maps',q:g2.addr||g2.nm||val,why:why,lat:g2.lat,lng:g2.lng});return;}
         if(g2&&(g2.nm||g2.addr)){t.textContent='Ищем на карте…';
-          geocode(g2.addr||g2.nm,r=>{closeDaySheet();addPlace(tid,{nm:g2.nm||g2.addr,q:g2.addr||g2.nm,lat:r&&r.lat,lng:r&&r.lng});});return;}
+          geocode(g2.addr||g2.nm,r=>{closeDaySheet();addPlace(tid,{nm:g2.nm||g2.addr,q:g2.addr||g2.nm,why:why,lat:r&&r.lat,lng:r&&r.lng});});return;}
         t.textContent='Найти и добавить';t.disabled=false;
         alert('Не получилось развернуть короткую ссылку.\n\nВставь вместо неё название места, например «Durango Wildlife Museum», — найду его на карте.');
         if(inp){inp.value='';inp.focus();}
@@ -2927,11 +2929,11 @@ document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)r
       return;
     }
     if(!g.nm&&!g.lat){alert('Не получилось разобрать ссылку. Вставь название места — найду по нему.');return;}
-    if(g.lat){closeDaySheet();addPlace(tid,{nm:g.nm||'Место из Google Maps',q:g.addr||g.nm||val,lat:g.lat,lng:g.lng});return;}
+    if(g.lat){closeDaySheet();addPlace(tid,{nm:g.nm||'Место из Google Maps',q:g.addr||g.nm||val,why:why,lat:g.lat,lng:g.lng});return;}
     /* координат в ссылке нет — ищем точку по названию и адресу */
     t.textContent='Ищем на карте…';t.disabled=true;
     geocode(g.addr||g.nm,r=>{closeDaySheet();
-      addPlace(tid,{nm:g.nm,q:g.addr||g.nm,lat:r&&r.lat,lng:r&&r.lng});});
+      addPlace(tid,{nm:g.nm,q:g.addr||g.nm,why:why,lat:r&&r.lat,lng:r&&r.lng});});
   }
   if(t.dataset.mnadd){
     const nm=(document.getElementById('mnNm')||{}).value,why=(document.getElementById('mnWhy')||{}).value;
