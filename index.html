@@ -1480,7 +1480,7 @@ function buildRoute(){
   });
   stops.push({gh:1,name:ORIGIN.city});
   const solo=BASES.length===1;
-  const R=36,padL=10,padR=10,TIN=22;   /* TIN — отступ узлов от дуги: подписи не лезут в поворот */
+  const R=30,padL=10,padR=10,TIN=22;   /* TIN — отступ узлов от дуги: подписи не лезут в поворот */
   const FN=solo?'800 19px "Plus Jakarta Sans",sans-serif':'800 12.5px "Plus Jakarta Sans",sans-serif';
   const FS='800 11px "Plus Jakarta Sans",sans-serif';        /* мелкий кегль — предпоследняя мера перед обрезкой */
   const FG='800 11.5px "Plus Jakarta Sans",sans-serif';
@@ -1528,12 +1528,12 @@ function buildRoute(){
       }
     }
   }
-  /* подписи у всех одинаково — над линией; высота блока: имя (+ даты) */
+  /* первая строка подписана сверху, вторая — снизу: между строками остаётся только поворот */
   const labH=st=>st.gh?12:(solo?42:(dates?28:13));
   const yTop=12+labH({}),rowY=[yTop,yTop+2*R];
   const P=place(two);
   P.forEach(p=>{p.y=rowY[p.row];});
-  const H=rowY[two?1:0]+16;
+  const H=two?rowY[1]+13+labH({})+4:rowY[0]+16;
   const segType=i=>(i===0||i===P.length-2)?'flight':(SEGMENT[P[i+1].st.id]||'car');
   const dash=t=>t==='flight'?'stroke="#c6cbd8" stroke-width="2" stroke-dasharray="3 4"':'stroke="url(#rgrad)" stroke-width="3"';
   const glyph=(x,y,t)=>{
@@ -1569,7 +1569,7 @@ function buildRoute(){
   P.forEach(p=>{
     const gh=p.st.gh;
     const cls='rlab'+(gh?' gh':'')+(solo&&!gh?' solo':'')+(small&&!gh?' sm':'');
-    const top=p.y-12-labH(p.st);              /* все подписи над линией, низом к одной высоте */
+    const top=p.row===1?p.y+13:p.y-12-labH(p.st);   /* второй ряд подписан под своей линией */
     const sub=gh||!dates?'':subOf(p.st);
     deco+='<span class="'+cls+'" style="left:'+q(ext(p,nm,dates)[0])+'px;top:'+q(top)+'px"><b>'+nm(p.st)+'</b>'+(sub?'<span>'+sub+'</span>':'')+'</span>'
       +'<span class="rnode'+(gh?' gh':'')+(solo&&!gh?' solo':'')+'" style="left:'+q(p.x)+'px;top:'+p.y+'px"></span>';
