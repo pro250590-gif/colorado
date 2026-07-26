@@ -1509,7 +1509,8 @@ function dayDate(startIso,dayN){return fmtDate(addDays(startIso,dayN-1));}
 /* ================= ФОТО МЕСТ (Викисклад, свободные лицензии) ================= */
 /* фотографии мест лежат в папке img/ — три размера: p (булавка), t (миниатюра), l (крупно) */
 
-function pimg(id,s){return 'img/'+id+'-'+s+'.webp';}
+/* в PHOTO значение = расширение файла ('jpg' у дозагруженных с Викисклада), иначе webp */
+function pimg(id,s){const e=PHOTO[id];return 'img/'+id+'-'+s+'.'+(typeof e==='string'?e:'webp');}
 
 
 /* пиковая высота каждого дня, метры — на ней держится профиль маршрута */

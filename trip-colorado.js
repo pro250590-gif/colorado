@@ -222,6 +222,9 @@ const LINES=[
 const START='2026-08-07';
 
 const PHOTO={};["dro","art","lnh","trn","mvp","clp","vlc","pag","chr","hav","cbp","mol","sil","mdh","rmp","bcf","ohs","box","ykb","tel","dld","rid","bcg","pnt","mcc","mar","red","mrb","crl","gon","asp","gro","ash","rgt","igh","ind","dil","lov","geo","den"].forEach(k=>PHOTO[k]=1);
+/* дозагружено с Викисклада скриптом fetch-photos.js — эти лежат в jpg, а не в webp.
+   Значение = расширение файла. У Cathedral Lake свободного фото на Викискладе нет — там плашка. */
+["mtl","per","bvf","mls","dpb","twn"].forEach(k=>PHOTO[k]='jpg');
 
 const BPHOTO={dur:'art',our:'ohs',asp:'asp',den:'den'};
 

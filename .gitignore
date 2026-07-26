@@ -6,3 +6,4 @@
 !.gitignore
 !img/
 !img/*.webp
+!img/*.jpg
