@@ -940,6 +940,28 @@ body{background:linear-gradient(168deg,#eef1f8,#e9edf6 60%,#e6eaf4)!important}
 .dsrow .dst span{display:block;font:600 10.5px/1 "Inter",sans-serif;color:var(--mut);margin-top:5px}
 .dsfree{flex:none;font:800 9.5px/1 "Plus Jakarta Sans",sans-serif;background:#e2f4ec;color:#0e6a4c;border-radius:7px;padding:5px 7px}
 .dsrow.sug{border-color:rgba(91,63,196,.5);background:#f8f6ff}
+.dsrow[disabled]{opacity:.55}
+.dssep{font:800 10px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:.11em;text-transform:uppercase;color:#9aa3b2;margin:14px 4px 9px}
+.dsform{display:flex;flex-direction:column;gap:8px;margin-bottom:4px}
+.dsform input{border:1.5px solid rgba(20,32,27,.12);border-radius:12px;padding:12px 13px;font:600 13px/1 "Inter",sans-serif;background:#fff;width:100%}
+.dsform input:focus{outline:none;border-color:rgba(91,63,196,.55)}
+.dsgo{border:0;background:linear-gradient(150deg,#7a5cf0,#5b3fc4);color:#fff;border-radius:12px;padding:12px;
+  font:800 12px/1 "Plus Jakarta Sans",sans-serif;cursor:pointer}
+.dshint{font:600 10.5px/1.45 "Inter",sans-serif;color:#8b8698}
+.dscancel.alt{background:#f6f2ff;color:#5b3fc4;margin-bottom:8px}
+/* действия у места в дне */
+.cpact{display:flex;align-items:center;gap:8px;flex:none}
+.cpmv{width:30px;height:30px;border-radius:10px;border:1.5px solid rgba(20,32,27,.1);background:#fff;color:#8b8698;
+  display:grid;place-items:center;cursor:pointer;flex:none;font:800 15px/1 "Inter",sans-serif;letter-spacing:.5px;padding-bottom:5px}
+.cpmv:active{transform:scale(.94)}
+.cpup{display:flex;align-items:center;gap:5px;flex:none;border:1.5px solid rgba(91,63,196,.34);background:#fff;color:#5b3fc4;
+  border-radius:10px;padding:8px 10px;font:800 10.5px/1 "Plus Jakarta Sans",sans-serif;cursor:pointer}
+.cpup .i{width:13px;height:13px}
+.cadd{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;margin-top:11px;padding:11px;
+  border-radius:13px;border:1.5px dashed rgba(91,63,196,.45);background:#faf9ff;color:#5b3fc4;
+  font:800 12px/1 "Plus Jakarta Sans",sans-serif;cursor:pointer}
+.cadd .i{width:15px;height:15px}
+.cadd:active{transform:scale(.99)}
 .dssug{flex:none;font:800 9.5px/1 "Plus Jakarta Sans",sans-serif;background:#5b3fc4;color:#fff;border-radius:7px;padding:5px 7px}
 .dscancel{width:100%;border:0;background:#f4f5f9;color:var(--ink2);border-radius:13px;padding:12px;
   font:800 12px/1 "Plus Jakarta Sans",sans-serif;margin-top:4px;cursor:pointer}
@@ -1712,13 +1734,14 @@ function foodPinHTML(id){const s=(''+id).replace(/\W/g,'');
     +'<span class="fpi">'+ic('food','i-sm')+'</span></div>';}
 /* иконка точки маршрута: обычная (фото/точка) ИЛИ заметный кружок с днём, когда рестораны в приоритете */
 function markerIcon(p){
+  const dn=dispOf(p.d)||'';        /* на булавке — номер дня как в ленте, а не id шаблона */
   if(p.cat==='food')return L.divIcon({className:'',iconSize:[34,44],iconAnchor:[17,42],popupAnchor:[0,-40],html:foodPinHTML(p.id)});
-  if(foodOn)return L.divIcon({className:'',iconSize:[24,24],iconAnchor:[12,12],popupAnchor:[0,-12],html:'<div class="rpt">'+(p.d||'')+'</div>'});
+  if(foodOn)return L.divIcon({className:'',iconSize:[24,24],iconAnchor:[12,12],popupAnchor:[0,-12],html:'<div class="rpt">'+dn+'</div>'});
   const ph=PHOTO[p.id];
   if(ph)return L.divIcon({className:'',iconSize:[42,48],iconAnchor:[21,48],popupAnchor:[0,-46],
-    html:'<div class="photopin"><div class="ph" style="background-image:url('+pimg(p.id,'p')+')"></div><div class="badge" style="background:#5b3fc4">'+(p.d||'')+'</div><div class="tip"></div></div>'});
+    html:'<div class="photopin"><div class="ph" style="background-image:url('+pimg(p.id,'p')+')"></div><div class="badge" style="background:#5b3fc4">'+dn+'</div><div class="tip"></div></div>'});
   const sz=p.star?22:18;
-  return L.divIcon({className:'',iconSize:[sz,sz],iconAnchor:[sz/2,sz/2],html:'<div class="pin" style="background:#5b3fc4;width:'+sz+'px;height:'+sz+'px;font-size:'+(p.star?12:10)+'px">'+(p.d||'')+'</div>'});
+  return L.divIcon({className:'',iconSize:[sz,sz],iconAnchor:[sz/2,sz/2],html:'<div class="pin" style="background:#5b3fc4;width:'+sz+'px;height:'+sz+'px;font-size:'+(p.star?12:10)+'px">'+dn+'</div>'});
 }
 /* маркер-города: обычная капля ИЛИ мелкий нейтральный кружок, когда рестораны в приоритете */
 function cityIcon(b,cnt){
@@ -1730,6 +1753,15 @@ function cityIcon(b,cnt){
       +'<path d="M20 2C10.6 2 3 9.6 3 19c0 12 17 31 17 31s17-19 17-31C37 9.6 29.4 2 20 2z" fill="url(#rg-'+b.id+')" stroke="#fff" stroke-width="2" filter="url(#gl-'+b.id+')"/>'
       +'<text x="20" y="24.5" text-anchor="middle" font-family="Plus Jakarta Sans,Segoe UI,sans-serif" font-weight="800" font-size="16" fill="#fff">'+cnt+'</text></svg>'
       +'<span class="cplab">'+shortName(b.name)+'</span></div>'});
+}
+/* маркер точки — одним местом, чтобы добавленные руками места тоже попадали на карту */
+function makeMarker(p){
+  if(!map||!L||typeof p.lat!=='number'||typeof p.lng!=='number')return null;
+  const c=p.cat==='food'?'#c1462a':'#5b3fc4',ph=PHOTO[p.id],dn=dispOf(p.d);
+  markers[p.id]=L.marker([p.lat,p.lng],{icon:markerIcon(p)})
+    .bindPopup(popupHTML(p.nm,p.q,p.why,dn?('День '+dn):(CATS[p.cat]?CATS[p.cat].l:''),c,ph?pimg(p.id,'l'):null,p.cat==='food'?foodCat(p):null),
+      {autoPan:true,keepInView:false,autoPanPaddingTopLeft:L.point(12,66),autoPanPaddingBottomRight:L.point(12,14)});
+  return markers[p.id];
 }
 function updateMarkerStyles(){
   P.forEach(p=>{const mk=markers[p.id];if(mk)mk.setIcon(markerIcon(p));});
@@ -1761,8 +1793,7 @@ function initMap(){
       baseMarkers[b.id]=L.marker([b.lat,b.lng],{icon:cityIcon(b,cnt)});
       baseMarkers[b.id].on('click',()=>{filter={mode:'base',v:b.id};fopen=null;buildFilters();applyFilter();fitVisible();});});
     /* точки-места: булавки С ФОТО (как раньше) — показываются при выборе города/дня/типа */
-    P.forEach(p=>{const c=p.cat==='food'?'#c1462a':'#5b3fc4';const ph=PHOTO[p.id];
-      markers[p.id]=L.marker([p.lat,p.lng],{icon:markerIcon(p)}).bindPopup(popupHTML(p.nm,p.q,p.why,p.d?('День '+p.d):(CATS[p.cat]?CATS[p.cat].l:''),c,ph?pimg(p.id,'l'):null,p.cat==='food'?foodCat(p):null),{autoPan:true,keepInView:false,autoPanPaddingTopLeft:L.point(12,66),autoPanPaddingBottomRight:L.point(12,14)});});
+    P.forEach(p=>{if(typeof p.lat==='number'&&typeof p.lng==='number')makeMarker(p);});
     /* маршрут: единый фиолетовый градиент светлый→тёмный по сегментам; радиалки — светлый фиолет пунктиром */
     const legLines=LINES.filter(o=>o.type==='leg').sort((a,b)=>((a.days&&a.days[0])||0)-((b.days&&b.days[0])||0));
     const nLeg=legLines.length;const legColorMap=new Map();
@@ -1909,8 +1940,12 @@ function buildCities(){
         +'<ul class="cplaces">'+list.map(p=>{const emo=p.star?'<span class="cstar">'+ic('star','i-sm')+'</span>':'';const on=picked.has(p.id);
           return '<li class="'+(on?'':'off')+'" data-pl="'+p.id+'"><div class="cpl-row"><div class="cpl-main">'
             +'<span class="cpnm">'+emo+'<a href="'+gurl(p.q)+'" target="_blank" rel="noopener">'+p.nm+'</a></span>'+metaStrip(p)+'<span class="cwhy">'+p.why+'</span></div>'
-            +'<span class="cpsw'+(on?' on':'')+'" data-pl="'+p.id+'" role="switch" aria-checked="'+on+'" aria-label="показывать на карте" tabindex="0"><i></i></span></div></li>';}).join('')
+            +'<span class="cpact">'
+            +'<span class="cpsw'+(on?' on':'')+'" data-pl="'+p.id+'" role="switch" aria-checked="'+on+'" aria-label="показывать на карте" tabindex="0"><i></i></span>'
+            +'<button class="cpmv" data-mvopen="'+p.id+'" aria-label="перенести или убрать" title="перенести или убрать">⋯</button>'
+            +'</span></div></li>';}).join('')
           +(list.length?'':'<li class="cfree">Свободный день — планы пока не заданы.</li>')+'</ul>'
+        +'<button class="cadd" data-addto="'+e.tid+'">'+ic('plus','i-sm')+' Добавить место в этот день</button>'
         +(d&&d.note?'<div class="cnote">'+d.note+'</div>':'')
         +(e.pin?'':'<button class="crm" data-rmthis="'+e.tid+'" data-rmbase="'+b.id+'">'+ic('close','i-sm')+' Убрать этот день</button>')
         +'</div></details>';}).join('')+'</div>';
@@ -1925,8 +1960,9 @@ function buildCities(){
     const more=sp.length?('<div class="cnode"><span class="cdot">'+ic('layers','i-sm')+'</span>'
       +'<div class="clbl"><b>Ещё в городе</b><span>'+shortName(b.name)+' · '+sp.length+' '+plural(sp.length,'место','места','мест')+' не поместились в дни</span></div>'
       +'<div class="cmore"><ul class="cplaces">'+sp.map(p=>'<li data-pl="'+p.id+'"><div class="cpl-row"><div class="cpl-main">'
-        +'<span class="cpnm"><a href="'+gurl(p.q)+'" target="_blank" rel="noopener">'+p.nm+'</a></span>'+metaStrip(p)+'<span class="cwhy">'+p.why+'</span></div></div></li>').join('')
-      +'</ul><div class="cmoren">Добавь ночь в городе — появится свободный день, и места вернутся в него.</div></div></div>'):'';
+        +'<span class="cpnm"><a href="'+gurl(p.q)+'" target="_blank" rel="noopener">'+p.nm+'</a></span>'+metaStrip(p)+'<span class="cwhy">'+p.why+'</span></div>'
+        +'<button class="cpup" data-mvopen="'+p.id+'">'+ic('plus','i-sm')+' в день</button></div></li>').join('')
+      +'</ul><div class="cmoren">Тап «в день» — место встанет в выбранный день. Вернёшь ночь — вернётся и убранный день.</div></div></div>'):'';
 
     return '<section class="city" id="city-'+b.id+'"><div class="wrap">'
       +'<div class="chead"><span class="ckick">База '+(i+1)+' из '+BASES.length+' · '+dm(ci)+'–'+dm(co)+'</span>'
@@ -2077,7 +2113,7 @@ function savePicks(){try{localStorage.setItem(KEY,JSON.stringify([...picked]));}
 /* Мета-строка по каждому месту: цена · время · лучшее время · по пути/крюк */
 
 function metaStrip(p){
-  const m=META[p.id];if(!m)return '';
+  const m=META[p.id]||p.meta;if(!m)return '';
   const pr=prioOf(p),wh=whenOf(p);
   let out='<span class="meta">';
   if(pr==='must')out+='<span class="mpill must">'+ic('star','i-sm')+' обязательно</span>';
@@ -2376,9 +2412,51 @@ function dispOf(tid){const e=SCHED_BY[tid];return e?e.disp:0;}
 function daysOfBase(bid){return SCHED.filter(e=>e.base===bid);}
 function baseById(id){return BASES.find(b=>b.id===id)||BASES[0];}
 function dayTitle(e){return e.tpl?e.tpl.title:'Свободный день · '+shortName(baseById(e.base).name);}
-/* места отложенных дней — лежат в городе и ждут свободного дня */
-function stashPlaces(bid){const t=(STASH[bid]||[]).map(x=>x.n);return P.filter(p=>t.indexOf(p.d)>=0&&p.cat!=='food');}
+/* места отложенных дней + убранные руками — лежат в городе и ждут свободного дня */
+function stashPlaces(bid){const t=(STASH[bid]||[]).map(x=>x.n);
+  return P.filter(p=>p.cat!=='food'&&(t.indexOf(p.d)>=0||p.d===stashTid(bid)));}
 function stashCount(bid){return stashPlaces(bid).length;}
+/* ================= РЕДАКТОР ДНЯ =================
+   MOVED — куда пользователь перенёс место (id → tid дня или «полка» города).
+   CUSTOM — места, добавленные руками. И то и другое живёт в плане, данные маршрута не меняются. */
+let MOVED={},CUSTOM=[];
+function stashTid(bid){return 's-'+bid;}
+function applyMoves(){
+  P.forEach(p=>{if(p._d0===undefined)p._d0=p.d;p.d=(MOVED[p.id]!==undefined)?MOVED[p.id]:p._d0;});
+}
+function mergeCustom(){
+  CUSTOM.forEach(c=>{if(!P.some(p=>p.id===c.id))P.push(c);});
+}
+function placeById(id){return P.find(p=>p.id===id);}
+function movePlace(id,tid){
+  const p=placeById(id);if(!p)return;
+  const prev=planState();
+  if(tid===p._d0)delete MOVED[id];else MOVED[id]=tid;
+  applyMoves();savePlan();rerenderTrip();
+  const e=dayOf(tid);
+  toast('<b>'+(e?('«'+p.nm+'» → День '+e.disp):('«'+p.nm+'» убрали в «Ещё в городе»'))+'</b>',p.base,prev);
+}
+/* новое место руками или по ссылке из Google Maps */
+function addPlace(tid,d){
+  const e=dayOf(tid);if(!e||!d||!d.nm)return;
+  const id='u'+(Date.now().toString(36))+Math.floor(Math.random()*1e3).toString(36);
+  const c={id:id,d:tid,base:e.base,cat:d.cat||'town',nm:d.nm,q:d.q||d.nm,why:d.why||'',
+    lat:d.lat,lng:d.lng,custom:1,meta:{}};
+  CUSTOM.push(c);P.push(c);
+  if(typeof d.lat==='number'&&typeof d.lng==='number'){picked.add(id);savePicks();if(map&&!markers[id])makeMarker(c);}
+  savePlan();rerenderTrip();
+  toast('<b>Добавили «'+c.nm+'» в День '+e.disp+'</b>'+(c.lat?'':'<i>без точки на карте — в ссылке не было координат</i>'),e.base,null);
+}
+/* что можно вытащить из ссылки Google Maps без всяких ключей: название и координаты */
+function parseGmaps(url){
+  const out={short:/maps\.app\.goo\.gl|goo\.gl\/maps/i.test(url)};
+  let m=url.match(/\/place\/([^\/@?]+)/);
+  if(m)out.nm=decodeURIComponent(m[1].replace(/\+/g,' ')).replace(/\s+/g,' ').trim();
+  m=url.match(/!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/)||url.match(/@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/)
+    ||url.match(/[?&](?:q|query|ll)=(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/);
+  if(m){out.lat=+m[1];out.lng=+m[2];}
+  return out;
+}
 /* меняем ночи в городе → пересобираем расписание и всё, что от дней зависит.
    Минус — это «поездка короче»: система сама выбирает, какой день уходит, и говорит какой. */
 /* Кнопка «−» НИЧЕГО не убирает сама: спрашивает, какой день убрать, и ждёт нажатия.
@@ -2402,8 +2480,10 @@ function applyNights(i,n){
   while(b.nights<v){b.nights++;const hid=hiddenOf(b.id);if(hid.length)HIDDEN[b.id]=hid.slice(1);}
   savePlan();rerenderTrip();
 }
-function planState(){return {nights:BASES.map(b=>b.nights),hidden:JSON.parse(JSON.stringify(HIDDEN))};}
-function restoreState(s){BASES.forEach((b,i)=>{if(typeof s.nights[i]==='number')b.nights=s.nights[i];});HIDDEN=s.hidden||{};savePlan();rerenderTrip();}
+function planState(){return {nights:BASES.map(b=>b.nights),hidden:JSON.parse(JSON.stringify(HIDDEN)),moved:JSON.parse(JSON.stringify(MOVED))};}
+function restoreState(s){
+  BASES.forEach((b,i)=>{if(typeof s.nights[i]==='number')b.nights=s.nights[i];});
+  HIDDEN=s.hidden||{};if(s.moved)MOVED=s.moved;applyMoves();savePlan();rerenderTrip();}
 /* ядро: убрать день из расписания (без перерисовки), чтобы можно было убрать несколько подряд.
    День помечается скрытым и попадает в «Ещё в городе». Своё место в очереди он сохраняет. */
 function removeDayCore(bid,tid){
@@ -2463,13 +2543,59 @@ function pickDaySheet(bid){
   el.classList.add('on');
 }
 function closeDaySheet(){const el=document.getElementById('daySheet');if(el)el.classList.remove('on');}
+/* общий лист снизу — для переноса и добавления места */
+function sheet(inner){
+  let el=document.getElementById('daySheet');
+  if(!el){el=document.createElement('div');el.id='daySheet';document.body.appendChild(el);}
+  el.innerHTML='<div class="dsov" data-dsclose="1"></div><div class="dspanel">'+inner+'</div>';
+  el.classList.add('on');
+}
+function dayRow(e,attrs,note){
+  const n=dayPlaces(e).length;
+  return '<button class="dsrow"'+attrs+'><span class="cn">'+e.disp+'</span>'
+    +'<span class="dst"><b>'+dayTitle(e)+'</b><span>'+dm(e.date)+' · '+shortName(baseById(e.base).name)+' · '+n+' '+plural(n,'место','места','мест')+'</span></span>'
+    +(note?'<span class="dsfree">'+note+'</span>':'')+'</button>';
+}
+/* «Перенести место» — дни своего города сверху, остальные ниже */
+function movePlaceSheet(id){
+  const p=placeById(id);if(!p)return;
+  const mine=SCHED.filter(e=>e.base===p.base),other=SCHED.filter(e=>e.base!==p.base);
+  const row=e=>e.tid===p.d?dayRow(e,' disabled','сейчас здесь'):dayRow(e,' data-mvto="'+e.tid+'" data-mvid="'+id+'"','');
+  sheet('<div class="dsh"><b>Куда перенести?</b><span>'+p.nm+'</span></div>'
+    +mine.map(row).join('')
+    +(other.length?'<div class="dssep">Другие города</div>'+other.map(row).join(''):'')
+    +(p.d===stashTid(p.base)?'':'<button class="dscancel alt" data-mvto="'+stashTid(p.base)+'" data-mvid="'+id+'">Убрать в «Ещё в городе»</button>')
+    +'<button class="dscancel" data-dsclose="1">Отмена</button>');
+}
+/* «Добавить место в день» — три способа */
+function addPlaceSheet(tid){
+  const e=dayOf(tid);if(!e)return;
+  const st=stashPlaces(e.base);
+  sheet('<div class="dsh"><b>Добавить место</b><span>День '+e.disp+' · '+dm(e.date)+' · '+shortName(baseById(e.base).name)+'</span></div>'
+    +(st.length?'<div class="dssep">Из «Ещё в городе»</div>'
+      +st.map(p=>'<button class="dsrow" data-mvto="'+tid+'" data-mvid="'+p.id+'"><span class="cn">'+ic('pin','i-sm')+'</span>'
+        +'<span class="dst"><b>'+p.nm+'</b><span>'+(p.why||'').replace(/<[^>]+>/g,'').slice(0,60)+'</span></span></button>').join(''):'')
+    +'<div class="dssep">Ссылка из Google Maps</div>'
+    +'<div class="dsform"><input id="gmUrl" placeholder="Вставь ссылку на место" autocomplete="off">'
+      +'<button class="dsgo" data-gmadd="'+tid+'">Добавить по ссылке</button>'
+      +'<span class="dshint">Название и точку на карте возьмём из ссылки. Если ссылка короткая (maps.app.goo.gl) — открой её и скопируй адрес из строки браузера.</span></div>'
+    +'<div class="dssep">Вручную</div>'
+    +'<div class="dsform"><input id="mnNm" placeholder="Название места" autocomplete="off">'
+      +'<input id="mnWhy" placeholder="Зачем сюда (по желанию)" autocomplete="off">'
+      +'<button class="dsgo" data-mnadd="'+tid+'">Добавить</button></div>'
+    +'<button class="dscancel" data-dsclose="1">Отмена</button>');
+}
 function rerenderTrip(){
   buildSchedule();
   renderStays();buildRoute();buildDays();buildCities();buildFilters();buildElev();
   recomputeDates();refreshBudgetCounts();syncChecks();applyFilter();updateDirLinks();
 }
-function loadPlan(){try{const s=JSON.parse(localStorage.getItem(PKEY));if(s){if(s.start)startIso=s.start;if(typeof s.people==='number'&&s.people>=1)PEOPLE=s.people;if(Array.isArray(s.nights))BASES.forEach((b,i)=>{if(typeof s.nights[i]==='number'&&s.nights[i]>=1)b.nights=s.nights[i];});if(s.hidden&&typeof s.hidden==='object')HIDDEN=s.hidden;}}catch(e){}}
-function savePlan(){try{localStorage.setItem(PKEY,JSON.stringify({start:startIso,people:PEOPLE,nights:BASES.map(b=>b.nights),hidden:HIDDEN}));}catch(e){}}
+function loadPlan(){try{const s=JSON.parse(localStorage.getItem(PKEY));if(s){if(s.start)startIso=s.start;if(typeof s.people==='number'&&s.people>=1)PEOPLE=s.people;if(Array.isArray(s.nights))BASES.forEach((b,i)=>{if(typeof s.nights[i]==='number'&&s.nights[i]>=1)b.nights=s.nights[i];});if(s.hidden&&typeof s.hidden==='object')HIDDEN=s.hidden;
+  if(s.moved&&typeof s.moved==='object')MOVED=s.moved;
+  if(Array.isArray(s.custom))CUSTOM=s.custom;}}catch(e){}
+  mergeCustom();applyMoves();}
+function savePlan(){try{localStorage.setItem(PKEY,JSON.stringify({start:startIso,people:PEOPLE,
+  nights:BASES.map(b=>b.nights),hidden:HIDDEN,moved:MOVED,custom:CUSTOM}));}catch(e){}}
 function nightsBefore(baseId){let s=0;for(const b of BASES){if(b.id===baseId)break;s+=b.nights;}return s;}
 function dayDateFor(tid){const e=SCHED_BY[tid];return e?e.date:addDays(startIso,0);}
 function totalNights(){return BASES.reduce((s,b)=>s+b.nights,0);}
@@ -2585,7 +2711,25 @@ document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)r
   if(t.dataset.pickday){pickDaySheet(t.dataset.pickday);}
   if(t.dataset.rmday){closeDaySheet();removeDay(t.dataset.rmbase,tidOf(t.dataset.rmday));}
   if(t.dataset.dsclose){closeDaySheet();}
-  if(t.dataset.rmthis){removeDay(t.dataset.rmbase,tidOf(t.dataset.rmthis));}});
+  if(t.dataset.rmthis){removeDay(t.dataset.rmbase,tidOf(t.dataset.rmthis));}
+  /* редактор дня: перенести / убрать в город / добавить место */
+  if(t.dataset.mvopen){movePlaceSheet(t.dataset.mvopen);}
+  if(t.dataset.mvto){closeDaySheet();movePlace(t.dataset.mvid,tidOf(t.dataset.mvto));}
+  if(t.dataset.addto){addPlaceSheet(tidOf(t.dataset.addto));}
+  if(t.dataset.gmadd){
+    const inp=document.getElementById('gmUrl'),url=(inp&&inp.value||'').trim();
+    if(!url){if(inp)inp.focus();return;}
+    const g=parseGmaps(url);
+    if(!g.nm&&!g.lat){alert(g.short
+      ? 'Это короткая ссылка. Открой её в браузере и скопируй адрес из строки — в нём есть название и координаты.'
+      : 'Не получилось разобрать ссылку. Скопируй адрес страницы места из Google Maps.');return;}
+    closeDaySheet();addPlace(tidOf(t.dataset.gmadd),{nm:g.nm||'Место из Google Maps',q:g.nm||url,lat:g.lat,lng:g.lng,why:''});
+  }
+  if(t.dataset.mnadd){
+    const nm=(document.getElementById('mnNm')||{}).value,why=(document.getElementById('mnWhy')||{}).value;
+    if(!nm||!nm.trim()){const i=document.getElementById('mnNm');if(i)i.focus();return;}
+    closeDaySheet();addPlace(tidOf(t.dataset.mnadd),{nm:nm.trim(),why:(why||'').trim()});
+  }});
 document.addEventListener('click',e=>{if(e.target.id==='daySheet'||(e.target.dataset&&e.target.dataset.dsclose))closeDaySheet();});
 function wireButtons(){
   document.getElementById('allOn').onclick=()=>{P.forEach(p=>picked.add(p.id));savePicks();syncChecks();applyFilter();};
