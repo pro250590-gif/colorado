@@ -402,6 +402,9 @@ input[type=checkbox].tick:checked::after{content:"";position:absolute;left:8px;t
 .mpill.free{background:rgba(47,190,134,.14);color:var(--green3);border-color:transparent}
 .mpill.best{background:rgba(224,160,32,.16);color:#8a6316;border-color:transparent}
 .mpill.route{background:rgba(61,90,114,.12);color:var(--deep2);border-color:transparent}
+/* важность и время: «если время» уходит первым, «по расписанию» не трогаем при раскладке */
+.mpill.spare{background:rgba(20,32,27,.06);color:#7c8697;border-color:transparent}
+.mpill.fixed{background:rgba(124,92,255,.13);color:#5b3fc4;border-color:transparent}
 .why{color:var(--ink2);font-size:14.5px;line-height:1.55;display:block;margin-top:8px}
 .tag{display:inline-block;font:800 9px/1 "Inter",sans-serif;letter-spacing:.1em;text-transform:uppercase;border-radius:7px;
   padding:4px 8px;margin-left:7px;vertical-align:2px;white-space:nowrap}
@@ -900,6 +903,43 @@ body{background:linear-gradient(168deg,#eef1f8,#e9edf6 60%,#e6eaf4)!important}
 /* отложенные места города */
 .cmore{background:#fff;border:1px solid #eceef6;border-radius:15px;box-shadow:var(--sh1);padding:6px 13px 13px}
 .cmoren{font:600 11.5px/1.45 "Inter",sans-serif;color:#8b8698;background:#faf9ff;border-radius:11px;padding:10px 12px;margin-top:4px}
+/* «убрать этот день» — на самой карточке дня, осознанный выбор */
+.crm{display:flex;align-items:center;gap:6px;margin-top:12px;padding:9px 12px;border:1.5px solid rgba(20,32,27,.1);background:#fff;border-radius:11px;
+  font:800 11px/1 "Plus Jakarta Sans",sans-serif;color:#8b8698;cursor:pointer}
+.crm .i{width:13px;height:13px}
+.crm:active{transform:scale(.99)}
+/* плашка «убрали день» с отменой */
+#toast{position:fixed;left:12px;right:12px;bottom:calc(84px + env(safe-area-inset-bottom));z-index:3500;
+  display:flex;flex-wrap:wrap;align-items:center;gap:9px;background:#14201b;color:#fff;border-radius:16px;padding:13px 14px;
+  box-shadow:0 18px 40px -16px rgba(0,0,0,.6);opacity:0;visibility:hidden;transform:translateY(14px);transition:opacity .22s,transform .22s,visibility .22s}
+#toast.on{opacity:1;visibility:visible;transform:none}
+#toast .ttx{flex:1 1 100%;font:600 12px/1.4 "Inter",sans-serif}
+#toast .ttx b{display:block;font:800 12.5px/1.35 "Plus Jakarta Sans",sans-serif;letter-spacing:-.02em}
+#toast .ttx i{display:block;font-style:normal;font-size:11px;opacity:.72;margin-top:4px}
+#toast .tb:first-of-type{margin-left:auto}
+#toast .tb{flex:none;border:0;background:rgba(255,255,255,.16);color:#fff;border-radius:9px;padding:9px 11px;
+  font:800 11px/1 "Plus Jakarta Sans",sans-serif;cursor:pointer}
+#toast .tb.v{background:#7c5cff}
+@media(min-width:1000px){#toast{left:auto;right:calc(40vw + 18px);bottom:22px;max-width:520px}}
+/* лист «какой день убрать» */
+#daySheet{position:fixed;inset:0;z-index:4200;opacity:0;visibility:hidden;transition:opacity .22s,visibility .22s}
+#daySheet.on{opacity:1;visibility:visible}
+.dsov{position:absolute;inset:0;background:rgba(20,32,27,.42);backdrop-filter:blur(2px)}
+.dspanel{position:absolute;left:12px;right:12px;bottom:calc(16px + env(safe-area-inset-bottom));background:#fff;border-radius:22px;
+  padding:16px 14px 14px;box-shadow:0 24px 60px -18px rgba(20,32,27,.6);max-height:80vh;overflow:auto}
+.dsh{margin:0 4px 12px}
+.dsh b{display:block;font:800 17px/1.2 "Plus Jakarta Sans",sans-serif;letter-spacing:-.03em}
+.dsh span{display:block;font:600 11.5px/1.4 "Inter",sans-serif;color:var(--mut);margin-top:5px}
+.dsrow{display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:#fff;border:1.5px solid rgba(20,32,27,.09);
+  border-radius:14px;padding:11px 12px;margin-bottom:8px;cursor:pointer}
+.dsrow .cn{flex:none;width:26px;height:26px;border-radius:50%;background:#f1eefc;color:#5b3fc4;display:grid;place-items:center;font:800 11.5px/1 "Plus Jakarta Sans",sans-serif}
+.dsrow .dst{flex:1;min-width:0}
+.dsrow .dst b{display:block;font:800 12.5px/1.25 "Plus Jakarta Sans",sans-serif;letter-spacing:-.02em}
+.dsrow .dst span{display:block;font:600 10.5px/1 "Inter",sans-serif;color:var(--mut);margin-top:5px}
+.dsfree{flex:none;font:800 9.5px/1 "Plus Jakarta Sans",sans-serif;background:#e2f4ec;color:#0e6a4c;border-radius:7px;padding:5px 7px}
+.dscancel{width:100%;border:0;background:#f4f5f9;color:var(--ink2);border-radius:13px;padding:12px;
+  font:800 12px/1 "Plus Jakarta Sans",sans-serif;margin-top:4px;cursor:pointer}
+@media(min-width:1000px){.dspanel{left:50%;right:auto;transform:translateX(-50%);width:460px;bottom:auto;top:50%;margin-top:-180px}}
 .cdtx{flex:1;min-width:0}
 .cdm{font:500 10.5px/1 "Inter",sans-serif;color:#8b8fa3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.01em}
 .cdm b{color:#5b3fc4}
@@ -1867,7 +1907,9 @@ function buildCities(){
             +'<span class="cpnm">'+emo+'<a href="'+gurl(p.q)+'" target="_blank" rel="noopener">'+p.nm+'</a></span>'+metaStrip(p)+'<span class="cwhy">'+p.why+'</span></div>'
             +'<span class="cpsw'+(on?' on':'')+'" data-pl="'+p.id+'" role="switch" aria-checked="'+on+'" aria-label="показывать на карте" tabindex="0"><i></i></span></div></li>';}).join('')
           +(list.length?'':'<li class="cfree">Свободный день — планы пока не заданы.</li>')+'</ul>'
-        +(d&&d.note?'<div class="cnote">'+d.note+'</div>':'')+'</div></details>';}).join('')+'</div>';
+        +(d&&d.note?'<div class="cnote">'+d.note+'</div>':'')
+        +(e.pin?'':'<button class="crm" data-rmthis="'+e.tid+'" data-rmbase="'+b.id+'">'+ic('close','i-sm')+' Убрать этот день</button>')
+        +'</div></details>';}).join('')+'</div>';
     /* сколько ночей в городе — кнопки прямо здесь, над днями */
     const nb='<div class="cnights"><span class="cnl">Ночей в городе</span>'
       +'<span class="hstep"><button class="stepbtn" data-nd="'+i+'" data-dir="-1" aria-label="меньше ночей">−</button>'
@@ -2032,8 +2074,11 @@ function savePicks(){try{localStorage.setItem(KEY,JSON.stringify([...picked]));}
 
 function metaStrip(p){
   const m=META[p.id];if(!m)return '';
+  const pr=prioOf(p),wh=whenOf(p);
   let out='<span class="meta">';
-  if(p.star)out+='<span class="mpill must">'+ic('star','i-sm')+' обязательно</span>';
+  if(pr==='must')out+='<span class="mpill must">'+ic('star','i-sm')+' обязательно</span>';
+  if(pr==='spare')out+='<span class="mpill spare">'+ic('clock','i-sm')+' если время</span>';
+  if(wh==='fixed')out+='<span class="mpill fixed">'+ic('ticket','i-sm')+' по расписанию</span>';
   if(m.price)out+='<span class="mpill '+(m.price==='бесплатно'?'free':'')+'">'+ic('money','i-sm')+' '+m.price+'</span>';
   if(m.dur)out+='<span class="mpill">'+ic('clock','i-sm')+' '+m.dur+'</span>';
   if(m.best)out+='<span class="mpill best">'+ic('sun','i-sm')+' '+m.best+'</span>';
@@ -2257,20 +2302,73 @@ const PKEY='co-trip-2026-plan';let startIso=START;let PEOPLE=2;
    Слотов у города = его ночи; у последнего +1 на день вылета (он всегда в конце).
    Шаблонов больше слотов — лишние уходят в «Ещё в городе» (STASH, ничего не теряется);
    слотов больше — появляются свободные дни, которые наполняет пользователь. */
-let SCHED=[],STASH={},SCHED_BY={};
+let SCHED=[],STASH={},SCHED_BY={},ORDER={};
 function dayTpls(bid){return DAYS.filter(d=>DAY_BASE[d.n]===bid);}
+/* ORDER — порядок дней внутри города; меняется, когда пользователь убирает конкретный день
+   (убранный уезжает в конец очереди). Первый день города (прилёт/переезд) и день вылета
+   закреплены и убраться не могут — иначе до города не доехать и домой не улететь. */
+function pinsOf(bid){
+  const t=dayTpls(bid),isLast=BASES.length&&BASES[BASES.length-1].id===bid;
+  return {first:t[0]||null,last:(isLast&&t.length>1)?t[t.length-1]:null};
+}
+function orderOf(bid){
+  const t=dayTpls(bid),pin=pinsOf(bid),ids=Array.isArray(ORDER[bid])?ORDER[bid]:[];
+  const mid=t.filter(x=>x!==pin.first&&x!==pin.last);
+  const sorted=ids.map(id=>mid.find(x=>x.n===id)).filter(Boolean);
+  mid.forEach(x=>{if(sorted.indexOf(x)<0)sorted.push(x);});
+  return (pin.first?[pin.first]:[]).concat(sorted);
+}
 function buildSchedule(){
   SCHED=[];STASH={};SCHED_BY={};
-  BASES.forEach((b,bi)=>{
-    const isLast=bi===BASES.length-1, tpls=dayTpls(b.id).slice();
-    const fin=isLast?(tpls.pop()||null):null;      /* день вылета — всегда последний */
-    const slots=Math.max(0,b.nights), use=tpls.slice(0,slots);
-    STASH[b.id]=tpls.slice(use.length);
-    use.forEach(t=>SCHED.push({tid:t.n,base:b.id,tpl:t}));
+  BASES.forEach(b=>{
+    const pin=pinsOf(b.id),list=orderOf(b.id);
+    const slots=Math.max(0,b.nights), use=list.slice(0,slots);
+    STASH[b.id]=list.slice(use.length);
+    use.forEach(t=>SCHED.push({tid:t.n,base:b.id,tpl:t,pin:t===pin.first?1:0}));
     for(let k=use.length;k<slots;k++)SCHED.push({tid:'f-'+b.id+'-'+k,base:b.id,tpl:null});
-    if(fin)SCHED.push({tid:fin.n,base:b.id,tpl:fin,fin:1});
+    if(pin.last)SCHED.push({tid:pin.last.n,base:b.id,tpl:pin.last,fin:1,pin:1});
   });
   SCHED.forEach((e,i)=>{e.disp=i+1;e.date=addDays(startIso,i);SCHED_BY[e.tid]=e;});
+}
+/* ── важность и время места ──
+   Выводим из того, что уже есть в данных (star / tag / META.best), поэтому новый маршрут
+   ничего вручную заполнять не обязан. Явные поля place.prio / place.when, если заданы, главнее. */
+function prioOf(p){
+  if(p.prio)return p.prio;
+  if(p.star||(p.tag&&p.tag[1]==='t-must'))return 'must';
+  if(p.tag&&/если|по желанию|вариант|спокойн/i.test(p.tag[0]))return 'spare';
+  return 'nice';
+}
+function whenOf(p){
+  if(p.when)return p.when;
+  if(p.tag&&/билет/i.test(p.tag[0]))return 'fixed';
+  const b=(META[p.id]&&META[p.id].best)||'';
+  if(/\d{1,2}:\d{2}|^до \d|выход до/i.test(b))return 'fixed';
+  if(/утро|рассвет|до полудня/i.test(b))return 'morning';
+  if(/вечер|закат/i.test(b))return 'evening';
+  if(/днём|обед|весь день/i.test(b))return 'day';
+  return 'any';
+}
+const PRIO_W={must:4,nice:2,spare:1};
+function dayPlaces(e){return P.filter(p=>p.d===e.tid&&p.cat!=='food');}
+function dayWeight(e){return e.tpl?dayPlaces(e).reduce((s,p)=>s+(PRIO_W[prioOf(p)]||2),0):0;}
+function dayMust(e){return e.tpl?dayPlaces(e).filter(p=>prioOf(p)==='must').length:0;}
+/* какие дни города вообще можно убрать (кроме закреплённых) */
+function removableDays(bid){return daysOfBase(bid).filter(e=>!e.pin);}
+/* Кого убрать при «− ночь». Правило нарочно простое и объяснимое:
+   1) свободный день; 2) день без обязательных мест (из таких — самый пустой);
+   3) если все дни важные — последний в городе.
+   Сравнивать «важность» двух собранных дней между собой не берёмся: так однажды
+   вылетел день Maroon Bells, потому что в нём было меньше точек. Лучше предсказуемо
+   и с кнопкой «Выбрать другой», чем умно и мимо. */
+function autoRemovable(bid){
+  const c=removableDays(bid);if(!c.length)return null;
+  const free=c.filter(e=>!e.tpl);
+  if(free.length)return {e:free[free.length-1],why:'он был свободным'};
+  const noMust=c.filter(e=>dayMust(e)===0);
+  if(noMust.length)return {e:noMust.slice().sort((a,b)=>(dayPlaces(a).length-dayPlaces(b).length)||(b.disp-a.disp))[0],
+    why:'в нём не было обязательных мест'};
+  return {e:c[c.length-1],why:'он был последним в городе'};
 }
 function dayOf(tid){return SCHED_BY[tid]||null;}
 /* значения из data-атрибутов приходят строкой: '4' → 4, 'f-our-1' оставляем как есть */
@@ -2282,19 +2380,87 @@ function dayTitle(e){return e.tpl?e.tpl.title:'Свободный день · '+
 /* места отложенных дней — лежат в городе и ждут свободного дня */
 function stashPlaces(bid){const t=(STASH[bid]||[]).map(x=>x.n);return P.filter(p=>t.indexOf(p.d)>=0&&p.cat!=='food');}
 function stashCount(bid){return stashPlaces(bid).length;}
-/* меняем ночи в городе → пересобираем расписание и всё, что от дней зависит */
+/* меняем ночи в городе → пересобираем расписание и всё, что от дней зависит.
+   Минус — это «поездка короче»: система сама выбирает, какой день уходит, и говорит какой. */
 function setNights(i,n){
   const b=BASES[i];if(!b)return;
   const v=Math.max(1,Math.min(30,n));if(v===b.nights)return;
+  if(v<b.nights){                       /* короче — сама решаю, какие дни уходят, и говорю почему */
+    const prev=planState();let last=null,g=0;
+    while(b.nights>v&&g++<40){
+      const pick=autoRemovable(b.id);if(!pick)break;
+      const info=removeDayCore(b.id,pick.e.tid);if(!info)break;
+      info.why=pick.why;last=info;
+    }
+    savePlan();rerenderTrip();
+    if(last)toastRemoved(b.id,last,prev);
+    return;
+  }
   b.nights=v;savePlan();rerenderTrip();
 }
+function planState(){return {nights:BASES.map(b=>b.nights),order:JSON.parse(JSON.stringify(ORDER))};}
+function restoreState(s){BASES.forEach((b,i)=>{if(typeof s.nights[i]==='number')b.nights=s.nights[i];});ORDER=s.order||{};savePlan();rerenderTrip();}
+/* ядро: убрать день из расписания (без перерисовки), чтобы можно было убрать несколько подряд.
+   Убранный день уезжает в конец очереди города и попадает в «Ещё в городе». */
+function removeDayCore(bid,tid){
+  const i=BASES.findIndex(b=>b.id===bid),e=dayOf(tid);
+  if(i<0||!e||e.pin||BASES[i].nights<=1)return null;
+  const info={disp:e.disp,free:!e.tpl,title:e.tpl?e.tpl.title:''};
+  if(e.tpl){const pin=pinsOf(bid),mid=orderOf(bid).filter(x=>x!==pin.first).map(x=>x.n).filter(x=>x!==tid);mid.push(tid);ORDER[bid]=mid;}
+  BASES[i].nights--;
+  buildSchedule();                      /* следующий шаг должен видеть актуальные дни */
+  return info;
+}
+/* убрать КОНКРЕТНЫЙ день города — осознанный выбор с карточки дня или из листа */
+function removeDay(bid,tid){
+  const prev=planState(),info=removeDayCore(bid,tid);
+  if(!info)return;
+  savePlan();rerenderTrip();toastRemoved(bid,info,prev);
+}
+function toastRemoved(bid,info,prev){
+  const n=stashCount(bid);
+  const sub=[info.why,(n&&!info.free)?n+' '+plural(n,'место','места','мест')+' остались в городе':''].filter(Boolean).join(' · ');
+  toast('<b>Убрали День '+info.disp+(info.title?' — «'+info.title+'»':'')+'</b>'+(sub?'<i>'+sub+'</i>':''),bid,prev);
+}
+/* плашка снизу: что убрали, отменить, выбрать другой день */
+let _toastT=null,_undo=null;
+function toast(html,bid,prev){
+  _undo={bid:bid,prev:prev};
+  let el=document.getElementById('toast');
+  if(!el){el=document.createElement('div');el.id='toast';document.body.appendChild(el);}
+  const more=removableDays(bid).length>0;
+  el.innerHTML='<span class="ttx">'+html+'</span>'
+    +'<button class="tb v" data-undo="1">Отменить</button>'
+    +(more?'<button class="tb" data-pickday="'+bid+'">Выбрать другой</button>':'');
+  el.classList.add('on');
+  clearTimeout(_toastT);_toastT=setTimeout(()=>el.classList.remove('on'),9000);
+}
+function hideToast(){const el=document.getElementById('toast');if(el)el.classList.remove('on');}
+/* лист «какой день убрать» — для тех, кто хочет решить сам */
+function pickDaySheet(bid){
+  const prev=_undo&&_undo.bid===bid?_undo.prev:null;
+  if(prev)restoreState(prev);                 /* сначала откатываем авто-выбор */
+  hideToast();
+  const days=removableDays(bid);if(!days.length)return;
+  let el=document.getElementById('daySheet');
+  if(!el){el=document.createElement('div');el.id='daySheet';document.body.appendChild(el);}
+  el.innerHTML='<div class="dsov" data-dsclose="1"></div><div class="dspanel">'
+    +'<div class="dsh"><b>Какой день убрать?</b><span>'+shortName(baseById(bid).name)+' · поездка станет короче на день</span></div>'
+    +days.map(e=>{const n=P.filter(p=>p.d===e.tid&&p.cat!=='food').length;
+      return '<button class="dsrow" data-rmday="'+e.tid+'" data-rmbase="'+bid+'"><span class="cn">'+e.disp+'</span>'
+        +'<span class="dst"><b>'+dayTitle(e)+'</b><span>'+dm(e.date)+' · '+n+' '+plural(n,'место','места','мест')+'</span></span>'
+        +(dayWeight(e)===0?'<span class="dsfree">пусто</span>':'')+'</button>';}).join('')
+    +'<button class="dscancel" data-dsclose="1">Ничего не убирать</button></div>';
+  el.classList.add('on');
+}
+function closeDaySheet(){const el=document.getElementById('daySheet');if(el)el.classList.remove('on');}
 function rerenderTrip(){
   buildSchedule();
   renderStays();buildRoute();buildDays();buildCities();buildFilters();buildElev();
   recomputeDates();refreshBudgetCounts();syncChecks();applyFilter();updateDirLinks();
 }
-function loadPlan(){try{const s=JSON.parse(localStorage.getItem(PKEY));if(s){if(s.start)startIso=s.start;if(typeof s.people==='number'&&s.people>=1)PEOPLE=s.people;if(Array.isArray(s.nights))BASES.forEach((b,i)=>{if(typeof s.nights[i]==='number'&&s.nights[i]>=1)b.nights=s.nights[i];});}}catch(e){}}
-function savePlan(){try{localStorage.setItem(PKEY,JSON.stringify({start:startIso,people:PEOPLE,nights:BASES.map(b=>b.nights)}));}catch(e){}}
+function loadPlan(){try{const s=JSON.parse(localStorage.getItem(PKEY));if(s){if(s.start)startIso=s.start;if(typeof s.people==='number'&&s.people>=1)PEOPLE=s.people;if(Array.isArray(s.nights))BASES.forEach((b,i)=>{if(typeof s.nights[i]==='number'&&s.nights[i]>=1)b.nights=s.nights[i];});if(s.order&&typeof s.order==='object')ORDER=s.order;}}catch(e){}}
+function savePlan(){try{localStorage.setItem(PKEY,JSON.stringify({start:startIso,people:PEOPLE,nights:BASES.map(b=>b.nights),order:ORDER}));}catch(e){}}
 function nightsBefore(baseId){let s=0;for(const b of BASES){if(b.id===baseId)break;s+=b.nights;}return s;}
 function dayDateFor(tid){const e=SCHED_BY[tid];return e?e.date:addDays(startIso,0);}
 function totalNights(){return BASES.reduce((s,b)=>s+b.nights,0);}
@@ -2404,7 +2570,13 @@ document.addEventListener('change',e=>{const id=e.target.dataset&&e.target.datas
 document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)return;
   if(t.dataset.dayon){P.filter(p=>p.d===tidOf(t.dataset.dayon)).forEach(p=>picked.add(p.id));savePicks();syncChecks();applyFilter();}
   if(t.dataset.dayoff){P.filter(p=>p.d===tidOf(t.dataset.dayoff)).forEach(p=>picked.delete(p.id));savePicks();syncChecks();applyFilter();}
-  if(t.dataset.nd!==undefined){const i=+t.dataset.nd,dir=+t.dataset.dir;setNights(i,BASES[i].nights+dir);}});
+  if(t.dataset.nd!==undefined){const i=+t.dataset.nd,dir=+t.dataset.dir;setNights(i,BASES[i].nights+dir);}
+  if(t.dataset.undo){if(_undo)restoreState(_undo.prev);_undo=null;hideToast();}
+  if(t.dataset.pickday){pickDaySheet(t.dataset.pickday);}
+  if(t.dataset.rmday){closeDaySheet();removeDay(t.dataset.rmbase,tidOf(t.dataset.rmday));}
+  if(t.dataset.dsclose){closeDaySheet();}
+  if(t.dataset.rmthis){removeDay(t.dataset.rmbase,tidOf(t.dataset.rmthis));}});
+document.addEventListener('click',e=>{if(e.target.id==='daySheet'||(e.target.dataset&&e.target.dataset.dsclose))closeDaySheet();});
 function wireButtons(){
   document.getElementById('allOn').onclick=()=>{P.forEach(p=>picked.add(p.id));savePicks();syncChecks();applyFilter();};
   document.getElementById('allOff').onclick=()=>{picked.clear();savePicks();syncChecks();applyFilter();};
