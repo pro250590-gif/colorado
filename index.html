@@ -243,7 +243,19 @@ h2.big{font-size:clamp(26px,6.4vw,38px);margin:12px 4px 0}
 .mpopB-ti{flex:1;min-width:0;padding-right:26px}
 .mpopB-ti .mpop-nm{font-size:16px;margin:4px 0 0}
 .mpopB-bd{padding:12px 15px 15px}
-.leaflet-control-scale-line{font-size:10.5px;font-weight:700;color:var(--ink);border-color:rgba(20,32,27,.5)}
+/* ── КОНТРОЛЫ КАРТЫ в стиле сайта (фиолет, скругления) ── */
+.leaflet-bar,.leaflet-control-layers{border:none!important;border-radius:14px!important;box-shadow:0 8px 20px -8px rgba(50,35,110,.42)!important;overflow:hidden}
+.leaflet-control-zoom a{width:38px;height:38px;line-height:38px;color:#5b3fc4;background:#fff;font-size:20px;font-weight:700;border:none;transition:background .15s}
+.leaflet-control-zoom a:hover{background:#f2effc;color:#3b2a8f}
+.leaflet-control-zoom a:first-child{border-bottom:1px solid #efe7f7}
+.leaflet-control-zoom a.leaflet-disabled{color:#cfc8e2;background:#fff}
+.leaflet-control-layers-toggle{width:38px!important;height:38px!important;background-color:#fff!important;background-repeat:no-repeat!important;background-position:center!important;background-size:21px 21px!important;
+  background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%235b3fc4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="m2 17 10 5 10-5M2 12l10 5 10-5"/></svg>')!important}
+.leaflet-control-layers-expanded{padding:10px 13px!important;background:#fff!important;color:#1b1533!important;font:600 13px/1.7 "Inter",sans-serif!important;min-width:132px}
+.leaflet-control-layers-expanded label{display:flex;align-items:center;gap:7px;margin:1px 0;cursor:pointer}
+.leaflet-control-layers-selector{accent-color:#5b3fc4;width:15px;height:15px}
+.leaflet-control-layers-list{margin:0}
+.leaflet-control-scale-line{border:2px solid rgba(91,63,196,.55);border-top:none;color:#5b3fc4;background:rgba(255,255,255,.85);font:800 10px/1.5 "Inter",sans-serif;border-radius:0 0 5px 5px;padding:0 6px}
 .mapbar{display:flex;gap:8px;align-items:center;padding:12px;background:rgba(255,255,255,.88);
   backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-top:1px solid var(--line2);
   overflow-x:auto;scrollbar-width:none}
@@ -1007,6 +1019,8 @@ body.mapopen #mapShell{display:block}
   .mfb>.i{display:none}
   .mfall,.mffood{width:100%;height:40px}
   .mfdrop{position:absolute;left:76px;top:0;width:254px;margin:0}
+  /* переключатель стиля карты выше (на десктопе фильтр слева, верх-право свободен) */
+  .leaflet-top{margin-top:10px}
 }
 .leaflet-control-attribution{font-size:8px!important;background:rgba(255,255,255,.55)!important;color:#9a9aad!important;padding:1px 5px!important;opacity:.7}
 .leaflet-control-attribution a{color:#9a9aad!important}
