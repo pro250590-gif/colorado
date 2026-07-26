@@ -2728,16 +2728,13 @@ function movePlaceSheet(id){
 function addPlaceSheet(tid){
   const e=dayOf(tid);if(!e)return;
   const st=stashPlaces(e.base);
-  /* поля сверху, список отложенных мест — ниже (просьба клиента) */
+  /* Одно поле на всё: ссылка, название или просто своя пометка. Отдельный блок
+     «вручную» был лишним — первое поле делает то же самое и вдобавок ищет точку. */
   sheet('<div class="dsh"><b>Добавить место</b><span>День '+e.disp+' · '+dm(e.date)+' · '+shortName(baseById(e.base).name)+'</span></div>'
-    +'<div class="dssep">Ссылка из Google Maps или название</div>'
-    +'<div class="dsform"><input id="gmUrl" placeholder="Вставь ссылку или напиши название" autocomplete="off">'
+    +'<div class="dssep">Новое место</div>'
+    +'<div class="dsform"><input id="gmUrl" placeholder="Ссылка из Google Maps или название" autocomplete="off">'
       +'<input id="gmWhy" placeholder="Зачем сюда (по желанию)" autocomplete="off">'
-      +'<button class="dsgo" data-gmadd="'+tid+'">Найти и добавить</button></div>'
-    +'<div class="dssep">Вручную</div>'
-    +'<div class="dsform"><input id="mnNm" placeholder="Название места" autocomplete="off">'
-      +'<input id="mnWhy" placeholder="Зачем сюда (по желанию)" autocomplete="off">'
-      +'<button class="dsgo" data-mnadd="'+tid+'">Добавить</button></div>'
+      +'<button class="dsgo" data-gmadd="'+tid+'">Добавить место</button></div>'
     +(st.length?'<div class="dssep">Из «Ещё в городе» · '+st.length+'</div>'
       +st.map(p=>'<button class="dsrow" data-mvto="'+tid+'" data-mvid="'+p.id+'"><span class="cn">'+ic('pin','i-sm')+'</span>'
         +'<span class="dst"><b>'+p.nm+'</b><span>'+(p.why||'').replace(/<[^>]+>/g,'').slice(0,60)+'</span></span></button>').join(''):'')
@@ -2935,11 +2932,7 @@ document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)r
     geocode(g.addr||g.nm,r=>{closeDaySheet();
       addPlace(tid,{nm:g.nm,q:g.addr||g.nm,why:why,lat:r&&r.lat,lng:r&&r.lng});});
   }
-  if(t.dataset.mnadd){
-    const nm=(document.getElementById('mnNm')||{}).value,why=(document.getElementById('mnWhy')||{}).value;
-    if(!nm||!nm.trim()){const i=document.getElementById('mnNm');if(i)i.focus();return;}
-    closeDaySheet();addPlace(tidOf(t.dataset.mnadd),{nm:nm.trim(),why:(why||'').trim()});
-  }});
+  });
 document.addEventListener('click',e=>{if(e.target.id==='daySheet'||(e.target.dataset&&e.target.dataset.dsclose))closeDaySheet();});
 function wireButtons(){
   document.getElementById('allOn').onclick=()=>{P.forEach(p=>picked.add(p.id));savePicks();syncChecks();applyFilter();};
