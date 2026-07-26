@@ -61,12 +61,10 @@ h1,h2,h3,h4{line-height:1.08;margin:0;font-family:"Plus Jakarta Sans","Inter",sa
   -webkit-backdrop-filter:saturate(180%) blur(16px);border-bottom:1px solid rgba(255,255,255,.7)}
 .topbar .wrap{display:flex;align-items:center;gap:11px;height:56px}
 .topdate{margin-left:auto}
-/* навигация в шапке (только десктоп; в телефоне — нижняя панель) */
-.topnav{display:none}
-.topnav a{font-size:13.5px;font-weight:700;color:#5c5872;padding:8px 13px;border-radius:10px;text-decoration:none;transition:background .15s,color .15s;letter-spacing:-.01em}
-.topnav a:hover{background:rgba(124,92,255,.1);color:#5b3fc4}
-.topnav a.on{color:#5b3fc4;background:#efeaff}
-#cities,#s-money,#s-food{scroll-margin-top:70px}
+/* вертикальные меню сайта/карты и иконки вкладок — только десктоп (в телефоне нижняя панель + горизонт. фильтр) */
+.siderail{display:none}
+.mfbico{display:none}
+#cities,#s-money,#s-food{scroll-margin-top:72px}
 .authbtn{flex:none;border:1.5px solid rgba(91,63,196,.4);background:linear-gradient(180deg,#fff,#f4f1ff);color:#5b3fc4;
   font:800 12.5px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:-.02em;padding:9px 14px;border-radius:12px;cursor:pointer;
   box-shadow:0 5px 13px -6px rgba(91,63,196,.5);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -517,7 +515,6 @@ footer a{color:#cbbcf9;font-weight:600}
 @media(min-width:1000px){
   body{padding-bottom:0}
   .bottomnav{display:none}
-  .topnav{display:flex;gap:4px;margin-left:16px}
   .wrap{padding:0 72px}
 }
 @media(prefers-reduced-motion:reduce){
@@ -980,13 +977,36 @@ body.mapopen #mapShell{display:block}
 .mapbox{height:100%}
 .mappanel #map,.mappanel .mapph{height:100%!important;min-height:0!important}
 @media(min-width:1000px){
-  body{padding-right:40vw}
-  .citystep{padding-left:72px;padding-right:72px}
-  #mapShell{display:block!important;position:fixed;top:0;right:0;left:auto;bottom:0;width:40vw;height:100vh;z-index:60}
+  body{padding-right:40vw;padding-top:56px}
+  .citystep{padding-left:96px;padding-right:72px}
+  /* карта — фиксированный сайдбар, опущен ПОД цельную шапку */
+  #mapShell{display:block!important;position:fixed;top:56px;right:0;left:auto;bottom:0;width:40vw;height:calc(100vh - 56px);z-index:60}
   body.mapopen{overflow:auto}
   .mapscrim,.mapclose{display:none}
   .mappanel{position:absolute;inset:0;left:0;top:0;right:0;bottom:0;border-radius:0;animation:none;
     border-left:1px solid var(--cardline);box-shadow:-16px 0 44px -26px rgba(20,25,60,.5)}
+  /* ── ЦЕЛЬНАЯ ШАПКА НА ВСЮ ШИРИНУ (поверх сайта и карты) ── */
+  .topbar{position:fixed;top:0;left:0;right:0;z-index:2001}
+  .topbar .wrap{max-width:none;margin:0;padding:0 24px}
+  /* ── МЕНЮ САЙТА: вертикальный иконки-рейл слева ── */
+  .wrap{padding:0 96px}
+  .siderail{display:flex;flex-direction:column;gap:5px;position:fixed;left:16px;top:72px;z-index:55;
+    background:#fff;border:1px solid #efe7f7;border-radius:16px;padding:8px 5px;box-shadow:0 12px 30px -14px rgba(50,35,110,.42)}
+  .siderail a{display:flex;flex-direction:column;align-items:center;gap:3px;width:56px;padding:9px 4px;border-radius:12px;
+    font-size:10px;font-weight:700;color:#6c6785;text-decoration:none;letter-spacing:-.01em;transition:background .15s,color .15s}
+  .siderail a .i{width:18px;height:18px}
+  .siderail a:hover{background:rgba(124,92,255,.1);color:#5b3fc4}
+  .siderail a.on{background:linear-gradient(150deg,#7a5cf0,#5b3fc4);color:#fff}
+  /* ── МЕНЮ КАРТЫ: вертикальный рейл слева, список выпадает вправо ── */
+  .filters{left:12px!important;right:auto!important;top:12px!important;width:auto}
+  .mfbar{flex-direction:column;width:66px;gap:4px;padding:6px}
+  .mfb{flex-direction:column;gap:3px;padding:9px 3px;width:100%}
+  .mfbico{display:block}
+  .mfbico .i{width:17px;height:17px;opacity:.9}
+  .mfblabel{font-size:9.5px}
+  .mfb>.i{display:none}
+  .mfall,.mffood{width:100%;height:40px}
+  .mfdrop{position:absolute;left:76px;top:0;width:254px;margin:0}
 }
 .leaflet-control-attribution{font-size:8px!important;background:rgba(255,255,255,.55)!important;color:#9a9aad!important;padding:1px 5px!important;opacity:.7}
 .leaflet-control-attribution a{color:#9a9aad!important}
@@ -1089,10 +1109,14 @@ section h2.big{margin-bottom:4px}
 
 <div class="topbar"><div class="wrap">
   <span class="brand"><span class="brandmark"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 3 4.5 8.5L17 7l5 14H2L8 3Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></span>Colorado<i>.</i></span>
-  <nav class="topnav"><a href="#cities">Дни</a><a href="#s-money">Бюджет</a><a href="#s-food">Еда</a></nav>
   <span class="topdate" id="topDate">7–16 августа 2026</span>
   <button class="authbtn" id="authBtn" style="display:none">Войти</button>
 </div></div>
+<nav class="siderail" aria-label="Разделы сайта">
+  <a href="#cities"><svg class="i" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg><span>Дни</span></a>
+  <a href="#s-money"><svg class="i" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0 0 4h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5"/><path d="M17.5 13h.01"/></svg><span>Бюджет</span></a>
+  <a href="#s-food"><svg class="i" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7a3 3 0 0 0 3 3v10M6 2v7M9 2v7M18 2c-1.6 2-2.4 4.2-2.4 6.4 0 1.9.9 3.1 2.4 3.4V22"/></svg><span>Еда</span></a>
+</nav>
 <div class="authov" id="authOv" aria-hidden="true">
   <div class="authbd" data-authclose></div>
   <div class="authcard" role="dialog" aria-modal="true" aria-label="Вход">
@@ -1766,9 +1790,11 @@ function buildFilters(){
     const m={star:'Главное',nature:'Природа',town:'Города',springs:'Источники',transport:'Транспорт'};
     return m[cv]||'Типы';
   };
+  const segIco={day:'cal',base:'bed',cat:'star'};
   const tab=(seg)=>{const act=fopen?(fopen===seg):(cur===seg);
     return '<button class="mfb'+(act?' act':'')+(fopen===seg?' open':'')+'" data-seg="'+seg+'">'
-      +'<span>'+label(seg)+'</span>'+ic('chevron','i-sm')+'</button>';};
+      +'<span class="mfbico">'+ic(segIco[seg],'i-sm')+'</span>'
+      +'<span class="mfblabel">'+label(seg)+'</span>'+ic('chevron','i-sm')+'</button>';};
 
   box.innerHTML='<div class="mfbar">'
       +'<button class="mfall'+(cur==='all'?' act':'')+'" data-f="all" title="показать все точки">'+ic('layers','i-sm')+'</button>'
@@ -2366,7 +2392,7 @@ document.addEventListener('click',e=>{
 
 /* подсветка текущего раздела в нижней панели */
 (function navHighlight(){
-  const links=[...document.querySelectorAll('.bottomnav a, .topnav a')];
+  const links=[...document.querySelectorAll('.bottomnav a, .siderail a')];
   if(!links.length||!('IntersectionObserver' in window))return;
   const byId={};links.forEach(a=>{const id=a.getAttribute('href').slice(1);if(!id)return;(byId[id]=byId[id]||[]).push(a);});
   const secs=Object.keys(byId).map(id=>document.getElementById(id)).filter(Boolean);
