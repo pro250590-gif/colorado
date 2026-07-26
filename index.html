@@ -917,7 +917,7 @@ body{background:linear-gradient(168deg,#eef1f8,#e9edf6 60%,#e6eaf4)!important}
 #toast .ttx b{display:block;font:800 12.5px/1.35 "Plus Jakarta Sans",sans-serif;letter-spacing:-.02em}
 #toast .ttx i{display:block;font-style:normal;font-size:11px;opacity:.72;margin-top:4px}
 #toast .tb:first-of-type{margin-left:auto}
-#toast .tb{flex:none;border:0;background:rgba(255,255,255,.16);color:#fff;border-radius:9px;padding:9px 11px;
+#toast .tb{flex:none;border:0;background:rgba(255,255,255,.16);color:#fff!important;border-radius:9px;padding:9px 11px;
   font:800 11px/1 "Plus Jakarta Sans",sans-serif;cursor:pointer}
 #toast .tb.v{background:#7c5cff}
 #toast .tb.x{padding:9px;background:rgba(255,255,255,.1);display:grid;place-items:center}
@@ -932,8 +932,15 @@ body{background:linear-gradient(168deg,#eef1f8,#e9edf6 60%,#e6eaf4)!important}
 .dsh{margin:0 4px 12px}
 .dsh b{display:block;font:800 17px/1.2 "Plus Jakarta Sans",sans-serif;letter-spacing:-.03em}
 .dsh span{display:block;font:600 11.5px/1.4 "Inter",sans-serif;color:var(--mut);margin-top:5px}
+/* ВАЖНО: у <button> на iOS свой синий цвет текста — цвет задаём явно всем кнопкам листа */
+#daySheet button,#toast button{-webkit-appearance:none;appearance:none;font-family:inherit}
 .dsrow{display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:#fff;border:1.5px solid rgba(20,32,27,.09);
-  border-radius:14px;padding:11px 12px;margin-bottom:8px;cursor:pointer}
+  border-radius:14px;padding:11px 12px;margin-bottom:8px;cursor:pointer;color:var(--ink)}
+.dsrow.far{opacity:.72}
+.dsfar{display:none}
+.dsfar.on{display:block}
+.dsmore{width:100%;border:1.5px dashed rgba(20,32,27,.16);background:#fff;color:#8b8698;border-radius:13px;padding:11px;
+  font:800 11.5px/1 "Plus Jakarta Sans",sans-serif;margin-bottom:8px;cursor:pointer}
 .dsrow .cn{flex:none;width:26px;height:26px;border-radius:50%;background:#f1eefc;color:#5b3fc4;display:grid;place-items:center;font:800 11.5px/1 "Plus Jakarta Sans",sans-serif}
 .dsrow .dst{flex:1;min-width:0}
 .dsrow .dst b{display:block;font:800 12.5px/1.25 "Plus Jakarta Sans",sans-serif;letter-spacing:-.02em}
@@ -945,10 +952,10 @@ body{background:linear-gradient(168deg,#eef1f8,#e9edf6 60%,#e6eaf4)!important}
 .dsform{display:flex;flex-direction:column;gap:8px;margin-bottom:4px}
 .dsform input{border:1.5px solid rgba(20,32,27,.12);border-radius:12px;padding:12px 13px;font:600 13px/1 "Inter",sans-serif;background:#fff;width:100%}
 .dsform input:focus{outline:none;border-color:rgba(91,63,196,.55)}
-.dsgo{border:0;background:linear-gradient(150deg,#7a5cf0,#5b3fc4);color:#fff;border-radius:12px;padding:12px;
+.dsgo{border:0;background:linear-gradient(150deg,#7a5cf0,#5b3fc4);color:#fff!important;border-radius:12px;padding:12px;
   font:800 12px/1 "Plus Jakarta Sans",sans-serif;cursor:pointer}
 .dshint{font:600 10.5px/1.45 "Inter",sans-serif;color:#8b8698}
-.dscancel.alt{background:#f6f2ff;color:#5b3fc4;margin-bottom:8px}
+.dscancel.alt{background:#f6f2ff;color:#5b3fc4!important;margin-bottom:8px}
 /* действия у места в дне */
 .cpact{display:flex;align-items:center;gap:8px;flex:none}
 .cpmv{width:30px;height:30px;border-radius:10px;border:1.5px solid rgba(20,32,27,.1);background:#fff;color:#8b8698;
@@ -963,7 +970,7 @@ body{background:linear-gradient(168deg,#eef1f8,#e9edf6 60%,#e6eaf4)!important}
 .cadd .i{width:15px;height:15px}
 .cadd:active{transform:scale(.99)}
 .dssug{flex:none;font:800 9.5px/1 "Plus Jakarta Sans",sans-serif;background:#5b3fc4;color:#fff;border-radius:7px;padding:5px 7px}
-.dscancel{width:100%;border:0;background:#f4f5f9;color:var(--ink2);border-radius:13px;padding:12px;
+.dscancel{width:100%;border:0;background:#f4f5f9;color:var(--ink2)!important;border-radius:13px;padding:12px;
   font:800 12px/1 "Plus Jakarta Sans",sans-serif;margin-top:4px;cursor:pointer}
 @media(min-width:1000px){.dspanel{left:50%;right:auto;transform:translateX(-50%);width:460px;bottom:auto;top:50%;margin-top:-180px}}
 .cdtx{flex:1;min-width:0}
@@ -2447,15 +2454,68 @@ function addPlace(tid,d){
   savePlan();rerenderTrip();
   toast('<b>Добавили «'+c.nm+'» в День '+e.disp+'</b>'+(c.lat?'':'<i>без точки на карте — в ссылке не было координат</i>'),e.base,null);
 }
-/* что можно вытащить из ссылки Google Maps без всяких ключей: название и координаты */
+/* ── МОЖНО ЛИ ПЕРЕНЕСТИ МЕСТО В ЭТОТ ДЕНЬ ──
+   Меса-Верде нельзя посмотреть из Аспена: это 330 км. Считаем настоящее расстояние
+   от места до города этого дня, а для дня-переезда — до нарисованной дороги (место
+   «по пути» законно попадает в день переезда). */
+/* 90 км по прямой — это уже 2 часа по горным дорогам, дальше день не радиальный.
+   Проверено на краях: Пагоса (77 км от Дуранго) внутри, Меса-Верде (103 км от Урея) снаружи. */
+const NEAR_BASE_KM=90,NEAR_ROAD_KM=35;
+function kmBetween(a,b,c,d){const R=6371,r=x=>x*Math.PI/180;
+  const dLat=r(c-a),dLng=r(d-b);
+  const h=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(r(a))*Math.cos(r(c))*Math.sin(dLng/2)*Math.sin(dLng/2);
+  return 2*R*Math.asin(Math.min(1,Math.sqrt(h)));}
+function kmToPath(lat,lng,pts){
+  let m=1e9;
+  for(let i=0;i<pts.length;i++){
+    const d=kmBetween(lat,lng,pts[i][0],pts[i][1]);if(d<m)m=d;
+    if(i){const a=pts[i-1],b=pts[i];                       /* добираем середины отрезков */
+      for(let t=0.25;t<1;t+=0.25){const dd=kmBetween(lat,lng,a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t);if(dd<m)m=dd;}}
+  }
+  return m;}
+function dayDistance(p,e){
+  if(typeof p.lat!=='number'||typeof p.lng!=='number')return null;
+  const b=baseById(e.base),dBase=kmBetween(p.lat,p.lng,b.lat,b.lng);
+  const leg=LINES.filter(o=>o.type==='leg'&&o.days&&o.days.indexOf(e.tid)>=0)[0];
+  if(leg&&leg.pts&&leg.pts.length){const dRoad=kmToPath(p.lat,p.lng,leg.pts);
+    return dRoad<dBase?{km:dRoad,road:true}:{km:dBase,road:false};}
+  return {km:dBase,road:false};}
+function dayReachable(p,e){
+  const d=dayDistance(p,e);
+  if(!d)return e.base===p.base;      /* без координат судить не можем — только свой город */
+  return d.road?(d.km<=NEAR_ROAD_KM):(d.km<=NEAR_BASE_KM);}
+/* Что можно вытащить из ссылки Google Maps без всяких ключей.
+   Кнопка «Поделиться» в приложении даёт длинную ссылку вида ?q=Название,+адрес&ftid=…
+   — координат там нет, зато есть название и адрес. Координаты потом добираем геокодером. */
 function parseGmaps(url){
   const out={short:/maps\.app\.goo\.gl|goo\.gl\/maps/i.test(url)};
-  let m=url.match(/\/place\/([^\/@?]+)/);
-  if(m)out.nm=decodeURIComponent(m[1].replace(/\+/g,' ')).replace(/\s+/g,' ').trim();
+  const dec=s=>{try{return decodeURIComponent(s.replace(/\+/g,' ')).replace(/\s+/g,' ').trim();}catch(e){return s;}};
+  let m=url.match(/\/(?:place|search)\/([^\/@?]+)/);
+  if(m)out.nm=dec(m[1]);
   m=url.match(/!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/)||url.match(/@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/)
-    ||url.match(/[?&](?:q|query|ll)=(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/);
+    ||url.match(/[?&](?:q|query|ll|sll|daddr)=(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/);
   if(m){out.lat=+m[1];out.lng=+m[2];}
+  if(!out.lat||!out.nm){                       /* ?q=Название,+адрес — как в кнопке «Поделиться» */
+    const t=url.match(/[?&](?:q|query|daddr)=([^&]+)/);
+    if(t){const txt=dec(t[1]);
+      if(!/^-?\d+(\.\d+)?\s*,\s*-?\d+(\.\d+)?$/.test(txt)){
+        out.addr=txt;
+        if(!out.nm)out.nm=txt.split(',')[0].trim();
+      }}
+  }
   return out;
+}
+/* координаты по названию и адресу — бесплатно, без ключа, через OpenStreetMap */
+function geocode(q,cb){
+  let done=false;
+  const fin=r=>{if(done)return;done=true;cb(r);};
+  const to=setTimeout(()=>fin(null),8000);
+  try{
+    fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q='+encodeURIComponent(q),{headers:{Accept:'application/json'}})
+      .then(r=>r.json())
+      .then(a=>{clearTimeout(to);fin(a&&a.length?{lat:+a[0].lat,lng:+a[0].lon}:null);})
+      .catch(()=>{clearTimeout(to);fin(null);});
+  }catch(e){clearTimeout(to);fin(null);}
 }
 /* меняем ночи в городе → пересобираем расписание и всё, что от дней зависит.
    Минус — это «поездка короче»: система сама выбирает, какой день уходит, и говорит какой. */
@@ -2550,20 +2610,27 @@ function sheet(inner){
   el.innerHTML='<div class="dsov" data-dsclose="1"></div><div class="dspanel">'+inner+'</div>';
   el.classList.add('on');
 }
-function dayRow(e,attrs,note){
+function dayRow(e,attrs,note,cls){
   const n=dayPlaces(e).length;
-  return '<button class="dsrow"'+attrs+'><span class="cn">'+e.disp+'</span>'
+  return '<button class="dsrow'+(cls?' '+cls:'')+'"'+attrs+'><span class="cn">'+e.disp+'</span>'
     +'<span class="dst"><b>'+dayTitle(e)+'</b><span>'+dm(e.date)+' · '+shortName(baseById(e.base).name)+' · '+n+' '+plural(n,'место','места','мест')+'</span></span>'
     +(note?'<span class="dsfree">'+note+'</span>':'')+'</button>';
 }
-/* «Перенести место» — дни своего города сверху, остальные ниже */
+/* «Перенести место» — только дни, куда до этого места реально доехать.
+   Далёкие дни спрятаны за кнопкой: вдруг человек знает лучше. */
 function movePlaceSheet(id){
   const p=placeById(id);if(!p)return;
-  const mine=SCHED.filter(e=>e.base===p.base),other=SCHED.filter(e=>e.base!==p.base);
-  const row=e=>e.tid===p.d?dayRow(e,' disabled','сейчас здесь'):dayRow(e,' data-mvto="'+e.tid+'" data-mvid="'+id+'"','');
+  const near=[],far=[];
+  SCHED.forEach(e=>{(dayReachable(p,e)?near:far).push(e);});
+  const row=(e,isFar)=>{
+    if(e.tid===p.d)return dayRow(e,' disabled','сейчас здесь');
+    const d=dayDistance(p,e),note=isFar&&d?Math.round(d.km)+' км':'';
+    return dayRow(e,' data-mvto="'+e.tid+'" data-mvid="'+id+'"',note,isFar?'far':'');
+  };
   sheet('<div class="dsh"><b>Куда перенести?</b><span>'+p.nm+'</span></div>'
-    +mine.map(row).join('')
-    +(other.length?'<div class="dssep">Другие города</div>'+other.map(row).join(''):'')
+    +(near.length?near.map(e=>row(e,false)).join(''):'<div class="dshint" style="margin:0 4px 10px">Рядом подходящих дней нет.</div>')
+    +(far.length?'<button class="dsmore" data-farshow="1">Показать дальние дни · '+far.length+'</button>'
+      +'<div class="dsfar"><div class="dssep">Далеко от этого места</div>'+far.map(e=>row(e,true)).join('')+'</div>':'')
     +(p.d===stashTid(p.base)?'':'<button class="dscancel alt" data-mvto="'+stashTid(p.base)+'" data-mvid="'+id+'">Убрать в «Ещё в городе»</button>')
     +'<button class="dscancel" data-dsclose="1">Отмена</button>');
 }
@@ -2578,7 +2645,7 @@ function addPlaceSheet(tid){
     +'<div class="dssep">Ссылка из Google Maps</div>'
     +'<div class="dsform"><input id="gmUrl" placeholder="Вставь ссылку на место" autocomplete="off">'
       +'<button class="dsgo" data-gmadd="'+tid+'">Добавить по ссылке</button>'
-      +'<span class="dshint">Название и точку на карте возьмём из ссылки. Если ссылка короткая (maps.app.goo.gl) — открой её и скопируй адрес из строки браузера.</span></div>'
+      +'<span class="dshint">Годится ссылка прямо из кнопки «Поделиться». Название возьмём из неё, а точку на карте найдём по адресу.</span></div>'
     +'<div class="dssep">Вручную</div>'
     +'<div class="dsform"><input id="mnNm" placeholder="Название места" autocomplete="off">'
       +'<input id="mnWhy" placeholder="Зачем сюда (по желанию)" autocomplete="off">'
@@ -2714,16 +2781,21 @@ document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)r
   if(t.dataset.rmthis){removeDay(t.dataset.rmbase,tidOf(t.dataset.rmthis));}
   /* редактор дня: перенести / убрать в город / добавить место */
   if(t.dataset.mvopen){movePlaceSheet(t.dataset.mvopen);}
+  if(t.dataset.farshow){const el=document.querySelector('#daySheet .dsfar');if(el)el.classList.add('on');t.remove();}
   if(t.dataset.mvto){closeDaySheet();movePlace(t.dataset.mvid,tidOf(t.dataset.mvto));}
   if(t.dataset.addto){addPlaceSheet(tidOf(t.dataset.addto));}
   if(t.dataset.gmadd){
-    const inp=document.getElementById('gmUrl'),url=(inp&&inp.value||'').trim();
+    const inp=document.getElementById('gmUrl'),url=(inp&&inp.value||'').trim(),tid=tidOf(t.dataset.gmadd);
     if(!url){if(inp)inp.focus();return;}
     const g=parseGmaps(url);
     if(!g.nm&&!g.lat){alert(g.short
-      ? 'Это короткая ссылка. Открой её в браузере и скопируй адрес из строки — в нём есть название и координаты.'
+      ? 'Это короткая ссылка. Открой её в браузере — она развернётся в полную, и скопируй адрес из строки.'
       : 'Не получилось разобрать ссылку. Скопируй адрес страницы места из Google Maps.');return;}
-    closeDaySheet();addPlace(tidOf(t.dataset.gmadd),{nm:g.nm||'Место из Google Maps',q:g.nm||url,lat:g.lat,lng:g.lng,why:''});
+    if(g.lat){closeDaySheet();addPlace(tid,{nm:g.nm||'Место из Google Maps',q:g.addr||g.nm||url,lat:g.lat,lng:g.lng});return;}
+    /* координат в ссылке нет — ищем точку по названию и адресу */
+    t.textContent='Ищем на карте…';t.disabled=true;
+    geocode(g.addr||g.nm,r=>{closeDaySheet();
+      addPlace(tid,{nm:g.nm,q:g.addr||g.nm,lat:r&&r.lat,lng:r&&r.lng});});
   }
   if(t.dataset.mnadd){
     const nm=(document.getElementById('mnNm')||{}).value,why=(document.getElementById('mnWhy')||{}).value;
