@@ -853,6 +853,14 @@ a.rglyph:active{transform:translate(-50%,-50%) scale(.9)}
 .pstep{display:flex;align-items:center;gap:8px;flex:none}
 .pnum{min-width:40px;text-align:center}
 .pnum b{font:800 22px/1 "JetBrains Mono",ui-monospace,monospace;color:var(--ink)}
+.peoplebar .pl .plsub{display:block;font:600 11.5px/1.3 "Plus Jakarta Sans",sans-serif;letter-spacing:-.01em;color:var(--ink3);margin-top:2px}
+/* кнопка валюты: тот же рост, что и у степперов рядом — чтобы строки не «плясали» */
+.curbtn{display:flex;align-items:center;gap:7px;flex:none;height:38px;padding:0 14px;border:1px solid var(--cardline);
+  background:rgba(255,255,255,.9);border-radius:13px;-webkit-appearance:none;appearance:none;cursor:pointer}
+.curbtn b{font:800 18px/1 "JetBrains Mono",ui-monospace,monospace;color:var(--ink)!important}
+.curbtn span{font:800 12.5px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:.04em;color:var(--ink3)!important}
+.dskind .cursym{font:800 15px/1 "JetBrains Mono",ui-monospace,monospace;color:inherit!important}
+.dskind.wait{opacity:.55}
 /* ── КНОПКИ БРОНИ (партнёрские) ── */
 .hbook{display:flex;align-items:center;gap:8px;width:100%;margin-top:2px;padding:11px 14px;border-radius:13px;text-decoration:none;background:linear-gradient(150deg,#1c9166,#0a6047);color:#fff;font:800 12px/1.2 "Plus Jakarta Sans",sans-serif;letter-spacing:-.02em;box-shadow:var(--sh1),inset 0 1px 0 rgba(255,255,255,.25)}
 .hbook .i{flex:none}
@@ -916,6 +924,8 @@ body{background:linear-gradient(168deg,#eef1f8,#e9edf6 60%,#e6eaf4)!important}
 .cstay .cph.b{display:grid;place-items:center;background:linear-gradient(150deg,#f3effd,#ddd1f6);color:#5b3fc4}
 .cstay .cph.b .i{width:26px;height:26px}
 .myst .cmeta b{color:#3b2a8f}
+.myst .cmeta b.nopt{color:#b03a2b}
+.stbtn.fix{color:#5b3fc4;border-color:rgba(91,63,196,.35);background:#faf8ff}
 .mystact{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:auto;padding-top:10px}
 .mystact .cbookl{padding-top:0}
 .stbtn{border:1.5px solid rgba(20,32,27,.12);background:#fff;color:#6d7c74;border-radius:9px;padding:7px 10px;
@@ -1320,6 +1330,7 @@ section h2.big{margin-bottom:4px}
   <h2 class="big">Как добираешься</h2>
   <div class="startcard"><span class="scmed" id="scMedIcon"></span><span class="scin"><span class="sclbl">Старт поездки</span><span class="scsub">меняешь дату — все дни и брони пересчитываются</span></span><input type="date" id="startDate" class="scdate"></div>
   <div class="peoplebar"><span class="pl">Сколько человек едет</span><span class="pstep"><button class="stepbtn" id="pMinus" aria-label="меньше человек">−</button><span class="pnum"><b id="pNum">2</b></span><button class="stepbtn" id="pPlus" aria-label="больше человек">+</button></span></div>
+  <div class="peoplebar"><span class="pl">Валюта поездки<span class="plsub">все цены покажем в ней</span></span><button class="curbtn" id="curBtn"><b>$</b><span>USD</span></button></div>
 </div></section>
 
 <div class="citystep" id="cityStep"></div>
@@ -2031,9 +2042,10 @@ function buildCities(){
     const stayCard=mine.map(h=>'<div class="cstay myst"><span class="cph b">'+ic('bed','i-sm')+'</span>'
         +'<span class="cin"><h3>'+h.nm+'</h3>'
         +'<span class="cmeta">'+shortName(b.name)+' · '+dm(ci)+'–'+dm(co)+' · '+b.nights+' '+nights(b.nights)+' · на '+guests
-        +(h.rate?'<br><b>$'+h.rate+' за ночь · $'+Math.round(h.rate*b.nights)+' всего</b>':'')
-        +(typeof h.lat==='number'?'':'<br>без точки на карте')+'</span>'
+        +(h.rate?'<br><b>'+curSym()+h.rate+' за ночь · '+curSym()+Math.round(h.rate*b.nights)+' всего</b>':'')
+        +(typeof h.lat==='number'?'':'<br><b class="nopt">Точки на карте нет — не нашли адрес</b>')+'</span>'
         +'<span class="mystact"><a class="cbookl" href="'+gurl(h.q||h.nm)+'" target="_blank" rel="noopener">Открыть в Google Maps →</a>'
+          +(typeof h.lat==='number'?'':'<button class="stbtn fix" data-fixopen="'+h.id+'">Поставить точку на карте</button>')
           +'<button class="stbtn" data-stayedit="'+h.id+'" data-staybase="'+b.id+'">Изменить</button>'
           +'<button class="stbtn del" data-delpl="'+h.id+'">Убрать</button></span></span></div>').join('');
     const stay='<div class="cnode"><span class="cdot">'+ic('bed','i-sm')+'</span>'
@@ -2609,8 +2621,8 @@ function addStaySheet(bid,id){
       +'<span>'+shortName(b.name)+' · '+dm(ci)+'–'+dm(co)+' · '+b.nights+' '+nights(b.nights)+' · на '+PEOPLE+' '+plural(PEOPLE,'гостя','гостей','гостей')+'</span></div>'
     +'<div class="dsform"><input id="stNm" placeholder="Название или ссылка на жильё" autocomplete="off" value="'+esc(p?(p.q||p.nm):'')+'">'
       +'<div class="dstwo">'
-        +'<label><span>Цена за ночь</span><input id="stRate" placeholder="$" inputmode="decimal" autocomplete="off" value="'+esc(rate)+'"></label>'
-        +'<label><span>Всего за '+b.nights+' '+nights(b.nights)+'</span><input id="stTot" placeholder="$" inputmode="decimal" autocomplete="off" value="'+esc(rate?Math.round(rate*b.nights):'')+'"></label>'
+        +'<label><span>Цена за ночь</span><input id="stRate" placeholder="'+curSym()+'" inputmode="decimal" autocomplete="off" value="'+esc(rate)+'"></label>'
+        +'<label><span>Всего за '+b.nights+' '+nights(b.nights)+'</span><input id="stTot" placeholder="'+curSym()+'" inputmode="decimal" autocomplete="off" value="'+esc(rate?Math.round(rate*b.nights):'')+'"></label>'
       +'</div>'
       +'<button class="dsgo" data-staysave="'+bid+'"'+(id?' data-stayid="'+id+'"':'')+'>Сохранить</button>'
       +'<span class="dshint">Заезд, выезд и число гостей уже известны — их не спрашиваем. Заполни любое из двух полей, второе посчитается. Цена уйдёт в бюджет, в строку жилья этого города.</span></div>'
@@ -2639,9 +2651,16 @@ function saveStay(bid,id,val,rate){
     savePlan();rerenderTrip();
     if(map&&p.lat&&!markers[p.id])makeMarker(p);
     toast('<b>'+(id?'Изменили жильё':'Записали жильё')+': «'+nm+'»</b>'
-      +(rate?'<i>$'+rate+' за ночь — цена ушла в бюджет</i>':(p.lat?'':'<i>без точки на карте — вставь ссылку, чтобы поставить метку</i>')),bid,null);
+      +(typeof p.lat!=='number'
+        ? '<i>адрес не нашли — нажми «Поставить точку на карте» в карточке</i>'
+        : (rate?'<i>'+curSym()+rate+' за ночь — цена ушла в бюджет</i>':'<i>метка на карте есть</i>')),bid,null);
   };
   if(/^https?:\/\//i.test(nm0)){
+    /* ссылка не из Google (Airbnb, сайт отеля) — точку по ней не найти, честно говорим об этом */
+    if(!/google\.[a-z.]+\/maps|maps\.app\.goo\.gl|goo\.gl\/maps|maps\.google/i.test(nm0)){
+      let host='';try{host=new URL(nm0).hostname.replace(/^www\./,'');}catch(e){}
+      return done(host?('Жильё · '+host):'Жильё',nm0);
+    }
     const g=parseGmaps(nm0);
     if(g.lat)return done(g.nm||'Жильё',g.addr||g.nm,g.lat,g.lng);
     if(g.short&&!g.nm)return expandShort(nm0,res=>{const g2=res?parseGmaps(res.url||''):null;
@@ -2839,8 +2858,9 @@ function toast(html,bid,prev){
   let el=document.getElementById('toast');
   if(!el){el=document.createElement('div');el.id='toast';document.body.appendChild(el);}
   /* два понятных слова вместо крестика: «Отменить» — вернуть как было, «Хорошо» — согласна */
+  /* без сохранённого состояния отменять нечего — тогда плашка просто сообщает */
   el.innerHTML='<span class="ttx">'+html+'</span>'
-    +'<button class="tb v" data-undo="1">Отменить</button>'
+    +(prev?'<button class="tb v" data-undo="1">Отменить</button>':'')
     +'<button class="tb ok" data-tclose="1">Хорошо</button>';
   el.classList.add('on');
 }
@@ -2992,10 +3012,12 @@ function rerenderTrip(){
 }
 function loadPlan(){try{const s=JSON.parse(localStorage.getItem(PKEY));if(s){if(s.start)startIso=s.start;if(typeof s.people==='number'&&s.people>=1)PEOPLE=s.people;if(Array.isArray(s.nights))BASES.forEach((b,i)=>{if(typeof s.nights[i]==='number'&&s.nights[i]>=1)b.nights=s.nights[i];});if(s.hidden&&typeof s.hidden==='object')HIDDEN=s.hidden;
   if(s.moved&&typeof s.moved==='object')MOVED=s.moved;
+  if(s.cur&&CURS.some(x=>x.c===s.cur))CUR=s.cur;
+  if(typeof s.crate==='number'&&s.crate>0)CRATE=s.crate;
   if(Array.isArray(s.custom))CUSTOM=s.custom;}}catch(e){}
-  mergeCustom();applyMoves();}
+  applyCurDefaults();mergeCustom();applyMoves();}
 function savePlan(){try{localStorage.setItem(PKEY,JSON.stringify({start:startIso,people:PEOPLE,
-  nights:BASES.map(b=>b.nights),hidden:HIDDEN,moved:MOVED,custom:CUSTOM}));}catch(e){}}
+  nights:BASES.map(b=>b.nights),hidden:HIDDEN,moved:MOVED,custom:CUSTOM,cur:CUR,crate:CRATE}));}catch(e){}}
 function nightsBefore(baseId){let s=0;for(const b of BASES){if(b.id===baseId)break;s+=b.nights;}return s;}
 function dayDateFor(tid){const e=SCHED_BY[tid];return e?e.date:addDays(startIso,0);}
 function totalNights(){return BASES.reduce((s,b)=>s+b.nights,0);}
@@ -3017,7 +3039,7 @@ function recomputeDates(){
   if(pl)pl.textContent=P.filter(p=>p.cat!=='food').length;
   const mn=document.getElementById('tMoney');
   if(mn){let sum=0;document.querySelectorAll('#budgetTbl tbody input.money').forEach(i=>sum+=parseFloat(i.value)||0);
-    if(sum>0)mn.textContent='$'+Math.round(sum/2).toLocaleString('en-US').replace(/,/g,' ');}
+    if(sum>0)mn.textContent=curSym()+Math.round(sum/2).toLocaleString('en-US').replace(/,/g,' ');}
   const nn=document.getElementById('tNights');if(nn)nn.textContent=tn+' '+nights(tn);
   const ns=document.getElementById('tNightsSub');
   if(ns)ns.textContent=td+' '+plural(td,'день','дня','дней')+' · '+BASES.length+' '+plural(BASES.length,'база','базы','баз');
@@ -3055,8 +3077,8 @@ function renderStays(){
           +'<button class="stepbtn" data-nd="'+i+'" data-dir="1" aria-label="больше ночей">+</button></span>'
       +'</span>'
       +'<span class="hmoney">'
-        +'<span class="hf"><label>за ночь</label><span class="hpill"><input class="hrate" data-hi="'+i+'" inputmode="decimal" value="'+(rate||'')+'" placeholder="0"><span class="hu">$</span></span></span>'
-        +'<span class="hf"><label>всего</label><span class="hpill"><input class="htot" data-hi="'+i+'" inputmode="decimal" value="'+(tot||'')+'" placeholder="0"><span class="hu">$</span></span></span>'
+        +'<span class="hf"><label>за ночь</label><span class="hpill"><input class="hrate" data-hi="'+i+'" inputmode="decimal" value="'+(rate||'')+'" placeholder="0"><span class="hu">'+curSym()+'</span></span></span>'
+        +'<span class="hf"><label>всего</label><span class="hpill"><input class="htot" data-hi="'+i+'" inputmode="decimal" value="'+(tot||'')+'" placeholder="0"><span class="hu">'+curSym()+'</span></span></span>'
       +'</span>'
       +'<a class="hbook" href="'+bookHotel(b.q,ci,co,PEOPLE)+'" target="_blank" rel="noopener" title="подобрать жильё на Booking">'+ic('bed','i-sm')+'<span>Забронировать на Booking · '+dm(ci)+'–'+dm(co)+' · '+PEOPLE+' гост.</span></a>'
       +'</div>';
@@ -3121,6 +3143,9 @@ document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)r
   if(t.dataset.mvto){closeDaySheet();movePlace(t.dataset.mvid,tidOf(t.dataset.mvto));}
   if(t.dataset.delpl){closeDaySheet();deletePlace(t.dataset.delpl);}
   if(t.dataset.kind){const box=t.parentNode;if(box)box.querySelectorAll('.dskind').forEach(b=>b.classList.toggle('on',b===t));}
+  if(t.id==='curBtn'){curSheet();}
+  if(t.dataset.cur){setCur(t.dataset.cur);}
+  if(t.dataset.curforce){forceCur(t.dataset.curforce);}
   if(t.dataset.stayadd){addStaySheet(t.dataset.stayadd);}
   if(t.dataset.stayedit){addStaySheet(t.dataset.staybase,t.dataset.stayedit);}
   if(t.dataset.staysave){
@@ -3205,7 +3230,80 @@ function wireButtons(){
 
 /* ================= БЮДЖЕТ ================= */
 const BKEY='co-trip-2026-budget';const DEF={};
-function money(n){return '$'+Math.round(n).toLocaleString('en-US').replace(/,/g,' ');}
+/* ================= ВАЛЮТА ПОЕЗДКИ =================
+   Символ подставляется всюду, где раньше был жёстко зашит доллар. При смене валюты
+   введённые суммы пересчитываются по курсу — иначе цифры молча поменяли бы смысл. */
+const CURS=[{c:'USD',s:'$',l:'Доллар'},{c:'EUR',s:'€',l:'Евро'},{c:'RUB',s:'₽',l:'Рубль'},
+ {c:'GBP',s:'£',l:'Фунт'},{c:'CAD',s:'C$',l:'Канадский'},{c:'MXN',s:'MX$',l:'Песо'},
+ {c:'KZT',s:'₸',l:'Тенге'},{c:'TRY',s:'₺',l:'Лира'},{c:'THB',s:'฿',l:'Бат'}];
+let CUR='USD';
+function curSym(c){const x=CURS.find(y=>y.c===(c||CUR));return x?x.s:'$';}
+/* CRATE — сколько единиц валюты поездки в одном долларе. Цены-заготовки в данных
+   записаны в долларах, поэтому храним снимок BUD0 и пересчитываем их из него: так
+   переключение туда-обратно не копит ошибку округления. */
+let CRATE=1;
+const BUD0=BUDGET.map(g=>g.items.map(it=>({v:it.v,rate:it.rate})));
+function applyCurDefaults(){
+  BUDGET.forEach((g,gi)=>g.items.forEach((it,ii)=>{
+    const o=BUD0[gi][ii];
+    if(o.v!==undefined)it.v=Math.round(o.v*CRATE);
+    if(o.rate!==undefined)it.rate=Math.round(o.rate*CRATE);
+  }));
+}
+/* курс тянем из бесплатного open.er-api.com — ключ не нужен, CORS открыт */
+function fetchRate(code,cb){
+  if(code==='USD')return cb(1);
+  fetch('https://open.er-api.com/v6/latest/USD').then(r=>r.json()).then(j=>{
+    const r=j&&j.rates&&j.rates[code];cb(typeof r==='number'&&r>0?r:null);
+  }).catch(()=>cb(null));
+}
+/* Пересчёт всех уже введённых сумм. Без него смена валюты молча меняла бы смысл
+   цифр: было 90 долларов за машину — стало бы 90 рублей. */
+function convertMoney(k){
+  if(!(k>0)||k===1)return;
+  let s={};try{s=JSON.parse(localStorage.getItem(BKEY))||{};}catch(e){}
+  Object.keys(s).forEach(key=>{const v=parseFloat(s[key]);if(!isNaN(v))s[key]=Math.round(v*k);});
+  try{localStorage.setItem(BKEY,JSON.stringify(s));}catch(e){}
+  BASES.forEach((b,i)=>{if(HRATE[i])HRATE[i]=Math.round(HRATE[i]*k);});
+  const seen=new Set();
+  [].concat(CUSTOM,P).forEach(p=>{if(p&&p.rate&&!seen.has(p)){seen.add(p);p.rate=Math.round(p.rate*k);}});
+}
+function setCur(code){
+  if(code===CUR)return closeDaySheet();
+  const cur=CURS.find(x=>x.c===code);if(!cur)return;
+  const btn=document.querySelector('#daySheet .dskind[data-cur="'+code+'"]');
+  if(btn)btn.classList.add('wait');
+  fetchRate(code,r=>{
+    if(r===null){curFailSheet(code);return;}
+    convertMoney(r/CRATE);
+    CUR=code;CRATE=r;applyCurDefaults();
+    savePlan();closeDaySheet();
+    buildBudget();rerenderTrip();syncCurBtn();
+    toast('Валюта поездки — '+cur.l+' ('+cur.s+'). Все суммы пересчитаны по курсу.',null,null);
+  });
+}
+/* курс не пришёл — не молчим и не подставляем выдуманный: спрашиваем */
+function curFailSheet(code){
+  const cur=CURS.find(x=>x.c===code);
+  sheet('<div class="dsh"><b>Курс не загрузился</b><span>Нет связи со справочником курсов. Можно сменить символ на '+cur.s+', но суммы останутся прежними числами — их придётся поправить руками.</span></div>'
+    +'<div class="dsform"><button class="dsgo" data-curforce="'+code+'">Сменить только символ</button></div>'
+    +'<button class="dscancel" data-dsclose="1">Отмена</button>');
+}
+function forceCur(code){
+  const cur=CURS.find(x=>x.c===code);if(!cur)return;
+  CUR=code;/* CRATE не трогаем: заготовки остаются в прежнем масштабе */
+  savePlan();closeDaySheet();
+  buildBudget();rerenderTrip();syncCurBtn();
+  toast('Символ сменили на '+cur.s+'. Суммы не пересчитаны — проверь их.',null,null);
+}
+function curSheet(){
+  sheet('<div class="dsh"><b>Валюта поездки</b><span>Все цены в бюджете и в жилье покажем в ней. Уже введённые суммы пересчитаем по курсу.</span></div>'
+    +'<div class="dsform"><div class="dskinds">'+CURS.map(x=>'<button class="dskind'+(x.c===CUR?' on':'')+'" data-cur="'+x.c+'">'
+      +'<b class="cursym">'+x.s+'</b><span>'+x.l+'</span></button>').join('')+'</div></div>'
+    +'<button class="dscancel" data-dsclose="1">Отмена</button>');
+}
+function syncCurBtn(){const b=document.getElementById('curBtn');if(b)b.innerHTML='<b>'+curSym()+'</b><span>'+CUR+'</span>';}
+function money(n){return curSym()+Math.round(n).toLocaleString('en-US').replace(/,/g,' ');}
 /* строки жилья: одна на базу, ночи берутся из планировщика */
 /* жильё переехало в раздел «Ночёвки» — здесь ничего не строим */
 function buildBudgetStay(){}
@@ -3226,7 +3324,7 @@ function buildBudget(){
       /* строка: слева название+описание, справа поле цены (за ед.) и поле «всего» — оба редактируемые */
       if(per==='day'||per==='person'||per==='personday'){
         const rate=saved[it.k+'rate']!==undefined?saved[it.k+'rate']:(it.rate!==undefined?it.rate:it.v);
-        const unit=per==='day'?'$/дн':'$/чел';
+        const unit=per==='day'?(curSym()+'/дн'):(curSym()+'/чел');
         const desc=per==='day'?('за день × <b data-days>'+days+'</b> дн.')
              :per==='person'?('на человека × <b data-ppl>'+PEOPLE+'</b> чел.')
              :('на человека × <b data-ppl>'+PEOPLE+'</b> чел. × <b data-days>'+days+'</b> дн.');
@@ -3234,12 +3332,12 @@ function buildBudget(){
         return '<div class="brow3" data-per="'+per+'">'
           +'<div class="b3l"><b class="b3nm">'+it.nm+'</b><span class="b3desc">'+desc+'</span></div>'
           +'<span class="b3box b3rate"><input class="money perunit" data-k="'+it.k+'rate" inputmode="decimal" value="'+rate+'"><span class="b3u">'+unit+'</span></span>'
-          +'<span class="b3box b3total"><input class="btotal" data-k="'+it.k+'" inputmode="decimal" value="'+totVal+'"><span class="b3u">$</span></span></div>';
+          +'<span class="b3box b3total"><input class="btotal" data-k="'+it.k+'" inputmode="decimal" value="'+totVal+'"><span class="b3u">'+curSym()+'</span></span></div>';
       }
       const desc=it.sub+(it.ok?' <span class="cf">'+ic('check','i-sm')+'</span>':(it.est?' <span class="est">~</span>':''));
       return '<div class="brow3">'
         +'<div class="b3l"><b class="b3nm">'+it.nm+'</b><span class="b3desc">'+desc+'</span></div>'
-        +'<span class="b3box b3total"><input class="money" data-k="'+it.k+'" inputmode="decimal" value="'+val+'"><span class="b3u">$</span></span></div>';
+        +'<span class="b3box b3total"><input class="money" data-k="'+it.k+'" inputmode="decimal" value="'+val+'"><span class="b3u">'+curSym()+'</span></span></div>';
     }).join('');
     return '<div class="bgroup">'
       +'<div class="bghead"><span class="bgmed" style="background:linear-gradient(150deg,'+gr.c+','+gr.c2+')">'+ic(gr.ic)+'</span>'
@@ -3314,7 +3412,7 @@ function sumBudget(){
   document.getElementById('sumAll').textContent=money(sum);
   document.getElementById('sumPer').textContent=money(Math.round(sum/PEOPLE));
   const sd=document.getElementById('sumDay');if(sd)sd.textContent=money(Math.round(sum/days));
-  const mn=document.getElementById('tMoney');if(mn&&sum>0)mn.textContent='$'+Math.round(sum/PEOPLE).toLocaleString('en-US').replace(/,/g,' ');
+  const mn=document.getElementById('tMoney');if(mn&&sum>0)mn.textContent=curSym()+Math.round(sum/PEOPLE).toLocaleString('en-US').replace(/,/g,' ');
   if(typeof requestAnimationFrame==='function')requestAnimationFrame(fitSums);else fitSums();
 }
 /* подгоняет размер шрифта итоговых сумм под самую крупную из трёх — ЕДИНЫЙ размер для всех, чтобы не скакал */
@@ -3333,6 +3431,7 @@ function wireBudget(){
   buildBudget();
   /* сколько человек едет */
   const pn=document.getElementById('pNum');if(pn)pn.textContent=PEOPLE;
+  syncCurBtn();
   const setPeople=(d)=>{PEOPLE=Math.max(1,Math.min(60,PEOPLE+d));if(pn)pn.textContent=PEOPLE;savePlan();if(typeof renderStays==='function')renderStays();calcBudget();buildCities();};
   const pm=document.getElementById('pMinus'),pp=document.getElementById('pPlus');
   if(pm)pm.addEventListener('click',()=>setPeople(-1));
@@ -3441,6 +3540,7 @@ function reinit(){try{
   try{const s=JSON.parse(localStorage.getItem(BKEY))||{};BASES.forEach((b,i)=>HRATE[i]=parseFloat(s['h'+(i+1)+'rate'])||0);}catch(e){}
   const sd=document.getElementById('startDate');if(sd)sd.value=startIso;
   const pn=document.getElementById('pNum');if(pn)pn.textContent=PEOPLE;
+  syncCurBtn();
   buildSchedule();
   buildRoute();buildDays();buildCities();buildFood();buildBases();buildPlanner();buildBudget();buildFilters();buildElev();recomputeDates();syncChecks();applyFilter();
 }catch(e){}}
