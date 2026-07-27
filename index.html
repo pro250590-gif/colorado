@@ -132,6 +132,33 @@ body.athome{padding-right:0!important}
   .accwho b{font-size:14px}
   .accwho span{font-size:11.5px}
 }
+/* ── ПАНЕЛЬ ЕДИНИЦ (валюта · язык · градусы · расстояние · поделиться) ── */
+.units{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:14px 0 0}
+.ub{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:38px;min-width:38px;padding:0 12px;
+  border-radius:19px;background:#fff;border:1.5px solid #e6e3ee;cursor:pointer;-webkit-appearance:none;appearance:none;
+  font:800 13px/1 "Plus Jakarta Sans",sans-serif;color:#2b2a38!important;box-shadow:0 3px 9px -6px rgba(20,32,27,.5)}
+.ub:active{transform:scale(.96)}
+.ub.sym{font:800 16px/1 "JetBrains Mono",ui-monospace,monospace;padding:0;width:38px}
+.ub.flag{padding:0;width:38px}
+.ub.flag svg{width:24px;height:24px;border-radius:50%;display:block}
+.ub.share{background:linear-gradient(150deg,#7a5cf0,#5b3fc4);border-color:transparent;color:#fff!important;font-size:12px}
+.ub.share .i{width:15px;height:15px}
+/* выбор языка в листе */
+.langs{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.langb{display:flex;align-items:center;gap:9px;height:42px;padding:0 11px;border-radius:12px;cursor:pointer;
+  border:1.5px solid rgba(20,32,27,.1);background:#fff;font:700 12px/1 "Inter",sans-serif;color:var(--ink2)!important;
+  -webkit-appearance:none;appearance:none}
+.langb svg{width:20px;height:20px;border-radius:50%;flex:none}
+.langb.on{border-color:transparent;background:linear-gradient(150deg,#7a5cf0,#5b3fc4);color:#fff!important}
+.langb i{margin-left:auto;font-style:normal;font:700 8.5px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:.06em;
+  color:#a4a9bb;background:#f4f5fb;border-radius:20px;padding:4px 6px}
+@media(min-width:1000px){
+  .ub{height:44px;min-width:44px;font-size:14px}
+  .ub.sym{width:44px;font-size:18px}
+  .ub.flag{width:44px}
+  .ub.flag svg{width:28px;height:28px}
+  .ub.share{font-size:13px}
+}
 /* ── МЕНЮ АККАУНТА: выпадает из-под аватара ── */
 #accMenu{position:fixed;inset:0;z-index:4250;opacity:0;visibility:hidden;transition:opacity .15s,visibility .15s}
 #accMenu.on{opacity:1;visibility:visible}
@@ -1461,6 +1488,7 @@ section h2.big{margin-bottom:4px}
   <div class="wrap">
     <div class="kicker" id="heroDate">7–16 августа 2026</div>
     <h1>Дуранго → Урей<em>Аспен → Денвер</em></h1>
+    <div class="units" id="units"></div>
     <p class="sub">Десять дней поперёк Скалистых гор: паровоз на Силвертон, скальные города Меса-Верде, Million Dollar Highway без отбойников, Чёрный каньон и перевал Independence на 3 687 метрах.</p>
     <div class="bento">
       <div class="tile wide tile-photo">
@@ -1666,6 +1694,7 @@ const ICONS={
  route:'<circle cx="6" cy="19" r="2.5"/><circle cx="18" cy="5" r="2.5"/><path d="M15.5 5H10a4 4 0 0 0 0 8h4a4 4 0 0 1 0 8H8.5"/>',
  camera:'<path d="M4 8h3l1.5-2.5h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z"/><circle cx="12" cy="13.5" r="3.4"/>',
  info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.8h.01"/>',
+ share:'<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5 15.4 17M15.4 7 8.6 10.5"/>',
  user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/>',
  doc:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5"/>',
  exit:'<path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/>',
@@ -2189,8 +2218,8 @@ function buildCities(){
           +(seg==='flight'
             ? '<a class="cbook" href="'+skyscanner(AIRPORT[pv.id]||'',AIRPORT[b.id]||'',fmtISO(ci))+'" target="_blank" rel="noopener">'+ic('plane','i-sm')+' Подобрать рейсы</a>'
             : '<div class="ctransf">'+(sum
-                ? ('<b>'+sum.km+' км</b><span>'+(sum.h?('~'+sum.h+' ч чистого хода'):'на машине')+'</span><span>через '+via.map(x=>shortName(x.name)).join(', ')+'</span>')
-                : (TRANSFER[b.id]?('<b>'+TRANSFER[b.id].km+' км</b><span>'+TRANSFER[b.id].clean+' чистого хода</span><span>'+TRANSFER[b.id].stops+' с остановками</span>'):'на машине'))+'</div>')
+                ? ('<b>'+fmtKm(sum.km)+'</b><span>'+(sum.h?('~'+sum.h+' ч чистого хода'):'на машине')+'</span><span>через '+via.map(x=>shortName(x.name)).join(', ')+'</span>')
+                : (TRANSFER[b.id]?('<b>'+fmtKm(TRANSFER[b.id].km)+'</b><span>'+TRANSFER[b.id].clean+' чистого хода</span><span>'+TRANSFER[b.id].stops+' с остановками</span>'):'на машине'))+'</div>')
           +'</div></div>';
     }
     /* аренда машины — берётся в первом городе, едет всю поездку до последнего */
@@ -2251,17 +2280,17 @@ function buildCities(){
         +'<span class="cdtx"><span class="cdm"><b>День '+e.disp+'</b> · '+dm(e.date)+' · '+n+' '+plural(n,'активность','активности','активностей')+'</span><b>'+dayTitle(e)+'</b></span>'
         +'<span class="cgo">'+ic('chevron','i-sm')+'</span></summary>'
         +'<div class="cdaybody">'
-        +(d&&d.leg?'<div class="cleg"><b>'+d.pill+'</b> '+d.leg+'</div>':'')
+        +(d&&d.leg?'<div class="cleg"><b>'+d.pill+'</b> '+convDist(d.leg)+'</div>':'')
         +'<ul class="cplaces">'+list.map(p=>{const emo=p.star?'<span class="cstar">'+ic('star','i-sm')+'</span>':'';const on=picked.has(p.id);
           return '<li class="'+(on?'':'off')+'" data-pl="'+p.id+'"><div class="cpl-row"><div class="cpl-main">'
             +'<span class="cpnm">'+emo+'<a href="'+gurl(p.q)+'" target="_blank" rel="noopener">'+p.nm+'</a></span></div>'
             +'<span class="cpact">'
             +'<span class="cpsw'+(on?' on':'')+'" data-pl="'+p.id+'" role="switch" aria-checked="'+on+'" aria-label="показывать на карте" tabindex="0"><i></i></span>'
             +'<button class="cpmv" data-mvopen="'+p.id+'" aria-label="перенести или убрать" title="перенести или убрать">⋯</button>'
-            +'</span></div>'+metaStrip(p)+(p.why?'<span class="cwhy">'+p.why+'</span>':'')+'</li>';}).join('')
+            +'</span></div>'+metaStrip(p)+(p.why?'<span class="cwhy">'+convDist(p.why)+'</span>':'')+'</li>';}).join('')
           +(list.length?'':'<li class="cfree">Свободный день — планы пока не заданы.</li>')+'</ul>'
         +'<button class="cadd" data-addto="'+e.tid+'">'+ic('plus','i-sm')+' Добавить место в этот день</button>'
-        +(d&&d.note?'<div class="cnote">'+d.note+'</div>':'')
+        +(d&&d.note?'<div class="cnote">'+convDist(d.note)+'</div>':'')
         +(e.pin?'':'<button class="crm" data-rmthis="'+e.tid+'" data-rmbase="'+b.id+'">'+ic('close','i-sm')+' Убрать этот день</button>')
         +'</div></details>';}).join('')+'</div>';
     /* сколько ночей в городе — кнопки прямо здесь, над днями */
@@ -2270,6 +2299,7 @@ function buildCities(){
       +'<span class="hn"><b>'+b.nights+'</b> '+nights(b.nights)+'</span>'
       +'<button class="stepbtn" data-nd="'+i+'" data-dir="1" aria-label="больше ночей">+</button></span></div>';
     /* отложенные места города — ничего не теряется */
+    const w=weatherOf(b.id,ci,co);   /* сколько было в эти дни год назад */
     const sp=stashPlaces(b.id);
     /* «в городе», а не «в Урее» — падежи не выведешь для произвольного названия */
     const more=sp.length?('<div class="cnode"><span class="cdot">'+ic('layers','i-sm')+'</span>'
@@ -2281,12 +2311,13 @@ function buildCities(){
       +'<div class="cmorebody"><ul class="cplaces">'+sp.map(p=>'<li data-pl="'+p.id+'"><div class="cpl-row"><div class="cpl-main">'
         +'<span class="cpnm"><a href="'+gurl(p.q)+'" target="_blank" rel="noopener">'+p.nm+'</a></span></div>'
         +'<button class="cpup" data-mvopen="'+p.id+'">'+ic('plus','i-sm')+' в день</button></div>'
-        +metaStrip(p)+(p.why?'<span class="cwhy">'+p.why+'</span>':'')+'</li>').join('')
+        +metaStrip(p)+(p.why?'<span class="cwhy">'+convDist(p.why)+'</span>':'')+'</li>').join('')
       +'</ul><div class="cmoren">Тап «в день» — место встанет в выбранный день. Вернёшь ночь — вернётся и убранный день.</div></div></details></div>'):'';
 
     return '<section class="city" id="city-'+b.id+'"><div class="wrap">'
-      +'<div class="chead"><span class="ckick">База '+(i+1)+' из '+BASES.length+' · '+dm(ci)+'–'+dm(co)+'</span>'
-      +'<h2>'+shortName(b.name)+'</h2><p>'+b.desc+'</p>'+nb+'</div>'
+      +'<div class="chead"><span class="ckick">База '+(i+1)+' из '+BASES.length+' · '+dm(ci)+'–'+dm(co)
+        +(w?(' · днём '+fmtTemp(w.d)+', ночью '+fmtTemp(w.n)):'')+'</span>'
+      +'<h2>'+shortName(b.name)+'</h2><p>'+convDist(b.desc)+'</p>'+nb+'</div>'
       +'<div class="ctl">'+arrival+carHire+stay+route+more+'</div></div></section>';
   }).join('');
 
@@ -2462,7 +2493,7 @@ function buildDays(){
       +'<span class="dhead-txt"><h3>'+d.title+'</h3><span class="dsub"><span class="ddate" data-daydate="'+e.tid+'">'+fmtDate(e.date)+'</span><span class="dalt">'+mrs(ALT[e.tid])+'</span></span></span>'
       +'<span class="dcount">'+list.length+' '+plural(list.length,'точка','точки','точек')+'</span><span class="chev"><svg class="i i-sm" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9.5 18 6-6-6-6"/></svg></span></summary>'
       +'<div class="day-body">'
-      +'<div class="leg"><span class="pill">'+d.pill+'</span> <b>'+d.leg+'</b><a class="dirlink" href="#" data-dir="'+e.tid+'" target="_blank" rel="noopener">Маршрут в Google Maps →</a></div>'
+      +'<div class="leg"><span class="pill">'+d.pill+'</span> <b>'+convDist(d.leg)+'</b><a class="dirlink" href="#" data-dir="'+e.tid+'" target="_blank" rel="noopener">Маршрут в Google Maps →</a></div>'
       +'<div class="daytools"><button class="tiny" data-dayon="'+e.tid+'">Отметить день</button><button class="tiny" data-dayoff="'+e.tid+'">Снять день</button></div>'
       +'<ul class="stops">'+list.map(p=>{const emo=p.star?'<span class="cemo star">'+ic('star','i-sm')+'</span>':'';
         return '<li data-id="'+p.id+'" data-cat="'+p.cat+'" data-day="'+p.d+'" data-base="'+p.base+'">'
@@ -2472,8 +2503,8 @@ function buildDays(){
         +'<input type="checkbox" class="tick" data-tick="'+p.id+'" aria-label="показать на карте"></span>'
         +'<span class="sinfo"><span class="snm">'+emo+'<a href="'+gurl(p.q)+'" target="_blank" rel="noopener">'+p.nm+'</a>'+(p.tag?'<span class="tag '+p.tag[1]+'">'+p.tag[0]+'</span>':'')+'</span>'
         +metaStrip(p)
-        +'<span class="why">'+p.why+'</span></span></li>';}).join('')+'</ul>'
-      +(d.note?'<div class="dnote">'+d.note+'</div>':'')+'</div></details>';
+        +'<span class="why">'+convDist(p.why)+'</span></span></li>';}).join('')+'</ul>'
+      +(d.note?'<div class="dnote">'+convDist(d.note)+'</div>':'')+'</div></details>';
   });
   host.innerHTML=out;
 }
@@ -2486,8 +2517,8 @@ function buildBases(){
       +'<div class="bphoto"'+(ph?' style="background-image:url('+pimg(BPHOTO[b.id],'l')+')"':'')+'>'
       +'<span class="bnum">База '+(i+1)+' из '+BASES.length+'</span>'+'<span class="btitle"><h3>'+b.name+'</h3></span></div>'
       +'<div class="bbody"><div class="nights" data-basenights="'+b.id+'">'+b.nights+' '+nights(b.nights)+'</div>'
-      +'<p>'+b.desc+'</p>'
-      +(b.alt?'<div class="alt">'+b.alt+'</div>':'')+'</div></div>';
+      +'<p>'+convDist(b.desc)+'</p>'
+      +(b.alt?'<div class="alt">'+convDist(b.alt)+'</div>':'')+'</div></div>';
   }).join('');
 }
 function dirURL(dayN){
@@ -3368,7 +3399,7 @@ function uiRestore(s){
 function rerenderTrip(){
   const snap=uiSnapshot();
   buildSchedule();
-  renderStays();buildRoute();buildDays();buildCities();buildFilters();buildElev();
+  renderUnits();renderStays();buildRoute();buildDays();buildCities();buildFilters();buildElev();
   recomputeDates();refreshBudgetCounts();syncChecks();updateMarkerStyles();applyFilter();updateDirLinks();
   uiRestore(snap);
 }
@@ -3377,11 +3408,15 @@ function loadPlan(){try{const s=JSON.parse(localStorage.getItem(PKEY));if(s){if(
   if(Array.isArray(s.nights))BASES.forEach((b,i)=>{if(typeof s.nights[i]==='number'&&s.nights[i]>=0)b.nights=s.nights[i];});if(s.hidden&&typeof s.hidden==='object')HIDDEN=s.hidden;
   if(s.moved&&typeof s.moved==='object')MOVED=s.moved;
   if(s.cur&&CURS.some(x=>x.c===s.cur))CUR=s.cur;
+  if(s.temp==='C'||s.temp==='F')TEMP=s.temp;
+  if(s.dist==='km'||s.dist==='mi')DIST=s.dist;
+  if(s.lang&&LANGS.some(x=>x.c===s.lang))LANG=s.lang;
   if(typeof s.crate==='number'&&s.crate>0)CRATE=s.crate;
   if(Array.isArray(s.custom))CUSTOM=s.custom;}}catch(e){}
   applyCurDefaults();mergeCustom();applyMoves();}
 function savePlan(){try{localStorage.setItem(PKEY,JSON.stringify({start:startIso,people:PEOPLE,
-  nights:BASES.map(b=>b.nights),hidden:HIDDEN,moved:MOVED,custom:CUSTOM,cur:CUR,crate:CRATE}));}catch(e){}}
+  nights:BASES.map(b=>b.nights),hidden:HIDDEN,moved:MOVED,custom:CUSTOM,cur:CUR,crate:CRATE,
+  temp:TEMP,dist:DIST,lang:LANG}));}catch(e){}}
 function nightsBefore(baseId){let s=0;for(const b of BASES){if(b.id===baseId)break;s+=b.nights;}return s;}
 function dayDateFor(tid){const e=SCHED_BY[tid];return e?e.date:addDays(startIso,0);}
 function totalNights(){return BASES.reduce((s,b)=>s+b.nights,0);}
@@ -3543,6 +3578,19 @@ document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)r
   if(t.dataset.leavesave){leaveSave();}
   if(t.dataset.leaveanyway){const go=_leaveGo;_leaveGo=null;popClose();if(go)go();}
   if(t.dataset.popdet){const b=document.querySelector('#popup .pdetbox');if(b)b.hidden=!b.hidden;}
+  if(t.dataset.uopen){unitsSheet(t.dataset.uopen);}
+  /* «Поделиться» пока честно: ссылка на сайт есть, а чужой поездки по ней не увидят —
+     для этого нужна публичная ссылка только на чтение, это следующий шаг */
+  if(t.dataset.ushare){shareSheet();}
+  if(t.dataset.shcopy){const u=location.href.split('#')[0];
+    const done=()=>{const b=document.querySelector('[data-shcopy]');if(b)b.textContent='Ссылка скопирована';};
+    if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(u).then(done).catch(()=>{});
+    else done();}
+  if(t.dataset.shnative){const u=location.href.split('#')[0];
+    if(navigator.share)navigator.share({title:tripMeta().title,url:u}).catch(()=>{});}
+  if(t.dataset.utemp){setTemp(TEMP==='C'?'F':'C');}
+  if(t.dataset.udist){setDist(DIST==='km'?'mi':'km');}
+  if(t.dataset.lang){LANG=t.dataset.lang;savePlan();renderUnits();closeDaySheet();}
   if(t.dataset.staymenu){stayMenuSheet(t.dataset.staymenu);}
   if(t.dataset.showmap&&window.showOnMap){closeDaySheet();showOnMap(t.dataset.showmap);}
   if(t.dataset.stayadd){addStaySheet(t.dataset.stayadd);}
@@ -3708,6 +3756,136 @@ function curSheet(){
     +'<button class="dscancel" data-dsclose="1">Отмена</button>');
 }
 function syncCurBtn(){const b=document.getElementById('curBtn');if(b)b.innerHTML='<b>'+curSym()+'</b><span>'+CUR+'</span>';}
+/* ================= ЕДИНИЦЫ ИЗМЕРЕНИЯ =================
+   Панель как у Layla: знак валюты, флаг языка, °C/°F и км/мили. Градусы и
+   расстояние — переключатели: вариантов два, список ради них не открываем. */
+let TEMP='C', DIST='km', LANG='ru';
+const LANGS=[
+ {c:'ru',t:'Русский',ok:1},{c:'en',t:'English'},{c:'es',t:'Español'},{c:'de',t:'Deutsch'},{c:'fr',t:'Français'},
+ {c:'it',t:'Italiano'},{c:'pt',t:'Português'},{c:'pl',t:'Polski'},{c:'tr',t:'Türkçe'},{c:'zh',t:'中文'}
+];
+/* флаги рисуем сами: на Windows флаг-эмодзи не существует, вместо него две буквы */
+const FLAGS={
+ ru:'<circle cx="12" cy="12" r="12" fill="#fff"/><path d="M0 8h24v8H0z" fill="#0039a6"/><path d="M0 16h24v8H0z" fill="#d52b1e"/>',
+ en:'<circle cx="12" cy="12" r="12" fill="#012169"/><path d="M0 0l24 24M24 0L0 24" stroke="#fff" stroke-width="5"/><path d="M0 0l24 24M24 0L0 24" stroke="#c8102e" stroke-width="2.6"/><path d="M12 0v24M0 12h24" stroke="#fff" stroke-width="7"/><path d="M12 0v24M0 12h24" stroke="#c8102e" stroke-width="4"/>',
+ es:'<circle cx="12" cy="12" r="12" fill="#c60b1e"/><path d="M0 7h24v10H0z" fill="#ffc400"/>',
+ de:'<circle cx="12" cy="12" r="12" fill="#000"/><path d="M0 8h24v8H0z" fill="#dd0000"/><path d="M0 16h24v8H0z" fill="#ffce00"/>',
+ fr:'<circle cx="12" cy="12" r="12" fill="#fff"/><path d="M0 0h8v24H0z" fill="#0055a4"/><path d="M16 0h8v24h-8z" fill="#ef4135"/>',
+ it:'<circle cx="12" cy="12" r="12" fill="#fff"/><path d="M0 0h8v24H0z" fill="#009246"/><path d="M16 0h8v24h-8z" fill="#ce2b37"/>',
+ pt:'<circle cx="12" cy="12" r="12" fill="#da291c"/><path d="M0 0h9v24H0z" fill="#046a38"/><circle cx="9" cy="12" r="3.4" fill="#ffe900" stroke="#046a38" stroke-width="1"/>',
+ pl:'<circle cx="12" cy="12" r="12" fill="#dc143c"/><path d="M0 0h24v12H0z" fill="#fff"/>',
+ tr:'<circle cx="12" cy="12" r="12" fill="#e30a17"/><circle cx="10" cy="12" r="5" fill="#fff"/><circle cx="11.6" cy="12" r="4" fill="#e30a17"/><path d="M16 12l-3.2 1 2-2.6v3.2l-2-2.6z" fill="#fff"/>',
+ zh:'<circle cx="12" cy="12" r="12" fill="#de2910"/><path d="M6 6.6l1 2.9 2.5-1.8H6.5l2.5 1.8z" fill="#ffde00"/><circle cx="12.5" cy="5.6" r="1" fill="#ffde00"/><circle cx="14.5" cy="8" r="1" fill="#ffde00"/><circle cx="14.5" cy="11" r="1" fill="#ffde00"/><circle cx="12.5" cy="13.2" r="1" fill="#ffde00"/>'
+};
+function flagSVG(c){return '<svg viewBox="0 0 24 24" aria-hidden="true">'+(FLAGS[c]||FLAGS.ru)+'</svg>';}
+/* ── расстояние ── */
+function distNum(km){return DIST==='mi'?km*0.621371:km;}
+/* «62,1 миля» — неверно: у дробных всегда «мили». Целые склоняем как обычно. */
+function mileWord(v){
+  if(Math.round(v)!==v)return 'мили';
+  const a=v%10,b=v%100;
+  if(a===1&&b!==11)return 'миля';
+  if(a>=2&&a<=4&&(b<10||b>=20))return 'мили';
+  return 'миль';
+}
+function distRound(v){return v>=100?Math.round(v):Math.round(v*10)/10;}
+function fmtKm(km){
+  const v=distRound(distNum(km));
+  return v.toLocaleString('ru-RU')+' '+(DIST==='mi'?mileWord(v):'км');
+}
+/* в данных расстояния лежат внутри готовых фраз («~120 км · 2 ч хода») — переписываем
+   число прямо в тексте, чтобы не трогать сам файл маршрута */
+function convDist(txt){
+  if(DIST!=='mi'||!txt)return txt;
+  /* \b после «км» не работает: для регулярки кириллица не «словесная», граница не
+     срабатывает и замена молча не происходила. Смотрим явно, что дальше не буква. */
+  return String(txt).replace(/(\d[\d\s\u00a0]*)(?:[.,](\d+))?\s*км(?![а-яёА-ЯЁa-zA-Z])/g,(m,a,b)=>{
+    const n=parseFloat((a.replace(/[\s\u00a0]/g,''))+(b?('.'+b):''));
+    if(!isFinite(n))return m;
+    const v=distRound(n*0.621371);
+    return v.toLocaleString('ru-RU')+' '+mileWord(v);
+  });
+}
+/* ── температура ── */
+function tempC(c){return TEMP==='F'?Math.round(c*9/5+32):Math.round(c);}
+function tempU(){return TEMP==='F'?'°F':'°C';}
+function fmtTemp(c){return (c>0?'+':'')+tempC(c)+' '+tempU();}
+/* ── панель ── */
+function unitsHTML(){
+  return '<button class="ub sym" data-uopen="cur" title="валюта">'+curSym()+'</button>'
+    +'<button class="ub flag" data-uopen="lang" title="язык">'+flagSVG(LANG)+'</button>'
+    +'<button class="ub" data-utemp="1" title="градусы">'+tempU()+'</button>'
+    +'<button class="ub" data-udist="1" title="расстояние">'+(DIST==='mi'?'мили':'км')+'</button>'
+    +'<button class="ub share" data-ushare="1">'+ic('share','i-sm')+'Поделиться</button>';
+}
+function renderUnits(){const el=document.getElementById('units');if(el)el.innerHTML=unitsHTML();}
+function unitsSheet(kind){
+  if(kind==='cur'){
+    sheet('<div class="dsh"><b>В какой валюте считать</b><span>уже введённые суммы пересчитаем по курсу</span></div>'
+      +'<div class="dsform"><div class="dskinds">'+CURS.map(x=>'<button class="dskind'+(x.c===CUR?' on':'')+'" data-cur="'+x.c+'">'
+        +'<b class="cursym">'+x.s+'</b><span>'+x.l+'</span></button>').join('')+'</div></div>'
+      +'<button class="dscancel" data-dsclose="1">Отмена</button>');
+    return;
+  }
+  sheet('<div class="dsh"><b>Язык сайта</b><span>русский готов, остальные переведём следующим шагом</span></div>'
+    +'<div class="dsform"><div class="langs">'+LANGS.map(x=>'<button class="langb'+(x.c===LANG?' on':'')+'"'
+      +(x.ok?' data-lang="'+x.c+'"':' data-soon="'+x.t+'"')+'>'+flagSVG(x.c)+x.t
+      +(x.ok?'':'<i>скоро</i>')+'</button>').join('')+'</div></div>'
+    +'<button class="dscancel" data-dsclose="1">Отмена</button>');
+}
+/* ── погода: чем переключать градусы ──
+   В данных маршрута температур нет вообще, поэтому переключатель было бы нечем
+   наполнить. Берём настоящие цифры за те же дни ГОД НАЗАД — это честный ответ на
+   вопрос «а сколько там обычно». Open-Meteo: бесплатно, без ключа, CORS открыт.
+   Ответ кладём в localStorage, чтобы не дёргать сеть при каждом заходе. */
+const WKEY='co-trip-weather';
+let WEATHER={};
+try{WEATHER=JSON.parse(localStorage.getItem(WKEY))||{};}catch(e){}
+function wKeyFor(b,ci,co){return b.id+'|'+fmtISO(ci).slice(5)+'|'+fmtISO(co).slice(5);}
+function weatherOf(bid,ci,co){const b=baseById(bid);return b?WEATHER[wKeyFor(b,ci,co)]:null;}
+let _wDone=false;
+function loadWeather(){
+  if(_wDone)return;_wDone=true;
+  const need=[];
+  BASES.forEach((b,i)=>{
+    if(!b.nights)return;
+    const before=nightsBefore(b.id),ci=addDays(startIso,before),co=addDays(startIso,before+b.nights);
+    const k=wKeyFor(b,ci,co);
+    if(!WEATHER[k])need.push({b:b,k:k,ci:ci,co:co});
+  });
+  if(!need.length)return;
+  let i=0,any=false;
+  const step=()=>{
+    if(i>=need.length){if(any){try{localStorage.setItem(WKEY,JSON.stringify(WEATHER));}catch(e){}rerenderTrip();}return;}
+    const n=need[i++],y=(new Date()).getFullYear()-1;
+    const iso=d=>y+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    fetch('https://archive-api.open-meteo.com/v1/archive?latitude='+n.b.lat+'&longitude='+n.b.lng
+      +'&start_date='+iso(n.ci)+'&end_date='+iso(n.co)+'&daily=temperature_2m_max,temperature_2m_min&timezone=auto')
+      .then(r=>r.json()).then(j=>{
+        const d=j&&j.daily;
+        if(d&&d.temperature_2m_max){
+          const mx=d.temperature_2m_max.filter(x=>x!=null),mn=d.temperature_2m_min.filter(x=>x!=null);
+          if(mx.length&&mn.length){
+            const avg=a=>a.reduce((s,v)=>s+v,0)/a.length;
+            WEATHER[n.k]={d:Math.round(avg(mx)),n:Math.round(avg(mn)),y:y};any=true;
+          }
+        }
+        setTimeout(step,150);
+      }).catch(()=>setTimeout(step,150));
+  };
+  setTimeout(step,900);
+}
+function shareSheet(){
+  const nat=(typeof navigator!=='undefined'&&navigator.share);
+  sheet('<div class="dsh"><b>Поделиться</b><span>ссылкой на сайт — маршрут откроется у тебя же</span></div>'
+    +'<div class="dsform">'
+    +(nat?'<button class="dsgo" data-shnative="1">Отправить ссылку</button>':'')
+    +'<button class="'+(nat?'dscancel alt':'dsgo')+'" data-shcopy="1">Скопировать ссылку</button>'
+    +'<span class="dshint">Пока по этой ссылке человек попадёт на сайт, но ТВОЮ поездку не увидит — поездки лежат в твоём аккаунте. Чтобы показать её другому, нужна отдельная ссылка «только посмотреть». Это следующий шаг, и я о нём помню.</span></div>'
+    +'<button class="dscancel" data-dsclose="1">Закрыть</button>');
+}
+function setTemp(v){TEMP=v;savePlan();renderUnits();rerenderTrip();}
+function setDist(v){DIST=v;savePlan();renderUnits();rerenderTrip();}
 function money(n){return curSym()+Math.round(n).toLocaleString('en-US').replace(/,/g,' ');}
 /* строки жилья: одна на базу, ночи берутся из планировщика */
 /* жильё переехало в раздел «Ночёвки» — здесь ничего не строим */
@@ -3849,13 +4027,14 @@ loadPlan();
 const scMed=document.getElementById('scMedIcon');if(scMed)scMed.innerHTML=ic('cal','i-sm');
 const sd0=document.getElementById('startDate');if(sd0){sd0.value=startIso;sd0.addEventListener('change',e=>{startIso=e.target.value||START;savePlan();rerenderTrip();});}
 buildSchedule();
-buildRoute();buildElev();buildFilters();buildDays();buildCities();buildFood();buildBases();buildPlanner();wireButtons();wireBudget();buildBudgetStay();
+renderUnits();buildRoute();buildElev();buildFilters();buildDays();buildCities();buildFood();buildBases();buildPlanner();wireButtons();wireBudget();buildBudgetStay();
 /* линия маршрута считается от ширины экрана и ширины подписей — пересобираем после ресайза и загрузки шрифтов */
 let _rrt;addEventListener('resize',()=>{clearTimeout(_rrt);_rrt=setTimeout(buildRoute,160);});
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(buildRoute);
 recomputeDates();
 syncChecks();applyFilter();
 backfillPoints();
+loadWeather();
 /* жёсткая блокировка масштабирования страницы: iOS Safari игнорит user-scalable=no,
    поэтому глушим жест «щипок» (gesture*) и разрешаем только прокрутку (pan) */
 try{document.documentElement.style.touchAction='pan-x pan-y';}catch(e){}
@@ -4204,7 +4383,7 @@ function reinit(){try{
   const pn=document.getElementById('pNum');if(pn)pn.textContent=PEOPLE;
   syncCurBtn();
   buildSchedule();
-  buildRoute();buildDays();buildCities();buildFood();buildBases();buildPlanner();buildBudget();buildFilters();buildElev();recomputeDates();syncChecks();applyFilter();
+  renderUnits();buildRoute();buildDays();buildCities();buildFood();buildBases();buildPlanner();buildBudget();buildFilters();buildElev();recomputeDates();syncChecks();applyFilter();
 }catch(e){}}
 async function cloudSync(session){
   if(!sb||!session)return;
