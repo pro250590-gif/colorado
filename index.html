@@ -886,6 +886,13 @@ a.rglyph:active{transform:translate(-50%,-50%) scale(.9)}
 .hbook .i{flex:none}
 /* «другие варианты» — то же место, но тише: своё жильё уже выбрано */
 .hbook.alt{background:#fff!important;border:1.5px solid #e5e6f5!important;color:#8b8698!important;box-shadow:none!important;font-weight:700}
+/* город без ночёвки: строка приглушена, полей цены и брони нет */
+.hrow.zero{opacity:.75}
+.hrow.zero .hdot{filter:grayscale(1)}
+.hpass{display:block;width:100%;margin-top:2px;padding:10px 13px;border-radius:13px;background:rgba(224,160,32,.14);
+  color:#8a6316;font:800 11px/1.2 "Plus Jakarta Sans",sans-serif;letter-spacing:-.01em;text-align:center}
+.cstay.nostay{border-style:dashed;border-color:#d3d7e6;background:rgba(255,255,255,.6)}
+.cdot.pale{background:#c9ccdb!important}
 .hbook:active{transform:scale(.99)}
 .hrow{flex-wrap:wrap}
 .hbook span{flex:1}
@@ -2109,7 +2116,12 @@ function buildCities(){
         +'<span class="mystact"><a class="cbookl" href="'+gurl(h.q||h.nm)+'" target="_blank" rel="noopener">Открыть в Google Maps</a>'
           +'<button class="cpmv" data-staymenu="'+h.id+'" aria-label="что сделать с жильём" title="что сделать с жильём">⋯</button>'
         +'</span></span></div>').join('');
-    const stay='<div class="cnode"><span class="cdot">'+ic('bed','i-sm')+'</span>'
+    /* ноль ночей — жильё не нужно: ни карточки, ни брони, только пояснение */
+    const stay=!b.nights
+      ? '<div class="cnode"><span class="cdot pale">'+ic('bed','i-sm')+'</span>'
+        +'<div class="clbl"><b>Без ночёвки</b><span>'+dm(ci)+' · в этом городе не ночуем</span></div>'
+        +'<div class="cstay nostay"><span class="cin"><span class="cmeta">Ночей поставлено 0, поэтому жильё тут не ищем и в бюджет ничего не считаем. Вернёшь ночь — вернётся и блок.</span></span></div></div>'
+      : '<div class="cnode"><span class="cdot">'+ic('bed','i-sm')+'</span>'
       +'<div class="clbl"><b>Проживание</b><span>Дни '+firstDay+'–'+lastDay+' · '+dm(ci)+'–'+dm(co)+' · '+b.nights+' '+nights(b.nights)+'</span></div>'
       +(mine.length
         ? stayCard
@@ -2126,8 +2138,9 @@ function buildCities(){
           +'</span></div>')
       +'</div>';
     /* маршрут по дням */
-    const route='<div class="cnode"><span class="cdot">'+ic('cal','i-sm')+'</span>'
-      +'<div class="clbl"><b>Маршрут</b><span>Дни '+firstDay+'–'+lastDay+'</span></div>'
+    /* без ночёвки дней у города нет — «Дни 1–1» было бы враньём */
+    const route='<div class="cnode"><span class="cdot"'+(days.length?'':' style="background:#c9ccdb"')+'>'+ic('cal','i-sm')+'</span>'
+      +'<div class="clbl"><b>Маршрут</b><span>'+(days.length?('Дни '+firstDay+'–'+lastDay):'дней нет — в городе не ночуем')+'</span></div>'
       +days.map(e=>{const d=e.tpl,n=dayPts(e.tid),list=P.filter(p=>p.d===e.tid&&p.cat!=='food'),ph=dayPhoto(e.tid);
         return '<details class="cday" data-day="'+e.tid+'"><summary class="cdaysum"><span class="cdph'+(ph?'':' free')+'"'+(ph?' style="background-image:url('+ph+')"':'')+'>'+(ph?'':ic('sun','i-sm'))+'</span>'
         +'<span class="cdtx"><span class="cdm"><b>День '+e.disp+'</b> · '+dm(e.date)+' · '+n+' '+plural(n,'активность','активности','активностей')+'</span><b>'+dayTitle(e)+'</b></span>'
@@ -2946,14 +2959,23 @@ function geocode(q,cb){
    Свой выбор система только ПРЕДЛАГАЕТ (первый в списке, с причиной). */
 function setNights(i,n){
   const b=BASES[i];if(!b)return;
-  const v=Math.max(1,Math.min(30,n));if(v===b.nights)return;
+  /* 0 ночей — законное состояние: город остаётся в маршруте, но в нём не ночуем */
+  const v=Math.max(0,Math.min(30,n));if(v===b.nights)return;
+  /* до нуля выбирать нечего — уходит весь город целиком, поэтому спрашивать не о чем.
+     Делаем сразу и показываем плашку с отменой. */
+  if(v===0){const prev=planState();applyNights(i,0);
+    toast('<b>'+shortName(b.name)+' — без ночёвки</b><i>дни города ждут в «Ещё в городе», жильё и брони убрали</i>',b.id,prev);return;}
   if(v<b.nights){pickDaySheet(b.id);return;}
   applyNights(i,v);
 }
 /* тихое изменение ночей — без вопросов (для расписания/облака/тестов) */
 function applyNights(i,n){
   const b=BASES[i];if(!b)return;
-  const v=Math.max(1,Math.min(30,n));if(v===b.nights)return;
+  const v=Math.max(0,Math.min(30,n));if(v===b.nights)return;
+  /* Ноль — особый случай: последний день города это ЗАКРЕПЛЁННЫЙ переезд, и обычный
+     разбор по одному дню до нуля не доходит. Ставим ноль прямо, а buildSchedule сам
+     сложит все дни города в «Ещё в городе». */
+  if(v===0){b.nights=0;savePlan();rerenderTrip();return;}
   if(v<b.nights){
     let g=0;
     while(b.nights>v&&g++<40){const pick=autoRemovable(b.id);if(!pick)break;if(!removeDayCore(b.id,pick.e.tid))break;}
@@ -3278,22 +3300,24 @@ function buildPlanner(){
 function renderStays(){
   const rows=BASES.map((b,i)=>{const before=nightsBefore(b.id);const ci=addDays(startIso,before),co=addDays(startIso,before+b.nights);
     const rate=hotelRate(i), tot=rate*b.nights;
-    return '<div class="hrow">'
+    const zero=!b.nights;   /* 0 ночей — ни цены, ни брони: ночевать негде и незачем */
+    return '<div class="hrow'+(zero?' zero':'')+'">'
       +'<span class="hdot" style="background:linear-gradient(150deg,'+b.color+','+(BCOL2[b.id]||b.color)+')">'+ic(b.emoji)+'</span>'
       +'<span class="hmain">'
         +'<span class="hname">'+shortName(b.name)+(altName(b.name)?'<i>'+altName(b.name)+'</i>':'')+'</span>'
-        +'<span class="hdate">'+dm(ci)+' → '+dm(co)+'</span>'
+        +'<span class="hdate">'+(zero?'без ночёвки · '+dm(ci):dm(ci)+' → '+dm(co))+'</span>'
         +'<span class="hstep"><button class="stepbtn" data-nd="'+i+'" data-dir="-1" aria-label="меньше ночей">−</button>'
           +'<span class="hn"><b data-hn="'+i+'">'+b.nights+'</b> <span data-hw="'+i+'">'+nights(b.nights)+'</span></span>'
           +'<button class="stepbtn" data-nd="'+i+'" data-dir="1" aria-label="больше ночей">+</button></span>'
       +'</span>'
-      +'<span class="hmoney">'
+      +(zero?'':'<span class="hmoney">'
         +'<span class="hf"><label>за ночь</label><span class="hpill"><input class="hrate" data-hi="'+i+'" inputmode="decimal" value="'+(rate||'')+'" placeholder="0"><span class="hu">'+curSym()+'</span></span></span>'
         +'<span class="hf"><label>всего</label><span class="hpill"><input class="htot" data-hi="'+i+'" inputmode="decimal" value="'+(tot||'')+'" placeholder="0"><span class="hu">'+curSym()+'</span></span></span>'
-      +'</span>'
+      +'</span>')
       /* жильё в этом городе уже своё — Booking понижаем в «другие варианты», как в ленте */
-      +'<a class="hbook'+(stayPlaces(b.id).length?' alt':'')+'" href="'+bookHotel(b.q,ci,co,PEOPLE)+'" target="_blank" rel="noopener" title="подобрать жильё на Booking">'+ic('bed','i-sm')
-        +'<span>'+(stayPlaces(b.id).length?'Посмотреть другие варианты на Booking':'Забронировать на Booking')+' · '+dm(ci)+'–'+dm(co)+' · '+PEOPLE+' гост.</span></a>'
+      +(zero?'<span class="hpass">Проездом · жильё не ищем</span>'
+        :'<a class="hbook'+(stayPlaces(b.id).length?' alt':'')+'" href="'+bookHotel(b.q,ci,co,PEOPLE)+'" target="_blank" rel="noopener" title="подобрать жильё на Booking">'+ic('bed','i-sm')
+        +'<span>'+(stayPlaces(b.id).length?'Посмотреть другие варианты на Booking':'Забронировать на Booking')+' · '+dm(ci)+'–'+dm(co)+' · '+PEOPLE+' гост.</span></a>')
       +'</div>';
   }).join('');
   const tn=totalNights();
