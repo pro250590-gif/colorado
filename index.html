@@ -83,8 +83,64 @@ h1,h2,h3,h4{line-height:1.08;margin:0;font-family:"Plus Jakarta Sans","Inter",sa
 /* в кабинете прячем всё, что относится к открытой поездке */
 body.athome>section,body.athome>.citystep,body.athome>#cities,body.athome>footer,
 body.athome>.bottomnav,body.athome>.siderail,body.athome>#mapShell,body.athome>header,
-body.athome>#days,body.athome>#toast,body.athome>.orb,body.athome>.glow{display:none!important}
-body.athome{padding-right:0!important}
+body.athome>#days,body.athome>#toast,body.athome>.orb,body.athome>.glow,
+body.atland>section,body.atland>.citystep,body.atland>#cities,body.atland>footer,
+body.atland>.bottomnav,body.atland>.siderail,body.atland>#mapShell,body.atland>header,
+body.atland>#days,body.atland>#toast,body.atland>.orb,body.atland>.glow{display:none!important}
+body.athome,body.atland{padding-right:0!important}
+/* ── ГЛАВНАЯ СТРАНИЦА: первый блок ── */
+.landwrap{padding:22px 20px 44px;max-width:760px}
+.landh{font:600 clamp(34px,10vw,46px)/1.02 "Fraunces",Georgia,serif;letter-spacing:-.02em;margin:12px 0 12px}
+.landh em{font-style:normal;color:#5b3fc4}
+.landsub{font:500 15px/1.55 "Inter",sans-serif;color:#6f7387;margin:0 0 20px}
+.askbox{border:1.5px solid rgba(91,63,196,.28);border-radius:19px;background:#fbfaff;padding:14px 15px 13px;
+  box-shadow:0 14px 30px -24px rgba(91,63,196,.9)}
+.askbox textarea{width:100%;border:0;background:none;resize:none;outline:none;min-height:84px;
+  font:500 14.5px/1.5 "Inter",sans-serif;color:var(--ink)}
+.askbox textarea::placeholder{color:#a3a0b8}
+.askrow{display:flex;align-items:center;gap:10px}
+.micb{width:46px;height:46px;flex:none;border-radius:14px;border:1.5px solid rgba(91,63,196,.28);background:#fff;color:#5b3fc4;
+  display:grid;place-items:center;cursor:pointer;-webkit-appearance:none;appearance:none}
+.micb .i{width:20px;height:20px}
+.micb.rec{background:#5b3fc4;color:#fff;border-color:#5b3fc4}
+.askgo{flex:1;min-height:46px;border:0;border-radius:14px;cursor:pointer;-webkit-appearance:none;appearance:none;
+  background:linear-gradient(150deg,#7a5cf0,#5b3fc4);color:#fff;font:800 13px/1 "Plus Jakarta Sans",sans-serif}
+.lchips{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
+.lchips button{border:1px solid #e4e6f0;background:#fff;border-radius:11px;padding:9px 11px;cursor:pointer;
+  font:600 12px/1 "Inter",sans-serif;color:#8b8fa3}
+.lor{text-align:center;margin-top:16px;font:600 12.5px/1.5 "Inter",sans-serif;color:#8b8fa3}
+.lnk{border:0;background:none;padding:0;cursor:pointer;font:inherit;color:#5b3fc4;text-decoration:underline;
+  text-decoration-color:rgba(91,63,196,.4)}
+/* ── ЭКРАН «ПРАВИЛЬНО ПОНЯЛИ?» ── */
+.gotwrap{padding:22px 20px 44px;max-width:620px}
+.goth{font:600 27px/1.12 "Fraunces",Georgia,serif;margin:6px 0 5px}
+.gothint{font:500 12.5px/1.45 "Inter",sans-serif;color:#9a9db0;margin:0 0 16px}
+.said{border:1.5px solid rgba(91,63,196,.22);background:#faf8ff;border-radius:16px;padding:13px 14px;margin-bottom:18px}
+.said .t{font:800 9.5px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:.15em;text-transform:uppercase;color:#8b86a8;margin-bottom:7px}
+.said p{margin:0;font:500 12.5px/1.5 "Inter",sans-serif;color:#6b6a80}
+.glbl{font:700 11.5px/1 "Inter",sans-serif;color:#6b6a80;margin:0 0 9px}
+.gots{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:18px}
+.gchip{display:inline-flex;align-items:center;gap:6px;border:1.5px solid rgba(91,63,196,.3);background:#f6f2ff;border-radius:12px;
+  padding:9px 12px;font:700 12.5px/1 "Inter",sans-serif;color:#3b2a8f;cursor:pointer;-webkit-appearance:none;appearance:none}
+.gchip .i{width:13px;height:13px;stroke-width:2.6}
+.gchip em{font-style:normal;color:#a9a2cf;font-weight:600}
+.gchip.ask{border-color:rgba(168,99,10,.45);background:#fff8ee;color:#8a4b0a}
+.qs{border-top:1px solid #eeecf7;padding-top:16px}
+.qtitle{font:700 12.5px/1.4 "Inter",sans-serif;color:var(--ink);margin:0 0 12px}
+.qf{margin-bottom:15px}
+.qf>label{display:block;font:700 12px/1 "Inter",sans-serif;color:#3b2a8f;margin-bottom:8px}
+.qopts{display:flex;flex-wrap:wrap;gap:6px}
+.qo{border:1.5px solid #e4e6f0;background:#fff;border-radius:11px;padding:9px 12px;cursor:pointer;
+  font:700 12px/1 "Inter",sans-serif;color:#4a4f63;-webkit-appearance:none;appearance:none}
+.qo.on{border-color:#5b3fc4;background:#f6f2ff;color:#3b2a8f}
+.qnum{width:74px;border:1.5px solid #e4e6f0;border-radius:11px;padding:9px 10px;font:700 12px/1 "Inter",sans-serif;
+  color:var(--ink);background:#fff;outline:none}
+.gogo{width:100%;min-height:48px;margin-top:6px;border:0;border-radius:14px;cursor:pointer;-webkit-appearance:none;appearance:none;
+  background:linear-gradient(150deg,#7a5cf0,#5b3fc4);color:#fff;font:800 13px/1 "Plus Jakarta Sans",sans-serif}
+.gomore{display:block;width:100%;text-align:center;margin-top:13px;border:0;background:none;cursor:pointer;
+  font:600 12px/1.5 "Inter",sans-serif;color:#8b8fa3}
+.gomore u{color:#5b3fc4}
+.gback{display:block;margin:16px auto 0;border:0;background:none;cursor:pointer;font:700 12px/1 "Inter",sans-serif;color:#8b8fa3}
 /* воздух: 26 от шапки, поля по краям 20 — карточки не липнут к краю (просьба клиента) */
 .homewrap{padding:26px 20px 40px;max-width:1120px}
 .homewrap .eyebrow{margin:0 0 10px}
@@ -1288,7 +1344,7 @@ body{background:linear-gradient(168deg,#eef1f8,#e9edf6 60%,#e6eaf4)!important}
 .cgo{color:#5b3fc4;flex:none;background:rgba(91,63,196,.1);border-radius:50%;width:30px;height:30px;display:grid;place-items:center}
 .cgo .i{width:20px;height:20px;stroke-width:2.4}
 /* ── ВЕРНУТЬ ШАПКУ + ПЛАШКУ-ЦЕПОЧКУ, ПЕРЕКРАСИТЬ В ФИОЛЕТ ── */
-body:not(.athome) header.hero,body:not(.athome) #s-route{display:block!important}
+body:not(.athome):not(.atland) header.hero,body:not(.athome):not(.atland) #s-route{display:block!important}
 /* шапка: только описание + фото, без метрик и профиля высоты */
 header.hero .stats,header.hero .elev,header.hero .tile-g,header.hero .tile-w{display:none!important}
 #s-days{display:none!important}
@@ -1526,6 +1582,7 @@ section h2.big{margin-bottom:4px}
   <button class="ava" id="avaBtn" aria-label="аккаунт"><span class="avl">Я</span><i class="avc"></i></button>
 </div></div>
 <div id="home" style="display:none"></div>
+<div id="land" style="display:none"></div>
 <nav class="siderail" aria-label="Разделы сайта">
   <a href="#cities"><svg class="i" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg><span>Дни</span></a>
   <a href="#s-money"><svg class="i" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0 0 4h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5"/><path d="M17.5 13h.01"/></svg><span>Бюджет</span></a>
@@ -1737,6 +1794,7 @@ const ICONS={
  map:'<path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14M15 6v14"/>',
  list:'<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',
  bed:'<path d="M2 20v-8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v8M2 16h20M6 10V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v4"/>',
+ mic:'<path d="M12 15a3.2 3.2 0 0 0 3.2-3.2V6.2a3.2 3.2 0 1 0-6.4 0v5.6A3.2 3.2 0 0 0 12 15Z"/><path d="M18.5 11.5a6.5 6.5 0 0 1-13 0M12 18v3.2M8.6 21.2h6.8"/>',
  sun:'<circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.4M12 19.6V22M4.2 4.2l1.7 1.7M18.1 18.1l1.7 1.7M2 12h2.4M19.6 12H22M4.2 19.8l1.7-1.7M18.1 5.9l1.7-1.7"/>',
  moon:'<path d="M20 14.5A8.2 8.2 0 0 1 9.5 4 8.3 8.3 0 1 0 20 14.5z"/>',
  food:'<path d="M3.4 2.3v4.5M6.9 2.3v4.5M10.4 2.3v4.5M3.4 6.8a3.5 3.5 0 0 0 7 0M6.9 10.3v11.4"/><path d="M17.9 2.3c-2.1 2.4-3.1 5.2-3.1 7.9 0 2.3 1.2 3.9 3.1 4.3v7.2"/>',
@@ -3666,6 +3724,7 @@ document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)r
       '<div class="prow"><button class="pok" data-popclose="1">Понятно</button></div>');}
   if(t.id==='brandHome'){closeDaySheet();leaveTrip(showHome);}
   if(t.dataset.gohome){accClose();closeDaySheet();leaveTrip(showHome);}
+  if(t.dataset.goland){accClose();closeDaySheet();leaveTrip(()=>showLand(null));}
   if(t.dataset.topen){closeDaySheet();const id=t.dataset.topen;
     if(id!==trips().active)switchTrip(id);hideHome();window.scrollTo(0,0);}
   if(t.dataset.newtrip){accClose();closeDaySheet();
@@ -4207,6 +4266,238 @@ function wireBudget(){
   if(pp)pp.addEventListener('click',()=>setPeople(1));
 }
 
+/* ================= ГЛАВНАЯ СТРАНИЦА И АНКЕТА =================
+   Поле на главной и анкета — одно и то же. Текст только РАССТАВЛЯЕТ ГАЛОЧКИ
+   в полях анкеты, а спрашиваем лишь то, чего человек не сказал: заставлять
+   его надиктовать всё и потом заполнять то же руками нельзя (просьба клиента).
+   Правило: ничего не подставляем молча — либо вынули из текста, либо спросили. */
+let _atLand=false,ASK=null,_askOpen={},_askMore=false;
+const AKEY='co-trip-ask';
+function askNew(){return {text:'',where:null,whereNm:'',days:null,month:null,adults:null,kids:0,
+  pace:null,drive:null,likes:[],limits:[],extras:[]};}
+/* что мы умеем собрать сегодня. Пока один маршрут — врать про остальные не будем */
+const CATALOG=[{k:'co',rx:/колорадо|colorado|дуранго|аспен|денвер|силвертон/i,nm:'Колорадо, США'}];
+const MONRX=['январ','феврал','март','апрел','ма[йя]','июн','июл','август','сентябр','октябр','ноябр','декабр'];
+const NUMW={'один':1,'одну':1,'два':2,'две':2,'три':3,'четыре':4,'пять':5,'шесть':6,'семь':7,
+  'восемь':8,'девять':9,'десять':10,'одиннадцать':11,'двенадцать':12,'две недели':14,'неделю':7,'неделя':7};
+/* Разбор своими силами: пока без ИИ. Понимает простые фразы, остальное честно
+   отправляется в вопросы — «не разобрали» лучше, чем выдуманное значение. */
+function parseAsk(raw){
+  const a=askNew();a.text=String(raw||'').trim();
+  const s=a.text.toLowerCase().replace(/ё/g,'е');
+  if(!s)return a;
+  const cat=CATALOG.find(c=>c.rx.test(s));if(cat){a.where=cat.k;a.whereNm=cat.nm;}
+  let m=s.match(/(\d+)\s*(?:дн|ден|сут)/);if(m)a.days=+m[1];
+  if(!a.days){m=s.match(/(\d+)\s*ноч/);if(m)a.days=+m[1]+1;}
+  if(!a.days){m=s.match(/([а-я]+)\s*(?:дн|ден|сут)/);if(m&&NUMW[m[1]])a.days=NUMW[m[1]];}
+  if(!a.days){m=s.match(/([а-я]+)\s*ноч/);if(m&&NUMW[m[1]])a.days=NUMW[m[1]]+1;}
+  if(!a.days&&/недел/.test(s)){a.days=/две недел|2 недел/.test(s)?14:7;}
+  MONRX.forEach((p,i)=>{if(new RegExp(p).test(s))a.month=i;});
+  if(/вдвоем|вдвоём|с женой|с мужем|пара/.test(s))a.adults=2;
+  else if(/втроем|втроём/.test(s))a.adults=3;
+  else if(/вчетвером/.test(s))a.adults=4;
+  else if(/один |одна |соло/.test(s))a.adults=1;
+  else{m=s.match(/(\d+)\s*(?:человек|взросл|гост)/);if(m)a.adults=+m[1];}
+  if(/дет[ия]|ребен|детьми|малыш/.test(s)){m=s.match(/(\d+)\s*(?:дет|ребен)/);a.kids=m?+m[1]:2;}
+  [[/гор[аыу]|горы|водопад|природ|озер|каньон|парк|лес/,'природа'],
+   [/еда|поесть|ресторан|кухн|вин[оа]/,'еда'],
+   [/город|музе|архитектур/,'города'],
+   [/фото|виды|пейзаж/,'виды и фото'],
+   [/поход|хайк|треккинг|сплав|актив/,'активности']].forEach(([rx,nm])=>{if(rx.test(s))a.likes.push(nm);});
+  /* «города — по минимуму»: между словами бывает тире и запятая, поэтому пропускаем
+     знаки. И тогда же убираем «города» из любимого — иначе одна фраза попадала
+     сразу в «люблю» и в «не хочу» */
+  if(/город[а-я]*[\s—–\-,:]*(?:по\s*минимуму|поменьше|меньше|не\s*хочу|не\s*нужн|без)/.test(s)){
+    a.limits.push('меньше городов');
+    a.likes=a.likes.filter(x=>x!=='города');
+  }
+  if(/собак|пес /.test(s))a.limits.push('едем с собакой');
+  if(/коляск/.test(s))a.limits.push('коляска');
+  if(/глютен|аллерг|веган|халяль/.test(s))a.limits.push('еда: ограничения');
+  if(/высот[ыа]\s*бо|боюсь высот|боязнь высот/.test(s))a.limits.push('боязнь высоты');
+  if(/спокойн|не спеша|размеренн/.test(s))a.pace='calm';
+  if(/насыщен|побольше успеть|много успеть/.test(s))a.pace='fast';
+  m=s.match(/(?:не более|не больше|до)\s*(\d+)\s*час[а-я]*\s*(?:в день\s*)?за рулем/);if(m)a.drive=String(m[1]);
+  if(/без машины|не за рулем|на поезд/.test(s))a.drive='0';
+  [[/фестивал|концерт|матч|свадьб/,'событие с датой'],
+   [/днем рожден|годовщин|медовый/,'особый повод']].forEach(([rx,nm])=>{if(rx.test(s))a.extras.push(nm);});
+  return a;
+}
+const PACES=[['calm','Спокойно'],['mid','Средне'],['fast','Насыщенно']];
+const DRIVES=[['2','до 2 ч'],['4','до 4 ч'],['x','сколько нужно'],['0','без машины']];
+const chk='<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5L20 6.5"/></svg>';
+const qmk='<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17h.01M9.5 9a2.5 2.5 0 1 1 3.2 2.4c-.6.2-.7.8-.7 1.3v.6"/></svg>';
+/* MONTHS в родительном («августа») — он для дат «7 августа». Для галочки и названия
+   поездки нужен именительный, иначе получается «Когда: августа» */
+const MONNM=['январь','февраль','март','апрель','май','июнь','июль','август','сентябрь','октябрь','ноябрь','декабрь'];
+function monthNm(i){return i==null?'':MONNM[i];}
+function askWho(a){
+  if(a.adults==null)return null;
+  return a.adults+' '+plural(a.adults,'взрослый','взрослых','взрослых')+(a.kids?(' · '+a.kids+' '+plural(a.kids,'ребёнок','детей','детей')):'');
+}
+/* поля: что известно — галочкой, что нет — оранжевым вопросом */
+function askFields(a){
+  return [
+    {k:'where',nm:'Куда едем',val:a.where?a.whereNm:null,q:'куда едем?'},
+    {k:'month',nm:'Когда',val:a.month!=null?monthNm(a.month):null,q:'в каком месяце?'},
+    {k:'days', nm:'Сколько дней',val:a.days?(a.days+' '+plural(a.days,'день','дня','дней')):null,q:'сколько дней?'},
+    {k:'who',  nm:'Кто едет',val:askWho(a),q:'с кем едете?'},
+    {k:'pace', nm:'Темп',val:a.pace?(PACES.find(x=>x[0]===a.pace)||[])[1]:null,q:'в каком темпе?'},
+    {k:'drive',nm:'За рулём',val:a.drive?(DRIVES.find(x=>x[0]===a.drive)||[])[1]:null,q:'сколько за рулём?'}
+  ];
+}
+function qBlock(f,a){
+  const o=(v,t,on)=>'<button class="qo'+(on?' on':'')+'" data-aset="'+f.k+'" data-av="'+v+'">'+t+'</button>';
+  let inner='';
+  if(f.k==='where')inner=CATALOG.map(c=>o(c.k,c.nm,a.where===c.k)).join('')
+    +'<span class="qo" style="border-style:dashed;color:#8b8fa3;cursor:default">другие страны — скоро</span>';
+  else if(f.k==='month')inner=MONNM.map((mn,i)=>o(i,mn.slice(0,3),a.month===i)).join('');
+  else if(f.k==='days')inner=[5,7,8,10,12,14].map(d=>o(d,d,a.days===d)).join('')
+    +'<input class="qnum" id="aDays" inputmode="numeric" placeholder="своё" value="'+(a.days&&[5,7,8,10,12,14].indexOf(a.days)<0?a.days:'')+'">';
+  else if(f.k==='who')inner=[1,2,3,4,5,6].map(n=>o('a'+n,n+' взр.',a.adults===n)).join('')
+    +[0,1,2,3].map(n=>o('k'+n,n?(n+' дет.'):'без детей',a.kids===n)).join('');
+  else if(f.k==='pace')inner=PACES.map(x=>o(x[0],x[1],a.pace===x[0])).join('');
+  else if(f.k==='drive')inner=DRIVES.map(x=>o(x[0],x[1],a.drive===x[0])).join('');
+  return '<div class="qf"><label>'+f.nm+'</label><div class="qopts">'+inner+'</div></div>';
+}
+function landHTML(){
+  return '<div class="wrap landwrap">'
+    +'<h1 class="landh">Маршрут, <em>который</em> собран под вас</h1>'
+    +'<p class="landsub">Расскажите про поездку своими словами — вернём готовый план по дням, с картой, жильём и бюджетом.</p>'
+    +'<div class="askbox"><textarea id="askText" rows="3" placeholder="Колорадо, десять дней в августе, вдвоём. Хотим горы и водопады, города — по минимуму…"></textarea>'
+      +'<div class="askrow"><button class="micb" id="micBtn" aria-label="надиктовать" title="надиктовать">'+ic('mic','i-sm')+'</button>'
+      +'<button class="askgo" data-askgo="1">Собрать маршрут</button></div></div>'
+    +'<div class="lchips">'
+      +['Колорадо на 10 дней вдвоём','Колорадо неделю с детьми','Горы и водопады, 8 дней']
+        .map(t=>'<button data-asktry="'+esc0(t)+'">'+t+'</button>').join('')
+    +'</div>'
+    +'<div class="lor">или <button class="lnk" data-askform="1">пройдите анкету</button> — спросим только нужное</div>'
+    +'</div>';
+}
+function gotHTML(){
+  const a=ASK,fs=askFields(a);
+  const known=fs.filter(f=>f.val&&!_askOpen[f.k]),miss=fs.filter(f=>!f.val||_askOpen[f.k]);
+  const chips=known.map(f=>'<button class="gchip" data-aopen="'+f.k+'">'+chk+esc0(f.val)+'</button>').join('')
+    +(a.likes.length?'<button class="gchip" data-aopen="likes">'+chk+esc0(a.likes.join(', '))+'</button>':'')
+    +(a.limits.length?'<button class="gchip" data-aopen="limits">'+chk+esc0(a.limits.join(', '))+'</button>':'');
+  return '<div class="wrap gotwrap">'
+    +(a.text?'<div class="said"><div class="t">Вы сказали</div><p>'+esc0(a.text)+'</p></div>':'')
+    +'<h1 class="goth">'+(a.text?'Правильно поняли?':'Расскажите про поездку')+'</h1>'
+    +'<p class="gothint">'+(a.text?'Нажмите на любое, чтобы поправить':'Спросим только то, без чего маршрут не собрать')+'</p>'
+    +(chips?'<p class="glbl">Мы это поняли так</p><div class="gots">'+chips+'</div>':'')
+    +(a.extras.length?'<p class="glbl">Услышали ещё — учтём при сборке</p><div class="gots">'
+      +a.extras.map(x=>'<span class="gchip">'+chk+esc0(x)+'</span>').join('')+'</div>':'')
+    +'<div class="qs">'
+      +(miss.length?'<p class="qtitle">'+(miss.length===1?'Остался один вопрос':'Осталось '+miss.length+' '+plural(miss.length,'вопрос','вопроса','вопросов'))+' — без них маршрут не посчитать</p>':'')
+      +miss.map(f=>qBlock(f,a)).join('')
+      +'<button class="gogo" data-abuild="1">Собрать маршрут</button>'
+      +'<button class="gomore" data-amore="1">едете с собакой, с коляской или не любите высоту?<br><u>'+(_askMore?'свернуть':'ответить ещё на пару вопросов')+'</u></button>'
+      +(_askMore?'<div class="qf" style="margin-top:14px"><label>Что важно</label><div class="qopts">'
+        +['природа','еда','города','виды и фото','активности'].map(x=>'<button class="qo'+(a.likes.indexOf(x)>=0?' on':'')+'" data-alike="'+x+'">'+x+'</button>').join('')
+        +'</div></div><div class="qf"><label>Ограничения</label><div class="qopts">'
+        +['едем с собакой','коляска','боязнь высоты','еда: ограничения','не водим ночью'].map(x=>'<button class="qo'+(a.limits.indexOf(x)>=0?' on':'')+'" data-alim="'+x+'">'+x+'</button>').join('')
+        +'</div></div>':'')
+    +'</div>'
+    +'<button class="gback" data-aback="1">← назад</button>'
+    +'</div>';
+}
+function renderLand(){
+  const el=document.getElementById('land');if(!el)return;
+  el.innerHTML=ASK?gotHTML():landHTML();
+  const ta=document.getElementById('askText');if(ta)ta.focus();
+  wireMic();
+}
+function showLand(ask){
+  ASK=ask||null;_askOpen={};_askMore=false;
+  _atLand=true;_atHome=false;renderUnits();
+  const h=document.getElementById('home');if(h)h.style.display='none';
+  document.body.classList.remove('athome');document.body.classList.add('atland');
+  const el=document.getElementById('land');if(el)el.style.display='';
+  renderLand();window.scrollTo(0,0);
+}
+function hideLand(){
+  _atLand=false;ASK=null;
+  const el=document.getElementById('land');if(el)el.style.display='none';
+  document.body.classList.remove('atland');
+}
+/* Микрофон — встроенное распознавание браузера: бесплатно, ничего никуда не шлём.
+   Не поддерживается (например, Firefox) — кнопку просто не показываем. */
+function wireMic(){
+  const b=document.getElementById('micBtn'),ta=document.getElementById('askText');
+  if(!b||!ta)return;
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){b.style.display='none';return;}
+  let rec=null;
+  b.onclick=()=>{
+    if(rec){rec.stop();return;}
+    rec=new SR();rec.lang='ru-RU';rec.interimResults=true;rec.continuous=true;
+    const base=ta.value?ta.value+' ':'';
+    rec.onresult=e=>{let s='';for(let i=e.resultIndex;i<e.results.length;i++)s+=e.results[i][0].transcript;ta.value=base+s;};
+    rec.onend=()=>{rec=null;b.classList.remove('rec');};
+    rec.onerror=()=>{rec=null;b.classList.remove('rec');};
+    b.classList.add('rec');rec.start();
+  };
+}
+/* раскладываем дни по городам: пропорционально нынешним ночам, метод наибольших остатков */
+function spreadNights(total){
+  const cur=BASES.map(b=>b.nights||1),sum=cur.reduce((a,b)=>a+b,0);
+  const n=BASES.length;
+  if(total<=0)return BASES.map(()=>0);
+  if(total<n){return BASES.map((b,i)=>i<total?1:0);}   /* городов больше, чем ночей */
+  const raw=cur.map(v=>v/sum*total),out=raw.map(v=>Math.max(1,Math.floor(v)));
+  let left=total-out.reduce((a,b)=>a+b,0);
+  const order=raw.map((v,i)=>[v-Math.floor(v),i]).sort((x,y)=>y[0]-x[0]);
+  for(let k=0;left>0;k++,left--)out[order[k%n][1]]++;
+  while(left<0){const i=out.indexOf(Math.max(...out));out[i]--;left++;}
+  return out;
+}
+function askStart(a){
+  if(a.month==null)return startIso;
+  const now=new Date(),y=now.getFullYear()+((a.month<now.getMonth())?1:0);
+  return y+'-'+String(a.month+1).padStart(2,'0')+'-01';
+}
+function buildFromAsk(){
+  const a=ASK;if(!a)return;
+  const fs=askFields(a);
+  const miss=fs.filter(f=>!f.val);
+  if(miss.length){_askOpen[miss[0].k]=1;renderLand();return;}
+  const title=(CATALOG.find(c=>c.k===a.where)||{}).nm.split(',')[0]+' · '+monthNm(a.month);
+  newTripFromCurrent(title);
+  const nights=spreadNights(a.days-1);
+  BASES.forEach((b,i)=>{applyNights(i,nights[i]);});
+  startIso=askStart(a);
+  PEOPLE=Math.max(1,(a.adults||2)+(a.kids||0));
+  savePlan();
+  try{localStorage.setItem(AKEY,JSON.stringify(a));}catch(e){}
+  reinit();hideLand();hideHome();rerenderTrip();window.scrollTo(0,0);
+  toast('<b>Маршрут собран: '+esc0(title)+'</b><i>дни разложены по городам — меняйте что угодно, всё пересчитается</i>',null,null);
+}
+document.addEventListener('click',e=>{
+  const t=e.target.closest('button');if(!t)return;
+  if(t.dataset.askgo!==undefined){const v=(document.getElementById('askText')||{}).value||'';showLand(parseAsk(v));}
+  if(t.dataset.asktry){const ta=document.getElementById('askText');if(ta){ta.value=t.dataset.asktry;ta.focus();}}
+  if(t.dataset.askform!==undefined){showLand(parseAsk(''));}
+  if(t.dataset.aopen){_askOpen[t.dataset.aopen]=1;renderLand();}
+  if(t.dataset.amore!==undefined){_askMore=!_askMore;renderLand();}
+  if(t.dataset.aback!==undefined){showLand(null);}
+  if(t.dataset.abuild!==undefined){buildFromAsk();}
+  if(t.dataset.alike){const i=ASK.likes.indexOf(t.dataset.alike);i<0?ASK.likes.push(t.dataset.alike):ASK.likes.splice(i,1);renderLand();}
+  if(t.dataset.alim){const i=ASK.limits.indexOf(t.dataset.alim);i<0?ASK.limits.push(t.dataset.alim):ASK.limits.splice(i,1);renderLand();}
+  if(t.dataset.aset&&ASK){
+    const k=t.dataset.aset,v=t.dataset.av;
+    if(k==='where'){ASK.where=v;ASK.whereNm=(CATALOG.find(c=>c.k===v)||{}).nm||'';}
+    else if(k==='month')ASK.month=+v;
+    else if(k==='days')ASK.days=+v;
+    else if(k==='who'){if(v[0]==='a')ASK.adults=+v.slice(1);else ASK.kids=+v.slice(1);}
+    else if(k==='pace')ASK.pace=v;
+    else if(k==='drive')ASK.drive=v;
+    delete _askOpen[k];renderLand();
+  }
+});
+document.addEventListener('input',e=>{
+  if(e.target&&e.target.id==='aDays'&&ASK){const v=parseInt(e.target.value,10);if(v>0&&v<60)ASK.days=v;}
+});
+
 /* ================= СТАРТ ================= */
 loadPlan();
 loadHRates();   /* только здесь: BKEY к этому моменту уже объявлен */
@@ -4448,6 +4739,7 @@ function renameSheet(id){
 const ACCITEMS=[
   {k:'gohome',ic:'layers',t:'Мои поездки'},
   {k:'newtrip',ic:'plus',t:'Новая поездка'},
+  {k:'goland',ic:'mountain',t:'Главная страница'},
   {k:'soon',ic:'user',t:'Профиль'},
   {k:'soon',ic:'ticket',t:'Подписка'},
   {k:'soon',ic:'sun',t:'Настройки'},
@@ -4652,8 +4944,10 @@ let openAuth=function(){};
 
 /* Сайт открывается в кабинете: сначала «Мои поездки», внутрь — кнопкой «Открыть».
    Ставим в самом конце: слой поездок объявлен через let/const выше по файлу, и до
-   его выполнения showHome() упал бы на временной мёртвой зоне. */
-showHome();
+   его выполнения showHome() упал бы на временной мёртвой зоне.
+   Главная страница пока по адресу ?land — своих поездок у клиента уже полно,
+   и встречать её лендингом вместо кабинета неправильно. */
+if(/[?&]land\b/.test(location.search))showLand(null);else showHome();
 </script>
 </body>
 </html>
