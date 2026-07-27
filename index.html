@@ -2068,9 +2068,11 @@ function buildCities(){
     const ci=addDays(startIso,before),co=addDays(startIso,before+b.nights);
     const days=daysOfBase(b.id);
     const firstDay=days.length?days[0].disp:1,lastDay=days.length?days[days.length-1].disp:1;
-    /* прибытие: первый город — перелёт; остальные — переезд из предыдущего */
+    /* прибытие: первый город — перелёт; остальные — переезд из предыдущего.
+       У города без ночёвки своего переезда нет: он уже внутри слитого участка соседа. */
     let arrival;
-    if(i===0){
+    if(i>0&&!b.nights){arrival='';}
+    else if(i===0){
       arrival='<div class="cnode"><span class="cdot">'+ic('plane','i-sm')+'</span>'
         +'<div class="clbl"><b>Прибытие</b><span>'+dm(ci)+'</span></div>'
         +'<div class="carr"><div class="crow">'
@@ -2079,14 +2081,21 @@ function buildCities(){
           +'<div class="cpt r"><b>'+shortName(b.name)+'</b><span>'+(AIRPORT[b.id]||'')+' · '+dm(ci)+'</span></div></div>'
           +'<a class="cbook" href="'+flightSearch()+'" target="_blank" rel="noopener">'+ic('plane','i-sm')+' Подобрать рейсы <small>туда+обратно</small></a></div></div>';
     }else{
-      const pv=BASES[i-1];const seg=citySeg(b.id);
+      /* едем из последнего города, где ночевали: если сосед проездом, участки слились */
+      const pi=prevStayIdx(i),pv=BASES[pi],seg=citySeg(b.id);
+      const via=skippedBetween(pi,i),sum=via.length?legSum(pi,i):null;
       arrival='<div class="cnode"><span class="cdot">'+ic(seg==='flight'?'plane':seg==='train'?'train':seg==='ferry'?'ferry':'car','i-sm')+'</span>'
         +'<div class="clbl"><b>Переезд</b><span>'+dm(ci)+'</span></div>'
         +'<div class="carr"><div class="crow">'
           +'<div class="cpt"><b>'+shortName(pv.name)+'</b><span>'+dm(ci)+'</span></div>'
           +'<div class="cmid"><div class="cic">'+ic(seg==='flight'?'plane':seg==='train'?'train':seg==='ferry'?'ferry':'car','i-sm')+'</div></div>'
           +'<div class="cpt r"><b>'+shortName(b.name)+'</b><span>'+dm(ci)+'</span></div></div>'
-          +(seg==='flight'?'<a class="cbook" href="'+skyscanner(AIRPORT[pv.id]||'',AIRPORT[b.id]||'',fmtISO(ci))+'" target="_blank" rel="noopener">'+ic('plane','i-sm')+' Подобрать рейсы</a>':'<div class="ctransf">'+(TRANSFER[b.id]?('<b>'+TRANSFER[b.id].km+' км</b><span>'+TRANSFER[b.id].clean+' чистого хода</span><span>'+TRANSFER[b.id].stops+' с остановками</span>'):'на машине')+'</div>')+'</div></div>';
+          +(seg==='flight'
+            ? '<a class="cbook" href="'+skyscanner(AIRPORT[pv.id]||'',AIRPORT[b.id]||'',fmtISO(ci))+'" target="_blank" rel="noopener">'+ic('plane','i-sm')+' Подобрать рейсы</a>'
+            : '<div class="ctransf">'+(sum
+                ? ('<b>'+sum.km+' км</b><span>'+(sum.h?('~'+sum.h+' ч чистого хода'):'на машине')+'</span><span>через '+via.map(x=>shortName(x.name)).join(', ')+'</span>')
+                : (TRANSFER[b.id]?('<b>'+TRANSFER[b.id].km+' км</b><span>'+TRANSFER[b.id].clean+' чистого хода</span><span>'+TRANSFER[b.id].stops+' с остановками</span>'):'на машине'))+'</div>')
+          +'</div></div>';
     }
     /* аренда машины — берётся в первом городе, едет всю поездку до последнего */
     let carHire='';
@@ -2574,6 +2583,30 @@ function pinsOf(bid){
   return {first:t[0]||null,last:(isLast&&t.length>1)?t[t.length-1]:null};
 }
 function hiddenOf(bid){return Array.isArray(HIDDEN[bid])?HIDDEN[bid]:[];}
+/* Откуда на самом деле едем в город i: из ближайшего предыдущего города, где НОЧУЕМ.
+   Если Урею поставили 0 ночей, в Аспен мы попадаем из Дуранго, а не «из Урея». */
+function prevStayIdx(i){for(let j=i-1;j>=0;j--)if(BASES[j].nights>0)return j;return i>0?0:-1;}
+/* города между ними, которые проезжаем без ночёвки */
+function skippedBetween(from,to){const r=[];for(let j=from+1;j<to;j++)if(!BASES[j].nights)r.push(BASES[j]);return r;}
+/* суммарный перегон: складываем участки, которые слились в один */
+function legSum(from,to){
+  let km=0,h=0,ok=true;
+  for(let j=from+1;j<=to;j++){const t=TRANSFER[BASES[j].id];
+    if(!t){ok=false;continue;}
+    km+=t.km||0;const m=String(t.clean||'').match(/[\d.,]+/);h+=m?parseFloat(m[0].replace(',','.')):0;}
+  return {km:km,h:h,ok:ok};
+}
+/* «Урей → Аспен» превращаем в «Дуранго → Аспен», когда Урей проездом */
+function legTitle(e){
+  const raw=e.tpl?e.tpl.title:'';
+  if(!raw||raw.indexOf('→')<0)return raw;
+  const bi=BASES.findIndex(x=>x.id===e.base);
+  if(bi<1)return raw;
+  const pins=pinsOf(e.base);if(!pins.first||pins.first.n!==e.tid)return raw;
+  const pi=prevStayIdx(bi);if(pi===bi-1)return raw;      /* никого не пропустили */
+  const tail=raw.slice(raw.indexOf('→')+1).trim();  /* «Аспен (Чёрный каньон)» */
+  return shortName(BASES[pi].name)+' → '+tail;
+}
 function buildSchedule(){
   SCHED=[];STASH={};SCHED_BY={};
   BASES.forEach(b=>{
@@ -2633,7 +2666,7 @@ function tidOf(v){return (typeof v==='string'&&v!==''&&!isNaN(+v))?+v:v;}
 function dispOf(tid){const e=SCHED_BY[tid];return e?e.disp:0;}
 function daysOfBase(bid){return SCHED.filter(e=>e.base===bid);}
 function baseById(id){return BASES.find(b=>b.id===id)||BASES[0];}
-function dayTitle(e){return e.tpl?e.tpl.title:'Свободный день · '+shortName(baseById(e.base).name);}
+function dayTitle(e){return e.tpl?legTitle(e):'Свободный день · '+shortName(baseById(e.base).name);}
 /* места отложенных дней + убранные руками — лежат в городе и ждут свободного дня */
 function stashPlaces(bid){const t=(STASH[bid]||[]).map(x=>x.n);
   return P.filter(p=>p.cat!=='food'&&(t.indexOf(p.d)>=0||p.d===stashTid(bid)));}
