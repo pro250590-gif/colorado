@@ -2377,9 +2377,10 @@ function buildCities(){
     return '<section class="city" id="city-'+b.id+'"><div class="wrap">'
       /* строка над названием: было «База 1 из 4 · 7 авг–10 авг · днём +32 °C, ночью
          +14 °C» — 54 знака вразрядку, уезжало на вторую строку. Сжали: «база» лишняя,
-         даты одним куском, погода значками. «≈» — потому что это не прогноз;
+         даты одним куском, погода значками. Слово «База» клиент вернула — с ним
+         строка всё равно помещается. «≈» — потому что это не прогноз;
          по тапу на градусы объясняем, откуда цифры (просьба клиента). */
-      +'<div class="chead"><span class="ckick">'+(i+1)+' из '+BASES.length+' · '+dmRange(ci,co)
+      +'<div class="chead"><span class="ckick">База '+(i+1)+' из '+BASES.length+' · '+dmRange(ci,co)
         +(w?(' · <button class="wtemp" data-weather="'+b.id+'" title="откуда эти градусы">'
              +ic('sun','i-w wsun')+' ≈'+fmtTempShort(w.d)+' '+ic('moon','i-w wmoon')+' ≈'+fmtTempShort(w.n)+'</button>'):'')+'</span>'
       +'<h2>'+shortName(b.name)+'</h2><p>'+convDist(b.desc)+'</p>'+nb+'</div>'
@@ -3470,6 +3471,9 @@ function rerenderTrip(){
   renderUnits();renderStays();buildRoute();buildDays();buildCities();buildFilters();buildElev();
   recomputeDates();refreshBudgetCounts();syncChecks();updateMarkerStyles();applyFilter();updateDirLinks();
   uiRestore(snap);
+  /* сменили дату старта или число ночей — даты городов другие, а погода привязана
+     к числам. Догружаем недостающее; если всё уже есть, функция сразу выходит. */
+  loadWeather();
 }
 function loadPlan(){try{const s=JSON.parse(localStorage.getItem(PKEY));if(s){if(s.start)startIso=s.start;if(typeof s.people==='number'&&s.people>=1)PEOPLE=s.people;/* >=0, а не >=1: ноль ночей — законное состояние, и с прежней проверкой
    сохранённый ноль отбрасывался, а город возвращал себе дни из данных */
@@ -3962,9 +3966,12 @@ let WEATHER={};
 try{WEATHER=JSON.parse(localStorage.getItem(WKEY))||{};}catch(e){}
 function wKeyFor(b,ci,co){return b.id+'|'+fmtISO(ci).slice(5)+'|'+fmtISO(co).slice(5);}
 function weatherOf(bid,ci,co){const b=baseById(bid);return b?WEATHER[wKeyFor(b,ci,co)]:null;}
-let _wDone=false;
+/* Флаг «сейчас качаем», а не «уже качали»: клиент вправе переставить поездку
+   с августа на ноябрь, и тогда нужны другие числа. Снимаем его, когда очередь
+   опустела, — иначе после первой загрузки погода больше никогда не обновится. */
+let _wBusy=false;
 function loadWeather(){
-  if(_wDone)return;_wDone=true;
+  if(_wBusy)return;
   const need=[];
   BASES.forEach((b,i)=>{
     if(!b.nights)return;
@@ -3973,9 +3980,10 @@ function loadWeather(){
     if(!WEATHER[k])need.push({b:b,k:k,ci:ci,co:co});
   });
   if(!need.length)return;
+  _wBusy=true;
   let i=0,any=false;
   const step=()=>{
-    if(i>=need.length){if(any){try{localStorage.setItem(WKEY,JSON.stringify(WEATHER));}catch(e){}rerenderTrip();}return;}
+    if(i>=need.length){_wBusy=false;if(any){try{localStorage.setItem(WKEY,JSON.stringify(WEATHER));}catch(e){}rerenderTrip();}return;}
     /* Одним запросом берём сплошной кусок в пять лет и сами оставляем только нужные
        числа: пять отдельных запросов на каждый город — это два десятка обращений. */
     const n=need[i++],y1=(new Date()).getFullYear()-1,y0=y1-(WYEARS-1);
