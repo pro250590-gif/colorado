@@ -2646,7 +2646,20 @@ function isStay(p){return !!(p&&p.custom&&p.kind==='stay'&&p.d===homeTid(p.base)
 function applyMoves(){
   P.forEach(p=>{if(p._d0===undefined)p._d0=p.d;p.d=(MOVED[p.id]!==undefined)?MOVED[p.id]:p._d0;});
 }
+/* Свои места синхронизируем в ОБЕ стороны. Раньше мы только добавляли, поэтому место,
+   удалённое на телефоне, на компьютере оставалось в ленте — просто с выключенным
+   тумблером (его id уходил из picked). Теперь то, чего нет в CUSTOM, убираем из P. */
 function mergeCustom(){
+  const live={};CUSTOM.forEach(c=>{live[c.id]=1;});
+  for(let i=P.length-1;i>=0;i--){
+    const p=P[i];if(!p.custom||live[p.id])continue;
+    P.splice(i,1);delete MOVED[p.id];
+    if(typeof picked!=='undefined'&&picked&&picked.delete)picked.delete(p.id);
+    if(typeof markers!=='undefined'&&markers[p.id]){
+      try{if(map&&map.hasLayer(markers[p.id]))map.removeLayer(markers[p.id]);}catch(e){}
+      delete markers[p.id];
+    }
+  }
   CUSTOM.forEach(c=>{if(!P.some(p=>p.id===c.id))P.push(c);});
 }
 function placeById(id){return P.find(p=>p.id===id);}
