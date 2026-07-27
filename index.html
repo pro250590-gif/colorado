@@ -2908,8 +2908,8 @@ function addStaySheet(bid,id){
     +'<div class="dsform"><input id="stNm" placeholder="Название или ссылка на жильё" autocomplete="off" value="'+esc(p?(p.q||p.nm):'')+'">'
       /* значок валюты стоит в самом поле: иначе видно голое число и непонятно, чего оно */
       +'<div class="dstwo">'
-        +'<label><span>Цена за ночь</span><span class="dspill"><b>'+curSym()+'</b><input id="stRate" placeholder="0" inputmode="decimal" autocomplete="off" value="'+esc(rate)+'"></span></label>'
-        +'<label><span>Всего за '+b.nights+' '+nights(b.nights)+'</span><span class="dspill"><b>'+curSym()+'</b><input id="stTot" placeholder="0" inputmode="decimal" autocomplete="off" value="'+esc(rate?Math.round(rate*b.nights):'')+'"></span></label>'
+        +'<label><span>Цена за ночь</span><span class="dspill"><b>'+curSym()+'</b><input id="stRate" placeholder="0" inputmode="decimal" autocomplete="off" value="'+esc(fmtIn(rate))+'"></span></label>'
+        +'<label><span>Всего за '+b.nights+' '+nights(b.nights)+'</span><span class="dspill"><b>'+curSym()+'</b><input id="stTot" placeholder="0" inputmode="decimal" autocomplete="off" value="'+esc(rate?fmtIn(Math.round(rate*b.nights)):'')+'"></span></label>'
       +'</div>'
       +'<button class="dsgo" data-staysave="'+bid+'"'+(id?' data-stayid="'+id+'"':'')+'>Сохранить</button>'
       +'<span class="dshint">Заезд, выезд и число гостей уже известны — их не спрашиваем. Заполни любое из двух полей, второе посчитается. Цена уйдёт в бюджет, в строку жилья этого города.</span></div>'
@@ -2917,8 +2917,8 @@ function addStaySheet(bid,id){
   /* два поля цены считают друг друга — как строки в бюджете */
   const n=b.nights,rt=document.getElementById('stRate'),tt=document.getElementById('stTot');
   if(rt&&tt){
-    rt.addEventListener('input',()=>{const v=parseFloat(rt.value)||0;tt.value=v?Math.round(v*n):'';});
-    tt.addEventListener('input',()=>{const v=parseFloat(tt.value)||0;rt.value=(v&&n)?Math.round(v/n):'';});
+    rt.addEventListener('input',()=>{const v=numIn(rt.value);tt.value=v?fmtIn(Math.round(v*n)):'';});
+    tt.addEventListener('input',()=>{const v=numIn(tt.value);rt.value=(v&&n)?fmtIn(Math.round(v/n)):'';});
   }
 }
 /* сохранить своё жильё: точку ищем как обычно, цену кладём в бюджет города */
@@ -3475,7 +3475,7 @@ function recomputeDates(){
   const pl=document.getElementById('tPlaces');
   if(pl)pl.textContent=P.filter(p=>p.cat!=='food').length;
   const mn=document.getElementById('tMoney');
-  if(mn){let sum=0;document.querySelectorAll('#budgetTbl tbody input.money').forEach(i=>sum+=parseFloat(i.value)||0);
+  if(mn){let sum=0;document.querySelectorAll('#budgetTbl tbody input.money').forEach(i=>sum+=numIn(i.value));
     if(sum>0)mn.textContent=curSym()+Math.round(sum/2).toLocaleString('en-US').replace(/,/g,' ');}
   const nn=document.getElementById('tNights');if(nn)nn.textContent=tn+' '+nights(tn);
   const ns=document.getElementById('tNightsSub');
@@ -3515,8 +3515,8 @@ function renderStays(){
           +'<button class="stepbtn" data-nd="'+i+'" data-dir="1" aria-label="больше ночей">+</button></span>'
       +'</span>'
       +(zero?'':'<span class="hmoney">'
-        +'<span class="hf"><label>за ночь</label><span class="hpill"><input class="hrate" data-hi="'+i+'" inputmode="decimal" value="'+(rate||'')+'" placeholder="0"><span class="hu">'+curSym()+'</span></span></span>'
-        +'<span class="hf"><label>всего</label><span class="hpill"><input class="htot" data-hi="'+i+'" inputmode="decimal" value="'+(tot||'')+'" placeholder="0"><span class="hu">'+curSym()+'</span></span></span>'
+        +'<span class="hf"><label>за ночь</label><span class="hpill"><input class="hrate" data-hi="'+i+'" inputmode="decimal" value="'+(rate?fmtIn(rate):'')+'" placeholder="0"><span class="hu">'+curSym()+'</span></span></span>'
+        +'<span class="hf"><label>всего</label><span class="hpill"><input class="htot" data-hi="'+i+'" inputmode="decimal" value="'+(tot?fmtIn(tot):'')+'" placeholder="0"><span class="hu">'+curSym()+'</span></span></span>'
       +'</span>')
       /* жильё в этом городе уже своё — Booking понижаем в «другие варианты», как в ленте */
       +(zero?'<span class="hpass">Проездом · жильё не ищем</span>'
@@ -3533,7 +3533,7 @@ function renderStays(){
 }
 /* цена за ночь по базе — из памяти бюджета */
 var HRATE={};
-(function(){let s={};try{s=JSON.parse(localStorage.getItem(BKEY))||{};}catch(e){}BASES.forEach((b,i)=>HRATE[i]=parseFloat(s['h'+(i+1)+'rate'])||0);})();
+(function(){let s={};try{s=JSON.parse(localStorage.getItem(BKEY))||{};}catch(e){}BASES.forEach((b,i)=>HRATE[i]=numIn(s['h'+(i+1)+'rate']));})();
 function hotelRate(i){return HRATE[i]||0;}
 function hotelTotal(){return BASES.reduce((a,b,i)=>a+hotelRate(i)*b.nights,0);}
 function saveHotelRate(i,rate){HRATE[i]=rate;let s={};try{s=JSON.parse(localStorage.getItem(BKEY))||{};}catch(e){}
@@ -3541,20 +3541,21 @@ function saveHotelRate(i,rate){HRATE[i]=rate;let s={};try{s=JSON.parse(localStor
 /* два поля: за ночь ↔ всего, второе считается */
 function wireHotelInputs(){
   document.querySelectorAll('#stayList .hrate').forEach(inp=>{
-    inp.addEventListener('input',()=>{const i=+inp.dataset.hi,rate=parseFloat(inp.value)||0;
+    inp.addEventListener('input',()=>{const i=+inp.dataset.hi,rate=numIn(inp.value);
       saveHotelRate(i,rate);
       const t=document.querySelector('.htot[data-hi="'+i+'"]');if(t){t.value=rate?rate*BASES[i].nights:'';sizeInput(t);}
       sizeInput(inp);updateHotelSum();});
     inp.addEventListener('focus',()=>inp.select());
   });
   document.querySelectorAll('#stayList .htot').forEach(inp=>{
-    inp.addEventListener('input',()=>{const i=+inp.dataset.hi,tot=parseFloat(inp.value)||0;
+    inp.addEventListener('input',()=>{const i=+inp.dataset.hi,tot=numIn(inp.value);
       const rate=BASES[i].nights?Math.round(tot/BASES[i].nights):0;
       saveHotelRate(i,rate);
       const r=document.querySelector('.hrate[data-hi="'+i+'"]');if(r){r.value=rate||'';sizeInput(r);}
       sizeInput(inp);updateHotelSum();});
     inp.addEventListener('focus',()=>inp.select());
   });
+  wireNumFields(document.getElementById('stayList'));
   document.querySelectorAll('#stayList .hf input').forEach(sizeInput);
 }
 function updateHotelSum(){
@@ -3636,7 +3637,7 @@ document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)r
   if(t.dataset.staysave){
     const v=((document.getElementById('stNm')||{}).value||'').trim();
     if(!v){const i=document.getElementById('stNm');if(i)i.focus();return;}
-    const rate=Math.round(parseFloat((document.getElementById('stRate')||{}).value)||0);
+    const rate=Math.round(numIn((document.getElementById('stRate')||{}).value));
     t.textContent='Ищем на карте…';t.disabled=true;
     closeDaySheet();saveStay(t.dataset.staysave,t.dataset.stayid||null,v,rate);
   }
@@ -3753,7 +3754,7 @@ function fetchRate(code,cb){
 function convertMoney(k){
   if(!(k>0)||k===1)return;
   let s={};try{s=JSON.parse(localStorage.getItem(BKEY))||{};}catch(e){}
-  Object.keys(s).forEach(key=>{const v=parseFloat(s[key]);if(!isNaN(v))s[key]=Math.round(v*k);});
+  Object.keys(s).forEach(key=>{const v=numIn(s[key]);if(v)s[key]=Math.round(v*k);});
   try{localStorage.setItem(BKEY,JSON.stringify(s));}catch(e){}
   BASES.forEach((b,i)=>{if(HRATE[i])HRATE[i]=Math.round(HRATE[i]*k);});
   const seen=new Set();
@@ -3941,7 +3942,30 @@ function loadWeather(){
 }
 function setTemp(v){TEMP=v;savePlan();renderUnits();rerenderTrip();}
 function setDist(v){DIST=v;savePlan();renderUnits();rerenderTrip();}
-function money(n){return curSym()+Math.round(n).toLocaleString('en-US').replace(/,/g,' ');}
+/* Числа в полях — с разделителем разрядов: «85 836» читается сразу, а «85836»
+   приходится разбирать глазами (просьба клиента). Разделитель — узкий неразрывный
+   пробел, чтобы число не переносилось. Разбираем обратно, вычищая любые пробелы. */
+/* U+202F (\u0443\u0437\u043a\u0438\u0439 \u043d\u0435\u0440\u0430\u0437\u0440\u044b\u0432\u043d\u044b\u0439) \u043d\u0430\u0448\u0438 \u0448\u0440\u0438\u0444\u0442\u044b \u043d\u0435 \u0440\u0438\u0441\u0443\u044e\u0442: \u0432 \u0442\u0435\u0441\u0442\u0430\u0445 \u0440\u0430\u0437\u0434\u0435\u043b\u0438\u0442\u0435\u043b\u044c \u0431\u044b\u043b,
+   \u0430 \u043d\u0430 \u044d\u043a\u0440\u0430\u043d\u0435 \u0447\u0438\u0441\u043b\u043e \u0432\u044b\u0433\u043b\u044f\u0434\u0435\u043b\u043e \u0441\u043b\u0438\u0442\u043d\u043e. \u0411\u0435\u0440\u0451\u043c \u043e\u0431\u044b\u0447\u043d\u044b\u0439 \u043d\u0435\u0440\u0430\u0437\u0440\u044b\u0432\u043d\u044b\u0439 U+00A0 \u2014 \u0432\u0438\u0434\u0435\u043d \u0432\u0435\u0437\u0434\u0435. */
+const NBSP='\u00a0';
+function numIn(v){const x=parseFloat(String(v==null?'':v).replace(/[\s\u00a0\u202f]/g,'').replace(',','.'));return isFinite(x)?x:0;}
+function fmtIn(n){
+  if(n===''||n==null)return '';
+  const x=typeof n==='number'?n:numIn(n);
+  if(!isFinite(x)||x===0)return (n===0||x===0)&&String(n)!==''?'0':'';
+  const neg=x<0,a=Math.abs(x),i=Math.floor(a),f=Math.round((a-i)*100);
+  return (neg?'-':'')+String(i).replace(/\B(?=(\d{3})+(?!\d))/g,NBSP)+(f?(','+String(f).padStart(2,'0').replace(/0$/,'')):'');
+}
+/* поля бюджета и жилья: показываем красиво, читаем без пробелов */
+function wireNumFields(root){
+  (root||document).querySelectorAll('input.money,input.btotal,input.hrate,input.htot').forEach(inp=>{
+    if(inp.dataset.numwired)return;inp.dataset.numwired='1';
+    inp.value=fmtIn(inp.value);
+    inp.addEventListener('blur',()=>{inp.value=fmtIn(inp.value);if(typeof sizeInput==='function')sizeInput(inp);});
+  });
+}
+/* пробел после знака: «₽ 85 836» читается лучше, чем «₽85 836» */
+function money(n){return curSym()+NBSP+fmtIn(Math.round(n));}
 /* строки жилья: одна на базу, ночи берутся из планировщика */
 /* жильё переехало в раздел «Ночёвки» — здесь ничего не строим */
 function buildBudgetStay(){}
@@ -3969,13 +3993,13 @@ function buildBudget(){
         const totVal=Math.round((parseFloat(rate)||0)*itemQty(per,days));
         return '<div class="brow3" data-per="'+per+'">'
           +'<div class="b3l"><b class="b3nm">'+it.nm+'</b><span class="b3desc">'+desc+'</span></div>'
-          +'<span class="b3box b3rate"><input class="money perunit" data-k="'+it.k+'rate" inputmode="decimal" value="'+rate+'"><span class="b3u">'+unit+'</span></span>'
-          +'<span class="b3box b3total"><input class="btotal" data-k="'+it.k+'" inputmode="decimal" value="'+totVal+'"><span class="b3u">'+curSym()+'</span></span></div>';
+          +'<span class="b3box b3rate"><input class="money perunit" data-k="'+it.k+'rate" inputmode="decimal" value="'+fmtIn(rate)+'"><span class="b3u">'+unit+'</span></span>'
+          +'<span class="b3box b3total"><input class="btotal" data-k="'+it.k+'" inputmode="decimal" value="'+fmtIn(totVal)+'"><span class="b3u">'+curSym()+'</span></span></div>';
       }
       const desc=it.sub+(it.ok?' <span class="cf">'+ic('check','i-sm')+'</span>':(it.est?' <span class="est">~</span>':''));
       return '<div class="brow3">'
         +'<div class="b3l"><b class="b3nm">'+it.nm+'</b><span class="b3desc">'+desc+'</span></div>'
-        +'<span class="b3box b3total"><input class="money" data-k="'+it.k+'" inputmode="decimal" value="'+val+'"><span class="b3u">'+curSym()+'</span></span></div>';
+        +'<span class="b3box b3total"><input class="money" data-k="'+it.k+'" inputmode="decimal" value="'+fmtIn(val)+'"><span class="b3u">'+curSym()+'</span></span></div>';
     }).join('');
     return '<div class="bgroup">'
       +'<div class="bghead"><span class="bgmed" style="background:linear-gradient(150deg,'+gr.c+','+gr.c2+')">'+ic(gr.ic)+'</span>'
@@ -3989,13 +4013,14 @@ function buildBudget(){
     const fixed=row.querySelector('input.money:not(.perunit)');
     if(per&&rate&&tot){
       /* двусторонний пересчёт: за ед. ↔ всего */
-      rate.addEventListener('input',()=>{const q=itemQty(per,totalNights()+1);tot.value=Math.round((parseFloat(rate.value)||0)*q);sizeInput(rate);sizeInput(tot);sumBudget();});
-      tot.addEventListener('input',()=>{const q=itemQty(per,totalNights()+1);rate.value=q?Math.round(((parseFloat(tot.value)||0)/q)*100)/100:0;sizeInput(rate);sizeInput(tot);sumBudget();});
+      rate.addEventListener('input',()=>{const q=itemQty(per,totalNights()+1);tot.value=fmtIn(Math.round(numIn(rate.value)*q));sizeInput(rate);sizeInput(tot);sumBudget();});
+      tot.addEventListener('input',()=>{const q=itemQty(per,totalNights()+1);rate.value=fmtIn(q?Math.round((numIn(tot.value)/q)*100)/100:0);sizeInput(rate);sizeInput(tot);sumBudget();});
     }else if(fixed){
       fixed.addEventListener('input',()=>{sizeInput(fixed);sumBudget();});
     }
     row.querySelectorAll('input').forEach(i=>i.addEventListener('focus',()=>i.select()));
   });
+  wireNumFields(host);
   calcBudget();
   sizeMoneyInputs();
 }
@@ -4023,7 +4048,7 @@ function calcBudget(){
   const days=totalNights()+1;
   document.querySelectorAll('#budgetBox .brow3[data-per]').forEach(row=>{
     const rate=row.querySelector('input.perunit'),tot=row.querySelector('input.btotal');
-    if(rate&&tot)tot.value=Math.round((parseFloat(rate.value)||0)*itemQty(row.dataset.per,days));
+    if(rate&&tot)tot.value=fmtIn(Math.round(numIn(rate.value)*itemQty(row.dataset.per,days)));
     const dd=row.querySelector('[data-days]');if(dd)dd.textContent=days;
     const pp=row.querySelector('[data-ppl]');if(pp)pp.textContent=PEOPLE;
   });
@@ -4036,15 +4061,17 @@ function sumBudget(){
     let gsum=0;
     gr.items.forEach(it=>{
       const sel=it.per?'input.btotal[data-k="'+it.k+'"]':'#budgetBox input.money[data-k="'+it.k+'"]';
-      const f=document.querySelector(sel);gsum+=parseFloat(f&&f.value)||0;
+      const f=document.querySelector(sel);gsum+=numIn(f&&f.value);
     });
     const gel=document.querySelector('[data-gsum="'+gr.g+'"]');if(gel)gel.textContent=money(gsum);
     sum+=gsum;
   });
   sum+=(typeof hotelTotal==='function'?hotelTotal():0);
   const o={};
-  document.querySelectorAll('#budgetBox input.perunit').forEach(i=>o[i.dataset.k]=i.value);
-  document.querySelectorAll('#budgetBox input.money:not(.perunit)').forEach(i=>o[i.dataset.k]=i.value);
+  /* сохраняем ЧИСЛА, а не показанные строки: «10 400» через parseFloat читается
+     как 10, и пересчёт валюты молча превращал бюджет в труху */
+  document.querySelectorAll('#budgetBox input.perunit').forEach(i=>o[i.dataset.k]=numIn(i.value));
+  document.querySelectorAll('#budgetBox input.money:not(.perunit)').forEach(i=>o[i.dataset.k]=numIn(i.value));
   BASES.forEach((b,i)=>o['h'+(i+1)+'rate']=HRATE[i]||0);
   try{localStorage.setItem(BKEY,JSON.stringify(o));}catch(e){}
   document.getElementById('sumAll').textContent=money(sum);
@@ -4432,7 +4459,7 @@ function reinit(){try{
   loadPlan();
   try{picked=new Set(JSON.parse(localStorage.getItem(KEY))||P.map(p=>p.id));}catch(e){picked=new Set(P.map(p=>p.id));}
   try{const s=JSON.parse(localStorage.getItem(FKEY));if(Array.isArray(s))foodPicked=new Set(s);}catch(e){}
-  try{const s=JSON.parse(localStorage.getItem(BKEY))||{};BASES.forEach((b,i)=>HRATE[i]=parseFloat(s['h'+(i+1)+'rate'])||0);}catch(e){}
+  try{const s=JSON.parse(localStorage.getItem(BKEY))||{};BASES.forEach((b,i)=>HRATE[i]=numIn(s['h'+(i+1)+'rate']));}catch(e){}
   const sd=document.getElementById('startDate');if(sd)sd.value=startIso;
   const pn=document.getElementById('pNum');if(pn)pn.textContent=PEOPLE;
   syncCurBtn();
