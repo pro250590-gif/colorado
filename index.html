@@ -3569,7 +3569,21 @@ function renderStays(){
 }
 /* цена за ночь по базе — из памяти бюджета */
 var HRATE={};
-(function(){let s={};try{s=JSON.parse(localStorage.getItem(BKEY))||{};}catch(e){}BASES.forEach((b,i)=>HRATE[i]=numIn(s['h'+(i+1)+'rate']));})();
+/* Читаем ставки функцией, а не тут же на месте. Раньше здесь стоял IIFE, а BKEY
+   объявлен ниже по файлу: обращение к нему из временной мёртвой зоны падало,
+   ошибку глотал catch — и HRATE на КАЖДОЙ загрузке получался нулевым. Цена жилья
+   держалась до первой перезагрузки, а потом sumBudget записывал в бюджет ноль.
+   Клиент это и увидела: в ленте «$ 319 за ночь», в бюджете — пусто. */
+function loadHRates(){
+  let s={};try{s=JSON.parse(localStorage.getItem(BKEY))||{};}catch(e){}
+  BASES.forEach((b,i)=>HRATE[i]=numIn(s['h'+(i+1)+'rate']));
+  /* у кого ставку уже обнулило, она уцелела в карточке своего жилья — забираем оттуда */
+  BASES.forEach((b,i)=>{
+    if(HRATE[i])return;
+    const h=stayPlaces(b.id).find(p=>numIn(p.rate)>0);
+    if(h)saveHotelRate(i,numIn(h.rate));
+  });
+}
 function hotelRate(i){return HRATE[i]||0;}
 function hotelTotal(){return BASES.reduce((a,b,i)=>a+hotelRate(i)*b.nights,0);}
 function saveHotelRate(i,rate){HRATE[i]=rate;let s={};try{s=JSON.parse(localStorage.getItem(BKEY))||{};}catch(e){}
@@ -4176,6 +4190,7 @@ function wireBudget(){
 
 /* ================= СТАРТ ================= */
 loadPlan();
+loadHRates();   /* только здесь: BKEY к этому моменту уже объявлен */
 ['tileIc1|clock','tileIc2|pin','tileIc3|money','tileIc4|tree'].forEach(p=>{const [id,ico]=p.split('|');const el=document.getElementById(id);if(el)el.innerHTML=ic(ico);});
 const scMed=document.getElementById('scMedIcon');if(scMed)scMed.innerHTML=ic('cal','i-sm');
 const sd0=document.getElementById('startDate');if(sd0){sd0.value=startIso;sd0.addEventListener('change',e=>{startIso=e.target.value||START;savePlan();rerenderTrip();});}
@@ -4530,7 +4545,7 @@ function reinit(){try{
   loadPlan();
   try{picked=new Set(JSON.parse(localStorage.getItem(KEY))||P.map(p=>p.id));}catch(e){picked=new Set(P.map(p=>p.id));}
   try{const s=JSON.parse(localStorage.getItem(FKEY));if(Array.isArray(s))foodPicked=new Set(s);}catch(e){}
-  try{const s=JSON.parse(localStorage.getItem(BKEY))||{};BASES.forEach((b,i)=>HRATE[i]=numIn(s['h'+(i+1)+'rate']));}catch(e){}
+  loadHRates();
   const sd=document.getElementById('startDate');if(sd)sd.value=startIso;
   const pn=document.getElementById('pNum');if(pn)pn.textContent=PEOPLE;
   syncCurBtn();
