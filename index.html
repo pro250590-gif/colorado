@@ -141,30 +141,16 @@ body.athome{padding-right:0!important}
   .accwho b{font-size:14px}
   .accwho span{font-size:11.5px}
 }
-/* ── СВОДКА ЕДИНИЦ В ШАПКЕ (вариант A) ── */
-.usum{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 10px;border-radius:16px;cursor:pointer;
-  background:#fff;border:1.5px solid #e6e3ee;color:#2b2a38!important;flex:none;
-  font:800 12px/1 "Plus Jakarta Sans",sans-serif;-webkit-appearance:none;appearance:none}
-.usum:active{transform:scale(.97)}
-.usum .us-c{font:800 13px/1 "JetBrains Mono",ui-monospace,monospace}
-.usum svg{width:17px;height:17px;border-radius:50%;flex:none}
-.usum .us-d{width:1px;height:14px;background:#e6e3ee;flex:none}
-.usum .us-v{font-style:normal;font-size:9px;color:#5b3fc4}
-/* лист настроек: у каждой строки есть подпись, а не голый значок */
-.uset{background:#fff;border:1px solid var(--line2);border-radius:16px;padding:2px 12px;margin-bottom:11px}
-.urow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 2px;border-top:1px solid #f2f3f8}
-.urow:first-child{border-top:0}
-.ul{font:700 12.5px/1.2 "Inter",sans-serif;color:var(--ink)}
-.ul small{display:block;font:500 10.5px/1.3 "Inter",sans-serif;color:var(--mut);margin-top:3px;font-weight:500}
-.upick{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 11px;border-radius:16px;cursor:pointer;flex:none;
-  background:#f6f4ff;border:1.5px solid rgba(91,63,196,.25);color:#5b3fc4!important;
-  font:800 11.5px/1 "Plus Jakarta Sans",sans-serif;-webkit-appearance:none;appearance:none}
-.upick b{font:800 13px/1 "JetBrains Mono",ui-monospace,monospace}
-.upick svg{width:17px;height:17px;border-radius:50%}
-.utg{display:inline-flex;height:32px;border-radius:16px;background:#f2f2f7;padding:2px;flex:none}
-.utg button{display:inline-flex;align-items:center;padding:0 12px;border:0;border-radius:14px;cursor:pointer;
-  background:none;color:#8b8698!important;font:800 11.5px/1 "Plus Jakarta Sans",sans-serif;-webkit-appearance:none;appearance:none}
-.utg button.on{background:#fff;color:#5b3fc4!important;box-shadow:0 2px 6px -3px rgba(20,32,27,.5)}
+/* ── ЕДИНИЦЫ В ШАПКЕ: четыре отдельные крупные кнопки ──
+   Клиент: «мелкие, неудобно попадать». 40 px — палец попадает уверенно. */
+.units{display:inline-flex;align-items:center;gap:6px;flex:none}
+.ub{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;padding:0;flex:none;
+  border-radius:50%;background:#fff;border:1.5px solid #e6e3ee;cursor:pointer;color:#2b2a38!important;
+  font:800 12.5px/1 "Plus Jakarta Sans",sans-serif;box-shadow:0 3px 9px -6px rgba(20,32,27,.55);
+  -webkit-appearance:none;appearance:none}
+.ub:active{transform:scale(.94)}
+.ub.sym{font:800 17px/1 "JetBrains Mono",ui-monospace,monospace}
+.ub.flag svg{width:26px;height:26px;border-radius:50%;display:block}
 /* выбор языка в листе */
 .langs{display:grid;grid-template-columns:1fr 1fr;gap:7px}
 .langb{display:flex;align-items:center;gap:9px;height:42px;padding:0 11px;border-radius:12px;cursor:pointer;
@@ -175,9 +161,10 @@ body.athome{padding-right:0!important}
 .langb i{margin-left:auto;font-style:normal;font:700 8.5px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:.06em;
   color:#a4a9bb;background:#f4f5fb;border-radius:20px;padding:4px 6px}
 @media(min-width:1000px){
-  .usum{height:40px;padding:0 13px;font-size:13.5px;gap:7px}
-  .usum .us-c{font-size:15px}
-  .usum svg{width:21px;height:21px}
+  .units{gap:8px}
+  .ub{width:48px;height:48px;font-size:14px}
+  .ub.sym{font-size:20px}
+  .ub.flag svg{width:31px;height:31px}
 }
 /* ── МЕНЮ АККАУНТА: выпадает из-под аватара ── */
 #accMenu{position:fixed;inset:0;z-index:4250;opacity:0;visibility:hidden;transition:opacity .15s,visibility .15s}
@@ -1489,7 +1476,7 @@ section h2.big{margin-bottom:4px}
 
 <div class="topbar"><div class="wrap">
   <button class="brand" id="brandHome" title="Мои поездки"><span id="brandName">KOLIBRI</span> <i>Pro</i></button>
-  <button class="usum" id="uSum" aria-label="настройки поездки"></button>
+  <span class="units" id="units"></span>
   <button class="ava" id="avaBtn" aria-label="аккаунт"><span class="avl">Я</span><i class="avc"></i></button>
 </div></div>
 <div id="home" style="display:none"></div>
@@ -1695,6 +1682,11 @@ section h2.big{margin-bottom:4px}
 <script>
 
 /* ================= ИКОНКИ (SVG вместо эмодзи) ================= */
+/* Сборщик ошибок страницы: если что-то падает, оно оказывается здесь, а не только
+   в консоли, которую в headless-проверках не видно. Помогло уже дважды. */
+window.__pageErr=[];
+window.addEventListener('error',e=>{window.__pageErr.push(e.message+' @'+(e.filename||'').split('/').pop()+':'+e.lineno);});
+window.addEventListener('unhandledrejection',e=>{window.__pageErr.push('promise: '+((e.reason&&e.reason.message)||e.reason));});
 const ICONS={
  map:'<path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14M15 6v14"/>',
  list:'<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',
@@ -3618,10 +3610,9 @@ document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)r
     else done();}
   if(t.dataset.shnative){const u=location.href.split('#')[0];
     if(navigator.share)navigator.share({title:tripMeta().title,url:u}).catch(()=>{});}
-  if(t.id==='uSum'){unitsSettingsSheet();}
-  if(t.dataset.usett){setTemp(t.dataset.usett);unitsSettingsSheet();}
-  if(t.dataset.usetd){setDist(t.dataset.usetd);unitsSettingsSheet();}
-  if(t.dataset.lang){LANG=t.dataset.lang;savePlan();renderUnits();unitsSettingsSheet();}
+  if(t.dataset.utemp){setTemp(TEMP==='C'?'F':'C');}
+  if(t.dataset.udist){setDist(DIST==='km'?'mi':'km');}
+  if(t.dataset.lang){LANG=t.dataset.lang;savePlan();renderUnits();closeDaySheet();}
   if(t.dataset.staymenu){stayMenuSheet(t.dataset.staymenu);}
   if(t.dataset.showmap&&window.showOnMap){closeDaySheet();showOnMap(t.dataset.showmap);}
   if(t.dataset.stayadd){addStaySheet(t.dataset.stayadd);}
@@ -3763,7 +3754,6 @@ function setCur(code){
     CUR=code;CRATE=r;applyCurDefaults();
     savePlan();closeDaySheet();
     buildBudget();rerenderTrip();syncCurBtn();
-    unitsSettingsSheet();
     toast('Валюта поездки — '+cur.l+' ('+cur.s+'). Все суммы пересчитаны по курсу.',null,null);
   });
 }
@@ -3845,38 +3835,23 @@ function fmtTemp(c){return (c>0?'+':'')+tempC(c)+' '+tempU();}
 /* ── панель ── */
 /* Сводка в шапке: одна кнопка, на ней все четыре значения. Пять кнопок рядом с
    названием и аватаром в 390 px не помещаются — замерено. */
+/* Четыре отдельные кнопки: валюта и язык открывают своё окно, градусы и расстояние
+   просто переключаются. Поместились, потому что «Поделиться» уехала в саму поездку. */
 function unitsHTML(){
-  return '<b class="us-c">'+curSym()+'</b>'+flagSVG(LANG)
-    +'<i class="us-d"></i><span>'+tempU()+'</span>'
-    +'<i class="us-d"></i><span>'+(DIST==='mi'?'мили':'км')+'</span>'
-    +'<em class="us-v">▾</em>';
+  return '<button class="ub sym" data-uopen="cur" aria-label="валюта">'+curSym()+'</button>'
+    +'<button class="ub flag" data-uopen="lang" aria-label="язык">'+flagSVG(LANG)+'</button>'
+    +'<button class="ub" data-utemp="1" aria-label="градусы">'+tempU()+'</button>'
+    +'<button class="ub" data-udist="1" aria-label="расстояние">'+(DIST==='mi'?'мили':'км')+'</button>';
 }
 /* объявлено здесь, а не в блоке кабинета: renderUnits() зовётся при старте, а
    до объявления let-переменная недоступна — страница падала на «Cannot access _atHome» */
 let _atHome=false;
 function renderUnits(){
-  const el=document.getElementById('uSum');if(!el)return;
+  const el=document.getElementById('units');if(!el)return;
   el.innerHTML=unitsHTML();
   el.style.display=_atHome?'none':'';   /* в кабинете это ни к чему: настройки поездки */
 }
-/* лист со всеми настройками сразу — у каждой есть подпись, а не голый значок */
-function unitsSettingsSheet(){
-  const cur=CURS.find(x=>x.c===CUR)||CURS[0],lg=LANGS.find(x=>x.c===LANG)||LANGS[0];
-  sheet('<div class="dsh"><b>Настройки поездки</b><span>как показывать цены, погоду и расстояния</span></div>'
-    +'<div class="uset">'
-      +'<div class="urow"><span class="ul">Валюта<small>цены и бюджет</small></span>'
-        +'<button class="upick" data-uopen="cur"><b>'+cur.s+'</b>'+cur.l+' ▾</button></div>'
-      +'<div class="urow"><span class="ul">Язык<small>язык сайта</small></span>'
-        +'<button class="upick" data-uopen="lang">'+flagSVG(LANG)+lg.t+' ▾</button></div>'
-      +'<div class="urow"><span class="ul">Градусы<small>погода в городах</small></span>'
-        +'<span class="utg"><button'+(TEMP==='C'?' class="on"':'')+' data-usett="C">°C</button>'
-        +'<button'+(TEMP==='F'?' class="on"':'')+' data-usett="F">°F</button></span></div>'
-      +'<div class="urow"><span class="ul">Расстояние<small>переезды и «до места»</small></span>'
-        +'<span class="utg"><button'+(DIST==='km'?' class="on"':'')+' data-usetd="km">км</button>'
-        +'<button'+(DIST==='mi'?' class="on"':'')+' data-usetd="mi">мили</button></span></div>'
-    +'</div>'
-    +'<button class="dscancel" data-dsclose="1">Закрыть</button>');
-}
+/* окна выбора: у валюты девять вариантов, у языка десять — тут список нужен */
 function unitsSheet(kind){
   if(kind==='cur'){
     sheet('<div class="dsh"><b>В какой валюте считать</b><span>уже введённые суммы пересчитаем по курсу</span></div>'
@@ -3892,9 +3867,9 @@ function unitsSheet(kind){
     +'<button class="dscancel" data-dsclose="1">Отмена</button>');
 }
 /* ── погода: чем переключать градусы ──
-   В данных маршрута температур нет вообще, поэтому переключатель было бы нечем
-   наполнить. Берём настоящие цифры за те же дни ГОД НАЗАД — это честный ответ на
-   вопрос «а сколько там обычно». Open-Meteo: бесплатно, без ключа, CORS открыт.
+   В данных маршрута температур нет вообще, поэтому переключателю нечего было бы
+   менять. Берём настоящие цифры за те же дни ГОД НАЗАД — честный ответ на вопрос
+   «а сколько там обычно». Open-Meteo: бесплатно, без ключа, CORS открыт.
    Ответ кладём в localStorage, чтобы не дёргать сеть при каждом заходе. */
 const WKEY='co-trip-weather';
 let WEATHER={};
@@ -3932,15 +3907,6 @@ function loadWeather(){
       }).catch(()=>setTimeout(step,150));
   };
   setTimeout(step,900);
-}
-function shareSheet(){
-  const nat=(typeof navigator!=='undefined'&&navigator.share);
-  sheet('<div class="dsh"><b>Поделиться</b><span>ссылкой на сайт — маршрут откроется у тебя же</span></div>'
-    +'<div class="dsform">'
-    +(nat?'<button class="dsgo" data-shnative="1">Отправить ссылку</button>':'')
-    +'<button class="'+(nat?'dscancel alt':'dsgo')+'" data-shcopy="1">Скопировать ссылку</button>'
-    +'<span class="dshint">Пока по этой ссылке человек попадёт на сайт, но ТВОЮ поездку не увидит — поездки лежат в твоём аккаунте. Чтобы показать её другому, нужна отдельная ссылка «только посмотреть». Это следующий шаг, и я о нём помню.</span></div>'
-    +'<button class="dscancel" data-dsclose="1">Закрыть</button>');
 }
 function setTemp(v){TEMP=v;savePlan();renderUnits();rerenderTrip();}
 function setDist(v){DIST=v;savePlan();renderUnits();rerenderTrip();}
@@ -4285,17 +4251,16 @@ function homeHTML(){
 }
 function esc0(x){return String(x==null?'':x).replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));}
 function showHome(){
-  _atHome=true;renderUnitsLater();
+  _atHome=true;renderUnits();
   const h=document.getElementById('home');if(h){h.innerHTML=homeHTML();h.style.display='';}
   document.body.classList.add('athome');
   window.scrollTo(0,0);
 }
 function hideHome(){
-  _atHome=false;renderUnitsLater();
+  _atHome=false;renderUnits();
   const h=document.getElementById('home');if(h)h.style.display='none';
   document.body.classList.remove('athome');
 }
-function renderUnitsLater(){setTimeout(()=>{if(typeof renderUnits==='function')renderUnits();},0);}
 function syncHomeUI(){if(_atHome)showHome();}
 /* меню поездки в кабинете */
 function tripMenuSheet(id){
