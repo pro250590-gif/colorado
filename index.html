@@ -1148,10 +1148,11 @@ body{background:linear-gradient(168deg,#eef1f8,#e9edf6 60%,#e6eaf4)!important}
 /* Карточка «где остановиться» — строкой, как и карточка своего жилья: фото
    размером со значок, текст во всю ширину, кнопки пополам от края до края. */
 .cstay.noyet{display:block;padding:15px 16px}
-.noyet .ahead{display:flex;align-items:center;gap:10px}
+.noyet .ahead{display:flex;align-items:center;gap:11px}
 .noyet .cph.sm{width:52px;height:52px;border-radius:15px}
-.noyet .ahead h3{font:600 18.5px/1.15 "Fraunces",Georgia,serif;flex:1;min-width:0}
-.noyet .cmeta{margin-top:10px}
+.noyet .atxt{flex:1;min-width:0}
+.noyet .ahead h3{display:block;font:600 18.5px/1.15 "Fraunces",Georgia,serif}
+.noyet .cmeta{display:block;margin-top:5px}
 .noyet .stacts{margin-top:12px;padding-top:0}
 /* пустая карточка: Booking и «уже есть жильё» одной парой */
 .stacts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:auto;padding-top:11px}
@@ -2334,10 +2335,11 @@ function buildCities(){
            фото уменьшено до значка, город/ночи/даты/гости идут одной строкой,
            а Booking и «Уже есть жильё» — во всю ширину пополам (просьба клиента:
            раньше кнопки жались справа от большого фото и текст на них обрезался) */
+        /* серая строка — под названием, рядом с фотографией, а не под ней (просьба клиента) */
         : '<div class="cstay noyet">'
           +'<div class="ahead"><span class="cph sm"'+(basePhoto(b.id)?' style="background-image:url('+basePhoto(b.id)+')"':'')+'></span>'
-            +'<h3>Где остановиться</h3></div>'
-          +'<div class="cmeta">'+shortName(b.name)+' · '+b.nights+' '+nights(b.nights)+' · '+dmRange(ci,co)+' · на '+guests+'</div>'
+            +'<span class="atxt"><h3>Где остановиться</h3>'
+            +'<span class="cmeta">'+shortName(b.name)+' · '+b.nights+' '+nights(b.nights)+' · '+dmRange(ci,co)+' · '+guests+'</span></span></div>'
           /* обе кнопки — одна пара: один рост, одна ширина, один стиль (просьба клиента) */
           +'<div class="stacts">'
             +'<a class="sbtn pri" href="'+bookHotel(b.q,ci,co,PEOPLE)+'" target="_blank" rel="noopener">Booking</a>'
