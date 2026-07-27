@@ -1066,6 +1066,15 @@ body{background:linear-gradient(168deg,#eef1f8,#e9edf6 60%,#e6eaf4)!important}
 .city{padding:30px 0 4px}
 .chead{padding:0 20px}
 .chead .ckick{font:600 11px/1 "Inter",sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#5b3fc4}
+/* градусы — кнопка: цифры не прогноз, по тапу объясняем, откуда они (просьба клиента).
+   Разрядку тут гасим: со значками и «≈» строка иначе снова уедет на вторую. */
+.chead .wtemp{border:0;background:none;padding:0 0 1px;margin:0;color:inherit;cursor:pointer;
+  font:inherit;letter-spacing:.06em;border-bottom:1px dotted rgba(91,63,196,.5)}
+.chead .wtemp .i-w{width:12px;height:12px;vertical-align:-1.5px}
+.i-w{stroke-width:2.1;display:inline-block;width:13px;height:13px;vertical-align:-2px}
+.wsun{color:#c9a227}.wmoon{color:#7b6fd6}
+.wexp p{font:500 13.5px/1.5 "Inter",sans-serif;color:#4a4f63;margin:0 0 10px}
+.wexp .wsrc{font-size:12.5px;color:#8b8fa3;margin-bottom:2px}
 .chead h2{font:600 38px/1 "Fraunces",Georgia,serif;letter-spacing:-.01em;margin:12px 0 10px}
 .chead p{font:400 14.5px/1.55 "Inter",sans-serif;color:#6a6e82;max-width:360px}
 .ctl{position:relative;padding:16px 18px 8px 56px}
@@ -1718,6 +1727,8 @@ const ICONS={
  map:'<path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14M15 6v14"/>',
  list:'<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',
  bed:'<path d="M2 20v-8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v8M2 16h20M6 10V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v4"/>',
+ sun:'<circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.4M12 19.6V22M4.2 4.2l1.7 1.7M18.1 18.1l1.7 1.7M2 12h2.4M19.6 12H22M4.2 19.8l1.7-1.7M18.1 5.9l1.7-1.7"/>',
+ moon:'<path d="M20 14.5A8.2 8.2 0 0 1 9.5 4 8.3 8.3 0 1 0 20 14.5z"/>',
  food:'<path d="M3.4 2.3v4.5M6.9 2.3v4.5M10.4 2.3v4.5M3.4 6.8a3.5 3.5 0 0 0 7 0M6.9 10.3v11.4"/><path d="M17.9 2.3c-2.1 2.4-3.1 5.2-3.1 7.9 0 2.3 1.2 3.9 3.1 4.3v7.2"/>',
  wallet:'<path d="M19 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0 0 4h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5"/><path d="M17.5 13h.01"/>',
  mountain:'<path d="m8 3 4.5 8.5L17 7l5 14H2L8 3Z"/>',
@@ -2364,8 +2375,13 @@ function buildCities(){
       +'</ul><div class="cmoren">Тап «в день» — место встанет в выбранный день. Вернёшь ночь — вернётся и убранный день.</div></div></details></div>'):'';
 
     return '<section class="city" id="city-'+b.id+'"><div class="wrap">'
-      +'<div class="chead"><span class="ckick">База '+(i+1)+' из '+BASES.length+' · '+dm(ci)+'–'+dm(co)
-        +(w?(' · днём '+fmtTemp(w.d)+', ночью '+fmtTemp(w.n)):'')+'</span>'
+      /* строка над названием: было «База 1 из 4 · 7 авг–10 авг · днём +32 °C, ночью
+         +14 °C» — 54 знака вразрядку, уезжало на вторую строку. Сжали: «база» лишняя,
+         даты одним куском, погода значками. «≈» — потому что это не прогноз;
+         по тапу на градусы объясняем, откуда цифры (просьба клиента). */
+      +'<div class="chead"><span class="ckick">'+(i+1)+' из '+BASES.length+' · '+dmRange(ci,co)
+        +(w?(' · <button class="wtemp" data-weather="'+b.id+'" title="откуда эти градусы">'
+             +ic('sun','i-w wsun')+' ≈'+fmtTempShort(w.d)+' '+ic('moon','i-w wmoon')+' ≈'+fmtTempShort(w.n)+'</button>'):'')+'</span>'
       +'<h2>'+shortName(b.name)+'</h2><p>'+convDist(b.desc)+'</p>'+nb+'</div>'
       +'<div class="ctl">'+arrival+carHire+stay+route+more+'</div></div></section>';
   }).join('');
@@ -3476,6 +3492,8 @@ function totalNights(){return BASES.reduce((s,b)=>s+b.nights,0);}
 function altName(s){const m=s.match(/\((.+?)\)/);return m&&/^[A-Za-z][A-Za-z .-]*$/.test(m[1])?m[1]:'';}
 function shortName(s){return s.replace(/\s*\(.*?\)/,'').replace(/\s*\/.*$/,'').trim();}
 function dm(dt){return dt.getDate()+' '+MONTHS[dt.getMonth()].slice(0,3);}
+/* «7–10 авг» вместо «7 авг–10 авг»: месяц повторять незачем, если он тот же */
+function dmRange(a,b){return a.getMonth()===b.getMonth()?(a.getDate()+'–'+dm(b)):(dm(a)+'–'+dm(b));}
 function plural(n,a,b,c){const x=n%10,y=n%100;if(x===1&&y!==11)return a;if(x>=2&&x<=4&&(y<10||y>=20))return b;return c;}
 function nights(n){const a=n%10,b=n%100;if(a===1&&b!==11)return'ночь';if(a>=2&&a<=4&&(b<10||b>=20))return'ночи';return'ночей';}
 function recomputeDates(){
@@ -3645,6 +3663,7 @@ document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)r
   if(t.dataset.usetd){setDist(t.dataset.usetd);closeDaySheet();}
   if(t.dataset.lang){LANG=t.dataset.lang;savePlan();renderUnits();closeDaySheet();}
   if(t.dataset.staymenu){stayMenuSheet(t.dataset.staymenu);}
+  if(t.dataset.weather){weatherSheet(t.dataset.weather);}
   if(t.dataset.showmap&&window.showOnMap){closeDaySheet();showOnMap(t.dataset.showmap);}
   if(t.dataset.stayadd){addStaySheet(t.dataset.stayadd);}
   if(t.dataset.stayedit){addStaySheet(t.dataset.staybase,t.dataset.stayedit);}
@@ -3863,6 +3882,23 @@ function convDist(txt){
 function tempC(c){return TEMP==='F'?Math.round(c*9/5+32):Math.round(c);}
 function tempU(){return TEMP==='F'?'°F':'°C';}
 function fmtTemp(c){return (c>0?'+':'')+tempC(c)+' '+tempU();}
+/* короткая форма для строки над названием города: «+32°». Какие это градусы,
+   видно в шапке — там кнопка °C/°F, и она же ими управляет. */
+function fmtTempShort(c){return (c>0?'+':'')+tempC(c)+'°';}
+/* Пояснение по тапу на градусы: цифры не прогноз, и человек вправе это знать. */
+function weatherSheet(bid){
+  const b=baseById(bid);if(!b)return;
+  const before=nightsBefore(b.id),ci=addDays(startIso,before),co=addDays(startIso,before+b.nights);
+  const w=weatherOf(b.id,ci,co);if(!w)return;
+  const yrs=(w.y0&&w.y1)?(w.y0+'–'+w.y1):'прошлого года';
+  sheet('<div class="dsh"><b>Погода примерная</b><span>'+shortName(b.name)+' · '+dmRange(ci,co)+'</span></div>'
+    +'<div class="wexp">'
+      +'<p>Это не прогноз. На даты поездки прогноза не существует ни у кого — погоду предсказывают недели на две вперёд, дальше уже гадание.</p>'
+      +'<p>Мы показываем, сколько тут обычно бывает в эти же числа: взяли настоящие замеры за '+yrs+' и усреднили. '
+        +ic('sun','i-w wsun')+' — среднее дневное, '+ic('moon','i-w wmoon')+' — среднее ночное.</p>'
+      +'<p class="wsrc">Данные: Open-Meteo, архив наблюдений. В конкретный год может быть заметно теплее или холоднее.</p>'
+    +'</div>');
+}
 /* ── панель ── */
 /* Сводка в шапке: одна кнопка, на ней все четыре значения. Пять кнопок рядом с
    названием и аватаром в 390 px не помещаются — замерено. */
@@ -3914,10 +3950,14 @@ function unitsSheet(kind){
 }
 /* ── погода: чем переключать градусы ──
    В данных маршрута температур нет вообще, поэтому переключателю нечего было бы
-   менять. Берём настоящие цифры за те же дни ГОД НАЗАД — честный ответ на вопрос
-   «а сколько там обычно». Open-Meteo: бесплатно, без ключа, CORS открыт.
-   Ответ кладём в localStorage, чтобы не дёргать сеть при каждом заходе. */
-const WKEY='co-trip-weather';
+   менять. Прогноза на даты поездки не существует — дальше двух недель погоду не
+   предсказывают. Берём архив: настоящие цифры за ТЕ ЖЕ ЧИСЛА пяти последних лет
+   и усредняем. Один год бывает аномальным, пять — уже нет, поэтому это climate
+   normal («обычно в это время»), а не обещание. Open-Meteo: бесплатно, без ключа,
+   CORS открыт. Ответ кладём в localStorage, чтобы не дёргать сеть при каждом заходе.
+   Годы храним в записи — их показываем в пояснении по тапу на градусы. */
+const WYEARS=5;
+const WKEY='co-trip-weather5';
 let WEATHER={};
 try{WEATHER=JSON.parse(localStorage.getItem(WKEY))||{};}catch(e){}
 function wKeyFor(b,ci,co){return b.id+'|'+fmtISO(ci).slice(5)+'|'+fmtISO(co).slice(5);}
@@ -3936,17 +3976,26 @@ function loadWeather(){
   let i=0,any=false;
   const step=()=>{
     if(i>=need.length){if(any){try{localStorage.setItem(WKEY,JSON.stringify(WEATHER));}catch(e){}rerenderTrip();}return;}
-    const n=need[i++],y=(new Date()).getFullYear()-1;
-    const iso=d=>y+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    /* Одним запросом берём сплошной кусок в пять лет и сами оставляем только нужные
+       числа: пять отдельных запросов на каждый город — это два десятка обращений. */
+    const n=need[i++],y1=(new Date()).getFullYear()-1,y0=y1-(WYEARS-1);
+    const md=d=>String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    const a=md(n.ci),z=md(n.co);
+    const inWindow=s=>a<=z?(s>=a&&s<=z):(s>=a||s<=z);   /* поездка через Новый год */
     fetch('https://archive-api.open-meteo.com/v1/archive?latitude='+n.b.lat+'&longitude='+n.b.lng
-      +'&start_date='+iso(n.ci)+'&end_date='+iso(n.co)+'&daily=temperature_2m_max,temperature_2m_min&timezone=auto')
+      +'&start_date='+y0+'-'+a+'&end_date='+y1+'-'+z+'&daily=temperature_2m_max,temperature_2m_min&timezone=auto')
       .then(r=>r.json()).then(j=>{
         const d=j&&j.daily;
-        if(d&&d.temperature_2m_max){
-          const mx=d.temperature_2m_max.filter(x=>x!=null),mn=d.temperature_2m_min.filter(x=>x!=null);
+        if(d&&d.time&&d.temperature_2m_max){
+          const mx=[],mn=[];
+          d.time.forEach((t,ix)=>{
+            if(!inWindow(t.slice(5)))return;
+            if(d.temperature_2m_max[ix]!=null)mx.push(d.temperature_2m_max[ix]);
+            if(d.temperature_2m_min[ix]!=null)mn.push(d.temperature_2m_min[ix]);
+          });
           if(mx.length&&mn.length){
-            const avg=a=>a.reduce((s,v)=>s+v,0)/a.length;
-            WEATHER[n.k]={d:Math.round(avg(mx)),n:Math.round(avg(mn)),y:y};any=true;
+            const avg=r=>r.reduce((s,v)=>s+v,0)/r.length;
+            WEATHER[n.k]={d:Math.round(avg(mx)),n:Math.round(avg(mn)),y0:y0,y1:y1,days:mx.length};any=true;
           }
         }
         setTimeout(step,150);
