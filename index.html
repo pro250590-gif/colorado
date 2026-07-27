@@ -146,11 +146,12 @@ body.athome{padding-right:0!important}
 .units{display:inline-flex;align-items:center;gap:6px;flex:none}
 .ub{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;padding:0;flex:none;
   border-radius:50%;background:#fff;border:1.5px solid #e6e3ee;cursor:pointer;color:#2b2a38!important;
-  font:800 12.5px/1 "Plus Jakarta Sans",sans-serif;box-shadow:0 3px 9px -6px rgba(20,32,27,.55);
-  -webkit-appearance:none;appearance:none}
+  box-shadow:0 3px 9px -6px rgba(20,32,27,.55);-webkit-appearance:none;appearance:none;
+  /* один кегль на все знаки: раньше «$» был крупнее «°C» и «км», и кнопки прыгали */
+  font:800 16.5px/1 "JetBrains Mono",ui-monospace,monospace;letter-spacing:-.02em}
 .ub:active{transform:scale(.94)}
-.ub.sym{font:800 17px/1 "JetBrains Mono",ui-monospace,monospace}
-.ub.flag svg{width:26px;height:26px;border-radius:50%;display:block}
+/* флаг чуть больше высоты букв (19 px) — так кружок читается вровень с «$» и «°C» */
+.ub.flag svg{width:22px;height:22px;border-radius:50%;display:block}
 /* выбор градусов и расстояния: крупное обозначение и расшифровка словами */
 .uopts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .uopt{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:14px 8px;cursor:pointer;
@@ -170,9 +171,8 @@ body.athome{padding-right:0!important}
   color:#a4a9bb;background:#f4f5fb;border-radius:20px;padding:4px 6px}
 @media(min-width:1000px){
   .units{gap:8px}
-  .ub{width:48px;height:48px;font-size:14px}
-  .ub.sym{font-size:20px}
-  .ub.flag svg{width:31px;height:31px}
+  .ub{width:48px;height:48px;font-size:19.5px}
+  .ub.flag svg{width:26px;height:26px}
 }
 /* ── МЕНЮ АККАУНТА: выпадает из-под аватара ── */
 #accMenu{position:fixed;inset:0;z-index:4250;opacity:0;visibility:hidden;transition:opacity .15s,visibility .15s}
