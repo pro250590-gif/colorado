@@ -267,6 +267,15 @@ body.athome{padding-right:0!important}
 header.hero{padding:26px 0 0}
 .kicker{font:800 12.5px/1.2 "Plus Jakarta Sans",sans-serif;letter-spacing:.16em;text-transform:uppercase;color:var(--brown);
   margin:0 4px 2px}
+/* первая строка поездки: дата слева, «Поделиться» справа — просьба клиента */
+.kickrow{display:flex;align-items:center;gap:10px;margin:0 4px 2px}
+.kickrow .kicker{margin:0;flex:1;min-width:0}
+.shbtn{flex:none;display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 13px;border-radius:16px;cursor:pointer;
+  border:0;background:linear-gradient(150deg,#7a5cf0,#5b3fc4);color:#fff!important;
+  font:800 11.5px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:-.01em;
+  box-shadow:0 6px 14px -8px rgba(91,63,196,.95);-webkit-appearance:none;appearance:none}
+.shbtn:active{transform:scale(.97)}
+@media(min-width:1000px){.shbtn{height:38px;padding:0 16px;font-size:13px}}
 header.hero h1{font-size:clamp(42px,11.5vw,64px);margin:12px 4px 8px;line-height:.94}
 header.hero h1 em{font-style:normal;display:block;
   background:linear-gradient(96deg,var(--orange2),var(--green2) 58%,var(--deep2));-webkit-background-clip:text;
@@ -1507,7 +1516,8 @@ section h2.big{margin-bottom:4px}
 
 <header class="hero">
   <div class="wrap">
-    <div class="kicker" id="heroDate">7–16 августа 2026</div>
+    <div class="kickrow"><div class="kicker" id="heroDate">7–16 августа 2026</div>
+      <button class="shbtn" data-ushare="1">Поделиться</button></div>
     <h1>Дуранго → Урей<em>Аспен → Денвер</em></h1>
     <p class="sub">Десять дней поперёк Скалистых гор: паровоз на Силвертон, скальные города Меса-Верде, Million Dollar Highway без отбойников, Чёрный каньон и перевал Independence на 3 687 метрах.</p>
     <div class="bento">
@@ -3865,7 +3875,6 @@ function unitsSettingsSheet(){
         +'<span class="utg"><button'+(DIST==='km'?' class="on"':'')+' data-usetd="km">км</button>'
         +'<button'+(DIST==='mi'?' class="on"':'')+' data-usetd="mi">мили</button></span></div>'
     +'</div>'
-    +'<div class="dsform"><button class="dsgo" data-ushare="1">'+ic('share','i-sm')+' Поделиться</button></div>'
     +'<button class="dscancel" data-dsclose="1">Закрыть</button>');
 }
 function unitsSheet(kind){
