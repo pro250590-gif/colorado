@@ -2276,7 +2276,7 @@ function buildCities(){
     const stayCard=mine.map(h=>'<div class="cstay myst"><span class="cph b">'+ic('bed','i-sm')+'</span>'
         +'<span class="cin"><h3>'+h.nm+'</h3>'
         +'<span class="cmeta">'+shortName(b.name)+' · '+dm(ci)+'–'+dm(co)+' · '+b.nights+' '+nights(b.nights)+' · на '+guests
-        +(h.rate?'<br><b>'+curSym()+h.rate+' за ночь · '+curSym()+Math.round(h.rate*b.nights)+' всего</b>':'')
+        +(h.rate?'<br><b>'+money(h.rate)+' за ночь · '+money(h.rate*b.nights)+' всего</b>':'')
         +(typeof h.lat==='number'
           ? (h.approx?'<br><b class="apx">Точка примерная — центр города, поправь её</b>':'')
           : '<br><b class="nopt">Точки на карте нет — не нашли адрес</b>')+'</span>'
@@ -2943,7 +2943,7 @@ function saveStay(bid,id,val,rate){
     /* нет точки или точка примерная — не молчим и не делаем вид, что нашли: спрашиваем */
     if(typeof p.lat!=='number'||approx)return fixPointSheet(p.id,approx?'approx':'none');
     toast('<b>'+(id?'Изменили жильё':'Записали жильё')+': «'+nm+'»</b>'
-      +(rate?'<i>'+curSym()+rate+' за ночь — цена ушла в бюджет</i>':'<i>метка на карте есть</i>'),bid,null);
+      +(rate?'<i>'+money(rate)+' за ночь — цена ушла в бюджет</i>':'<i>метка на карте есть</i>'),bid,null);
   };
   if(/^https?:\/\//i.test(nm0)){
     /* ссылка не из Google (Airbnb, сайт отеля) — точку по ней не найти, честно говорим об этом */
@@ -3476,7 +3476,7 @@ function recomputeDates(){
   if(pl)pl.textContent=P.filter(p=>p.cat!=='food').length;
   const mn=document.getElementById('tMoney');
   if(mn){let sum=0;document.querySelectorAll('#budgetTbl tbody input.money').forEach(i=>sum+=numIn(i.value));
-    if(sum>0)mn.textContent=curSym()+Math.round(sum/2).toLocaleString('en-US').replace(/,/g,' ');}
+    if(sum>0)mn.textContent=money(sum/2);}
   const nn=document.getElementById('tNights');if(nn)nn.textContent=tn+' '+nights(tn);
   const ns=document.getElementById('tNightsSub');
   if(ns)ns.textContent=td+' '+plural(td,'день','дня','дней')+' · '+BASES.length+' '+plural(BASES.length,'база','базы','баз');
@@ -4077,7 +4077,7 @@ function sumBudget(){
   document.getElementById('sumAll').textContent=money(sum);
   document.getElementById('sumPer').textContent=money(Math.round(sum/PEOPLE));
   const sd=document.getElementById('sumDay');if(sd)sd.textContent=money(Math.round(sum/days));
-  const mn=document.getElementById('tMoney');if(mn&&sum>0)mn.textContent=curSym()+Math.round(sum/PEOPLE).toLocaleString('en-US').replace(/,/g,' ');
+  const mn=document.getElementById('tMoney');if(mn&&sum>0)mn.textContent=money(sum/PEOPLE);
   if(typeof requestAnimationFrame==='function')requestAnimationFrame(fitSums);else fitSums();
 }
 /* подгоняет размер шрифта итоговых сумм под самую крупную из трёх — ЕДИНЫЙ размер для всех, чтобы не скакал */
