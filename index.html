@@ -1177,6 +1177,9 @@ body{background:linear-gradient(168deg,#eef1f8,#e9edf6 60%,#e6eaf4)!important}
 .dspanel{position:absolute;left:12px;right:12px;bottom:calc(16px + env(safe-area-inset-bottom));background:#fff;border-radius:22px;
   padding:16px 14px 14px;box-shadow:0 24px 60px -18px rgba(20,32,27,.6)}
 .dsbody{max-height:76vh;overflow:auto;-webkit-overflow-scrolling:touch}
+/* окно, падающее сверху: открывается под шапкой, там же, куда смотрит глаз */
+#daySheet.top .dspanel{top:calc(56px + 8px);bottom:auto}
+#daySheet.top .dsbody{max-height:70vh}
 .dsx{position:absolute;top:12px;right:12px;width:34px;height:34px;border-radius:50%;border:0;background:#f4f5f9;
   color:var(--ink2)!important;display:grid;place-items:center;cursor:pointer;z-index:3}
 .dsx .i{width:16px;height:16px;stroke-width:2.4}
@@ -1242,6 +1245,8 @@ body{background:linear-gradient(168deg,#eef1f8,#e9edf6 60%,#e6eaf4)!important}
   .dspanel{left:50%;right:auto;bottom:auto;top:50%;margin-top:0;width:460px;
     transform:translate(-50%,-50%);max-height:88vh;display:flex;flex-direction:column}
   .dspanel .dsbody{max-height:none;flex:1 1 auto;min-height:0}
+  /* сверху — прижимаем к шапке, по горизонтали остаёмся по центру */
+  #daySheet.top .dspanel{top:70px;transform:translate(-50%,0);max-height:80vh}
 }
 .cdtx{flex:1;min-width:0}
 .cdm{font:500 10.5px/1 "Inter",sans-serif;color:#8b8fa3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.01em}
@@ -3244,15 +3249,18 @@ function pickDaySheet(bid){
 }
 function closeDaySheet(){killFxMap();const el=document.getElementById('daySheet');if(el)el.classList.remove('on');}
 /* общий лист снизу — для переноса и добавления места */
-function sheet(inner){
+/* top:true — окно падает СВЕРХУ, из-под шапки. Для списков, которые открываются
+   кнопками в шапке: глаз идёт вверх, и содержимое должно появляться там же,
+   а не внизу экрана (просьба клиента). */
+function sheet(inner,opts){
   let el=document.getElementById('daySheet');
   if(!el){el=document.createElement('div');el.id='daySheet';document.body.appendChild(el);}
-  /* крестик в углу — чтобы закрыть сразу, не докручивая до «Отмены» */
   /* Крестик — снаружи прокручиваемой части, поэтому он всегда на месте: список
-     «Ещё в городе» может быть длинным, и докручивать до «Отмены» неудобно. */
+     «Ещё в городе» может быть длинным, и докручивать до низа неудобно. */
   el.innerHTML='<div class="dsov" data-dsclose="1"></div><div class="dspanel">'
     +'<button class="dsx" data-dsclose="1" aria-label="закрыть">'+ic('close','i-sm')+'</button>'
     +'<div class="dsbody">'+inner+'</div></div>';
+  el.classList.toggle('top',!!(opts&&opts.top));
   el.classList.add('on');
 }
 function dayRow(e,attrs,note,cls){
@@ -3872,22 +3880,22 @@ function unitsSheet(kind){
     sheet('<div class="dsh"><b>'+(isT?'В чём показывать температуру':'В чём показывать расстояния')+'</b>'
         +'<span>'+(isT?'погода в городах':'переезды и «до места»')+'</span></div>'
       +'<div class="dsform"><div class="uopts">'+opts.map(x=>'<button class="uopt'+(x.now?' on':'')+'"'
-        +' data-'+(isT?'usett':'usetd')+'="'+x.v+'"><b>'+x.k+'</b><span>'+x.t+'</span></button>').join('')+'</div></div>'
-      +'<button class="dscancel" data-dsclose="1">Отмена</button>');
+        +' data-'+(isT?'usett':'usetd')+'="'+x.v+'"><b>'+x.k+'</b><span>'+x.t+'</span></button>').join('')+'</div></div>',
+      {top:true});
     return;
   }
   if(kind==='cur'){
     sheet('<div class="dsh"><b>В какой валюте считать</b><span>уже введённые суммы пересчитаем по курсу</span></div>'
       +'<div class="dsform"><div class="dskinds">'+CURS.map(x=>'<button class="dskind'+(x.c===CUR?' on':'')+'" data-cur="'+x.c+'">'
-        +'<b class="cursym">'+x.s+'</b><span>'+x.l+'</span></button>').join('')+'</div></div>'
-      +'<button class="dscancel" data-dsclose="1">Отмена</button>');
+        +'<b class="cursym">'+x.s+'</b><span>'+x.l+'</span></button>').join('')+'</div></div>',
+      {top:true});
     return;
   }
   sheet('<div class="dsh"><b>Язык сайта</b><span>русский готов, остальные переведём следующим шагом</span></div>'
     +'<div class="dsform"><div class="langs">'+LANGS.map(x=>'<button class="langb'+(x.c===LANG?' on':'')+'"'
       +(x.ok?' data-lang="'+x.c+'"':' data-soon="'+x.t+'"')+'>'+flagSVG(x.c)+x.t
-      +(x.ok?'':'<i>скоро</i>')+'</button>').join('')+'</div></div>'
-    +'<button class="dscancel" data-dsclose="1">Отмена</button>');
+      +(x.ok?'':'<i>скоро</i>')+'</button>').join('')+'</div></div>',
+    {top:true});
 }
 /* ── погода: чем переключать градусы ──
    В данных маршрута температур нет вообще, поэтому переключателю нечего было бы
