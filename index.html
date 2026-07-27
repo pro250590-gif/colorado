@@ -65,23 +65,61 @@ h1,h2,h3,h4{line-height:1.08;margin:0;font-family:"Plus Jakarta Sans","Inter",sa
 .siderail{display:none}
 .mfbico{display:none}
 #cities,#s-money,#s-food{scroll-margin-top:72px}
-.authbtn{flex:none;border:1.5px solid rgba(91,63,196,.4);background:linear-gradient(180deg,#fff,#f4f1ff);color:#5b3fc4;
-  font:800 12.5px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:-.02em;padding:9px 14px;border-radius:12px;cursor:pointer;
-  box-shadow:0 5px 13px -6px rgba(91,63,196,.5);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.authbtn:active{transform:scale(.97)}
-/* состояние сохранения видно всегда: молча терять правки нельзя */
-.syncpill{flex:none;display:flex;align-items:center;gap:6px;border:1.5px solid #e5e6f5;background:#fff;
-  color:#8b8698!important;font:800 11px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:-.02em;padding:8px 11px;
-  border-radius:12px;cursor:pointer;max-width:190px;overflow:hidden;white-space:nowrap;-webkit-appearance:none;appearance:none}
-.syncpill .sdot{width:7px;height:7px;border-radius:50%;background:#c3c7d6;flex:none}
-.syncpill[data-s=ok]{border-color:rgba(18,133,94,.32);color:#0a6047!important}
-.syncpill[data-s=ok] .sdot{background:#12855e}
-.syncpill[data-s=go]{border-color:rgba(91,63,196,.35);color:#5b3fc4!important}
-.syncpill[data-s=go] .sdot{background:#5b3fc4;animation:sblink 1s infinite}
-.syncpill[data-s=bad]{border-color:rgba(192,57,43,.4);color:#b03a2b!important;background:#fdeeec}
-.syncpill[data-s=bad] .sdot{background:#c0392b}
-@keyframes sblink{50%{opacity:.25}}
-.authbtn[data-state=in]{background:linear-gradient(150deg,#7a5cf0,#5b3fc4);color:#fff;border-color:transparent}
+/* шапка: логотип-бренд слева, кружок аккаунта справа. Больше в ней ничего нет —
+   название поездки дублировало её же заголовок, а кнопка сохранения переехала на выход. */
+.brand{border:0;background:none;padding:0;cursor:pointer;color:inherit}
+.ava{flex:none;width:36px;height:36px;border-radius:50%;border:0;cursor:pointer;
+  background:linear-gradient(150deg,#f0eaff,#ddd1f6);color:#4b2fa8!important;
+  font:800 13.5px/1 "Plus Jakarta Sans",sans-serif;display:grid;place-items:center}
+.ava:active{transform:scale(.95)}
+/* ── ЭКРАН «МОИ ПОЕЗДКИ» ── */
+/* в кабинете прячем всё, что относится к открытой поездке */
+body.athome>section,body.athome>.citystep,body.athome>#cities,body.athome>footer,
+body.athome>.bottomnav,body.athome>.siderail,body.athome>#mapShell,body.athome>header,
+body.athome>#days,body.athome>#toast,body.athome>.orb,body.athome>.glow{display:none!important}
+body.athome{padding-right:0!important}
+.homewrap{padding-top:22px;padding-bottom:40px}
+.homeh{font:600 30px/1.08 "Fraunces",Georgia,serif;margin:0 0 16px;letter-spacing:-.01em}
+.newtrip{display:flex;align-items:center;gap:11px;width:100%;padding:15px 14px;border-radius:18px;margin-bottom:13px;
+  border:2px dashed rgba(91,63,196,.35);background:rgba(255,255,255,.65);color:#5b3fc4!important;
+  font:800 13.5px/1.2 "Plus Jakarta Sans",sans-serif;text-align:left;cursor:pointer}
+.newtrip i{width:38px;height:38px;border-radius:13px;flex:none;display:grid;place-items:center;font-style:normal;
+  background:linear-gradient(150deg,#7a5cf0,#5b3fc4);color:#fff}
+.newtrip i .i{width:19px;height:19px}
+.newtrip small{display:block;font:500 11px/1.35 "Inter",sans-serif;color:#8b8698;margin-top:3px;font-weight:500}
+.tcard{background:#fff;border:1px solid #e8e9f2;border-radius:18px;overflow:hidden;margin-bottom:11px;box-shadow:var(--sh1)}
+.tcard[data-cur] {border-color:rgba(91,63,196,.35)}
+.tph{height:112px;background:#e5e7f0 center/cover no-repeat;position:relative}
+.tph::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(20,25,40,0) 45%,rgba(20,25,40,.62))}
+.tnm{position:absolute;left:14px;bottom:10px;z-index:2;color:#fff;font:600 21px/1.1 "Fraunces",Georgia,serif}
+.tin{padding:11px 12px 12px;display:flex;align-items:center;gap:9px}
+.tmeta{flex:1;min-width:0;font:600 11px/1.4 "Inter",sans-serif;color:#8b8698}
+.topen{flex:none;border:0;border-radius:11px;padding:11px 15px;cursor:pointer;
+  background:linear-gradient(150deg,#7a5cf0,#5b3fc4);color:#fff!important;font:800 11.5px/1 "Plus Jakarta Sans",sans-serif}
+.tdots{flex:none;width:36px;height:36px;border-radius:11px;border:1.5px solid rgba(20,32,27,.1);background:#fff;
+  color:#8b8698!important;font:800 15px/1 "Inter",sans-serif;cursor:pointer;padding-bottom:5px}
+/* ── ОКНО ПО ЦЕНТРУ (выход из поездки) ── */
+#popup{position:fixed;inset:0;z-index:4300;opacity:0;visibility:hidden;transition:opacity .18s,visibility .18s}
+#popup.on{opacity:1;visibility:visible}
+.pov{position:absolute;inset:0;background:rgba(20,25,40,.4);backdrop-filter:blur(2px)}
+.pbox{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(320px,calc(100vw - 40px));
+  background:#fff;border-radius:20px;padding:18px 16px;text-align:center;box-shadow:0 26px 50px -22px rgba(20,25,50,.6)}
+.pic{width:46px;height:46px;border-radius:50%;margin:0 auto 11px;display:grid;place-items:center}
+.pic .i{width:22px;height:22px;stroke-width:2.4}
+.pic.ok{background:linear-gradient(150deg,#d8f5e8,#a8e9cd);color:#0a6047}
+.pic.save{background:linear-gradient(150deg,#e6e0ff,#cfc2fb);color:#4b2fa8}
+.pic.warn{background:linear-gradient(150deg,#fff0dc,#ffe0b8);color:#8a4b0a}
+.pbox b{display:block;font:800 15px/1.25 "Plus Jakarta Sans",sans-serif;color:var(--ink);margin-bottom:5px;letter-spacing:-.02em}
+.pbox p{margin:0;font:500 12.5px/1.5 "Inter",sans-serif;color:var(--mut)}
+.prow{display:flex;gap:8px;margin-top:14px}
+.prow button{flex:1;border:0;border-radius:12px;padding:12px 8px;cursor:pointer;
+  font:800 11.5px/1 "Plus Jakarta Sans",sans-serif;-webkit-appearance:none;appearance:none}
+.pgo{background:linear-gradient(150deg,#7a5cf0,#5b3fc4);color:#fff!important}
+.pok{background:#f4f5fb;color:#6d7c74!important}
+.pdet{display:block;width:100%;margin-top:9px;border:0;background:none;cursor:pointer;
+  font:700 10.5px/1 "Inter",sans-serif;color:#a4a9bb!important;padding:3px}
+.pdetbox{background:#f8f9fc;border:1px solid #eceef5;border-radius:11px;padding:10px;margin-top:8px;
+  font:600 10px/1.45 ui-monospace,monospace;color:#8b8698;word-break:break-all;text-align:left}
 .authov{position:fixed;inset:0;z-index:4000;display:none}
 .authov.show{display:block}
 .authov .authbd{position:absolute;inset:0;background:rgba(20,25,40,.5);opacity:0;transition:opacity .2s}
@@ -102,13 +140,12 @@ h1,h2,h3,h4{line-height:1.08;margin:0;font-family:"Plus Jakarta Sans","Inter",sa
 .authsubmit{width:100%;border:0;background:linear-gradient(150deg,#7a5cf0,#5b3fc4);color:#fff;font:800 14.5px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:-.02em;padding:14px;border-radius:13px;cursor:pointer;box-shadow:0 8px 20px -8px rgba(91,63,196,.7)}
 .authsubmit:disabled{opacity:.6}
 .authhint{font:500 12px/1.4 "Inter",sans-serif;color:#8b8fa3;text-align:center;margin-top:12px}
-/* бренд отжимает всё правое к краю — надёжнее, чем margin-left:auto на кнопках:
-   плашка сохранения может быть скрыта, и тогда «Войти» теряла свой auto и уезжала в центр */
-.brand{font-family:"Plus Jakarta Sans",sans-serif;font-weight:800;font-size:18px;letter-spacing:-.04em;
-  display:flex;align-items:center;gap:9px;margin-right:auto}
+/* бренд отжимает аватар к правому краю */
+.brand{font-family:"Plus Jakarta Sans",sans-serif;font-weight:800;font-size:18px;letter-spacing:-.035em;
+  display:flex;align-items:center;gap:9px;margin-right:auto;white-space:nowrap}
 .brandmark{width:32px;height:32px;border-radius:12px;display:grid;place-items:center;flex:none;color:#fff;
   background:linear-gradient(150deg,var(--green1),var(--green3));box-shadow:var(--sh1),inset 0 1px 0 rgba(255,255,255,.45)}
-.brand i{font-style:normal;color:var(--orange2)}
+.brand i{font-style:normal;color:#5b3fc4}
 .topdate{margin-left:auto;font-size:11.5px;color:var(--mut);font-weight:600;background:rgba(255,255,255,.82);
   border:1px solid #fff;padding:8px 13px;border-radius:999px;box-shadow:var(--sh1)}
 
@@ -1106,7 +1143,7 @@ body{background:linear-gradient(168deg,#eef1f8,#e9edf6 60%,#e6eaf4)!important}
 .cgo{color:#5b3fc4;flex:none;background:rgba(91,63,196,.1);border-radius:50%;width:30px;height:30px;display:grid;place-items:center}
 .cgo .i{width:20px;height:20px;stroke-width:2.4}
 /* ── ВЕРНУТЬ ШАПКУ + ПЛАШКУ-ЦЕПОЧКУ, ПЕРЕКРАСИТЬ В ФИОЛЕТ ── */
-header.hero,#s-route{display:block!important}
+body:not(.athome) header.hero,body:not(.athome) #s-route{display:block!important}
 /* шапка: только описание + фото, без метрик и профиля высоты */
 header.hero .stats,header.hero .elev,header.hero .tile-g,header.hero .tile-w{display:none!important}
 #s-days{display:none!important}
@@ -1339,10 +1376,10 @@ section h2.big{margin-bottom:4px}
 <body>
 
 <div class="topbar"><div class="wrap">
-  <span class="brand"><span class="brandmark"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 3 4.5 8.5L17 7l5 14H2L8 3Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></span>Colorado<i>.</i></span>
-  <button class="syncpill" id="syncPill" style="display:none" title="сохранение в аккаунте"><span class="sdot"></span><span id="syncTxt">—</span></button>
-  <button class="authbtn" id="authBtn" style="display:none">Войти</button>
+  <button class="brand" id="brandHome" title="Мои поездки"><span class="brandmark"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 3 4.5 8.5L17 7l5 14H2L8 3Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></span><span id="brandName">KOLIBRI</span> <i>Pro</i></button>
+  <button class="ava" id="avaBtn" aria-label="аккаунт">Я</button>
 </div></div>
+<div id="home" style="display:none"></div>
 <nav class="siderail" aria-label="Разделы сайта">
   <a href="#cities"><svg class="i" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg><span>Дни</span></a>
   <a href="#s-money"><svg class="i" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0 0 4h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5"/><path d="M17.5 13h.01"/></svg><span>Бюджет</span></a>
@@ -3318,7 +3355,7 @@ function recomputeDates(){
   buildFooter();
 }
 /* конфиг сервиса (не поездки): бренд и контакт для футера — общие для всех маршрутов */
-const SITE={brand:'Colorado', email:''};
+const SITE={brand:'KOLIBRI Pro', email:''};
 /* футер: дисклеймер + партнёрская пометка (статично) + контакт + копирайт (из SITE) */
 function buildFooter(){
   const ct=document.getElementById('footContact');
@@ -3420,6 +3457,29 @@ document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)r
   if(t.dataset.curforce){forceCur(t.dataset.curforce);}
   if(t.dataset.syncretry){closeDaySheet();_syncErr='';syncUI('go','Сохраняю…');
     if(typeof cloudPush==='function')cloudPush().catch(e=>{_syncErr=(e&&e.message)||String(e);syncSay();});}
+  /* ——— кабинет, аккаунт, выход из поездки ——— */
+  if(t.id==='avaBtn'){accountSheet();}
+  if(t.id==='brandHome'){closeDaySheet();leaveTrip(showHome);}
+  if(t.dataset.gohome){closeDaySheet();leaveTrip(showHome);}
+  if(t.dataset.topen){closeDaySheet();const id=t.dataset.topen;
+    if(id!==trips().active)switchTrip(id);hideHome();window.scrollTo(0,0);}
+  if(t.dataset.newtrip){closeDaySheet();
+    leaveTrip(()=>{newTripFromCurrent();hideHome();renameSheet(trips().active);});}
+  if(t.dataset.tmenu){tripMenuSheet(t.dataset.tmenu);}
+  if(t.dataset.trename){renameSheet(t.dataset.trename);}
+  if(t.dataset.trsave){const v=((document.getElementById('trnm')||{}).value||'').trim();
+    if(!v){const i=document.getElementById('trnm');if(i)i.focus();return;}
+    renameTrip(t.dataset.trsave,v);closeDaySheet();}
+  if(t.dataset.tcopy){closeDaySheet();const src=t.dataset.tcopy;
+    if(src!==trips().active)switchTrip(src);
+    newTripFromCurrent(tripMeta(src).title+' · копия');hideHome();renameSheet(trips().active);}
+  if(t.dataset.tdel){closeDaySheet();deleteTrip(t.dataset.tdel);}
+  if(t.dataset.signin){closeDaySheet();openAuth();}
+  if(t.dataset.signout){closeDaySheet();if(window.doSignOut)doSignOut();}
+  if(t.dataset.popclose){popClose();}
+  if(t.dataset.leavesave){leaveSave();}
+  if(t.dataset.leaveanyway){const go=_leaveGo;_leaveGo=null;popClose();if(go)go();}
+  if(t.dataset.popdet){const b=document.querySelector('#popup .pdetbox');if(b)b.hidden=!b.hidden;}
   if(t.dataset.staymenu){stayMenuSheet(t.dataset.staymenu);}
   if(t.dataset.showmap&&window.showOnMap){closeDaySheet();showOnMap(t.dataset.showmap);}
   if(t.dataset.stayadd){addStaySheet(t.dataset.stayadd);}
@@ -3820,10 +3880,190 @@ try{if(window.supabase&&window.supabase.createClient)sb=window.supabase.createCl
 try{if('scrollRestoration' in history)history.scrollRestoration='manual';}catch(e){}
 window.scrollTo(0,0);window.addEventListener('load',()=>window.scrollTo(0,0));
 /* ---- облачное сохранение плана (даты/цены/ночи/люди/выборы) ---- */
-const CLOUD_KEYS=['co-trip-2026-plan','co-trip-2026-budget','co-trip-2026-picks','co-trip-2026-food'];
+/* ================= НЕСКОЛЬКО ПОЕЗДОК =================
+   Движок как читал, так и читает четыре своих ключа — это ВСЕГДА открытая сейчас
+   поездка. Остальные лежат рядом, в co-trip-trips. Так ни одна старая функция не
+   переписывается, а поездок становится сколько угодно.
+   Формат: {active:'t1', list:[{id,title,created}], data:{id:{четыре ключа}}}
+   У открытой поездки в data копия появляется только перед сохранением/переключением. */
+const TRIP_TITLE=(typeof TRIP_NAME!=='undefined'&&TRIP_NAME)||'Моя поездка';
+const TRIP_KEYS=['co-trip-2026-plan','co-trip-2026-budget','co-trip-2026-picks','co-trip-2026-food'];
+const TKEY='co-trip-trips';
+const CLOUD_KEYS=TRIP_KEYS.concat([TKEY]);
 const _rawSet=localStorage.setItem.bind(localStorage);
 let _applying=false,_cloudTimer=null;
-function localBundle(){const o={};CLOUD_KEYS.forEach(k=>{const v=localStorage.getItem(k);if(v!=null)o[k]=v;});return o;}
+function tripId(){return 't'+Date.now().toString(36)+Math.floor(Math.random()*1e3).toString(36);}
+function curKeys(){const o={};TRIP_KEYS.forEach(k=>{const v=localStorage.getItem(k);if(v!=null)o[k]=v;});return o;}
+/* Читаем список. Нет его — заворачиваем то, что уже лежит, в первую поездку:
+   у клиента там готовое Колорадо, потерять его нельзя. */
+function trips(){
+  let t=null;try{t=JSON.parse(localStorage.getItem(TKEY));}catch(e){}
+  if(!t||!t.list||!t.list.length||!t.active){
+    const id=t&&t.active?t.active:tripId();
+    t={active:id,list:[{id:id,title:TRIP_TITLE,created:0}],data:{}};
+    _rawSet(TKEY,JSON.stringify(t));
+  }
+  if(!t.data)t.data={};
+  return t;
+}
+function tripsSave(t){try{localStorage.setItem(TKEY,JSON.stringify(t));}catch(e){}}
+function tripMeta(id){const t=trips();return t.list.find(x=>x.id===(id||t.active))||t.list[0];}
+/* перед сохранением и переключением кладём открытую поездку в общий список */
+function syncActiveIntoTrips(){
+  const t=trips();t.data[t.active]=curKeys();
+  try{_rawSet(TKEY,JSON.stringify(t));}catch(e){}
+  return t;
+}
+function applyTripKeys(keys){
+  _applying=true;
+  TRIP_KEYS.forEach(k=>{if(keys&&keys[k]!=null)_rawSet(k,keys[k]);else localStorage.removeItem(k);});
+  _applying=false;
+}
+function switchTrip(id){
+  const t=syncActiveIntoTrips();
+  if(id===t.active||!t.list.some(x=>x.id===id))return false;
+  applyTripKeys(t.data[id]||{});
+  t.active=id;tripsSave(t);
+  reinit();syncHomeUI();
+  return true;
+}
+/* новая поездка = копия открытой: маршрут тот же, а даты/дни/люди меняешь заново */
+function newTripFromCurrent(title){
+  const t=syncActiveIntoTrips(),id=tripId();
+  t.list.push({id:id,title:title||(tripMeta().title+' · копия'),created:Date.now()});
+  t.data[id]=curKeys();
+  t.active=id;tripsSave(t);
+  applyTripKeys(t.data[id]);
+  reinit();syncHomeUI();
+  return id;
+}
+function renameTrip(id,title){
+  const t=trips(),m=t.list.find(x=>x.id===id);if(!m||!title)return false;
+  m.title=String(title).slice(0,60);tripsSave(t);syncHomeUI();return true;
+}
+function deleteTrip(id){
+  const t=syncActiveIntoTrips();
+  if(t.list.length<2)return false;                 /* последнюю не отдаём */
+  t.list=t.list.filter(x=>x.id!==id);delete t.data[id];
+  if(t.active===id){t.active=t.list[0].id;applyTripKeys(t.data[t.active]||{});tripsSave(t);reinit();}
+  else tripsSave(t);
+  syncHomeUI();return true;
+}
+/* ================= ЭКРАН «МОИ ПОЕЗДКИ» =================
+   Сайт открывается здесь. Внутрь поездки заходят кнопкой «Открыть». */
+function tripStats(id){
+  const t=trips(),keys=(id===t.active)?curKeys():(t.data[id]||{});
+  let plan={};try{plan=JSON.parse(keys[PKEY]||'{}')||{};}catch(e){}
+  const nights=Array.isArray(plan.nights)?plan.nights:BASES.map(b=>b.nights);
+  const tn=nights.reduce((x,v)=>x+(+v||0),0),td=tn+1;
+  const cities=nights.filter(v=>+v>0).length;
+  const start=plan.start||START,people=plan.people||PEOPLE;
+  const d0=addDays(start,0),d1=addDays(start,tn);
+  return {days:td,cities:cities,people:people,
+    dates:d0.getDate()+'–'+d1.getDate()+' '+MONTHS[d1.getMonth()]+' '+d1.getFullYear()};
+}
+function homeHTML(){
+  const t=trips();
+  const cards=t.list.map(m=>{
+    const st=tripStats(m.id),ph=basePhoto(BASES[0].id)||'';
+    return '<div class="tcard"'+(m.id===t.active?' data-cur="1"':'')+'>'
+      +'<div class="tph"'+(ph?' style="background-image:url('+ph+')"':'')+'><span class="tnm">'+esc0(m.title)+'</span></div>'
+      +'<div class="tin"><span class="tmeta">'+st.dates+'<br>'+st.days+' '+plural(st.days,'день','дня','дней')
+        +' · '+st.cities+' '+plural(st.cities,'город','города','городов')+' · '+st.people+' '+plural(st.people,'гость','гостя','гостей')+'</span>'
+      +'<button class="topen" data-topen="'+m.id+'">Открыть</button>'
+      +'<button class="tdots" data-tmenu="'+m.id+'" aria-label="что сделать с поездкой">⋯</button></div></div>';
+  }).join('');
+  return '<div class="wrap homewrap">'
+    +'<div class="eyebrow">ЛИЧНЫЙ КАБИНЕТ</div><h1 class="homeh">Мои поездки</h1>'
+    +'<button class="newtrip" data-newtrip="1"><i>'+ic('plus','i-sm')+'</i><span>Новая поездка<small>соберём маршрут по твоим ответам</small></span></button>'
+    +cards+'</div>';
+}
+function esc0(x){return String(x==null?'':x).replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));}
+let _atHome=false;
+function showHome(){
+  _atHome=true;
+  const h=document.getElementById('home');if(h){h.innerHTML=homeHTML();h.style.display='';}
+  document.body.classList.add('athome');
+  window.scrollTo(0,0);
+}
+function hideHome(){
+  _atHome=false;
+  const h=document.getElementById('home');if(h)h.style.display='none';
+  document.body.classList.remove('athome');
+}
+function syncHomeUI(){if(_atHome)showHome();}
+/* меню поездки в кабинете */
+function tripMenuSheet(id){
+  const m=tripMeta(id),one=trips().list.length<2;
+  sheet('<div class="dsh"><b>'+esc0(m.title)+'</b><span>что сделать с поездкой</span></div>'
+    +'<button class="dscancel alt" data-trename="'+id+'">Переименовать</button>'
+    +'<button class="dscancel alt" data-tcopy="'+id+'">Сделать копию</button>'
+    +(one?'':'<button class="dscancel del" data-tdel="'+id+'">Удалить поездку</button>')
+    +'<button class="dscancel" data-dsclose="1">Отмена</button>');
+}
+function renameSheet(id){
+  const m=tripMeta(id);
+  sheet('<div class="dsh"><b>Как назовём</b><span>чтобы отличать поездки в списке</span></div>'
+    +'<div class="dsform"><input id="trnm" autocomplete="off" value="'+esc0(m.title)+'">'
+    +'<button class="dsgo" data-trsave="'+id+'">Сохранить</button></div>'
+    +'<button class="dscancel" data-dsclose="1">Отмена</button>');
+  setTimeout(()=>{const i=document.getElementById('trnm');if(i){i.focus();i.select();}},60);
+}
+/* ================= МЕНЮ АККАУНТА ================= */
+function accountSheet(){
+  const inn=_signedIn;
+  sheet('<div class="dsh"><b>'+(inn?esc0(_userEmail||'Аккаунт'):'Аккаунт')+'</b>'
+      +'<span>'+(inn?'поездки сохраняются автоматически':'войди, чтобы поездки сохранялись и открывались с любого устройства')+'</span></div>'
+    +'<button class="dscancel alt" data-newtrip="1">Новая поездка</button>'
+    +'<button class="dscancel alt" data-gohome="1">Мои поездки</button>'
+    +(inn?'<button class="dscancel" data-signout="1">Выйти</button>'
+         :'<button class="dsgo" data-signin="1">Войти</button>')
+    +'<button class="dscancel" data-dsclose="1">Закрыть</button>');
+}
+/* ================= ВЫХОД ИЗ ПОЕЗДКИ =================
+   Одно окно по центру, три случая. Сохраняем всегда, говорим только когда есть о чём. */
+function popup(kind,title,text,buttons){
+  let el=document.getElementById('popup');
+  if(!el){el=document.createElement('div');el.id='popup';document.body.appendChild(el);}
+  el.innerHTML='<div class="pov"'+(kind==='ok'?' data-popclose="1"':'')+'></div>'
+    +'<div class="pbox"><span class="pic '+kind+'">'+ic(kind==='ok'?'check':kind==='save'?'money':'clock','i-sm')+'</span>'
+    +'<b>'+title+'</b><p>'+text+'</p>'+(buttons||'')+'</div>';
+  el.classList.add('on');
+}
+function popClose(){const el=document.getElementById('popup');if(el)el.classList.remove('on');}
+let _popT=null;
+/* куда собирались уйти — выполняем после того, как разобрались с сохранением */
+function leaveTrip(go){
+  const done=()=>{popClose();go();};
+  if(!_signedIn||!sb)return done();          /* без аккаунта сохранять некуда */
+  if(!dirty()){
+    done();
+    popup('ok','Поездка сохранена','Она лежит в разделе «Мои поездки»','');
+    clearTimeout(_popT);_popT=setTimeout(popClose,3000);
+    return;
+  }
+  popup('save','Есть несохранённые правки','Сохраним их в аккаунт и перейдём дальше',
+    '<div class="prow"><button class="pgo" data-leavesave="1">Сохранить</button>'
+    +'<button class="pok" data-popclose="1">Остаться</button></div>');
+  _leaveGo=go;
+}
+let _leaveGo=null;
+async function leaveSave(){
+  const btn=document.querySelector('#popup .pgo');if(btn){btn.textContent='Сохраняю…';btn.disabled=true;}
+  const ok=await cloudPush().catch(()=>false);
+  if(ok){const go=_leaveGo;_leaveGo=null;popClose();if(go)go();
+    popup('ok','Поездка сохранена','Она лежит в разделе «Мои поездки»','');
+    clearTimeout(_popT);_popT=setTimeout(popClose,3000);return;}
+  /* причину НЕ выдумываем: показываем факт, подробности прячем */
+  popup('warn','Пока не сохранилось','Правки на месте, ничего не пропало',
+    '<div class="prow"><button class="pgo" data-leavesave="1">Попробовать сейчас</button>'
+    +'<button class="pok" data-leaveanyway="1">Хорошо, позже</button></div>'
+    +'<button class="pdet" data-popdet="1">Подробности</button>'
+    +'<div class="pdetbox" hidden>'+esc0(_syncErr||'неизвестная причина')+'</div>');
+}
+/* перед отправкой складываем открытую поездку в список — иначе в облако уедут
+   только её четыре ключа, а сам список останется вчерашним */
+function localBundle(){syncActiveIntoTrips();const o={};CLOUD_KEYS.forEach(k=>{const v=localStorage.getItem(k);if(v!=null)o[k]=v;});return o;}
 function localTs(){return parseInt(localStorage.getItem('co-trip-ts')||'0',10);}
 /* Метка «что уже уехало в облако». Сравнивать часы двух устройств нельзя: они врут
    друг относительно друга, и телефон затирался компьютером. Сравниваем своё «изменено»
@@ -3846,7 +4086,7 @@ function syncSay(){
   if(dirty())return syncUI('go','Сохранить');
   syncUI('ok','Сохранено');
 }
-let _signedIn=false;
+let _signedIn=false,_userEmail='';
 /* Пишем в облако. upsert может не сработать, если в таблице нет уникальности по
    user_id — тогда честно пробуем update, а если строки ещё нет, insert. */
 async function cloudPush(){
@@ -3909,11 +4149,12 @@ async function cloudSync(session){
   }catch(e){_syncErr=(e&&e.message)||String(e);syncSay();}}
 /* перехват записи наших ключей → отметка времени + авто-сохранение */
 localStorage.setItem=function(k,v){_rawSet(k,v);if(!_applying&&CLOUD_KEYS.indexOf(k)>=0){_rawSet('co-trip-ts',String(Date.now()));cloudSave();}};
+/* открыть окно входа умеет и меню аккаунта */
+let openAuth=function(){};
 (function authInit(){
-  const btn=document.getElementById('authBtn'),ov=document.getElementById('authOv');
-  if(!btn||!ov)return;
-  if(!sb){btn.style.display='none';return;} /* облако недоступно — сайт работает как раньше */
-  btn.style.display='';
+  const ov=document.getElementById('authOv');
+  if(!ov)return;
+  if(!sb)return; /* облако недоступно — сайт работает как раньше */
   const email=document.getElementById('authEmail'),pass=document.getElementById('authPass'),
         err=document.getElementById('authErr'),submit=document.getElementById('authSubmit'),hint=document.getElementById('authHint');
   let mode='in';
@@ -3925,26 +4166,13 @@ localStorage.setItem=function(k,v){_rawSet(k,v);if(!_applying&&CLOUD_KEYS.indexO
   document.querySelectorAll('.authtab').forEach(t=>t.addEventListener('click',()=>setMode(t.dataset.mode)));
   ov.querySelectorAll('[data-authclose]').forEach(x=>x.addEventListener('click',close));
   async function refresh(){try{const{data}=await sb.auth.getSession();const s=data&&data.session;
-    if(s){btn.textContent='Выйти';btn.dataset.state='in';btn.title=s.user.email||'';_signedIn=true;}
-    else{btn.textContent='Войти';btn.dataset.state='out';btn.title='';_signedIn=false;}
-    syncSay();}catch(e){}}
-  /* нажатие на плашку: сохранить прямо сейчас, а если не вышло — показать причину */
-  const pill=document.getElementById('syncPill');
-  if(pill)pill.addEventListener('click',async()=>{
-    if(_syncErr){
-      const msg=_syncErr;
-      sheet('<div class="dsh"><b>Не сохраняется в аккаунт</b><span>Правки остались на этом устройстве, но в облако не уехали. Ответ сервера ниже — пришли его мне, и я починю.</span></div>'
-        +'<div class="dsform"><span class="dshint" style="user-select:text">'+String(msg).replace(/</g,'&lt;')+'</span>'
-        +'<button class="dsgo" data-syncretry="1">Попробовать ещё раз</button></div>'
-        +'<button class="dscancel" data-dsclose="1">Закрыть</button>');
-      return;
-    }
-    syncUI('go','Сохраняю…');
-    const ok=await cloudPush();
-    if(ok)syncUI('ok','Сохранено');
-  });
-  btn.addEventListener('click',async()=>{
-    if(btn.dataset.state==='in'){await sb.auth.signOut();refresh();}else open();});
+    _signedIn=!!s;_userEmail=s?(s.user.email||''):'';
+    const av=document.getElementById('avaBtn');
+    if(av)av.textContent=_userEmail?_userEmail[0].toUpperCase():'Я';
+  }catch(e){}}
+  openAuth=open;
+  window.authRefresh=refresh;
+  window.doSignOut=async()=>{try{await sb.auth.signOut();}catch(e){}refresh();};
   submit.addEventListener('click',async()=>{
     const e=(email.value||'').trim(),p=pass.value||'';
     if(!e||!p){err.style.color='';err.textContent='Введи email и пароль';return;}
@@ -3966,6 +4194,11 @@ localStorage.setItem=function(k,v){_rawSet(k,v);if(!_applying&&CLOUD_KEYS.indexO
   try{sb.auth.onAuthStateChange((ev,session)=>{refresh();if(session&&(ev==='SIGNED_IN'||ev==='INITIAL_SESSION'))cloudSync(session);});}catch(e){}
   refresh();
 })();
+
+/* Сайт открывается в кабинете: сначала «Мои поездки», внутрь — кнопкой «Открыть».
+   Ставим в самом конце: слой поездок объявлен через let/const выше по файлу, и до
+   его выполнения showHome() упал бы на временной мёртвой зоне. */
+showHome();
 </script>
 </body>
 </html>

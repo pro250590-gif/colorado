@@ -219,6 +219,8 @@ const LINES=[
  {type:'rad',days:[8],color:'#2f9e6f',dash:'8,8',w:3.5,label:'День 8: долины',pts:[[39.1911,-106.8175],[39.1650,-106.6250],[39.1600,-106.6480],[39.0500,-106.7975],[39.0670,-106.6640]]}
 ];
 
+/* как поездка называется в списке «Мои поездки» */
+const TRIP_NAME='Колорадо';
 const START='2026-08-07';
 
 const PHOTO={};["dro","art","lnh","trn","mvp","clp","vlc","pag","chr","hav","cbp","mol","sil","mdh","rmp","bcf","ohs","box","ykb","tel","dld","rid","bcg","pnt","mcc","mar","red","mrb","crl","gon","asp","gro","ash","rgt","igh","ind","dil","lov","geo","den"].forEach(k=>PHOTO[k]=1);
