@@ -78,26 +78,61 @@ body.athome>section,body.athome>.citystep,body.athome>#cities,body.athome>footer
 body.athome>.bottomnav,body.athome>.siderail,body.athome>#mapShell,body.athome>header,
 body.athome>#days,body.athome>#toast,body.athome>.orb,body.athome>.glow{display:none!important}
 body.athome{padding-right:0!important}
-.homewrap{padding-top:22px;padding-bottom:40px}
-.homeh{font:600 30px/1.08 "Fraunces",Georgia,serif;margin:0 0 16px;letter-spacing:-.01em}
-.newtrip{display:flex;align-items:center;gap:11px;width:100%;padding:15px 14px;border-radius:18px;margin-bottom:13px;
-  border:2px dashed rgba(91,63,196,.35);background:rgba(255,255,255,.65);color:#5b3fc4!important;
-  font:800 13.5px/1.2 "Plus Jakarta Sans",sans-serif;text-align:left;cursor:pointer}
-.newtrip i{width:38px;height:38px;border-radius:13px;flex:none;display:grid;place-items:center;font-style:normal;
+/* воздух: 26 от шапки, поля по краям 20 — карточки не липнут к краю (просьба клиента) */
+.homewrap{padding:26px 20px 40px;max-width:1120px}
+.homewrap .eyebrow{margin:0 0 10px}
+.homeh{font:600 27px/1.06 "Fraunces",Georgia,serif;margin:0 0 20px;letter-spacing:-.01em}
+.newtrip{display:flex;align-items:center;gap:11px;width:100%;padding:14px;border-radius:16px;margin-bottom:16px;
+  border:1.5px dashed rgba(91,63,196,.4);background:rgba(255,255,255,.7);color:#5b3fc4!important;
+  font:800 12.5px/1.2 "Plus Jakarta Sans",sans-serif;text-align:left;cursor:pointer}
+.newtrip i{width:34px;height:34px;border-radius:12px;flex:none;display:grid;place-items:center;font-style:normal;
   background:linear-gradient(150deg,#7a5cf0,#5b3fc4);color:#fff}
-.newtrip i .i{width:19px;height:19px}
-.newtrip small{display:block;font:500 11px/1.35 "Inter",sans-serif;color:#8b8698;margin-top:3px;font-weight:500}
-.tcard{background:#fff;border:1px solid #e8e9f2;border-radius:18px;overflow:hidden;margin-bottom:11px;box-shadow:var(--sh1)}
-.tcard[data-cur] {border-color:rgba(91,63,196,.35)}
-.tph{height:112px;background:#e5e7f0 center/cover no-repeat;position:relative}
-.tph::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(20,25,40,0) 45%,rgba(20,25,40,.62))}
-.tnm{position:absolute;left:14px;bottom:10px;z-index:2;color:#fff;font:600 21px/1.1 "Fraunces",Georgia,serif}
-.tin{padding:11px 12px 12px;display:flex;align-items:center;gap:9px}
-.tmeta{flex:1;min-width:0;font:600 11px/1.4 "Inter",sans-serif;color:#8b8698}
-.topen{flex:none;border:0;border-radius:11px;padding:11px 15px;cursor:pointer;
-  background:linear-gradient(150deg,#7a5cf0,#5b3fc4);color:#fff!important;font:800 11.5px/1 "Plus Jakarta Sans",sans-serif}
-.tdots{flex:none;width:36px;height:36px;border-radius:11px;border:1.5px solid rgba(20,32,27,.1);background:#fff;
-  color:#8b8698!important;font:800 15px/1 "Inter",sans-serif;cursor:pointer;padding-bottom:5px}
+.newtrip i .i{width:17px;height:17px}
+.newtrip small{display:block;font:500 10.5px/1.35 "Inter",sans-serif;color:#8b8698;margin-top:3px;font-weight:500}
+/* плитка: фото во всю карточку, текст поверх. Одна в ряд на телефоне, две на компьютере */
+.tgrid{display:grid;grid-template-columns:1fr;gap:12px}
+.tcard{position:relative}
+.ttile{display:block;width:100%;height:172px;border:0;padding:0;cursor:pointer;position:relative;
+  border-radius:18px;overflow:hidden;background:#dfe3ee center/cover no-repeat;
+  box-shadow:0 12px 26px -18px rgba(20,32,27,.65);-webkit-appearance:none;appearance:none}
+.ttile::after{content:"";position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(15,20,35,.02) 22%,rgba(15,20,35,.86))}
+.ttile:active{transform:scale(.995)}
+.tin{position:absolute;left:0;right:0;bottom:0;z-index:2;padding:14px;text-align:left}
+.tnm{display:block;color:#fff!important;font:600 21px/1.05 "Fraunces",Georgia,serif;margin-bottom:6px}
+.twhere{display:block;color:#fff!important;opacity:.95;font:700 11px/1.35 "Plus Jakarta Sans",sans-serif;
+  letter-spacing:-.01em;margin-bottom:4px}
+.tmeta{display:block;color:rgba(255,255,255,.72)!important;font:600 10.5px/1.4 "Inter",sans-serif}
+.tdots{position:absolute;right:11px;top:11px;z-index:3;width:32px;height:32px;border-radius:50%;border:0;cursor:pointer;
+  background:rgba(255,255,255,.92);color:#4b2fa8!important;font:800 14px/1 "Inter",sans-serif;
+  display:grid;place-items:center;padding-bottom:4px}
+@media(min-width:1000px){
+  .tgrid{grid-template-columns:1fr 1fr;gap:14px}
+  .ttile{height:164px}
+  .homewrap{padding-left:0;padding-right:0}
+}
+/* ── МЕНЮ АККАУНТА: выпадает из-под аватара ── */
+#accMenu{position:fixed;inset:0;z-index:4250;opacity:0;visibility:hidden;transition:opacity .15s,visibility .15s}
+#accMenu.on{opacity:1;visibility:visible}
+.accov{position:absolute;inset:0}
+.accbox{position:absolute;right:14px;top:52px;width:min(250px,calc(100vw - 28px));background:#fff;
+  border:1px solid #e8e9f2;border-radius:16px;padding:7px;box-shadow:0 22px 44px -20px rgba(20,25,50,.55)}
+.accwho{padding:10px 11px 11px;border-bottom:1px solid #f0f1f6;margin-bottom:6px}
+.accwho b{display:block;font:800 12.5px/1.2 "Plus Jakarta Sans",sans-serif;color:var(--ink)}
+.accwho span{display:block;font:500 10.5px/1.35 "Inter",sans-serif;color:var(--mut);margin-top:3px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.accmi{display:flex;align-items:center;gap:9px;width:100%;border:0;background:none;border-radius:10px;cursor:pointer;
+  padding:10px 11px;font:700 12.5px/1 "Inter",sans-serif;color:#1b1e2e!important;text-align:left;
+  -webkit-appearance:none;appearance:none}
+.accmi .i{width:15px;height:15px;color:#8b8698;flex:none}
+.accmi:active{background:#f6f4ff}
+.accsoon{margin-left:auto;font:700 9px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:.06em;
+  color:#a4a9bb;background:#f4f5fb;border-radius:20px;padding:4px 7px;font-style:normal}
+.accmi.out,.accmi.in{border-top:1px solid #f0f1f6;margin-top:6px;padding-top:12px;border-radius:0}
+.accmi.out{color:#b03a2b!important}
+.accmi.out .i{color:#b03a2b}
+.accmi.in{color:#5b3fc4!important}
+.accmi.in .i{color:#5b3fc4}
 /* ── ОКНО ПО ЦЕНТРУ (выход из поездки) ── */
 #popup{position:fixed;inset:0;z-index:4300;opacity:0;visibility:hidden;transition:opacity .18s,visibility .18s}
 #popup.on{opacity:1;visibility:visible}
@@ -1610,6 +1645,9 @@ const ICONS={
  route:'<circle cx="6" cy="19" r="2.5"/><circle cx="18" cy="5" r="2.5"/><path d="M15.5 5H10a4 4 0 0 0 0 8h4a4 4 0 0 1 0 8H8.5"/>',
  camera:'<path d="M4 8h3l1.5-2.5h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z"/><circle cx="12" cy="13.5" r="3.4"/>',
  info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.8h.01"/>',
+ user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/>',
+ doc:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5"/>',
+ exit:'<path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/>',
  tree:'<path d="M12 2 7 10h3l-4 6h5v6h2v-6h5l-4-6h3L12 2Z"/>',
  chevron:'<path d="m6 9 6 6 6-6"/>',
  fuel:'<path d="M4 21V5a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v16M3 21h11M4.5 9.5h8M15 6.5l3 1.9a2 2 0 0 1 1 1.7v6.4a1.75 1.75 0 0 0 3.5 0v-5.9h-2.5"/>',
@@ -3459,11 +3497,15 @@ document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)r
     if(typeof cloudPush==='function')cloudPush().catch(e=>{_syncErr=(e&&e.message)||String(e);syncSay();});}
   /* ——— кабинет, аккаунт, выход из поездки ——— */
   if(t.id==='avaBtn'){accountSheet();}
+  if(t.dataset.accclose){accClose();}
+  if(t.dataset.soon){accClose();
+    popup('save',t.dataset.soon,'Этого раздела ещё нет — сделаем следующим',
+      '<div class="prow"><button class="pok" data-popclose="1">Понятно</button></div>');}
   if(t.id==='brandHome'){closeDaySheet();leaveTrip(showHome);}
-  if(t.dataset.gohome){closeDaySheet();leaveTrip(showHome);}
+  if(t.dataset.gohome){accClose();closeDaySheet();leaveTrip(showHome);}
   if(t.dataset.topen){closeDaySheet();const id=t.dataset.topen;
     if(id!==trips().active)switchTrip(id);hideHome();window.scrollTo(0,0);}
-  if(t.dataset.newtrip){closeDaySheet();
+  if(t.dataset.newtrip){accClose();closeDaySheet();
     leaveTrip(()=>{newTripFromCurrent();hideHome();renameSheet(trips().active);});}
   if(t.dataset.tmenu){tripMenuSheet(t.dataset.tmenu);}
   if(t.dataset.trename){renameSheet(t.dataset.trename);}
@@ -3474,8 +3516,8 @@ document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)r
     if(src!==trips().active)switchTrip(src);
     newTripFromCurrent(tripMeta(src).title+' · копия');hideHome();renameSheet(trips().active);}
   if(t.dataset.tdel){closeDaySheet();deleteTrip(t.dataset.tdel);}
-  if(t.dataset.signin){closeDaySheet();openAuth();}
-  if(t.dataset.signout){closeDaySheet();if(window.doSignOut)doSignOut();}
+  if(t.dataset.signin){accClose();closeDaySheet();openAuth();}
+  if(t.dataset.signout){accClose();closeDaySheet();if(window.doSignOut)doSignOut();}
   if(t.dataset.popclose){popClose();}
   if(t.dataset.leavesave){leaveSave();}
   if(t.dataset.leaveanyway){const go=_leaveGo;_leaveGo=null;popClose();if(go)go();}
@@ -3956,27 +3998,32 @@ function tripStats(id){
   let plan={};try{plan=JSON.parse(keys[PKEY]||'{}')||{};}catch(e){}
   const nights=Array.isArray(plan.nights)?plan.nights:BASES.map(b=>b.nights);
   const tn=nights.reduce((x,v)=>x+(+v||0),0),td=tn+1;
-  const cities=nights.filter(v=>+v>0).length;
+  /* «где это» — города, где ночуем. Название поездки человек меняет, а города
+     остаются правдой: через полгода по «Осень в горах» не вспомнишь, куда она. */
+  const named=BASES.filter((b,i)=>(+nights[i]||0)>0).map(b=>shortName(b.name));
+  const where=named.length>4?(named.slice(0,3).join(' · ')+' +'+(named.length-3)):named.join(' · ');
   const start=plan.start||START,people=plan.people||PEOPLE;
   const d0=addDays(start,0),d1=addDays(start,tn);
-  return {days:td,cities:cities,people:people,
+  return {days:td,cities:named.length,people:people,where:where||'маршрут пока пустой',
     dates:d0.getDate()+'–'+d1.getDate()+' '+MONTHS[d1.getMonth()]+' '+d1.getFullYear()};
 }
 function homeHTML(){
   const t=trips();
-  const cards=t.list.map(m=>{
-    const st=tripStats(m.id),ph=basePhoto(BASES[0].id)||'';
-    return '<div class="tcard"'+(m.id===t.active?' data-cur="1"':'')+'>'
-      +'<div class="tph"'+(ph?' style="background-image:url('+ph+')"':'')+'><span class="tnm">'+esc0(m.title)+'</span></div>'
-      +'<div class="tin"><span class="tmeta">'+st.dates+'<br>'+st.days+' '+plural(st.days,'день','дня','дней')
-        +' · '+st.cities+' '+plural(st.cities,'город','города','городов')+' · '+st.people+' '+plural(st.people,'гость','гостя','гостей')+'</span>'
-      +'<button class="topen" data-topen="'+m.id+'">Открыть</button>'
-      +'<button class="tdots" data-tmenu="'+m.id+'" aria-label="что сделать с поездкой">⋯</button></div></div>';
+  /* плитка целиком — кнопка «открыть»; «⋯» отдельной кнопкой в углу */
+  const cards=t.list.map((m,i)=>{
+    const st=tripStats(m.id),ph=basePhoto(BASES[i%BASES.length].id)||basePhoto(BASES[0].id)||'';
+    return '<div class="tcard">'
+      +'<button class="ttile" data-topen="'+m.id+'"'+(ph?' style="background-image:url('+ph+')"':'')+'>'
+        +'<span class="tin"><span class="tnm">'+esc0(m.title)+'</span>'
+        +'<span class="twhere">'+esc0(st.where)+'</span>'
+        +'<span class="tmeta">'+st.dates+' · '+st.days+' '+plural(st.days,'день','дня','дней')
+          +' · '+st.people+' '+plural(st.people,'гость','гостя','гостей')+'</span></span></button>'
+      +'<button class="tdots" data-tmenu="'+m.id+'" aria-label="что сделать с поездкой">⋯</button></div>';
   }).join('');
   return '<div class="wrap homewrap">'
     +'<div class="eyebrow">ЛИЧНЫЙ КАБИНЕТ</div><h1 class="homeh">Мои поездки</h1>'
     +'<button class="newtrip" data-newtrip="1"><i>'+ic('plus','i-sm')+'</i><span>Новая поездка<small>соберём маршрут по твоим ответам</small></span></button>'
-    +cards+'</div>';
+    +'<div class="tgrid">'+cards+'</div></div>';
 }
 function esc0(x){return String(x==null?'':x).replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));}
 let _atHome=false;
@@ -4009,17 +4056,33 @@ function renameSheet(id){
     +'<button class="dscancel" data-dsclose="1">Отмена</button>');
   setTimeout(()=>{const i=document.getElementById('trnm');if(i){i.focus();i.select();}},60);
 }
-/* ================= МЕНЮ АККАУНТА ================= */
+/* ================= МЕНЮ АККАУНТА =================
+   Выпадает из-под аватара, как у обычных сервисов, а не выскакивает по центру.
+   Закрывается тапом мимо — отдельная кнопка «Закрыть» тут лишняя. */
+const ACCITEMS=[
+  {k:'gohome',ic:'layers',t:'Мои поездки'},
+  {k:'newtrip',ic:'plus',t:'Новая поездка'},
+  {k:'soon',ic:'user',t:'Профиль'},
+  {k:'soon',ic:'ticket',t:'Подписка'},
+  {k:'soon',ic:'sun',t:'Настройки'},
+  {k:'soon',ic:'info',t:'Помощь и контакты'},
+  {k:'soon',ic:'doc',t:'Условия'}
+];
 function accountSheet(){
-  const inn=_signedIn;
-  sheet('<div class="dsh"><b>'+(inn?esc0(_userEmail||'Аккаунт'):'Аккаунт')+'</b>'
-      +'<span>'+(inn?'поездки сохраняются автоматически':'войди, чтобы поездки сохранялись и открывались с любого устройства')+'</span></div>'
-    +'<button class="dscancel alt" data-newtrip="1">Новая поездка</button>'
-    +'<button class="dscancel alt" data-gohome="1">Мои поездки</button>'
-    +(inn?'<button class="dscancel" data-signout="1">Выйти</button>'
-         :'<button class="dsgo" data-signin="1">Войти</button>')
-    +'<button class="dscancel" data-dsclose="1">Закрыть</button>');
+  let el=document.getElementById('accMenu');
+  if(!el){el=document.createElement('div');el.id='accMenu';document.body.appendChild(el);}
+  const who=_signedIn
+    ? '<div class="accwho"><b>'+esc0((_userEmail||'').split('@')[0]||'Аккаунт')+'</b><span>'+esc0(_userEmail)+'</span></div>'
+    : '<div class="accwho"><b>Вы не вошли</b><span>войдите, чтобы поездки открывались с любого устройства</span></div>';
+  const items=ACCITEMS.map(x=>'<button class="accmi"'+(x.k==='soon'?' data-soon="'+esc0(x.t)+'"':' data-'+x.k+'="1"')+'>'
+    +ic(x.ic,'i-sm')+x.t+(x.k==='soon'?'<i class="accsoon">скоро</i>':'')+'</button>').join('');
+  const last=_signedIn
+    ? '<button class="accmi out" data-signout="1">'+ic('exit','i-sm')+'Выйти из аккаунта</button>'
+    : '<button class="accmi in" data-signin="1">'+ic('exit','i-sm')+'Войти</button>';
+  el.innerHTML='<div class="accov" data-accclose="1"></div><div class="accbox">'+who+items+last+'</div>';
+  el.classList.add('on');
 }
+function accClose(){const el=document.getElementById('accMenu');if(el)el.classList.remove('on');}
 /* ================= ВЫХОД ИЗ ПОЕЗДКИ =================
    Одно окно по центру, три случая. Сохраняем всегда, говорим только когда есть о чём. */
 function popup(kind,title,text,buttons){
