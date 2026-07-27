@@ -1781,7 +1781,26 @@ section h2.big{margin-bottom:4px}
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" onerror="window.__lf=1"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" onerror="window.__sb=1"></script>
-<script src="trip-colorado.js"></script>
+<script>
+/* Какой маршрут открывать. Данные лежат в отдельных файлах и объявлены через
+   const (BASES, DAYS, P…), поэтому два файла сразу загрузить нельзя — выбираем
+   один ДО запуска движка. У поездки в списке хранится имя её файла; нет имени
+   (все старые поездки) — Колорадо, как было.
+   document.write здесь намеренно: он единственный грузит скрипт синхронно,
+   а весь движок ниже рассчитывает, что данные уже есть. */
+(function(){
+  var f='trip-colorado.js';
+  try{
+    var t=JSON.parse(localStorage.getItem('co-trip-trips')||'null');
+    if(t&&t.list&&t.active){
+      var m=t.list.filter(function(x){return x.id===t.active;})[0];
+      if(m&&m.data&&/^trip-[a-z0-9-]+\.js$/.test(m.data))f=m.data;
+    }
+  }catch(e){}
+  window.__dataFile=f;
+  document.write('<scr'+'ipt src="'+f+'"></scr'+'ipt>');
+})();
+</script>
 <script>
 
 /* ================= ИКОНКИ (SVG вместо эмодзи) ================= */
@@ -1881,7 +1900,10 @@ function dayDate(startIso,dayN){return fmtDate(addDays(startIso,dayN-1));}
 /* фотографии мест лежат в папке img/ — три размера: p (булавка), t (миниатюра), l (крупно) */
 
 /* в PHOTO значение = расширение файла ('jpg' у дозагруженных с Викисклада), иначе webp */
-function pimg(id,s){const e=PHOTO[id];return 'img/'+id+'-'+s+'.'+(typeof e==='string'?e:'webp');}
+/* IMGPREF — приставка к именам файлов маршрута: у Юты img/ut_del-l.jpg.
+   Без неё файлы разных маршрутов перетирали бы друг друга при совпадении id. */
+function pimg(id,s){const e=PHOTO[id],pr=(typeof IMGPREF==='string')?IMGPREF:'';
+  return 'img/'+pr+id+'-'+s+'.'+(typeof e==='string'?e:'webp');}
 
 
 /* пиковая высота каждого дня, метры — на ней держится профиль маршрута */
@@ -4276,7 +4298,10 @@ const AKEY='co-trip-ask';
 function askNew(){return {text:'',where:null,whereNm:'',days:null,month:null,adults:null,kids:0,
   pace:null,drive:null,likes:[],limits:[],extras:[]};}
 /* что мы умеем собрать сегодня. Пока один маршрут — врать про остальные не будем */
-const CATALOG=[{k:'co',rx:/колорадо|colorado|дуранго|аспен|денвер|силвертон/i,nm:'Колорадо, США'}];
+const CATALOG=[
+  {k:'co',file:'trip-colorado.js',rx:/колорадо|colorado|дуранго|аспен|денвер|силвертон/i,nm:'Колорадо, США'},
+  {k:'ut',file:'trip-utah.js',    rx:/юта|utah|зайон|zion|брайс|bryce|моаб|moab|арки|arches|каньонлендс/i,nm:'Юта, каньоны'}
+];
 const MONRX=['январ','феврал','март','апрел','ма[йя]','июн','июл','август','сентябр','октябр','ноябр','декабр'];
 const NUMW={'один':1,'одну':1,'два':2,'две':2,'три':3,'четыре':4,'пять':5,'шесть':6,'семь':7,
   'восемь':8,'девять':9,'десять':10,'одиннадцать':11,'двенадцать':12,'две недели':14,'неделю':7,'неделя':7};
@@ -4456,19 +4481,26 @@ function askStart(a){
   const now=new Date(),y=now.getFullYear()+((a.month<now.getMonth())?1:0);
   return y+'-'+String(a.month+1).padStart(2,'0')+'-01';
 }
-function buildFromAsk(){
-  const a=ASK;if(!a)return;
-  const fs=askFields(a);
-  const miss=fs.filter(f=>!f.val);
-  if(miss.length){_askOpen[miss[0].k]=1;renderLand();return;}
-  const title=(CATALOG.find(c=>c.k===a.where)||{}).nm.split(',')[0]+' · '+monthNm(a.month);
-  newTripFromCurrent(title);
-  const nights=spreadNights(a.days-1);
+/* раскладываем ответы анкеты по уже загруженному маршруту */
+function applyAsk(a){
+  const nights=spreadNights((a.days||10)-1);
   BASES.forEach((b,i)=>{applyNights(i,nights[i]);});
   startIso=askStart(a);
   PEOPLE=Math.max(1,(a.adults||2)+(a.kids||0));
   savePlan();
   try{localStorage.setItem(AKEY,JSON.stringify(a));}catch(e){}
+}
+function buildFromAsk(){
+  const a=ASK;if(!a)return;
+  const fs=askFields(a);
+  const miss=fs.filter(f=>!f.val);
+  if(miss.length){_askOpen[miss[0].k]=1;renderLand();return;}
+  const cat=CATALOG.find(c=>c.k===a.where)||CATALOG[0];
+  const title=cat.nm.split(',')[0]+' · '+monthNm(a.month);
+  /* другой маршрут — другой файл данных, он подключается только при загрузке */
+  if(cat.file!==window.__dataFile)return newTripFromData(title,cat.file,a);
+  newTripFromCurrent(title);
+  applyAsk(a);
   reinit();hideLand();hideHome();rerenderTrip();window.scrollTo(0,0);
   toast('<b>Маршрут собран: '+esc0(title)+'</b><i>дни разложены по городам — меняйте что угодно, всё пересчитается</i>',null,null);
 }
@@ -4498,9 +4530,28 @@ document.addEventListener('input',e=>{
   if(e.target&&e.target.id==='aDays'&&ASK){const v=parseInt(e.target.value,10);if(v>0&&v<60)ASK.days=v;}
 });
 
+/* Шапка поездки: у Колорадо она в разметке, у остальных маршрутов приходит
+   данными (HERO в файле маршрута). Без HERO ничего не трогаем. */
+function applyHero(){
+  if(typeof HERO==='undefined'||!HERO)return;
+  const q=s=>document.querySelector(s);
+  const h1=q('header.hero h1');if(h1&&HERO.h1)h1.innerHTML=esc0(HERO.h1)+(HERO.em?'<em>'+esc0(HERO.em)+'</em>':'');
+  const sub=q('header.hero .sub');if(sub&&HERO.sub)sub.textContent=HERO.sub;
+  const img=q('header.hero .tile-photo img');
+  if(img&&HERO.photo){img.src=HERO.photo;img.alt=HERO.alt||'';}
+  const cnt=q('header.hero .tile-photo .cnt');
+  if(cnt&&HERO.capTitle)cnt.innerHTML='<h2>'+esc0(HERO.capTitle)+'</h2><p>'+esc0(HERO.capSub||'')+'</p>';
+  if(HERO.parks){
+    const t=document.querySelectorAll('header.hero .tile-g.d b, header.hero .tile-g.d .tcap');
+    if(t[0])t[0].textContent=HERO.parks;
+    if(t[1])t[1].textContent=HERO.parksCap||t[1].textContent;
+  }
+}
+
 /* ================= СТАРТ ================= */
 loadPlan();
 loadHRates();   /* только здесь: BKEY к этому моменту уже объявлен */
+applyHero();
 ['tileIc1|clock','tileIc2|pin','tileIc3|money','tileIc4|tree'].forEach(p=>{const [id,ico]=p.split('|');const el=document.getElementById(id);if(el)el.innerHTML=ic(ico);});
 const scMed=document.getElementById('scMedIcon');if(scMed)scMed.innerHTML=ic('cal','i-sm');
 const sd0=document.getElementById('startDate');if(sd0){sd0.value=startIso;sd0.addEventListener('change',e=>{startIso=e.target.value||START;savePlan();rerenderTrip();});}
@@ -4631,6 +4682,8 @@ function tripMeta(id){const t=trips();return t.list.find(x=>x.id===(id||t.active
 /* перед сохранением и переключением кладём открытую поездку в общий список */
 function syncActiveIntoTrips(){
   const t=trips();t.data[t.active]=curKeys();
+  const m=t.list.find(x=>x.id===t.active);
+  if(m){try{m.snap=tripStats(t.active);}catch(e){}}
   try{_rawSet(TKEY,JSON.stringify(t));}catch(e){}
   return t;
 }
@@ -4639,13 +4692,31 @@ function applyTripKeys(keys){
   TRIP_KEYS.forEach(k=>{if(keys&&keys[k]!=null)_rawSet(k,keys[k]);else localStorage.removeItem(k);});
   _applying=false;
 }
+function tripData(m){return (m&&m.data)||'trip-colorado.js';}
 function switchTrip(id){
   const t=syncActiveIntoTrips();
   if(id===t.active||!t.list.some(x=>x.id===id))return false;
+  const to=t.list.find(x=>x.id===id);
   applyTripKeys(t.data[id]||{});
   t.active=id;tripsSave(t);
+  /* у поездок разные файлы данных, а они объявлены через const — подменить их
+     на лету нельзя, поэтому честно перезагружаем страницу */
+  if(tripData(to)!==window.__dataFile){location.reload();return true;}
   reinit();syncHomeUI();
   return true;
+}
+/* новая поездка по ДРУГОМУ маршруту: ключи пустые, чтобы применились значения
+   из файла данных, а ответы анкеты применяем уже после перезагрузки */
+const PENDKEY='co-trip-apply';
+function newTripFromData(title,dataFile,ask){
+  const t=syncActiveIntoTrips(),id=tripId();
+  t.list.push({id:id,title:title,created:Date.now(),data:dataFile});
+  t.data[id]={};
+  t.active=id;tripsSave(t);
+  applyTripKeys({});
+  try{localStorage.setItem(PENDKEY,JSON.stringify(ask||null));}catch(e){}
+  location.reload();
+  return id;
 }
 /* новая поездка = копия открытой: маршрут тот же, а даты/дни/люди меняешь заново */
 function newTripFromCurrent(title){
@@ -4671,8 +4742,14 @@ function deleteTrip(id){
 }
 /* ================= ЭКРАН «МОИ ПОЕЗДКИ» =================
    Сайт открывается здесь. Внутрь поездки заходят кнопкой «Открыть». */
+/* Города и даты чужой поездки посчитать нельзя: её маршрут лежит в другом файле,
+   а загружен всегда один. Поэтому при каждом сохранении кладём в список готовый
+   снимок — что показывать на плитке. Иначе Колорадо в кабинете подписывался
+   городами Юты (поймано глазами на второй поездке). */
 function tripStats(id){
-  const t=trips(),keys=(id===t.active)?curKeys():(t.data[id]||{});
+  const t=trips(),m=t.list.find(x=>x.id===id);
+  if(id!==t.active&&m&&m.snap)return m.snap;
+  const keys=(id===t.active)?curKeys():(t.data[id]||{});
   let plan={};try{plan=JSON.parse(keys[PKEY]||'{}')||{};}catch(e){}
   const nights=Array.isArray(plan.nights)?plan.nights:BASES.map(b=>b.nights);
   const tn=nights.reduce((x,v)=>x+(+v||0),0),td=tn+1;
@@ -4947,7 +5024,23 @@ let openAuth=function(){};
    его выполнения showHome() упал бы на временной мёртвой зоне.
    Главная страница пока по адресу ?land — своих поездок у клиента уже полно,
    и встречать её лендингом вместо кабинета неправильно. */
-if(/[?&]land\b/.test(location.search))showLand(null);else showHome();
+/* поездка по другому маршруту создавалась с перезагрузкой — здесь докладываем
+   в неё ответы анкеты и сразу открываем: человек нажал «Собрать маршрут» и
+   должен увидеть маршрут, а не кабинет */
+(function(){
+  let a=null;try{a=JSON.parse(localStorage.getItem(PENDKEY)||'null');}catch(e){}
+  if(a===null&&localStorage.getItem(PENDKEY)===null)return;
+  localStorage.removeItem(PENDKEY);
+  if(!a)return;
+  try{
+    applyAsk(a);reinit();hideLand();hideHome();rerenderTrip();window.scrollTo(0,0);
+    const nm=(CATALOG.find(c=>c.k===a.where)||{}).nm||'';
+    toast('<b>Маршрут собран: '+esc0(nm.split(',')[0])+'</b><i>дни разложены по городам — меняйте что угодно, всё пересчитается</i>',null,null);
+    window.__askApplied=1;
+  }catch(e){window.__pageErr.push('анкета: '+e.message);}
+})();
+if(window.__askApplied);
+else if(/[?&]land\b/.test(location.search))showLand(null);else showHome();
 </script>
 </body>
 </html>
