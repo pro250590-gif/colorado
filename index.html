@@ -68,10 +68,17 @@ h1,h2,h3,h4{line-height:1.08;margin:0;font-family:"Plus Jakarta Sans","Inter",sa
 /* шапка: логотип-бренд слева, кружок аккаунта справа. Больше в ней ничего нет —
    название поездки дублировало её же заголовок, а кнопка сохранения переехала на выход. */
 .brand{border:0;background:none;padding:0;cursor:pointer;color:inherit}
-.ava{flex:none;width:36px;height:36px;border-radius:50%;border:0;cursor:pointer;
-  background:linear-gradient(150deg,#f0eaff,#ddd1f6);color:#4b2fa8!important;
-  font:800 13.5px/1 "Plus Jakarta Sans",sans-serif;display:grid;place-items:center}
+/* аватар выделен: рамка, тень и кружок с галочкой — сразу видно, что раскрывается */
+.ava{position:relative;flex:none;width:38px;height:38px;border-radius:50%;cursor:pointer;padding:0;
+  border:2px solid #fff;background:linear-gradient(150deg,#f0eaff,#ddd1f6);color:#4b2fa8!important;
+  font:800 14px/1 "Plus Jakarta Sans",sans-serif;display:grid;place-items:center;
+  box-shadow:0 4px 12px -4px rgba(91,63,196,.55),0 0 0 1.5px rgba(91,63,196,.25)}
 .ava:active{transform:scale(.95)}
+.avl{display:block;transform:translateY(-1px)}
+.avc{position:absolute;right:-3px;bottom:-3px;width:15px;height:15px;border-radius:50%;
+  background:#fff;border:1.5px solid rgba(91,63,196,.3);box-shadow:0 2px 5px -2px rgba(20,32,27,.55)}
+.avc::after{content:"";position:absolute;left:50%;top:50%;width:5px;height:5px;margin:-4px 0 0 -3px;
+  border-right:1.6px solid #5b3fc4;border-bottom:1.6px solid #5b3fc4;transform:rotate(45deg)}
 /* ── ЭКРАН «МОИ ПОЕЗДКИ» ── */
 /* в кабинете прячем всё, что относится к открытой поездке */
 body.athome>section,body.athome>.citystep,body.athome>#cities,body.athome>footer,
@@ -118,6 +125,8 @@ body.athome{padding-right:0!important}
   .brandmark .i{width:23px;height:23px}
   .brand{font-size:21px;gap:11px}
   .ava{width:46px;height:46px;font-size:17px}
+  .avc{width:18px;height:18px;right:-3px;bottom:-3px}
+  .avc::after{width:6px;height:6px;margin:-5px 0 0 -4px}
   .tdots{width:42px;height:42px;font-size:18px;right:13px;top:13px}
   .newtrip{padding:17px}
   .newtrip i{width:44px;height:44px;border-radius:15px}
@@ -132,17 +141,30 @@ body.athome{padding-right:0!important}
   .accwho b{font-size:14px}
   .accwho span{font-size:11.5px}
 }
-/* ── ПАНЕЛЬ ЕДИНИЦ (валюта · язык · градусы · расстояние · поделиться) ── */
-.units{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:14px 0 0}
-.ub{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:38px;min-width:38px;padding:0 12px;
-  border-radius:19px;background:#fff;border:1.5px solid #e6e3ee;cursor:pointer;-webkit-appearance:none;appearance:none;
-  font:800 13px/1 "Plus Jakarta Sans",sans-serif;color:#2b2a38!important;box-shadow:0 3px 9px -6px rgba(20,32,27,.5)}
-.ub:active{transform:scale(.96)}
-.ub.sym{font:800 16px/1 "JetBrains Mono",ui-monospace,monospace;padding:0;width:38px}
-.ub.flag{padding:0;width:38px}
-.ub.flag svg{width:24px;height:24px;border-radius:50%;display:block}
-.ub.share{background:linear-gradient(150deg,#7a5cf0,#5b3fc4);border-color:transparent;color:#fff!important;font-size:12px}
-.ub.share .i{width:15px;height:15px}
+/* ── СВОДКА ЕДИНИЦ В ШАПКЕ (вариант A) ── */
+.usum{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 10px;border-radius:16px;cursor:pointer;
+  background:#fff;border:1.5px solid #e6e3ee;color:#2b2a38!important;flex:none;
+  font:800 12px/1 "Plus Jakarta Sans",sans-serif;-webkit-appearance:none;appearance:none}
+.usum:active{transform:scale(.97)}
+.usum .us-c{font:800 13px/1 "JetBrains Mono",ui-monospace,monospace}
+.usum svg{width:17px;height:17px;border-radius:50%;flex:none}
+.usum .us-d{width:1px;height:14px;background:#e6e3ee;flex:none}
+.usum .us-v{font-style:normal;font-size:9px;color:#5b3fc4}
+/* лист настроек: у каждой строки есть подпись, а не голый значок */
+.uset{background:#fff;border:1px solid var(--line2);border-radius:16px;padding:2px 12px;margin-bottom:11px}
+.urow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 2px;border-top:1px solid #f2f3f8}
+.urow:first-child{border-top:0}
+.ul{font:700 12.5px/1.2 "Inter",sans-serif;color:var(--ink)}
+.ul small{display:block;font:500 10.5px/1.3 "Inter",sans-serif;color:var(--mut);margin-top:3px;font-weight:500}
+.upick{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 11px;border-radius:16px;cursor:pointer;flex:none;
+  background:#f6f4ff;border:1.5px solid rgba(91,63,196,.25);color:#5b3fc4!important;
+  font:800 11.5px/1 "Plus Jakarta Sans",sans-serif;-webkit-appearance:none;appearance:none}
+.upick b{font:800 13px/1 "JetBrains Mono",ui-monospace,monospace}
+.upick svg{width:17px;height:17px;border-radius:50%}
+.utg{display:inline-flex;height:32px;border-radius:16px;background:#f2f2f7;padding:2px;flex:none}
+.utg button{display:inline-flex;align-items:center;padding:0 12px;border:0;border-radius:14px;cursor:pointer;
+  background:none;color:#8b8698!important;font:800 11.5px/1 "Plus Jakarta Sans",sans-serif;-webkit-appearance:none;appearance:none}
+.utg button.on{background:#fff;color:#5b3fc4!important;box-shadow:0 2px 6px -3px rgba(20,32,27,.5)}
 /* выбор языка в листе */
 .langs{display:grid;grid-template-columns:1fr 1fr;gap:7px}
 .langb{display:flex;align-items:center;gap:9px;height:42px;padding:0 11px;border-radius:12px;cursor:pointer;
@@ -153,11 +175,9 @@ body.athome{padding-right:0!important}
 .langb i{margin-left:auto;font-style:normal;font:700 8.5px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:.06em;
   color:#a4a9bb;background:#f4f5fb;border-radius:20px;padding:4px 6px}
 @media(min-width:1000px){
-  .ub{height:44px;min-width:44px;font-size:14px}
-  .ub.sym{width:44px;font-size:18px}
-  .ub.flag{width:44px}
-  .ub.flag svg{width:28px;height:28px}
-  .ub.share{font-size:13px}
+  .usum{height:40px;padding:0 13px;font-size:13.5px;gap:7px}
+  .usum .us-c{font-size:15px}
+  .usum svg{width:21px;height:21px}
 }
 /* ── МЕНЮ АККАУНТА: выпадает из-под аватара ── */
 #accMenu{position:fixed;inset:0;z-index:4250;opacity:0;visibility:hidden;transition:opacity .15s,visibility .15s}
@@ -1459,8 +1479,9 @@ section h2.big{margin-bottom:4px}
 <body>
 
 <div class="topbar"><div class="wrap">
-  <button class="brand" id="brandHome" title="Мои поездки"><span class="brandmark"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 3 4.5 8.5L17 7l5 14H2L8 3Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></span><span id="brandName">KOLIBRI</span> <i>Pro</i></button>
-  <button class="ava" id="avaBtn" aria-label="аккаунт">Я</button>
+  <button class="brand" id="brandHome" title="Мои поездки"><span id="brandName">KOLIBRI</span> <i>Pro</i></button>
+  <button class="usum" id="uSum" aria-label="настройки поездки"></button>
+  <button class="ava" id="avaBtn" aria-label="аккаунт"><span class="avl">Я</span><i class="avc"></i></button>
 </div></div>
 <div id="home" style="display:none"></div>
 <nav class="siderail" aria-label="Разделы сайта">
@@ -1488,7 +1509,6 @@ section h2.big{margin-bottom:4px}
   <div class="wrap">
     <div class="kicker" id="heroDate">7–16 августа 2026</div>
     <h1>Дуранго → Урей<em>Аспен → Денвер</em></h1>
-    <div class="units" id="units"></div>
     <p class="sub">Десять дней поперёк Скалистых гор: паровоз на Силвертон, скальные города Меса-Верде, Million Dollar Highway без отбойников, Чёрный каньон и перевал Independence на 3 687 метрах.</p>
     <div class="bento">
       <div class="tile wide tile-photo">
@@ -3588,9 +3608,10 @@ document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)r
     else done();}
   if(t.dataset.shnative){const u=location.href.split('#')[0];
     if(navigator.share)navigator.share({title:tripMeta().title,url:u}).catch(()=>{});}
-  if(t.dataset.utemp){setTemp(TEMP==='C'?'F':'C');}
-  if(t.dataset.udist){setDist(DIST==='km'?'mi':'km');}
-  if(t.dataset.lang){LANG=t.dataset.lang;savePlan();renderUnits();closeDaySheet();}
+  if(t.id==='uSum'){unitsSettingsSheet();}
+  if(t.dataset.usett){setTemp(t.dataset.usett);unitsSettingsSheet();}
+  if(t.dataset.usetd){setDist(t.dataset.usetd);unitsSettingsSheet();}
+  if(t.dataset.lang){LANG=t.dataset.lang;savePlan();renderUnits();unitsSettingsSheet();}
   if(t.dataset.staymenu){stayMenuSheet(t.dataset.staymenu);}
   if(t.dataset.showmap&&window.showOnMap){closeDaySheet();showOnMap(t.dataset.showmap);}
   if(t.dataset.stayadd){addStaySheet(t.dataset.stayadd);}
@@ -3732,6 +3753,7 @@ function setCur(code){
     CUR=code;CRATE=r;applyCurDefaults();
     savePlan();closeDaySheet();
     buildBudget();rerenderTrip();syncCurBtn();
+    unitsSettingsSheet();
     toast('Валюта поездки — '+cur.l+' ('+cur.s+'). Все суммы пересчитаны по курсу.',null,null);
   });
 }
@@ -3811,14 +3833,41 @@ function tempC(c){return TEMP==='F'?Math.round(c*9/5+32):Math.round(c);}
 function tempU(){return TEMP==='F'?'°F':'°C';}
 function fmtTemp(c){return (c>0?'+':'')+tempC(c)+' '+tempU();}
 /* ── панель ── */
+/* Сводка в шапке: одна кнопка, на ней все четыре значения. Пять кнопок рядом с
+   названием и аватаром в 390 px не помещаются — замерено. */
 function unitsHTML(){
-  return '<button class="ub sym" data-uopen="cur" title="валюта">'+curSym()+'</button>'
-    +'<button class="ub flag" data-uopen="lang" title="язык">'+flagSVG(LANG)+'</button>'
-    +'<button class="ub" data-utemp="1" title="градусы">'+tempU()+'</button>'
-    +'<button class="ub" data-udist="1" title="расстояние">'+(DIST==='mi'?'мили':'км')+'</button>'
-    +'<button class="ub share" data-ushare="1">'+ic('share','i-sm')+'Поделиться</button>';
+  return '<b class="us-c">'+curSym()+'</b>'+flagSVG(LANG)
+    +'<i class="us-d"></i><span>'+tempU()+'</span>'
+    +'<i class="us-d"></i><span>'+(DIST==='mi'?'мили':'км')+'</span>'
+    +'<em class="us-v">▾</em>';
 }
-function renderUnits(){const el=document.getElementById('units');if(el)el.innerHTML=unitsHTML();}
+/* объявлено здесь, а не в блоке кабинета: renderUnits() зовётся при старте, а
+   до объявления let-переменная недоступна — страница падала на «Cannot access _atHome» */
+let _atHome=false;
+function renderUnits(){
+  const el=document.getElementById('uSum');if(!el)return;
+  el.innerHTML=unitsHTML();
+  el.style.display=_atHome?'none':'';   /* в кабинете это ни к чему: настройки поездки */
+}
+/* лист со всеми настройками сразу — у каждой есть подпись, а не голый значок */
+function unitsSettingsSheet(){
+  const cur=CURS.find(x=>x.c===CUR)||CURS[0],lg=LANGS.find(x=>x.c===LANG)||LANGS[0];
+  sheet('<div class="dsh"><b>Настройки поездки</b><span>как показывать цены, погоду и расстояния</span></div>'
+    +'<div class="uset">'
+      +'<div class="urow"><span class="ul">Валюта<small>цены и бюджет</small></span>'
+        +'<button class="upick" data-uopen="cur"><b>'+cur.s+'</b>'+cur.l+' ▾</button></div>'
+      +'<div class="urow"><span class="ul">Язык<small>язык сайта</small></span>'
+        +'<button class="upick" data-uopen="lang">'+flagSVG(LANG)+lg.t+' ▾</button></div>'
+      +'<div class="urow"><span class="ul">Градусы<small>погода в городах</small></span>'
+        +'<span class="utg"><button'+(TEMP==='C'?' class="on"':'')+' data-usett="C">°C</button>'
+        +'<button'+(TEMP==='F'?' class="on"':'')+' data-usett="F">°F</button></span></div>'
+      +'<div class="urow"><span class="ul">Расстояние<small>переезды и «до места»</small></span>'
+        +'<span class="utg"><button'+(DIST==='km'?' class="on"':'')+' data-usetd="km">км</button>'
+        +'<button'+(DIST==='mi'?' class="on"':'')+' data-usetd="mi">мили</button></span></div>'
+    +'</div>'
+    +'<div class="dsform"><button class="dsgo" data-ushare="1">'+ic('share','i-sm')+' Поделиться</button></div>'
+    +'<button class="dscancel" data-dsclose="1">Закрыть</button>');
+}
 function unitsSheet(kind){
   if(kind==='cur'){
     sheet('<div class="dsh"><b>В какой валюте считать</b><span>уже введённые суммы пересчитаем по курсу</span></div>'
@@ -4226,18 +4275,18 @@ function homeHTML(){
     +'<div class="tgrid">'+cards+'</div></div>';
 }
 function esc0(x){return String(x==null?'':x).replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));}
-let _atHome=false;
 function showHome(){
-  _atHome=true;
+  _atHome=true;renderUnitsLater();
   const h=document.getElementById('home');if(h){h.innerHTML=homeHTML();h.style.display='';}
   document.body.classList.add('athome');
   window.scrollTo(0,0);
 }
 function hideHome(){
-  _atHome=false;
+  _atHome=false;renderUnitsLater();
   const h=document.getElementById('home');if(h)h.style.display='none';
   document.body.classList.remove('athome');
 }
+function renderUnitsLater(){setTimeout(()=>{if(typeof renderUnits==='function')renderUnits();},0);}
 function syncHomeUI(){if(_atHome)showHome();}
 /* меню поездки в кабинете */
 function tripMenuSheet(id){
@@ -4431,7 +4480,7 @@ let openAuth=function(){};
   async function refresh(){try{const{data}=await sb.auth.getSession();const s=data&&data.session;
     _signedIn=!!s;_userEmail=s?(s.user.email||''):'';
     const av=document.getElementById('avaBtn');
-    if(av)av.textContent=_userEmail?_userEmail[0].toUpperCase():'Я';
+    const al=av&&av.querySelector('.avl');if(al)al.textContent=_userEmail?_userEmail[0].toUpperCase():'Я';
   }catch(e){}}
   openAuth=open;
   window.authRefresh=refresh;
