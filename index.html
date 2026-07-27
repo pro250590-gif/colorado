@@ -177,7 +177,7 @@ body.athome{padding-right:0!important}
 /* ── МЕНЮ АККАУНТА: выпадает из-под аватара ── */
 #accMenu{position:fixed;inset:0;z-index:4250;opacity:0;visibility:hidden;transition:opacity .15s,visibility .15s}
 #accMenu.on{opacity:1;visibility:visible}
-.accov{position:absolute;inset:0}
+.accov{position:absolute;inset:0;border:0;padding:0;background:none;cursor:default;-webkit-appearance:none;appearance:none}
 .accbox{position:absolute;right:14px;top:52px;width:min(250px,calc(100vw - 28px));background:#fff;
   border:1px solid #e8e9f2;border-radius:16px;padding:7px;box-shadow:0 22px 44px -20px rgba(20,25,50,.55)}
 .accwho{padding:10px 11px 11px;border-bottom:1px solid #f0f1f6;margin-bottom:6px}
@@ -207,6 +207,7 @@ body.athome{padding-right:0!important}
 .pic.ok{background:linear-gradient(150deg,#d8f5e8,#a8e9cd);color:#0a6047}
 .pic.save{background:linear-gradient(150deg,#e6e0ff,#cfc2fb);color:#4b2fa8}
 .pic.warn{background:linear-gradient(150deg,#fff0dc,#ffe0b8);color:#8a4b0a}
+.pic.soon{background:linear-gradient(150deg,#eef1f8,#dfe4f2);color:#5b6280}
 .pbox b{display:block;font:800 15px/1.25 "Plus Jakarta Sans",sans-serif;color:var(--ink);margin-bottom:5px;letter-spacing:-.02em}
 .pbox p{margin:0;font:500 12.5px/1.5 "Inter",sans-serif;color:var(--mut)}
 .prow{display:flex;gap:8px;margin-top:14px}
@@ -3641,10 +3642,12 @@ document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)r
   if(t.dataset.syncretry){closeDaySheet();_syncErr='';syncUI('go','Сохраняю…');
     if(typeof cloudPush==='function')cloudPush().catch(e=>{_syncErr=(e&&e.message)||String(e);syncSay();});}
   /* ——— кабинет, аккаунт, выход из поездки ——— */
-  if(t.id==='avaBtn'){accountSheet();}
+  /* второй тап по аватарке закрывает меню — так его и пробуют закрыть (просьба клиента) */
+  if(t.id==='avaBtn'){accOpen()?accClose():accountSheet();}
   if(t.dataset.accclose){accClose();}
+  /* «скоро» — не про деньги: со значком доллара окно про «Профиль» читалось странно */
   if(t.dataset.soon){accClose();
-    popup('save',t.dataset.soon,'Этого раздела ещё нет — сделаем следующим',
+    popup('soon',t.dataset.soon,'Этого раздела ещё нет — сделаем следующим',
       '<div class="prow"><button class="pok" data-popclose="1">Понятно</button></div>');}
   if(t.id==='brandHome'){closeDaySheet();leaveTrip(showHome);}
   if(t.dataset.gohome){accClose();closeDaySheet();leaveTrip(showHome);}
@@ -4446,10 +4449,16 @@ function accountSheet(){
   const last=_signedIn
     ? '<button class="accmi out" data-signout="1">'+ic('exit','i-sm')+'Выйти из аккаунта</button>'
     : '<button class="accmi in" data-signin="1">'+ic('exit','i-sm')+'Войти</button>';
-  el.innerHTML='<div class="accov" data-accclose="1"></div><div class="accbox">'+who+items+last+'</div>';
+  /* подложка — кнопка, а не div: общий обработчик кликов смотрит только на
+     e.target.closest('button'), и с <div> тап мимо меню просто пропадал —
+     меню не закрывалось ничем (жалоба клиента) */
+  el.innerHTML='<button class="accov" data-accclose="1" aria-label="закрыть меню"></button><div class="accbox">'+who+items+last+'</div>';
   el.classList.add('on');
 }
+function accOpen(){const el=document.getElementById('accMenu');return !!(el&&el.classList.contains('on'));}
 function accClose(){const el=document.getElementById('accMenu');if(el)el.classList.remove('on');}
+/* Esc закрывает меню — на компьютере это первое, что жмут */
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&accOpen())accClose();});
 /* ================= ВЫХОД ИЗ ПОЕЗДКИ =================
    Одно окно по центру, три случая. Сохраняем всегда, говорим только когда есть о чём. */
 function popup(kind,title,text,buttons){
