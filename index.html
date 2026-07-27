@@ -151,6 +151,14 @@ body.athome{padding-right:0!important}
 .ub:active{transform:scale(.94)}
 .ub.sym{font:800 17px/1 "JetBrains Mono",ui-monospace,monospace}
 .ub.flag svg{width:26px;height:26px;border-radius:50%;display:block}
+/* выбор градусов и расстояния: крупное обозначение и расшифровка словами */
+.uopts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.uopt{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:14px 8px;cursor:pointer;
+  border:1.5px solid rgba(20,32,27,.1);border-radius:14px;background:#fff;-webkit-appearance:none;appearance:none}
+.uopt b{font:800 20px/1 "Plus Jakarta Sans",sans-serif;color:var(--ink)!important;letter-spacing:-.02em}
+.uopt span{font:600 11px/1.3 "Inter",sans-serif;color:var(--mut)!important;text-align:center}
+.uopt.on{border-color:transparent;background:linear-gradient(150deg,#7a5cf0,#5b3fc4)}
+.uopt.on b,.uopt.on span{color:#fff!important}
 /* выбор языка в листе */
 .langs{display:grid;grid-template-columns:1fr 1fr;gap:7px}
 .langb{display:flex;align-items:center;gap:9px;height:42px;padding:0 11px;border-radius:12px;cursor:pointer;
@@ -3610,8 +3618,8 @@ document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)r
     else done();}
   if(t.dataset.shnative){const u=location.href.split('#')[0];
     if(navigator.share)navigator.share({title:tripMeta().title,url:u}).catch(()=>{});}
-  if(t.dataset.utemp){setTemp(TEMP==='C'?'F':'C');}
-  if(t.dataset.udist){setDist(DIST==='km'?'mi':'km');}
+  if(t.dataset.usett){setTemp(t.dataset.usett);closeDaySheet();}
+  if(t.dataset.usetd){setDist(t.dataset.usetd);closeDaySheet();}
   if(t.dataset.lang){LANG=t.dataset.lang;savePlan();renderUnits();closeDaySheet();}
   if(t.dataset.staymenu){stayMenuSheet(t.dataset.staymenu);}
   if(t.dataset.showmap&&window.showOnMap){closeDaySheet();showOnMap(t.dataset.showmap);}
@@ -3838,10 +3846,12 @@ function fmtTemp(c){return (c>0?'+':'')+tempC(c)+' '+tempU();}
 /* Четыре отдельные кнопки: валюта и язык открывают своё окно, градусы и расстояние
    просто переключаются. Поместились, потому что «Поделиться» уехала в саму поездку. */
 function unitsHTML(){
+  /* на кнопке только короткое обозначение — «мили» словом рядом с «км» смотрелись
+     громоздко (просьба клиента). Расшифровка — в списке, который открывается. */
   return '<button class="ub sym" data-uopen="cur" aria-label="валюта">'+curSym()+'</button>'
     +'<button class="ub flag" data-uopen="lang" aria-label="язык">'+flagSVG(LANG)+'</button>'
-    +'<button class="ub" data-utemp="1" aria-label="градусы">'+tempU()+'</button>'
-    +'<button class="ub" data-udist="1" aria-label="расстояние">'+(DIST==='mi'?'мили':'км')+'</button>';
+    +'<button class="ub" data-uopen="temp" aria-label="градусы">'+tempU()+'</button>'
+    +'<button class="ub" data-uopen="dist" aria-label="расстояние">'+(DIST==='mi'?'ми':'км')+'</button>';
 }
 /* объявлено здесь, а не в блоке кабинета: renderUnits() зовётся при старте, а
    до объявления let-переменная недоступна — страница падала на «Cannot access _atHome» */
@@ -3853,6 +3863,19 @@ function renderUnits(){
 }
 /* окна выбора: у валюты девять вариантов, у языка десять — тут список нужен */
 function unitsSheet(kind){
+  /* градусы и расстояние — тоже списком: на кнопке обозначение, в списке расшифровка */
+  if(kind==='temp'||kind==='dist'){
+    const isT=kind==='temp';
+    const opts=isT
+      ? [{v:'C',k:'°C',t:'градусы по Цельсию',now:TEMP==='C'},{v:'F',k:'°F',t:'градусы по Фаренгейту',now:TEMP==='F'}]
+      : [{v:'km',k:'км',t:'километры',now:DIST==='km'},{v:'mi',k:'ми',t:'мили',now:DIST==='mi'}];
+    sheet('<div class="dsh"><b>'+(isT?'В чём показывать температуру':'В чём показывать расстояния')+'</b>'
+        +'<span>'+(isT?'погода в городах':'переезды и «до места»')+'</span></div>'
+      +'<div class="dsform"><div class="uopts">'+opts.map(x=>'<button class="uopt'+(x.now?' on':'')+'"'
+        +' data-'+(isT?'usett':'usetd')+'="'+x.v+'"><b>'+x.k+'</b><span>'+x.t+'</span></button>').join('')+'</div></div>'
+      +'<button class="dscancel" data-dsclose="1">Отмена</button>');
+    return;
+  }
   if(kind==='cur'){
     sheet('<div class="dsh"><b>В какой валюте считать</b><span>уже введённые суммы пересчитаем по курсу</span></div>'
       +'<div class="dsform"><div class="dskinds">'+CURS.map(x=>'<button class="dskind'+(x.c===CUR?' on':'')+'" data-cur="'+x.c+'">'
