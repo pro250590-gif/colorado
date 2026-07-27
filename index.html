@@ -419,9 +419,14 @@ input[type=checkbox].tick:checked::after{content:"";position:absolute;left:8px;t
 .snm .cemo{margin-right:5px;color:var(--orange2)}
 .snm a{color:var(--ink)}
 .snm a:hover{color:var(--orange3);text-decoration:none}
-.meta{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0 0}
-.mpill{font:700 10px/1 "Inter",sans-serif;border-radius:9px;padding:6px 9px;background:rgba(255,255,255,.9);
-  color:var(--mut);white-space:nowrap;border:1px solid var(--line2);box-shadow:0 4px 10px -6px rgba(20,32,27,.35)}
+/* Пилюли ужаты по отступам, но НЕ по шрифту: на телефоне колонка узкая (справа её
+   съедают тумблер и «⋯»), и пять пилюль рвались на 3–4 строки. Замер на ширине 215 px:
+   меньшие отступы дают 3 строки → 2, а уменьшение шрифта не даёт ничего — значит
+   читаемость трогать незачем (клиент: «если нормально — как сейчас оставить»). */
+.meta{display:flex;flex-wrap:wrap;gap:4px;margin:8px 0 0}
+.mpill{font:700 10px/1 "Inter",sans-serif;border-radius:8px;padding:5px 7px;background:rgba(255,255,255,.9);
+  color:var(--mut);white-space:nowrap;border:1px solid var(--line2)}
+.mpill .i-sm{width:12px;height:12px;vertical-align:-2px}
 .mpill.must{background:linear-gradient(150deg,var(--orange1),var(--orange3));color:#fff;border-color:transparent}
 .mpill.free{background:rgba(47,190,134,.14);color:var(--green3);border-color:transparent}
 .mpill.best{background:rgba(224,160,32,.16);color:#8a6316;border-color:transparent}
@@ -1126,7 +1131,7 @@ header.hero h1 em{background:none!important;-webkit-background-clip:border-box!i
 .cplaces li:first-child{border-top:0}
 .cpl-row{display:flex;align-items:flex-start;gap:12px}
 .cpl-main{flex:1;min-width:0;transition:opacity .2s}
-.cplaces li.off .cpl-main{opacity:.4}
+.cplaces li.off .cpl-main,.cplaces li.off .meta,.cplaces li.off .cwhy{opacity:.4}
 .cpsw{flex:none;width:46px;height:27px;border-radius:999px;background:#d5d8e6;position:relative;cursor:pointer;transition:background .2s;margin-top:2px}
 .cpsw.on{background:linear-gradient(150deg,#7a5cf0,#5b3fc4)}
 .cpsw i{position:absolute;top:3px;left:3px;width:21px;height:21px;border-radius:50%;background:#fff;box-shadow:0 2px 5px rgba(20,32,27,.3);transition:left .2s}
@@ -2131,11 +2136,11 @@ function buildCities(){
         +(d&&d.leg?'<div class="cleg"><b>'+d.pill+'</b> '+d.leg+'</div>':'')
         +'<ul class="cplaces">'+list.map(p=>{const emo=p.star?'<span class="cstar">'+ic('star','i-sm')+'</span>':'';const on=picked.has(p.id);
           return '<li class="'+(on?'':'off')+'" data-pl="'+p.id+'"><div class="cpl-row"><div class="cpl-main">'
-            +'<span class="cpnm">'+emo+'<a href="'+gurl(p.q)+'" target="_blank" rel="noopener">'+p.nm+'</a></span>'+metaStrip(p)+'<span class="cwhy">'+p.why+'</span></div>'
+            +'<span class="cpnm">'+emo+'<a href="'+gurl(p.q)+'" target="_blank" rel="noopener">'+p.nm+'</a></span></div>'
             +'<span class="cpact">'
             +'<span class="cpsw'+(on?' on':'')+'" data-pl="'+p.id+'" role="switch" aria-checked="'+on+'" aria-label="показывать на карте" tabindex="0"><i></i></span>'
             +'<button class="cpmv" data-mvopen="'+p.id+'" aria-label="перенести или убрать" title="перенести или убрать">⋯</button>'
-            +'</span></div></li>';}).join('')
+            +'</span></div>'+metaStrip(p)+(p.why?'<span class="cwhy">'+p.why+'</span>':'')+'</li>';}).join('')
           +(list.length?'':'<li class="cfree">Свободный день — планы пока не заданы.</li>')+'</ul>'
         +'<button class="cadd" data-addto="'+e.tid+'">'+ic('plus','i-sm')+' Добавить место в этот день</button>'
         +(d&&d.note?'<div class="cnote">'+d.note+'</div>':'')
@@ -2156,8 +2161,9 @@ function buildCities(){
         +'<b class="lclose">Свернуть список</b>'
         +'<span class="cgo">'+ic('chevron','i-sm')+'</span></summary>'
       +'<div class="cmorebody"><ul class="cplaces">'+sp.map(p=>'<li data-pl="'+p.id+'"><div class="cpl-row"><div class="cpl-main">'
-        +'<span class="cpnm"><a href="'+gurl(p.q)+'" target="_blank" rel="noopener">'+p.nm+'</a></span>'+metaStrip(p)+'<span class="cwhy">'+p.why+'</span></div>'
-        +'<button class="cpup" data-mvopen="'+p.id+'">'+ic('plus','i-sm')+' в день</button></div></li>').join('')
+        +'<span class="cpnm"><a href="'+gurl(p.q)+'" target="_blank" rel="noopener">'+p.nm+'</a></span></div>'
+        +'<button class="cpup" data-mvopen="'+p.id+'">'+ic('plus','i-sm')+' в день</button></div>'
+        +metaStrip(p)+(p.why?'<span class="cwhy">'+p.why+'</span>':'')+'</li>').join('')
       +'</ul><div class="cmoren">Тап «в день» — место встанет в выбранный день. Вернёшь ночь — вернётся и убранный день.</div></div></details></div>'):'';
 
     return '<section class="city" id="city-'+b.id+'"><div class="wrap">'
