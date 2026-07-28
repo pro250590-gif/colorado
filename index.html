@@ -132,8 +132,14 @@ body.athome,body.atland{padding-right:0!important}
    слева. До этого всё было одним сплошным мелким текстом, и клиент сказала
    верно: не видно, где кончается один вопрос и начинается следующий. */
 .qf{background:#fff;border-radius:16px;padding:14px 14px 16px;margin-bottom:10px;box-shadow:0 1px 2px rgba(20,18,40,.05)}
-.qf>label{display:flex;align-items:center;gap:7px;font:800 15px/1.3 "Plus Jakarta Sans",sans-serif;
-  color:var(--ink);margin-bottom:12px;border-left:3px solid #5b3fc4;padding-left:10px}
+.qf>label{display:flex;align-items:center;gap:10px;font:800 15px/1.3 "Plus Jakarta Sans",sans-serif;
+  color:var(--ink);margin-bottom:12px}
+/* значок вопроса: сиреневый квадрат, у отвеченного — зелёный, галочка справа */
+.qic{width:32px;height:32px;border-radius:10px;background:#f0ecff;color:#5b3fc4;display:grid;place-items:center;flex:none}
+.qic .i{width:17px;height:17px}
+.qf>label.done .qic{background:#e6f6ee;color:#12a06a}
+.qok{margin-left:auto;color:#12a06a;display:flex;flex:none}
+.qok .i{width:15px;height:15px;stroke-width:3}
 .qopts{display:flex;flex-wrap:wrap;gap:6px}
 .qo{border:1.5px solid #e4e6f0;background:#fff;border-radius:11px;padding:9px 12px;cursor:pointer;
   font:700 12px/1 "Inter",sans-serif;color:#4a4f63;-webkit-appearance:none;appearance:none}
@@ -159,8 +165,6 @@ body.athome,body.atland{padding-right:0!important}
   font:700 11.5px/1.25 "Inter",sans-serif;color:#5b3fc4;-webkit-appearance:none;appearance:none}
 .qsub{margin:0 0 6px;font:700 11px/1 "Inter",sans-serif;color:#8b8fa3}
 .qsub+.qopts{margin-bottom:10px}
-.qf>label.done{border-left-color:#12a06a}
-.qf>label.done .i{width:14px;height:14px;stroke-width:3;color:#12a06a;flex:none}
 /* календарь на две даты — «как на бронировании» (просьба клиента) */
 .cal{margin-top:9px;border:1.5px solid #e4e6f0;border-radius:14px;padding:11px 11px 9px;background:#fff}
 .calhd{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
@@ -183,7 +187,8 @@ body.athome,body.atland{padding-right:0!important}
 /* уточнение по брони — не самостоятельный вопрос, а приложение к нему:
    пунктирная рамка, без цветной метки и без тени */
 .bkq{border:1.5px dashed rgba(91,63,196,.3);background:#fbfaff;box-shadow:none;margin-bottom:8px}
-.bkq>label{font:800 13px/1.3 "Plus Jakarta Sans",sans-serif;border-left:0;padding-left:0;margin-bottom:10px}
+.bkq>label{font:800 13px/1.3 "Plus Jakarta Sans",sans-serif;margin-bottom:10px;gap:6px}
+.bkq>label .i{width:13px;height:13px;stroke-width:3;color:#12a06a;flex:none}
 .bkok{margin-top:11px;width:100%;min-height:40px;border:0;border-radius:11px;cursor:pointer;-webkit-appearance:none;appearance:none;
   background:#5b3fc4;color:#fff;font:800 12px/1 "Plus Jakarta Sans",sans-serif}
 .qerr{margin:9px 0 0;font:700 11.5px/1.45 "Inter",sans-serif;color:#c0392b}
@@ -4732,11 +4737,20 @@ function bkBlock(k,a){
   return list.map((d,i)=>bkOne(k,i,d,nm,list.length)).join('')
     +'<button class="bkadd" data-bkadd="'+k+'">+ добавить '+(BKMORE[k]||'ещё')+'</button>';
 }
+/* у каждого вопроса свой значок в цветном квадрате: экран перестаёт быть
+   сплошным текстом, а высота не растёт (выбор клиента из нарисованных вариантов) */
+const QICON={dest:'map',when:'cal',who:'user',places:'pin',drive:'car',booked:'ticket',likes:'star',
+  pace:'clock',limits:'info'};
+function qLab(k,nm,done){
+  return '<label class="'+(done?'done':'')+'">'
+    +'<span class="qic">'+ic(QICON[k]||'info','i-sm')+'</span>'+nm
+    +(done?'<span class="qok">'+chk+'</span>':'')+'</label>';
+}
 function qBlock(f,a){
   const o=(v,t,on)=>'<button class="qo'+(on?' on':'')+'" data-aset="'+f.k+'" data-av="'+v+'">'+t+'</button>';
-  /* галочка прямо в заголовке вопроса: видно, на что уже ответили, и при этом
-     ничего не исчезает с экрана */
-  const lab=nm=>'<label class="'+(f.val?'done':'')+'">'+(f.val?chk:'')+nm+'</label>';
+  /* галочка в заголовке вопроса: видно, на что уже ответили, и при этом ничего
+     не исчезает с экрана */
+  const lab=nm=>qLab(f.k,nm,!!f.val);
   let inner='';
   /* направление — обычное поле. Кнопок со странами нет и не будет: человек пишет
      свой город, а мир в наш каталог не помещается */
@@ -4830,9 +4844,9 @@ function gotHTML(){
   const miss=fs.filter(f=>!f.val&&!f.opt);
   /* уточнения по бронированному — только по тому, что человек отметил сам */
   const bks=a.booked.filter(k=>k!=='none').map(k=>bkBlock(k,a)).join('');
-  const extra='<div class="qf"><label>Темп</label><div class="qopts">'
+  const extra='<div class="qf">'+qLab('pace','Темп',!!a.pace)+'<div class="qopts">'
       +PACES.map(x=>'<button class="qo'+(a.pace===x[0]?' on':'')+'" data-aset="pace" data-av="'+x[0]+'">'+x[1]+'</button>').join('')
-    +'</div></div><div class="qf"><label>Ограничения</label><div class="qopts">'
+    +'</div></div><div class="qf">'+qLab('limits','Ограничения',!!(a.limits.length||a.limitOther))+'<div class="qopts">'
       +['едем с собакой','коляска','боязнь высоты','еда: ограничения','не водим ночью'].map(x=>'<button class="qo'+(a.limits.indexOf(x)>=0?' on':'')+'" data-alim="'+x+'">'+x+'</button>').join('')
     +'</div>'
     /* своё ограничение: список никогда не покроет всё — у кого-то спина, у кого-то
