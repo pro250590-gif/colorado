@@ -167,6 +167,10 @@ body.athome,body.atland{padding-right:0!important}
 .bksum{display:flex;align-items:center;gap:10px;justify-content:space-between}
 .bksum span{font:700 12.5px/1.4 "Inter",sans-serif;color:var(--ink)}
 .bkedit{border:0;background:none;cursor:pointer;font:700 11.5px/1 "Inter",sans-serif;color:#5b3fc4;white-space:nowrap}
+.bkdel{margin-left:auto;border:0;background:none;cursor:pointer;font:700 11px/1 "Inter",sans-serif;color:#a3a0b8}
+.bkq>label{display:flex;align-items:center;gap:6px}
+.bkadd{display:block;width:100%;margin:-4px 0 15px;border:1.5px dashed #d8d5e6;border-radius:11px;background:none;
+  padding:11px;cursor:pointer;font:700 12px/1 "Inter",sans-serif;color:#5b3fc4;-webkit-appearance:none;appearance:none}
 .gogo{width:100%;min-height:48px;margin-top:6px;border:0;border-radius:14px;cursor:pointer;-webkit-appearance:none;appearance:none;
   background:linear-gradient(150deg,#7a5cf0,#5b3fc4);color:#fff;font:800 13px/1 "Plus Jakarta Sans",sans-serif}
 .gomore{display:block;width:100%;text-align:center;margin-top:13px;border:0;background:none;cursor:pointer;
@@ -4425,16 +4429,37 @@ const LIKEMAX=3;
 const DRIVE3=[['any','вожу, поеду сколько нужно'],['short','вожу, но недолго'],['no','не вожу и не хочу']];
 /* что уже забронировано. У каждой брони есть НАЧАЛО И КОНЕЦ: паром может идти
    двое суток, фестиваль — четыре дня. Иначе теряются ночи в пути и врут дни. */
-const BOOKED=[['flight','билеты'],['stay','жильё'],['car','машина'],['ferry','паром или поезд'],['event','событие с датой']];
-/* четвёртым идёт 'w' — поле занимает всю строку. Без него «прилетаю в» и
-   «улетаю из» слипались в одну кашу и было не понять, какая дата к чему */
+const BOOKED=[['flight','билеты'],['stay','жильё'],['car','машина'],['ferry','паром'],['train','поезд'],
+  ['event','событие с датой'],['other','другое']];
+/* поле: [ключ, подпись, тип, флаги, подсказка внутри поля].
+   Флаги: 'w' — поле на всю строку, 'o' — необязательное.
+   'w' нужен, чтобы «прилетаю в» и «улетаю из» не слипались в кашу и было
+   понятно, какая дата к чему. Подсказка — чтобы человек не гадал, что писать:
+   клиент прислала скрин пустого поля «название или ссылка» со словами
+   «непонятно, что тут заполнять». Комментарий есть у каждой брони: туда
+   человек допишет то, о чём мы не догадались спросить. */
+const BKNOTE=['note','комментарий','text','wo','если есть что добавить — необязательно'];
 const BKFIELDS={
-  flight:[['inCity','прилетаю в','text','w'],['inDate','дата','date'],['inTime','время','time'],
-          ['outCity','улетаю из','text','w'],['outDate','дата','date'],['outTime','время','time']],
-  stay:  [['city','город','text','w'],['from','с','date'],['to','по','date'],['name','название или ссылка','text','w']],
-  car:   [['takeCity','беру в','text','w'],['takeDate','дата','date'],['dropCity','сдаю в','text','w'],['dropDate','дата','date']],
-  ferry: [['from','откуда','text'],['to','куда','text'],['date','отправление','date'],['dateEnd','прибытие','date']],
-  event: [['city','город','text','w'],['what','что это','text','w'],['from','начало','date'],['to','конец','date']]
+  flight:[['inCity','прилетаю в','text','w','город или аэропорт'],['inDate','дата','date'],['inTime','время','time'],
+          ['outCity','улетаю из','text','w','город или аэропорт'],['outDate','дата','date'],['outTime','время','time'],BKNOTE],
+  stay:  [['city','город','text','w','город'],['from','с','date'],['to','по','date'],
+          ['addr','адрес','text','w','адрес или ссылка на Google Maps'],BKNOTE],
+  car:   [['takeCity','беру в','text','w','город или аэропорт'],['takeDate','дата','date'],
+          ['dropCity','сдаю в','text','w','город или аэропорт'],['dropDate','дата','date'],BKNOTE],
+  /* прибытие и конец — необязательные: паром обычно приходит в тот же день, а
+     концерт идёт один вечер. Пусто = тот же день, переспрашивать незачем */
+  ferry: [['from','откуда','text','','город или порт'],['to','куда','text','','город или порт'],
+          ['date','отправление','date'],['dateEnd','прибытие, если на другой день','date','o'],BKNOTE],
+  train: [['from','откуда','text','','город или вокзал'],['to','куда','text','','город или вокзал'],
+          ['date','отправление','date'],['dateEnd','прибытие, если на другой день','date','o'],BKNOTE],
+  event: [['city','город','text','w','город'],['what','что это','text','w','концерт, свадьба, фестиваль'],
+          ['from','начало','date'],['to','конец, если не один день','date','o'],BKNOTE],
+  /* «другое» — мы не знаем, что это, поэтому требуем самый минимум: ЧТО и
+     КОГДА. Без них место в маршруте не поставить. Адрес и конец — по желанию:
+     бывает онлайн-бронь и бывает экскурсия, которая забирает из отеля */
+  other: [['what','что забронировано','text','w','экскурсия, ресторан, спа, билет в музей'],
+          ['from','дата','date'],['to','конец, если не один день','date','o'],
+          ['addr','адрес','text','wo','адрес или ссылка на Google Maps — необязательно'],BKNOTE]
 };
 const MONRX=['январ','феврал','март','апрел','ма[йя]','июн','июл','август','сентябр','октябр','ноябр','декабр'];
 const NUMW={'один':1,'одну':1,'два':2,'две':2,'три':3,'четыре':4,'пять':5,'шесть':6,'семь':7,
@@ -4495,7 +4520,8 @@ function parseAsk(raw){
   [[/билет[ыа]?\s*(?:уже\s*)?(?:куп|заброн|есть|на руках)|уже\s*куп[а-я]*\s*билет/,'flight'],
    [/отель\s*(?:уже\s*)?заброн|жиль[её]\s*(?:уже\s*)?заброн|заброн[а-я]*\s*(?:отель|квартир|жиль)/,'stay'],
    [/машин[аеу]\s*(?:уже\s*)?заброн|аренд[а-я]*\s*(?:уже\s*)?заброн/,'car'],
-   [/паром\s*(?:уже\s*)?заброн|поезд\s*(?:уже\s*)?заброн|билет[ыа]?\s*на\s*(?:паром|поезд)/,'ferry'],
+   [/паром\s*(?:уже\s*)?заброн|билет[ыа]?\s*на\s*паром/,'ferry'],
+   [/поезд\s*(?:уже\s*)?заброн|билет[ыа]?\s*на\s*поезд/,'train'],
    [/фестивал|концерт|матч|свадьб/,'event']].forEach(([rx,k])=>{
      if(rx.test(s)&&a.booked.indexOf(k)<0)a.booked.push(k);});
   if(/собак|пес /.test(s))a.limits.push('едем с собакой');
@@ -4606,27 +4632,48 @@ function inp(path,ph,type,val,w){
 /* бронь заполняется, проверяется и сворачивается в одну строку — клиент просила
    «нажать окей, проверить, что всё заполнено, и подписать снизу» */
 let _bkDone={},_bkErr={};
-function bkMissing(k,d){return BKFIELDS[k].filter(f=>!String(d[f[0]]||'').trim()).map(f=>f[1]);}
+const bkOpt=f=>!!(f[3]&&f[3].indexOf('o')>=0);
+function bkMissing(k,d){return BKFIELDS[k].filter(f=>!bkOpt(f)&&!String(d[f[0]]||'').trim()).map(f=>f[1]);}
 function bkSummary(k,d){
-  const D=x=>dmy(d[x]),T=x=>d[x]?(' '+d[x]):'';
-  if(k==='flight')return d.inCity+', '+D('inDate')+T('inTime')+'  →  '+d.outCity+', '+D('outDate')+T('outTime');
-  if(k==='stay')  return d.city+', '+D('from')+' — '+D('to')+(d.name?(' · '+d.name):'');
-  if(k==='car')   return d.takeCity+', '+D('takeDate')+'  →  '+d.dropCity+', '+D('dropDate');
-  if(k==='ferry') return d.from+'  →  '+d.to+', '+D('date')+(d.dateEnd&&d.dateEnd!==d.date?(' — '+D('dateEnd')):'');
-  if(k==='event') return d.city+' · '+d.what+' · '+D('from')+(d.to&&d.to!==d.from?(' — '+D('to')):'');
+  const V=x=>String(d[x]||'').trim(),D=x=>dmy(d[x]),T=x=>d[x]?(' '+d[x]):'';
+  const note=V('note')?(' · '+V('note')):'';
+  if(k==='flight')return V('inCity')+', '+D('inDate')+T('inTime')+'  →  '+V('outCity')+', '+D('outDate')+T('outTime')+note;
+  if(k==='stay')  return V('city')+', '+D('from')+' — '+D('to')+(V('addr')?(' · '+V('addr')):'')+note;
+  if(k==='car')   return V('takeCity')+', '+D('takeDate')+'  →  '+V('dropCity')+', '+D('dropDate')+note;
+  if(k==='ferry'||k==='train')
+    return V('from')+'  →  '+V('to')+', '+D('date')+(d.dateEnd&&d.dateEnd!==d.date?(' — '+D('dateEnd')):'')+note;
+  if(k==='event') return V('city')+' · '+V('what')+' · '+D('from')+(d.to&&d.to!==d.from?(' — '+D('to')):'')+note;
+  if(k==='other') return V('what')+' · '+D('from')+(d.to&&d.to!==d.from?(' — '+D('to')):'')
+    +(V('addr')?(' · '+V('addr')):'')+note;
   return '';
 }
-function bkBlock(k,a){
-  const d=a.bk[k]||{},nm=(BOOKED.find(x=>x[0]===k)||[])[1],miss=bkMissing(k,d);
-  if(_bkDone[k]&&!miss.length)
-    return '<div class="qf bkq"><label class="done">'+chk+nm+'</label>'
+/* Броней одного вида бывает несколько: два перелёта, три отеля, одна машина.
+   Поэтому каждая бронь — это СПИСОК записей, а не одна запись (просьба клиента). */
+const BKMORE={flight:'ещё билеты',stay:'ещё жильё',car:'ещё машину',ferry:'ещё паром',
+  train:'ещё поезд',event:'ещё событие',other:'ещё бронь'};
+function bkList(a,k){
+  if(!Array.isArray(a.bk[k]))a.bk[k]=(a.bk[k]&&typeof a.bk[k]==='object')?[a.bk[k]]:[{}];
+  if(!a.bk[k].length)a.bk[k].push({});
+  return a.bk[k];
+}
+function bkOne(k,i,d,nm,many){
+  const id=k+'#'+i,ttl=nm+(many>1?(' '+(i+1)):''),miss=bkMissing(k,d);
+  if(_bkDone[id]&&!miss.length)
+    return '<div class="qf bkq"><label class="done">'+chk+ttl+'</label>'
       +'<div class="bksum"><span>'+esc0(bkSummary(k,d))+'</span>'
-      +'<button class="bkedit" data-bkedit="'+k+'">изменить</button></div></div>';
-  const rows=BKFIELDS[k].map(f=>'<span class="bkf'+(f[3]==='w'?' wide':'')+'"><em>'+f[1]+'</em>'
-    +inp('bk.'+k+'.'+f[0],'',f[2],d[f[0]])+'</span>').join('');
-  return '<div class="qf bkq"><label>'+nm+' — уточните</label><div class="bkrow">'+rows+'</div>'
-    +(_bkErr[k]&&miss.length?'<p class="qerr">Не заполнено: '+esc0(miss.join(', '))+'</p>':'')
-    +'<button class="bkok" data-bkok="'+k+'">Готово</button></div>';
+      +'<button class="bkedit" data-bkedit="'+id+'">изменить</button></div></div>';
+  const rows=BKFIELDS[k].map(f=>'<span class="bkf'+(f[3]&&f[3].indexOf('w')>=0?' wide':'')+'"><em>'+f[1]+'</em>'
+    +inp('bk.'+k+'.'+i+'.'+f[0],f[4]||'',f[2],d[f[0]])+'</span>').join('');
+  return '<div class="qf bkq"><label>'+ttl+' — уточните'
+    +(many>1?'<button class="bkdel" data-bkdel="'+id+'">убрать</button>':'')+'</label>'
+    +'<div class="bkrow">'+rows+'</div>'
+    +(_bkErr[id]&&miss.length?'<p class="qerr">Не заполнено: '+esc0(miss.join(', '))+'</p>':'')
+    +'<button class="bkok" data-bkok="'+id+'">Готово</button></div>';
+}
+function bkBlock(k,a){
+  const nm=(BOOKED.find(x=>x[0]===k)||[])[1],list=bkList(a,k);
+  return list.map((d,i)=>bkOne(k,i,d,nm,list.length)).join('')
+    +'<button class="bkadd" data-bkadd="'+k+'">+ добавить '+(BKMORE[k]||'ещё')+'</button>';
 }
 function qBlock(f,a){
   const o=(v,t,on)=>'<button class="qo'+(on?' on':'')+'" data-aset="'+f.k+'" data-av="'+v+'">'+t+'</button>';
@@ -4830,12 +4877,19 @@ document.addEventListener('click',e=>{
     _calM=v.slice(0,7);renderLand();
   }
   if(t.dataset.bkok&&ASK){
-    const k=t.dataset.bkok;
-    if(bkMissing(k,ASK.bk[k]||{}).length)_bkErr[k]=1;
-    else {_bkDone[k]=1;_bkErr[k]=0;}
+    const id=t.dataset.bkok,k=id.split('#')[0],i=+id.split('#')[1];
+    if(bkMissing(k,bkList(ASK,k)[i]||{}).length)_bkErr[id]=1;
+    else {_bkDone[id]=1;_bkErr[id]=0;}
     renderLand();
   }
   if(t.dataset.bkedit){_bkDone[t.dataset.bkedit]=0;_bkErr[t.dataset.bkedit]=0;renderLand();}
+  if(t.dataset.bkadd&&ASK){bkList(ASK,t.dataset.bkadd).push({});renderLand();}
+  if(t.dataset.bkdel&&ASK){
+    const id=t.dataset.bkdel,k=id.split('#')[0],i=+id.split('#')[1];
+    bkList(ASK,k).splice(i,1);
+    /* пометки «готово» и ошибки привязаны к номеру — после удаления они съезжают */
+    _bkDone={};_bkErr={};renderLand();
+  }
   if(t.dataset.aback!==undefined){showLand(null);}
   if(t.dataset.abuild!==undefined){buildFromAsk();}
   if(t.dataset.alim){const i=ASK.limits.indexOf(t.dataset.alim);i<0?ASK.limits.push(t.dataset.alim):ASK.limits.splice(i,1);renderLand();}
