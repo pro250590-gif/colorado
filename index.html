@@ -3805,16 +3805,24 @@ document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)r
   if(t.dataset.goland){accClose();closeDaySheet();leaveTrip(()=>showLand(null));}
   if(t.dataset.topen){closeDaySheet();const id=t.dataset.topen;
     if(id!==trips().active)switchTrip(id);hideHome();window.scrollTo(0,0);}
+  /* Сначала спрашиваем имя, и только потом создаём. Раньше поездка появлялась
+     сразу, а окно «как назовём» показывалось уже поверх неё — и «Отмена»
+     ничего не отменяла: копия оставалась в списке (жалоба клиента). */
   if(t.dataset.newtrip){accClose();closeDaySheet();
-    leaveTrip(()=>{newTripFromCurrent();hideHome();renameSheet(trips().active);});}
+    leaveTrip(()=>{createTripSheet(null);});}
   if(t.dataset.tmenu){tripMenuSheet(t.dataset.tmenu);}
   if(t.dataset.trename){renameSheet(t.dataset.trename);}
   if(t.dataset.trsave){const v=((document.getElementById('trnm')||{}).value||'').trim();
     if(!v){const i=document.getElementById('trnm');if(i)i.focus();return;}
     renameTrip(t.dataset.trsave,v);closeDaySheet();}
-  if(t.dataset.tcopy){closeDaySheet();const src=t.dataset.tcopy;
-    if(src!==trips().active)switchTrip(src);
-    newTripFromCurrent(tripMeta(src).title+' · копия');hideHome();renameSheet(trips().active);}
+  if(t.dataset.tcopy){closeDaySheet();createTripSheet(t.dataset.tcopy);}
+  if(t.dataset.tcreate!==undefined){
+    const v=((document.getElementById('trnm')||{}).value||'').trim();
+    if(!v){const i=document.getElementById('trnm');if(i)i.focus();return;}
+    const src=t.dataset.tcreate||'';
+    closeDaySheet();
+    if(src&&src!==trips().active)switchTrip(src);
+    newTripFromCurrent(v);hideHome();window.scrollTo(0,0);}
   if(t.dataset.tdel){closeDaySheet();deleteTrip(t.dataset.tdel);}
   if(t.dataset.signin){accClose();closeDaySheet();openAuth();}
   if(t.dataset.signout){accClose();closeDaySheet();if(window.doSignOut)doSignOut();}
@@ -4909,6 +4917,17 @@ function tripMenuSheet(id){
     +'<button class="dscancel alt" data-tcopy="'+id+'">Сделать копию</button>'
     +(one?'':'<button class="dscancel del" data-tdel="'+id+'">Удалить поездку</button>')
     +'<button class="dscancel" data-dsclose="1">Отмена</button>');
+}
+/* Лист СОЗДАНИЯ поездки: пока не нажали «Создать», ничего не появляется.
+   srcId — с какой поездки делаем копию; пусто — с текущей открытой. */
+function createTripSheet(srcId){
+  const base=srcId?tripMeta(srcId):tripMeta();
+  const proposed=(base&&base.title?base.title:'Поездка')+' · копия';
+  sheet('<div class="dsh"><b>Новая поездка</b><span>копия «'+esc0(base?base.title:'')+'» — маршрут тот же, даты и дни поменяете</span></div>'
+    +'<div class="dsform"><input id="trnm" autocomplete="off" value="'+esc0(proposed)+'">'
+    +'<button class="dsgo" data-tcreate="'+esc0(srcId||'')+'">Создать</button></div>'
+    +'<button class="dscancel" data-dsclose="1">Отмена</button>');
+  setTimeout(()=>{const i=document.getElementById('trnm');if(i){i.focus();i.select();}},60);
 }
 function renameSheet(id){
   const m=tripMeta(id);
