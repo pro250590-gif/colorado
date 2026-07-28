@@ -145,7 +145,8 @@ const BPHOTO={zio:'zio',bry:'bry',moa:'moa'};
 
 const ALT={1:1200,2:1300,3:2400,4:1200,5:1500,6:1800,7:1400};
 const ALTNM={};
-const ORIGIN={city:'Майами',code:'MIA'};
+/* ll — координаты аэропорта вылета, нужны карте для дуги перелёта */
+const ORIGIN={city:'Майами',code:'MIA',ll:[25.7617,-80.1918]};
 const AIRPORT={zio:'LAS',moa:'GJT'};
 const SEGMENT={zio:'flight',bry:'car',moa:'car'};
 const TRANSFER={bry:{km:130,clean:'2 ч',stops:'полдня'},moa:{km:430,clean:'4,5 ч',stops:'весь день'}};

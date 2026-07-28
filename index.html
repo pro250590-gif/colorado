@@ -2235,30 +2235,56 @@ function initMap(){
       const ln=L.polyline(o.pts,{color:col,weight:w,opacity:1,dashArray:o.dash,lineCap:'round',lineJoin:'round'}).addTo(map).bindTooltip(o.label,{sticky:true});
       lineLayers.push({days:o.days,layer:ln});}
     LINES.forEach(drawLine);
-    /* самолёты Майами — Майами на СВОЁМ месте (Флорида, далеко ЮВ); видно при отдалении карты */
     decoLayer=L.layerGroup();
-    /* координаты АЭРОПОРТОВ (не центра города): DRO Дуранго-Ла-Плата, DEN Денвер Intl */
-    const MIA=[25.7617,-80.1918],DUR=[37.1515,-107.7539],DEN=[39.8617,-104.6731];
+    /* ── Оформление карты СТРОИТСЯ ИЗ ДАННЫХ, а не зашито под один маршрут ──
+       Раньше тут стояли константы Дуранго/Денвер/Майами и carPath=LINES[0..2],
+       поэтому на втором маршруте (Юта) самолёт улетал в Колорадо, а финишный
+       флаг вставал в первом городе. Теперь всё берётся из BASES/AIRPORT/LINES. */
+    /* координаты аэропортов — из мест типа transport: код рейса стоит в названии «(LAS)» */
+    const airLL=code=>{
+      if(!code)return null;
+      const p=P.find(x=>x.cat==='transport'&&typeof x.lat==='number'
+        &&(new RegExp('\\('+code+'\\)','i').test(x.nm||'')||new RegExp('\\b'+code+'\\b','i').test(x.q||'')));
+      return p?[p.lat,p.lng]:null;
+    };
+    const homeLL=(ORIGIN&&ORIGIN.ll)||null;                 /* откуда летим (город клиента) */
+    const arrLL=airLL(AIRPORT[BASES[0].id]);                /* аэропорт прилёта */
+    const depLL=airLL(AIRPORT[BASES[BASES.length-1].id]);   /* аэропорт вылета */
     /* эмодзи-самолёт ✈️ (на iPhone — сине-белый Apple). По умолчанию смотрит вправо-вверх (~45°), поэтому +45° к углу линии, чтобы летел строго вдоль пунктира */
     const planeHTML=(rot)=>'<div class="planemk" style="transform:rotate('+(rot+45)+'deg);font-size:21px;line-height:1">✈️</div>';
-    /* дуги перелётов до реального Майами (уходят за ЮВ край; видно целиком при отзуме) */
-    decoLayer.addLayer(L.polyline([MIA,DUR],{color:'#9aa0b4',weight:2,opacity:.8,dashArray:'2,8',lineCap:'round'}));
-    decoLayer.addLayer(L.polyline([DEN,MIA],{color:'#9aa0b4',weight:2,opacity:.8,dashArray:'2,8',lineCap:'round'}));
-    /* самолётики ЛЕТЯТ ПО ПУНКТИРНОЙ ЛИНИИ (видимый участок у Колорадо) и двигаются, как машинка */
     const onLine=(A,B,f)=>[A[0]+(B[0]-A[0])*f,A[1]+(B[1]-A[1])*f];
     /* угол линии на экране (0=восток, по часовой): dy вниз = a.lat−b.lat, dx вправо = b.lng−a.lng */
     const planeRot=(a,b)=>Math.atan2(a[0]-b[0],b[1]-a[1])*180/Math.PI;
-    const rotArr=planeRot(onLine(DUR,MIA,0.06),onLine(DUR,MIA,0.004));/* летит К Дуранго */
-    const rotDep=planeRot(onLine(DEN,MIA,0.004),onLine(DEN,MIA,0.05));/* летит К Майами */
-    const arrPlane=L.marker(onLine(DUR,MIA,0.03),{icon:L.divIcon({className:'',iconSize:[27,24],iconAnchor:[13,12],html:planeHTML(rotArr)})});
-    const depPlane=L.marker(onLine(DEN,MIA,0.005),{icon:L.divIcon({className:'',iconSize:[27,24],iconAnchor:[13,12],html:planeHTML(rotDep)})});
-    decoLayer.addLayer(arrPlane);decoLayer.addLayer(depPlane);
-    decoLayer.addLayer(L.marker(MIA,{icon:L.divIcon({className:'',iconSize:[84,24],iconAnchor:[42,12],html:'<div class="miamichip">✈ Майами</div>'})}));
-    /* прилёт: из-за края к Дуранго; вылет: от Денвера к краю. Петля, как рейсы */
-    animPlane(arrPlane,onLine(DUR,MIA,0.06),onLine(DUR,MIA,0.004),7000);
-    animPlane(depPlane,onLine(DEN,MIA,0.004),onLine(DEN,MIA,0.05),7000);
-    /* машинка едет по переездам Дуранго→Урей→Аспен→Денвер */
-    const carPath=[].concat(LINES[0].pts.slice().reverse(),LINES[1].pts.slice().reverse(),LINES[2].pts.slice().reverse());
+    /* Не знаем координат — НЕ рисуем: пустая карта честнее самолёта в чужом штате */
+    if(homeLL&&arrLL){
+      decoLayer.addLayer(L.polyline([homeLL,arrLL],{color:'#9aa0b4',weight:2,opacity:.8,dashArray:'2,8',lineCap:'round'}));
+      const rotArr=planeRot(onLine(arrLL,homeLL,0.06),onLine(arrLL,homeLL,0.004));
+      const arrPlane=L.marker(onLine(arrLL,homeLL,0.03),{icon:L.divIcon({className:'',iconSize:[27,24],iconAnchor:[13,12],html:planeHTML(rotArr)})});
+      decoLayer.addLayer(arrPlane);
+      animPlane(arrPlane,onLine(arrLL,homeLL,0.06),onLine(arrLL,homeLL,0.004),7000);
+    }
+    if(homeLL&&depLL){
+      decoLayer.addLayer(L.polyline([depLL,homeLL],{color:'#9aa0b4',weight:2,opacity:.8,dashArray:'2,8',lineCap:'round'}));
+      const rotDep=planeRot(onLine(depLL,homeLL,0.004),onLine(depLL,homeLL,0.05));
+      const depPlane=L.marker(onLine(depLL,homeLL,0.005),{icon:L.divIcon({className:'',iconSize:[27,24],iconAnchor:[13,12],html:planeHTML(rotDep)})});
+      decoLayer.addLayer(depPlane);
+      animPlane(depPlane,onLine(depLL,homeLL,0.004),onLine(depLL,homeLL,0.05),7000);
+    }
+    if(homeLL)decoLayer.addLayer(L.marker(homeLL,{icon:L.divIcon({className:'',iconSize:[84,24],iconAnchor:[42,12],
+      html:'<div class="miamichip">✈ '+esc0(ORIGIN.city||'')+'</div>'})}));
+    /* Путь машинки: переезды по порядку дней. Точки внутри линии в разных файлах
+       записаны в разную сторону (Колорадо — с конца, Юта — с начала), поэтому
+       разворачиваем по факту: какой конец ближе к тому, где мы сейчас. */
+    let cur=[BASES[0].lat,BASES[0].lng];
+    const carPath=[];
+    legLines.forEach(o=>{
+      const pts=o.pts.slice();
+      const dA=kmBetween(cur[0],cur[1],pts[0][0],pts[0][1]);
+      const dB=kmBetween(cur[0],cur[1],pts[pts.length-1][0],pts[pts.length-1][1]);
+      if(dB<dA)pts.reverse();
+      carPath.push.apply(carPath,pts);
+      cur=pts[pts.length-1];
+    });
     /* ФИНИШ — клетчатый вымпел (ласточкин хвост) ТОЧНО В КОНЦЕ ДОРОГИ (последняя точка пути машины) */
     const finPt=carPath[carPath.length-1];
     if(finPt){const chp='<pattern id="chFin" width="7" height="7" patternUnits="userSpaceOnUse"><rect width="7" height="7" fill="#fff"/><rect width="3.5" height="3.5" fill="#1b1533"/><rect x="3.5" y="3.5" width="3.5" height="3.5" fill="#1b1533"/></pattern>';
@@ -2269,8 +2295,12 @@ function initMap(){
     carMarker=L.marker(carPath[0],{icon:L.divIcon({className:'',iconSize:[30,30],iconAnchor:[15,15],
       html:'<div class="carmk"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1b1e2e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg></div>'})});
     startCarAnim(carPath);
-    const legs=lineLayers.filter(l=>[4,6,9].some(d=>l.days.indexOf(d)>=0)).map(l=>l.layer);
-    FULL=L.featureGroup(legs).getBounds().pad(0.08);map.fitBounds(FULL);
+    /* охват карты — по ВСЕМ переездам маршрута. Раньше стояли номера дней
+       Колорадо [4,6,9], и на другом маршруте карта открывалась не туда. */
+    const legDays=legLines.map(o=>(o.days&&o.days[0]));
+    const legs=lineLayers.filter(l=>l.days&&l.days.some(d=>legDays.indexOf(d)>=0)).map(l=>l.layer);
+    FULL=(legs.length?L.featureGroup(legs):L.featureGroup(BASES.map(b=>L.marker([b.lat,b.lng])))).getBounds().pad(0.08);
+    map.fitBounds(FULL);
     applyFilter();
   }catch(err){mapFallback('Карта не отрисовалась');}
 }
