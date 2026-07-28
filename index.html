@@ -2585,7 +2585,10 @@ function buildFilters(){
   const cur=filter.mode, cv=filter.v;
   const label=(seg)=>{
     if(cur!==seg)return seg==='day'?'Дни':seg==='base'?'Базы':'Типы';
-    if(seg==='day')return 'День '+cv;
+    /* filter.v — это ID шаблона дня, а НЕ его номер в расписании. Пока ни один
+       день не убран, они совпадают; уберёшь ночь — расходятся, и кнопка писала
+       «День 5», когда на булавках стояла цифра 4. Показываем номер из расписания. */
+    if(seg==='day'){const e=dayOf(cv);return 'День '+(e?e.disp:cv);}
     if(seg==='base'){const b=BASES.find(x=>x.id===cv);return b?shortName(b.name):'Базы';}
     const m={star:'Главное',nature:'Природа',town:'Города',springs:'Источники',transport:'Транспорт'};
     return m[cv]||'Типы';
@@ -4716,7 +4719,12 @@ function tripMeta(id){const t=trips();return t.list.find(x=>x.id===(id||t.active
 function syncActiveIntoTrips(){
   const t=trips();t.data[t.active]=curKeys();
   const m=t.list.find(x=>x.id===t.active);
-  if(m){try{m.snap=tripStats(t.active);}catch(e){}}
+  if(m){
+    try{m.snap=tripStats(t.active);}catch(e){}
+    /* имя маршрута — чтобы плитка чужой поездки могла хотя бы назвать
+       направление, не выдумывая города из открытого сейчас файла */
+    if(typeof TRIP_NAME==='string'&&TRIP_NAME)m.route=TRIP_NAME;
+  }
   try{_rawSet(TKEY,JSON.stringify(t));}catch(e){}
   return t;
 }
@@ -4782,17 +4790,29 @@ function deleteTrip(id){
 function tripStats(id){
   const t=trips(),m=t.list.find(x=>x.id===id);
   if(id!==t.active&&m&&m.snap)return m.snap;
-  const keys=(id===t.active)?curKeys():(t.data[id]||{});
+  const own=(id===t.active);
+  const keys=own?curKeys():(t.data[id]||{});
   let plan={};try{plan=JSON.parse(keys[PKEY]||'{}')||{};}catch(e){}
-  const nights=Array.isArray(plan.nights)?plan.nights:BASES.map(b=>b.nights);
+  /* ⚠️ BASES — это ЗАГРУЖЕННЫЙ сейчас маршрут. Для ЧУЖОЙ поездки (другой файл
+     данных) брать из него города и ночи нельзя: в кабинете все поездки
+     подписывались городами того маршрута, что открыт. Клиент увидела три
+     «Колорадо», подписанных городами Юты. Чего не знаем — не выдумываем. */
+  const foreign=!own&&tripData(m)!==window.__dataFile;
+  const nights=Array.isArray(plan.nights)?plan.nights:(foreign?[]:BASES.map(b=>b.nights));
   const tn=nights.reduce((x,v)=>x+(+v||0),0),td=tn+1;
   /* «где это» — города, где ночуем. Название поездки человек меняет, а города
      остаются правдой: через полгода по «Осень в горах» не вспомнишь, куда она. */
-  const named=BASES.filter((b,i)=>(+nights[i]||0)>0).map(b=>shortName(b.name));
+  const named=foreign?[]:BASES.filter((b,i)=>(+nights[i]||0)>0).map(b=>shortName(b.name));
   const where=named.length>4?(named.slice(0,3).join(' · ')+' +'+(named.length-3)):named.join(' · ');
-  const start=plan.start||START,people=plan.people||PEOPLE;
+  const people=plan.people||(foreign?null:PEOPLE);
+  if(foreign&&!tn){
+    /* про такую поездку честно ничего не знаем, пока её не откроют */
+    return {days:null,cities:0,people:people,where:(m&&m.route)||'',dates:'',unknown:true};
+  }
+  const start=plan.start||START;
   const d0=addDays(start,0),d1=addDays(start,tn);
-  return {days:td,cities:named.length,people:people,where:where||'маршрут пока пустой',
+  return {days:td,cities:named.length,people:people,
+    where:where||((m&&m.route)||'маршрут пока пустой'),
     dates:d0.getDate()+'–'+d1.getDate()+' '+MONTHS[d1.getMonth()]+' '+d1.getFullYear()};
 }
 function homeHTML(){
@@ -4800,12 +4820,17 @@ function homeHTML(){
   /* плитка целиком — кнопка «открыть»; «⋯» отдельной кнопкой в углу */
   const cards=t.list.map((m,i)=>{
     const st=tripStats(m.id),ph=basePhoto(BASES[i%BASES.length].id)||basePhoto(BASES[0].id)||'';
+    /* про ещё не открывавшуюся чужую поездку данных нет — пишем это прямо,
+       а не подставляем числа от другого маршрута */
+    const meta=st.unknown
+      ? 'откройте, чтобы посчитать дни'
+      : st.dates+' · '+st.days+' '+plural(st.days,'день','дня','дней')
+        +(st.people?(' · '+st.people+' '+plural(st.people,'гость','гостя','гостей')):'');
     return '<div class="tcard">'
       +'<button class="ttile" data-topen="'+m.id+'"'+(ph?' style="background-image:url('+ph+')"':'')+'>'
         +'<span class="tin"><span class="tnm">'+esc0(m.title)+'</span>'
-        +'<span class="twhere">'+esc0(st.where)+'</span>'
-        +'<span class="tmeta">'+st.dates+' · '+st.days+' '+plural(st.days,'день','дня','дней')
-          +' · '+st.people+' '+plural(st.people,'гость','гостя','гостей')+'</span></span></button>'
+        +(st.where?'<span class="twhere">'+esc0(st.where)+'</span>':'')
+        +'<span class="tmeta">'+meta+'</span></span></button>'
       +'<button class="tdots" data-tmenu="'+m.id+'" aria-label="что сделать с поездкой">⋯</button></div>';
   }).join('');
   return '<div class="wrap homewrap">'
