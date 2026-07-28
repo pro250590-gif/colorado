@@ -4724,6 +4724,7 @@ function syncActiveIntoTrips(){
     /* имя маршрута — чтобы плитка чужой поездки могла хотя бы назвать
        направление, не выдумывая города из открытого сейчас файла */
     if(typeof TRIP_NAME==='string'&&TRIP_NAME)m.route=TRIP_NAME;
+    try{const c=heroPhoto();if(c)m.cover=c;}catch(e){}   /* обложка плитки — одна и та же всегда */
   }
   try{_rawSet(TKEY,JSON.stringify(t));}catch(e){}
   return t;
@@ -4815,11 +4816,28 @@ function tripStats(id){
     where:where||((m&&m.route)||'маршрут пока пустой'),
     dates:d0.getDate()+'–'+d1.getDate()+' '+MONTHS[d1.getMonth()]+' '+d1.getFullYear()};
 }
+/* Главная фотография поездки: она же в шапке маршрута. Для чужой поездки
+   (другой файл данных) берём ту, что запомнили при последнем сохранении. */
+function heroPhoto(){
+  if(typeof HERO!=='undefined'&&HERO&&HERO.photo)return HERO.photo;
+  const el=document.querySelector('header.hero .tile-photo img');
+  const src=el&&el.getAttribute('src');
+  return src||basePhoto(BASES[0].id)||'';
+}
+function tripCover(m){
+  const t=trips();
+  if(m.id===t.active)return heroPhoto();
+  return m.cover||'';
+}
 function homeHTML(){
   const t=trips();
   /* плитка целиком — кнопка «открыть»; «⋯» отдельной кнопкой в углу */
   const cards=t.list.map((m,i)=>{
-    const st=tripStats(m.id),ph=basePhoto(BASES[i%BASES.length].id)||basePhoto(BASES[0].id)||'';
+    /* Одна и та же фотография у поездки всегда — ГЛАВНАЯ, та же что в её шапке.
+       Раньше бралось фото i-того города по кругу: у каждой плитки своё, и оно
+       менялось от места в списке и от того, какой маршрут сейчас открыт.
+       Клиент: «должна быть одна фотография всегда, та что стоит в поездке». */
+    const st=tripStats(m.id),ph=tripCover(m);
     /* про ещё не открывавшуюся чужую поездку данных нет — пишем это прямо,
        а не подставляем числа от другого маршрута */
     const meta=st.unknown
@@ -4918,12 +4936,11 @@ let _popT=null;
 function leaveTrip(go){
   const done=()=>{popClose();go();};
   if(!_signedIn||!sb)return done();          /* без аккаунта сохранять некуда */
-  if(!dirty()){
-    done();
-    popup('ok','Поездка сохранена','Она лежит в разделе «Мои поездки»','');
-    clearTimeout(_popT);_popT=setTimeout(popClose,3000);
-    return;
-  }
+  /* Молчим, когда сохранять было нечего. Раньше окно «Поездка сохранена»
+     всплывало на КАЖДОМ переходе, даже если человек ничего не менял —
+     клиент справедливо сказала, что тогда оно ничего не значит и только
+     мешает. Показываем подтверждение только после настоящего сохранения. */
+  if(!dirty())return done();
   popup('save','Есть несохранённые правки','Сохраним их в аккаунт и перейдём дальше',
     '<div class="prow"><button class="pgo" data-leavesave="1">Сохранить</button>'
     +'<button class="pok" data-popclose="1">Остаться</button></div>');
@@ -4951,7 +4968,17 @@ function localTs(){return parseInt(localStorage.getItem('co-trip-ts')||'0',10);}
    друг относительно друга, и телефон затирался компьютером. Сравниваем своё «изменено»
    со своим же «отправлено» — это честно и без чужих часов. */
 function pushedTs(){return parseInt(localStorage.getItem('co-trip-pushed')||'0',10);}
-function dirty(){return localTs()>pushedTs();}
+/* ⚠️ Одного сравнения времён МАЛО. «Отправлено» мы берём из облака (updated_at),
+   то есть с ЧУЖИХ часов. Если они спешат, метка «отправлено» оказывается в
+   будущем относительно наших — и любая местная правка выглядит уже отправленной.
+   Тогда удалённая поездка не уезжает в облако и возвращается оттуда обратно
+   при следующей синхронизации — ровно то, на что жаловался клиент.
+   Поэтому держим ещё и прямой флаг «есть неотправленное»: его ставит запись,
+   а снимает только успешная отправка. Часы на него не влияют. */
+const DKEY='co-trip-dirty';
+function dirty(){return localStorage.getItem(DKEY)==='1'||localTs()>pushedTs();}
+function markDirty(){_rawSet(DKEY,'1');}
+function markClean(){try{localStorage.removeItem(DKEY);}catch(e){}}
 /* состояние сохранения — на экране, а не в консоли */
 let _syncErr='';
 function syncUI(state,txt){
@@ -4987,6 +5014,7 @@ async function cloudPush(){
   if(err){_syncErr=err.message||String(err);syncSay();return false;}
   _syncErr='';
   _rawSet('co-trip-pushed',String(stamp));
+  markClean();                 /* отправили — только теперь снимаем флаг */
   syncSay();
   return true;
 }
@@ -5022,6 +5050,7 @@ async function cloudSync(session){
         CLOUD_KEYS.forEach(k=>{if(row.plan[k]!=null)_rawSet(k,row.plan[k]);});
         const cts=row.updated_at?new Date(row.updated_at).getTime():Date.now();
         _rawSet('co-trip-ts',String(cts));_rawSet('co-trip-pushed',String(cts));
+        markClean();           /* приняли облако целиком — своего неотправленного нет */
         reinit();_applying=false;
       }
       _syncErr='';syncSay();return;
@@ -5030,7 +5059,7 @@ async function cloudSync(session){
     await cloudPush();
   }catch(e){_syncErr=(e&&e.message)||String(e);syncSay();}}
 /* перехват записи наших ключей → отметка времени + авто-сохранение */
-localStorage.setItem=function(k,v){_rawSet(k,v);if(!_applying&&CLOUD_KEYS.indexOf(k)>=0){_rawSet('co-trip-ts',String(Date.now()));cloudSave();}};
+localStorage.setItem=function(k,v){_rawSet(k,v);if(!_applying&&CLOUD_KEYS.indexOf(k)>=0){_rawSet('co-trip-ts',String(Date.now()));markDirty();cloudSave();}};
 /* открыть окно входа умеет и меню аккаунта */
 let openAuth=function(){};
 (function authInit(){
