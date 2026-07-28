@@ -99,10 +99,6 @@ body.athome,body.atland{padding-right:0!important}
   font:500 14.5px/1.5 "Inter",sans-serif;color:var(--ink)}
 .askbox textarea::placeholder{color:#a3a0b8}
 .askrow{display:flex;align-items:center;gap:10px}
-.micb{width:46px;height:46px;flex:none;border-radius:14px;border:1.5px solid rgba(91,63,196,.28);background:#fff;color:#5b3fc4;
-  display:grid;place-items:center;cursor:pointer;-webkit-appearance:none;appearance:none}
-.micb .i{width:20px;height:20px}
-.micb.rec{background:#5b3fc4;color:#fff;border-color:#5b3fc4}
 .askgo{flex:1;min-height:46px;border:0;border-radius:14px;cursor:pointer;-webkit-appearance:none;appearance:none;
   background:linear-gradient(150deg,#7a5cf0,#5b3fc4);color:#fff;font:800 13px/1 "Plus Jakarta Sans",sans-serif}
 .lchips{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
@@ -1813,7 +1809,6 @@ const ICONS={
  map:'<path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14M15 6v14"/>',
  list:'<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',
  bed:'<path d="M2 20v-8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v8M2 16h20M6 10V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v4"/>',
- mic:'<path d="M12 15a3.2 3.2 0 0 0 3.2-3.2V6.2a3.2 3.2 0 1 0-6.4 0v5.6A3.2 3.2 0 0 0 12 15Z"/><path d="M18.5 11.5a6.5 6.5 0 0 1-13 0M12 18v3.2M8.6 21.2h6.8"/>',
  sun:'<circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.4M12 19.6V22M4.2 4.2l1.7 1.7M18.1 18.1l1.7 1.7M2 12h2.4M19.6 12H22M4.2 19.8l1.7-1.7M18.1 5.9l1.7-1.7"/>',
  moon:'<path d="M20 14.5A8.2 8.2 0 0 1 9.5 4 8.3 8.3 0 1 0 20 14.5z"/>',
  food:'<path d="M3.4 2.3v4.5M6.9 2.3v4.5M10.4 2.3v4.5M3.4 6.8a3.5 3.5 0 0 0 7 0M6.9 10.3v11.4"/><path d="M17.9 2.3c-2.1 2.4-3.1 5.2-3.1 7.9 0 2.3 1.2 3.9 3.1 4.3v7.2"/>',
@@ -4392,8 +4387,7 @@ function landHTML(){
     +'<h1 class="landh">Маршрут, <em>который</em> собран под вас</h1>'
     +'<p class="landsub">Расскажите про поездку своими словами — вернём готовый план по дням, с картой, жильём и бюджетом.</p>'
     +'<div class="askbox"><textarea id="askText" rows="3" placeholder="Колорадо, десять дней в августе, вдвоём. Хотим горы и водопады, города — по минимуму…"></textarea>'
-      +'<div class="askrow"><button class="micb" id="micBtn" aria-label="надиктовать" title="надиктовать">'+ic('mic','i-sm')+'</button>'
-      +'<button class="askgo" data-askgo="1">Собрать маршрут</button></div></div>'
+      +'<div class="askrow"><button class="askgo" data-askgo="1">Собрать маршрут</button></div></div>'
     +'<div class="lchips">'
       +['Колорадо на 10 дней вдвоём','Колорадо неделю с детьми','Горы и водопады, 8 дней']
         .map(t=>'<button data-asktry="'+esc0(t)+'">'+t+'</button>').join('')
@@ -4432,7 +4426,6 @@ function renderLand(){
   const el=document.getElementById('land');if(!el)return;
   el.innerHTML=ASK?gotHTML():landHTML();
   const ta=document.getElementById('askText');if(ta)ta.focus();
-  wireMic();
 }
 function showLand(ask){
   ASK=ask||null;_askOpen={};_askMore=false;
@@ -4446,24 +4439,6 @@ function hideLand(){
   _atLand=false;ASK=null;
   const el=document.getElementById('land');if(el)el.style.display='none';
   document.body.classList.remove('atland');
-}
-/* Микрофон — встроенное распознавание браузера: бесплатно, ничего никуда не шлём.
-   Не поддерживается (например, Firefox) — кнопку просто не показываем. */
-function wireMic(){
-  const b=document.getElementById('micBtn'),ta=document.getElementById('askText');
-  if(!b||!ta)return;
-  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR){b.style.display='none';return;}
-  let rec=null;
-  b.onclick=()=>{
-    if(rec){rec.stop();return;}
-    rec=new SR();rec.lang='ru-RU';rec.interimResults=true;rec.continuous=true;
-    const base=ta.value?ta.value+' ':'';
-    rec.onresult=e=>{let s='';for(let i=e.resultIndex;i<e.results.length;i++)s+=e.results[i][0].transcript;ta.value=base+s;};
-    rec.onend=()=>{rec=null;b.classList.remove('rec');};
-    rec.onerror=()=>{rec=null;b.classList.remove('rec');};
-    b.classList.add('rec');rec.start();
-  };
 }
 /* раскладываем дни по городам: пропорционально нынешним ночам, метод наибольших остатков */
 function spreadNights(total){
