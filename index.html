@@ -4501,7 +4501,8 @@ function renderLand(){
 function showLand(ask){
   ASK=ask||null;_askOpen={};_askMore=false;
   _atLand=true;_atHome=false;renderUnits();
-  const h=document.getElementById('home');if(h)h.style.display='none';
+  /* симметрично showHome: кабинет прячем целиком, а не только помечаем флагом */
+  const h=document.getElementById('home');if(h){h.style.display='none';h.innerHTML='';}
   document.body.classList.remove('athome');document.body.classList.add('atland');
   const el=document.getElementById('land');if(el)el.style.display='';
   renderLand();window.scrollTo(0,0);
@@ -4902,6 +4903,12 @@ function homeHTML(){
 }
 function esc0(x){return String(x==null?'':x).replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));}
 function showHome(){
+  /* Кабинет и главная — РАЗНЫЕ экраны, и показывать их одновременно нельзя.
+     showHome не прятал главную, поэтому после «Новой поездки» анкета
+     оставалась висеть ПОД списком поездок (клиент прислала скрин). */
+  _atLand=false;ASK=null;
+  const l=document.getElementById('land');if(l)l.style.display='none';
+  document.body.classList.remove('atland');
   _atHome=true;renderUnits();
   const h=document.getElementById('home');if(h){h.innerHTML=homeHTML();h.style.display='';}
   document.body.classList.add('athome');
