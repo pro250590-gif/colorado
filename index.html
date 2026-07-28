@@ -131,6 +131,19 @@ body.athome,body.atland{padding-right:0!important}
 .qo.on{border-color:#5b3fc4;background:#f6f2ff;color:#3b2a8f}
 .qnum{width:74px;border:1.5px solid #e4e6f0;border-radius:11px;padding:9px 10px;font:700 12px/1 "Inter",sans-serif;
   color:var(--ink);background:#fff;outline:none}
+/* текстовые поля анкеты: направление, места, уточнения по броням */
+.qtxt{width:100%;border:1.5px solid #e4e6f0;border-radius:11px;padding:11px 12px;background:#fff;outline:none;
+  font:600 13px/1.3 "Inter",sans-serif;color:var(--ink);-webkit-appearance:none;appearance:none}
+.qtxt:focus{border-color:#5b3fc4}
+.qtxt::placeholder{color:#a3a0b8;font-weight:500}
+.qhint{margin:7px 0 0;font:600 11.5px/1.45 "Inter",sans-serif;color:#8b8fa3}
+.qsub{margin:0 0 6px;font:700 11px/1 "Inter",sans-serif;color:#8b8fa3}
+.qsub+.qopts{margin-bottom:10px}
+.bkrow{display:flex;flex-wrap:wrap;gap:8px}
+.bkf{display:flex;flex-direction:column;gap:4px;flex:1 1 132px;min-width:0}
+.bkf.wide{flex:1 1 100%}
+.bkf em{font-style:normal;font:700 11px/1 "Inter",sans-serif;color:#8b8fa3}
+.bkq{border:1.5px dashed rgba(91,63,196,.28);border-radius:14px;padding:12px 13px;background:#fbfaff}
 .gogo{width:100%;min-height:48px;margin-top:6px;border:0;border-radius:14px;cursor:pointer;-webkit-appearance:none;appearance:none;
   background:linear-gradient(150deg,#7a5cf0,#5b3fc4);color:#fff;font:800 13px/1 "Plus Jakarta Sans",sans-serif}
 .gomore{display:block;width:100%;text-align:center;margin-top:13px;border:0;background:none;cursor:pointer;
@@ -4360,16 +4373,46 @@ function wireBudget(){
    Правило: ничего не подставляем молча — либо вынули из текста, либо спросили. */
 let _atLand=false,ASK=null,_askOpen={},_askMore=false;
 const AKEY='co-trip-ask';
-function askNew(){return {text:'',where:null,whereNm:'',days:null,month:null,adults:null,kids:0,
-  pace:null,drive:null,likes:[],limits:[],extras:[]};}
-/* что мы умеем собрать сегодня. Пока один маршрут — врать про остальные не будем */
+function askNew(){return {text:'',dest:'',where:null,whereNm:'',
+  dateMode:null,from:'',to:'',days:null,month:null,   /* три формы ответа на «когда» */
+  adults:null,kids:null,places:'',placesAny:false,
+  drive:null,booked:[],bk:{},
+  pace:null,likes:[],limits:[],extras:[]};}
+/* что мы умеем собрать сегодня. Пока два маршрута — врать про остальные не будем */
 /* cover — главная фотография маршрута. Нужна кабинету, чтобы показать обложку
    поездки, чей файл сейчас НЕ загружен: иначе фото появлялось только после того,
-   как поездку хоть раз откроют (клиент это и заметила). */
+   как поездку хоть раз откроют (клиент это и заметила).
+   best — лучший месяц. Нужен, когда человек назвал только длину поездки: тогда
+   месяц подсказываем мы, но говорим об этом вслух, а не подставляем молча. */
 const CATALOG=[
-  {k:'co',file:'trip-colorado.js',rx:/колорадо|colorado|дуранго|аспен|денвер|силвертон/i,nm:'Колорадо, США',cover:'img/hero-w.webp'},
-  {k:'ut',file:'trip-utah.js',    rx:/юта|utah|зайон|zion|брайс|bryce|моаб|moab|арки|arches|каньонлендс/i,nm:'Юта, каньоны',cover:'img/ut_mes-l.jpg'}
+  {k:'co',file:'trip-colorado.js',rx:/колорадо|colorado|дуранго|аспен|денвер|силвертон/i,nm:'Колорадо, США',cover:'img/hero-w.webp',
+   best:{m:8,why:'сентябрь: осины золотые, жара спала, толпы разъехались'}},
+  {k:'ut',file:'trip-utah.js',    rx:/юта|utah|зайон|zion|брайс|bryce|моаб|moab|арки|arches|каньонлендс/i,nm:'Юта, каньоны',cover:'img/ut_mes-l.jpg',
+   best:{m:9,why:'октябрь: в каньонах уже не +40, а вода в Narrows ещё тёплая'}}
 ];
+/* восемь приоритетов. Список нарочно такой, чтобы каждый пункт был осмыслен для
+   ЛЮБОГО места на земле: направление человек пишет словами, каталога стран у нас
+   нет и не будет. «Водопады» и «нацпарки» сюда не годятся — это уже ответ, а не
+   вопрос, и в Париже такой пункт выглядит глупо. */
+const LIKES8=['Природа и виды','Города и архитектура','Музеи, искусство, история',
+  'Еда и напитки','Активный отдых','Шопинг','Тишина и отдых','Местная жизнь и люди'];
+const LIKEMAX=3;
+/* водит человек или нет — вопрос ПРО ЧЕЛОВЕКА. «Нужна ли машина в Париже» знаем
+   мы, а не он, и это решение, а не вопрос. */
+const DRIVE3=[['any','вожу, поеду сколько нужно'],['short','вожу, но недолго'],['no','не вожу и не хочу']];
+/* что уже забронировано. У каждой брони есть НАЧАЛО И КОНЕЦ: паром может идти
+   двое суток, фестиваль — четыре дня. Иначе теряются ночи в пути и врут дни. */
+const BOOKED=[['flight','билеты'],['stay','жильё'],['car','машина'],['ferry','паром или поезд'],['event','событие с датой']];
+/* четвёртым идёт 'w' — поле занимает всю строку. Без него «прилетаю в» и
+   «улетаю из» слипались в одну кашу и было не понять, какая дата к чему */
+const BKFIELDS={
+  flight:[['inCity','прилетаю в','text','w'],['inDate','дата','date'],['inTime','время','time'],
+          ['outCity','улетаю из','text','w'],['outDate','дата','date'],['outTime','время','time']],
+  stay:  [['city','город','text','w'],['from','с','date'],['to','по','date'],['name','название или ссылка','text','w']],
+  car:   [['takeCity','беру в','text','w'],['takeDate','дата','date'],['dropCity','сдаю в','text','w'],['dropDate','дата','date']],
+  ferry: [['from','откуда','text'],['to','куда','text'],['date','отправление','date'],['dateEnd','прибытие','date']],
+  event: [['city','город','text','w'],['what','что это','text','w'],['from','начало','date'],['to','конец','date']]
+};
 const MONRX=['январ','феврал','март','апрел','ма[йя]','июн','июл','август','сентябр','октябр','ноябр','декабр'];
 const NUMW={'один':1,'одну':1,'два':2,'две':2,'три':3,'четыре':4,'пять':5,'шесть':6,'семь':7,
   'восемь':8,'девять':9,'десять':10,'одиннадцать':11,'двенадцать':12,'две недели':14,'неделю':7,'неделя':7};
@@ -4379,45 +4422,65 @@ function parseAsk(raw){
   const a=askNew();a.text=String(raw||'').trim();
   const s=a.text.toLowerCase().replace(/ё/g,'е');
   if(!s)return a;
-  const cat=CATALOG.find(c=>c.rx.test(s));if(cat){a.where=cat.k;a.whereNm=cat.nm;}
+  const cat=CATALOG.find(c=>c.rx.test(s));if(cat){a.where=cat.k;a.whereNm=cat.nm;a.dest=cat.nm;}
+  /* «с 10 по 20 августа» — точные даты человек называет сам куда чаще, чем месяц */
+  let d=s.match(/с\s*(\d{1,2})\s*(?:по|до|-|—)\s*(\d{1,2})\s*([а-я]+)/);
+  if(d){const mi=MONRX.findIndex(p=>new RegExp('^'+p).test(d[3]));
+    if(mi>=0){a.dateMode='exact';a.month=mi;
+      const y=new Date().getFullYear()+((mi<new Date().getMonth())?1:0);
+      const iso=(dd)=>y+'-'+String(mi+1).padStart(2,'0')+'-'+String(dd).padStart(2,'0');
+      a.from=iso(+d[1]);a.to=iso(+d[2]);a.days=(+d[2])-(+d[1])+1;}}
   let m=s.match(/(\d+)\s*(?:дн|ден|сут)/);if(m)a.days=+m[1];
   if(!a.days){m=s.match(/(\d+)\s*ноч/);if(m)a.days=+m[1]+1;}
   if(!a.days){m=s.match(/([а-я]+)\s*(?:дн|ден|сут)/);if(m&&NUMW[m[1]])a.days=NUMW[m[1]];}
   if(!a.days){m=s.match(/([а-я]+)\s*ноч/);if(m&&NUMW[m[1]])a.days=NUMW[m[1]]+1;}
   if(!a.days&&/недел/.test(s)){a.days=/две недел|2 недел/.test(s)?14:7;}
   MONRX.forEach((p,i)=>{if(new RegExp(p).test(s))a.month=i;});
+  if(!a.dateMode)a.dateMode=a.month!=null?'month':(a.days?'days':null);
   if(/вдвоем|вдвоём|с женой|с мужем|пара/.test(s))a.adults=2;
   else if(/втроем|втроём/.test(s))a.adults=3;
   else if(/вчетвером/.test(s))a.adults=4;
   else if(/один |одна |соло/.test(s))a.adults=1;
   else{m=s.match(/(\d+)\s*(?:человек|взросл|гост)/);if(m)a.adults=+m[1];}
   if(/дет[ия]|ребен|детьми|малыш/.test(s)){m=s.match(/(\d+)\s*(?:дет|ребен)/);a.kids=m?+m[1]:2;}
-  [[/гор[аыу]|горы|водопад|природ|озер|каньон|парк|лес/,'природа'],
-   [/еда|поесть|ресторан|кухн|вин[оа]/,'еда'],
-   [/город|музе|архитектур/,'города'],
-   [/фото|виды|пейзаж/,'виды и фото'],
-   [/поход|хайк|треккинг|сплав|актив/,'активности']].forEach(([rx,nm])=>{if(rx.test(s))a.likes.push(nm);});
+  else if(/вдвоем|вдвоём|с женой|с мужем|один |одна |соло/.test(s))a.kids=0;
+  [[/гор[аыу]|горы|водопад|природ|озер|каньон|лес|вид[ыа]|пейзаж/,'Природа и виды'],
+   [/город|архитектур/,'Города и архитектура'],
+   [/музе|искусств|истор|галере/,'Музеи, искусство, история'],
+   [/еда|поесть|ресторан|кухн|вин[оа]|гастро/,'Еда и напитки'],
+   [/поход|хайк|треккинг|сплав|актив|вело|каяк/,'Активный отдых'],
+   [/шопинг|шоппинг|магазин|аутлет/,'Шопинг'],
+   [/тишин|отдохнут|расслаб|спокойн|ничего не делать/,'Тишина и отдых'],
+   [/местн|локальн|люди|быт|традиц/,'Местная жизнь и люди']].forEach(([rx,nm])=>{
+     if(rx.test(s)&&a.likes.length<LIKEMAX&&a.likes.indexOf(nm)<0)a.likes.push(nm);});
   /* «города — по минимуму»: между словами бывает тире и запятая, поэтому пропускаем
      знаки. И тогда же убираем «города» из любимого — иначе одна фраза попадала
      сразу в «люблю» и в «не хочу» */
   if(/город[а-я]*[\s—–\-,:]*(?:по\s*минимуму|поменьше|меньше|не\s*хочу|не\s*нужн|без)/.test(s)){
     a.limits.push('меньше городов');
-    a.likes=a.likes.filter(x=>x!=='города');
+    a.likes=a.likes.filter(x=>x!=='Города и архитектура');
   }
+  /* что уже забронировано: об этом человек почти всегда говорит сам */
+  [[/билет[ыа]?\s*(?:уже\s*)?(?:куп|заброн|есть|на руках)|уже\s*куп[а-я]*\s*билет/,'flight'],
+   [/отель\s*(?:уже\s*)?заброн|жиль[её]\s*(?:уже\s*)?заброн|заброн[а-я]*\s*(?:отель|квартир|жиль)/,'stay'],
+   [/машин[аеу]\s*(?:уже\s*)?заброн|аренд[а-я]*\s*(?:уже\s*)?заброн/,'car'],
+   [/паром\s*(?:уже\s*)?заброн|поезд\s*(?:уже\s*)?заброн|билет[ыа]?\s*на\s*(?:паром|поезд)/,'ferry'],
+   [/фестивал|концерт|матч|свадьб/,'event']].forEach(([rx,k])=>{
+     if(rx.test(s)&&a.booked.indexOf(k)<0)a.booked.push(k);});
   if(/собак|пес /.test(s))a.limits.push('едем с собакой');
   if(/коляск/.test(s))a.limits.push('коляска');
   if(/глютен|аллерг|веган|халяль/.test(s))a.limits.push('еда: ограничения');
   if(/высот[ыа]\s*бо|боюсь высот|боязнь высот/.test(s))a.limits.push('боязнь высоты');
   if(/спокойн|не спеша|размеренн/.test(s))a.pace='calm';
   if(/насыщен|побольше успеть|много успеть/.test(s))a.pace='fast';
-  m=s.match(/(?:не более|не больше|до)\s*(\d+)\s*час[а-я]*\s*(?:в день\s*)?за рулем/);if(m)a.drive=String(m[1]);
-  if(/без машины|не за рулем|на поезд/.test(s))a.drive='0';
+  if(/(?:не более|не больше|до)\s*\d+\s*час[а-я]*\s*(?:в день\s*)?за рулем|недолго за рулем/.test(s))a.drive='short';
+  if(/без машины|не за рулем|не вожу|не хочу вести|на поезд/.test(s))a.drive='no';
+  if(/сколько нужно за рулем|люблю водить|за рулем не проблема/.test(s))a.drive='any';
   [[/фестивал|концерт|матч|свадьб/,'событие с датой'],
    [/днем рожден|годовщин|медовый/,'особый повод']].forEach(([rx,nm])=>{if(rx.test(s))a.extras.push(nm);});
   return a;
 }
 const PACES=[['calm','Спокойно'],['mid','Средне'],['fast','Насыщенно']];
-const DRIVES=[['2','до 2 ч'],['4','до 4 ч'],['x','сколько нужно'],['0','без машины']];
 const chk='<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5L20 6.5"/></svg>';
 const qmk='<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17h.01M9.5 9a2.5 2.5 0 1 1 3.2 2.4c-.6.2-.7.8-.7 1.3v.6"/></svg>';
 /* MONTHS в родительном («августа») — он для дат «7 августа». Для галочки и названия
@@ -4428,39 +4491,104 @@ function askWho(a){
   if(a.adults==null)return null;
   return a.adults+' '+plural(a.adults,'взрослый','взрослых','взрослых')+(a.kids?(' · '+a.kids+' '+plural(a.kids,'ребёнок','детей','детей')):'');
 }
-/* поля: что известно — галочкой, что нет — оранжевым вопросом */
+/* «когда» — ОДИН вопрос с тремя формами ответа. У человека с билетами на руках
+   есть ровно даты, а не «август»; у того, кто ещё не решил, — только длина. */
+function dmy(iso){if(!iso)return '';const p=String(iso).split('-');
+  return p.length===3?(+p[2])+' '+MONNM[+p[1]-1].slice(0,3):iso;}
+function askDays(a){
+  if(a.dateMode==='exact'&&a.from&&a.to){
+    const d=Math.round((new Date(a.to)-new Date(a.from))/864e5)+1;
+    return d>0?d:null;
+  }
+  return a.days||null;
+}
+function whenVal(a){
+  if(a.dateMode==='exact')return (a.from&&a.to)?(dmy(a.from)+' — '+dmy(a.to)):null;
+  if(a.dateMode==='month')return (a.month!=null&&a.days)?(monthNm(a.month)+' · '+a.days+' '+plural(a.days,'день','дня','дней')):null;
+  if(a.dateMode==='days')return a.days?(a.days+' '+plural(a.days,'день','дня','дней')+' · месяц подскажем сами'):null;
+  return null;
+}
+function bookedVal(a){
+  if(!a.booked.length)return null;
+  if(a.booked.indexOf('none')>=0)return 'ничего не забронировано';
+  return a.booked.map(k=>(BOOKED.find(x=>x[0]===k)||[])[1]).filter(Boolean).join(', ');
+}
+/* поля: что известно — галочкой, что нет — вопросом. opt — можно и не отвечать */
 function askFields(a){
+  const d=askDays(a);
   return [
-    {k:'where',nm:'Куда едем',val:a.where?a.whereNm:null,q:'куда едем?'},
-    {k:'month',nm:'Когда',val:a.month!=null?monthNm(a.month):null,q:'в каком месяце?'},
-    {k:'days', nm:'Сколько дней',val:a.days?(a.days+' '+plural(a.days,'день','дня','дней')):null,q:'сколько дней?'},
+    {k:'dest', nm:'Куда едете',val:a.dest||null,q:'куда едете?'},
+    {k:'when', nm:'Когда',val:whenVal(a),q:'когда едете?'},
     {k:'who',  nm:'Кто едет',val:askWho(a),q:'с кем едете?'},
-    {k:'pace', nm:'Темп',val:a.pace?(PACES.find(x=>x[0]===a.pace)||[])[1]:null,q:'в каком темпе?'},
-    {k:'drive',nm:'За рулём',val:a.drive?(DRIVES.find(x=>x[0]===a.drive)||[])[1]:null,q:'сколько за рулём?'}
+    {k:'places',nm:'Какие места хотите посетить',opt:1,
+     val:a.placesAny?'решаем мы':(a.places||null),q:'есть места на примете?'},
+    {k:'drive',nm:'Водите ли вы',val:a.drive?(DRIVE3.find(x=>x[0]===a.drive)||[])[1]:null,q:'водите ли вы?'},
+    {k:'booked',nm:'Что уже забронировано',val:bookedVal(a),q:'что уже забронировано?'},
+    {k:'likes',nm:'Что в приоритете',opt:1,val:a.likes.length?a.likes.join(', '):null,q:'что в приоритете?'}
   ];
+}
+/* поле ввода внутри вопроса: пишет прямо в ASK, страницу не перерисовывает,
+   иначе на каждой набранной букве терялся бы курсор */
+function inp(path,ph,type,val,w){
+  return '<input class="qtxt" data-abk="'+path+'" type="'+(type||'text')+'"'
+    +(w?' style="width:'+w+'"':'')+' placeholder="'+esc0(ph||'')+'" value="'+esc0(val||'')+'">';
+}
+function bkBlock(k,a){
+  const d=a.bk[k]||{};
+  const rows=BKFIELDS[k].map(f=>'<span class="bkf'+(f[3]==='w'?' wide':'')+'"><em>'+f[1]+'</em>'
+    +inp('bk.'+k+'.'+f[0],'',f[2],d[f[0]])+'</span>').join('');
+  return '<div class="qf bkq"><label>'+(BOOKED.find(x=>x[0]===k)||[])[1]+' — уточните</label><div class="bkrow">'+rows+'</div></div>';
 }
 function qBlock(f,a){
   const o=(v,t,on)=>'<button class="qo'+(on?' on':'')+'" data-aset="'+f.k+'" data-av="'+v+'">'+t+'</button>';
   let inner='';
-  if(f.k==='where')inner=CATALOG.map(c=>o(c.k,c.nm,a.where===c.k)).join('')
-    +'<span class="qo" style="border-style:dashed;color:#8b8fa3;cursor:default">другие страны — скоро</span>';
-  else if(f.k==='month')inner=MONNM.map((mn,i)=>o(i,mn.slice(0,3),a.month===i)).join('');
-  else if(f.k==='days')inner=[5,7,8,10,12,14].map(d=>o(d,d,a.days===d)).join('')
-    +'<input class="qnum" id="aDays" inputmode="numeric" placeholder="своё" value="'+(a.days&&[5,7,8,10,12,14].indexOf(a.days)<0?a.days:'')+'">';
-  else if(f.k==='who')inner=[1,2,3,4,5,6].map(n=>o('a'+n,n+' взр.',a.adults===n)).join('')
-    +[0,1,2,3].map(n=>o('k'+n,n?(n+' дет.'):'без детей',a.kids===n)).join('');
-  else if(f.k==='pace')inner=PACES.map(x=>o(x[0],x[1],a.pace===x[0])).join('');
-  else if(f.k==='drive')inner=DRIVES.map(x=>o(x[0],x[1],a.drive===x[0])).join('');
-  return '<div class="qf"><label>'+f.nm+'</label><div class="qopts">'+inner+'</div></div>';
+  /* направление — обычное поле. Кнопок со странами нет и не будет: человек пишет
+     свой город, а мир в наш каталог не помещается */
+  if(f.k==='dest')return '<div class="qf"><label>Куда едете</label>'
+    +inp('dest','Юта · Париж · Норвегия · Япония · Патагония','text',a.dest)+'</div>';
+  if(f.k==='when'){
+    const md=[['exact','точные даты'],['month','месяц и сколько дней'],['days','только сколько дней']]
+      .map(x=>o(x[0],x[1],a.dateMode===x[0])).join('');
+    let body='';
+    if(a.dateMode==='exact')body='<div class="bkrow"><span class="bkf"><em>с</em>'+inp('from','','date',a.from,'132px')
+      +'</span><span class="bkf"><em>по</em>'+inp('to','','date',a.to,'132px')+'</span></div>';
+    else if(a.dateMode==='month')body='<div class="qopts" style="margin-top:8px">'
+      +MONNM.map((mn,i)=>o('m'+i,mn.slice(0,3),a.month===i)).join('')+'</div>'
+      +'<div class="qopts" style="margin-top:6px">'+[5,7,8,10,12,14].map(d=>o('d'+d,d,a.days===d)).join('')
+      +'<input class="qnum" id="aDays" inputmode="numeric" placeholder="своё" value="'+(a.days&&[5,7,8,10,12,14].indexOf(a.days)<0?a.days:'')+'"></div>';
+    else if(a.dateMode==='days')body='<div class="qopts" style="margin-top:8px">'
+      +[5,7,8,10,12,14].map(d=>o('d'+d,d,a.days===d)).join('')
+      +'<input class="qnum" id="aDays" inputmode="numeric" placeholder="своё" value="'+(a.days&&[5,7,8,10,12,14].indexOf(a.days)<0?a.days:'')+'"></div>'
+      +'<p class="qhint">Скажем сами, в каком месяце туда лучше всего.</p>';
+    return '<div class="qf"><label>Когда</label><div class="qopts">'+md+'</div>'+body+'</div>';
+  }
+  /* взрослые и дети — двумя подписанными строками: два поля «своё» подряд читались
+     неоднозначно, было не понять, какое из них чьё */
+  if(f.k==='who')return '<div class="qf"><label>Кто едет</label>'
+    +'<p class="qsub">взрослые</p><div class="qopts">'
+      +[1,2,3,4,5,6].map(n=>o('a'+n,n,a.adults===n)).join('')
+      +'<input class="qnum" id="aAd" inputmode="numeric" placeholder="своё" value="'+(a.adults&&a.adults>6?a.adults:'')+'"></div>'
+    +'<p class="qsub">дети</p><div class="qopts">'
+      +[0,1,2,3].map(n=>o('k'+n,n?String(n):'нет',a.kids===n)).join('')
+      +'<input class="qnum" id="aKid" inputmode="numeric" placeholder="своё" value="'+(a.kids&&a.kids>3?a.kids:'')+'"></div></div>';
+  else if(f.k==='places')return '<div class="qf"><label>Какие места хотите посетить</label>'
+    +inp('places','если есть на примете','text',a.places)
+    +'<div class="qopts" style="margin-top:7px">'+o('any','решите за меня',a.placesAny)+'</div></div>';
+  else if(f.k==='drive')inner=DRIVE3.map(x=>o(x[0],x[1],a.drive===x[0])).join('');
+  else if(f.k==='booked')inner=o('none','ничего',a.booked.indexOf('none')>=0)
+    +BOOKED.map(x=>o(x[0],x[1],a.booked.indexOf(x[0])>=0)).join('');
+  else if(f.k==='likes')inner=LIKES8.map(x=>o('L'+x,x,a.likes.indexOf(x)>=0)).join('');
+  const hint=f.k==='likes'?'<p class="qhint">Не больше трёх — иначе это не приоритет.</p>':'';
+  return '<div class="qf"><label>'+f.nm+'</label><div class="qopts">'+inner+'</div>'+hint+'</div>';
 }
 function landHTML(){
   return '<div class="wrap landwrap">'
     +'<h1 class="landh">Маршрут, <em>который</em> собран под вас</h1>'
     +'<p class="landsub">Расскажите про поездку своими словами — вернём готовый план по дням, с картой, жильём и бюджетом.</p>'
-    +'<div class="askbox"><textarea id="askText" rows="3" placeholder="Колорадо, десять дней в августе, вдвоём. Хотим горы и водопады, города — по минимуму…"></textarea>'
+    +'<div class="askbox"><textarea id="askText" rows="3" placeholder="Колорадо с 10 по 20 сентября, вдвоём. Билеты уже купили. Любим горы и поесть, города — по минимуму…"></textarea>'
       +'<div class="askrow"><button class="askgo" data-askgo="1">Собрать маршрут</button></div></div>'
     +'<div class="lchips">'
-      +['Колорадо на 10 дней вдвоём','Колорадо неделю с детьми','Горы и водопады, 8 дней']
+      +['Колорадо на 10 дней вдвоём','Юта на неделю с детьми','Юта с 3 по 10 октября, билеты есть']
         .map(t=>'<button data-asktry="'+esc0(t)+'">'+t+'</button>').join('')
     +'</div>'
     +'<div class="lor">или <button class="lnk" data-askform="1">пройдите анкету</button> — спросим только нужное</div>'
@@ -4468,10 +4596,14 @@ function landHTML(){
 }
 function gotHTML(){
   const a=ASK,fs=askFields(a);
-  const known=fs.filter(f=>f.val&&!_askOpen[f.k]),miss=fs.filter(f=>!f.val||_askOpen[f.k]);
+  const known=fs.filter(f=>f.val&&!_askOpen[f.k]);
+  /* необязательное не держит сборку: спрашиваем, но не требуем */
+  const miss=fs.filter(f=>(!f.val&&!f.opt)||_askOpen[f.k]);
+  const later=fs.filter(f=>!f.val&&f.opt&&!_askOpen[f.k]);
   const chips=known.map(f=>'<button class="gchip" data-aopen="'+f.k+'">'+chk+esc0(f.val)+'</button>').join('')
-    +(a.likes.length?'<button class="gchip" data-aopen="likes">'+chk+esc0(a.likes.join(', '))+'</button>':'')
     +(a.limits.length?'<button class="gchip" data-aopen="limits">'+chk+esc0(a.limits.join(', '))+'</button>':'');
+  /* уточнения по бронированному — только по тому, что человек отметил сам */
+  const bks=a.booked.filter(k=>k!=='none').map(k=>bkBlock(k,a)).join('');
   return '<div class="wrap gotwrap">'
     +(a.text?'<div class="said"><div class="t">Вы сказали</div><p>'+esc0(a.text)+'</p></div>':'')
     +'<h1 class="goth">'+(a.text?'Правильно поняли?':'Расскажите про поездку')+'</h1>'
@@ -4480,12 +4612,14 @@ function gotHTML(){
     +(a.extras.length?'<p class="glbl">Услышали ещё — учтём при сборке</p><div class="gots">'
       +a.extras.map(x=>'<span class="gchip">'+chk+esc0(x)+'</span>').join('')+'</div>':'')
     +'<div class="qs">'
-      +(miss.length?'<p class="qtitle">'+(miss.length===1?'Остался один вопрос':'Осталось '+miss.length+' '+plural(miss.length,'вопрос','вопроса','вопросов'))+' — без них маршрут не посчитать</p>':'')
+      +(miss.length?'<p class="qtitle">'+(miss.length===1?'Остался один вопрос — без него':'Осталось '+miss.length+' '+plural(miss.length,'вопрос','вопроса','вопросов')+' — без них')+' маршрут не посчитать</p>':'')
       +miss.map(f=>qBlock(f,a)).join('')
+      +bks
+      +(later.length?'<p class="qtitle" style="margin-top:16px">Необязательно, но маршрут будет точнее</p>'+later.map(f=>qBlock(f,a)).join(''):'')
       +'<button class="gogo" data-abuild="1">Собрать маршрут</button>'
       +'<button class="gomore" data-amore="1">едете с собакой, с коляской или не любите высоту?<br><u>'+(_askMore?'свернуть':'ответить ещё на пару вопросов')+'</u></button>'
-      +(_askMore?'<div class="qf" style="margin-top:14px"><label>Что важно</label><div class="qopts">'
-        +['природа','еда','города','виды и фото','активности'].map(x=>'<button class="qo'+(a.likes.indexOf(x)>=0?' on':'')+'" data-alike="'+x+'">'+x+'</button>').join('')
+      +(_askMore?'<div class="qf" style="margin-top:14px"><label>Темп</label><div class="qopts">'
+        +PACES.map(x=>'<button class="qo'+(a.pace===x[0]?' on':'')+'" data-aset="pace" data-av="'+x[0]+'">'+x[1]+'</button>').join('')
         +'</div></div><div class="qf"><label>Ограничения</label><div class="qopts">'
         +['едем с собакой','коляска','боязнь высоты','еда: ограничения','не водим ночью'].map(x=>'<button class="qo'+(a.limits.indexOf(x)>=0?' on':'')+'" data-alim="'+x+'">'+x+'</button>').join('')
         +'</div></div>':'')
@@ -4525,33 +4659,58 @@ function spreadNights(total){
   while(left<0){const i=out.indexOf(Math.max(...out));out[i]--;left++;}
   return out;
 }
+/* месяц: назвал сам — берём его; назвал только длину — подсказываем лучший и
+   говорим об этом вслух (askMonth возвращает ещё и откуда он взялся) */
+function askMonth(a){
+  if(a.month!=null)return {m:a.month,own:1};
+  const cat=CATALOG.find(c=>c.k===a.where);
+  if(cat&&cat.best)return {m:cat.best.m,why:cat.best.why};
+  return {m:null};
+}
 function askStart(a){
-  if(a.month==null)return startIso;
-  const now=new Date(),y=now.getFullYear()+((a.month<now.getMonth())?1:0);
-  return y+'-'+String(a.month+1).padStart(2,'0')+'-01';
+  if(a.dateMode==='exact'&&a.from)return a.from;
+  const mm=askMonth(a);
+  if(mm.m==null)return startIso;
+  const now=new Date(),y=now.getFullYear()+((mm.m<now.getMonth())?1:0);
+  return y+'-'+String(mm.m+1).padStart(2,'0')+'-01';
 }
 /* раскладываем ответы анкеты по уже загруженному маршруту */
 function applyAsk(a){
-  const nights=spreadNights((a.days||10)-1);
+  const nights=spreadNights((askDays(a)||10)-1);
   BASES.forEach((b,i)=>{applyNights(i,nights[i]);});
   startIso=askStart(a);
   PEOPLE=Math.max(1,(a.adults||2)+(a.kids||0));
   savePlan();
   try{localStorage.setItem(AKEY,JSON.stringify(a));}catch(e){}
 }
+/* направление человек пишет словами, а собрать мы сегодня умеем только два
+   маршрута. Врать нельзя: если не узнали — говорим об этом прямо. */
+function destCat(a){
+  if(a.where)return CATALOG.find(c=>c.k===a.where)||null;
+  const s=String(a.dest||'').toLowerCase();
+  return s?(CATALOG.find(c=>c.rx.test(s))||null):null;
+}
 function buildFromAsk(){
   const a=ASK;if(!a)return;
   const fs=askFields(a);
-  const miss=fs.filter(f=>!f.val);
+  const miss=fs.filter(f=>!f.val&&!f.opt);
   if(miss.length){_askOpen[miss[0].k]=1;renderLand();return;}
-  const cat=CATALOG.find(c=>c.k===a.where)||CATALOG[0];
-  const title=cat.nm.split(',')[0]+' · '+monthNm(a.month);
+  const cat=destCat(a);
+  if(!cat){
+    toast('<b>Такого направления у нас пока нет</b><i>сегодня умеем собрать Колорадо и Юту. Впишите одно из них — или подождите, мы открываем новые направления</i>',null,null);
+    _askOpen.dest=1;renderLand();return;
+  }
+  a.where=cat.k;a.whereNm=cat.nm;
+  const mm=askMonth(a);
+  const title=cat.nm.split(',')[0]+(mm.m!=null?(' · '+monthNm(mm.m)):'');
   /* другой маршрут — другой файл данных, он подключается только при загрузке */
   if(cat.file!==window.__dataFile)return newTripFromData(title,cat.file,a);
   newTripFromCurrent(title);
   applyAsk(a);
   reinit();hideLand();hideHome();rerenderTrip();window.scrollTo(0,0);
-  toast('<b>Маршрут собран: '+esc0(title)+'</b><i>дни разложены по городам — меняйте что угодно, всё пересчитается</i>',null,null);
+  toast('<b>Маршрут собран: '+esc0(title)+'</b>'
+    +'<i>'+(mm.why?('месяц выбрали мы — '+esc0(mm.why)+'. '):'')
+    +'дни разложены по городам — меняйте что угодно, всё пересчитается</i>',null,null);
 }
 document.addEventListener('click',e=>{
   const t=e.target.closest('button');if(!t)return;
@@ -4562,21 +4721,53 @@ document.addEventListener('click',e=>{
   if(t.dataset.amore!==undefined){_askMore=!_askMore;renderLand();}
   if(t.dataset.aback!==undefined){showLand(null);}
   if(t.dataset.abuild!==undefined){buildFromAsk();}
-  if(t.dataset.alike){const i=ASK.likes.indexOf(t.dataset.alike);i<0?ASK.likes.push(t.dataset.alike):ASK.likes.splice(i,1);renderLand();}
   if(t.dataset.alim){const i=ASK.limits.indexOf(t.dataset.alim);i<0?ASK.limits.push(t.dataset.alim):ASK.limits.splice(i,1);renderLand();}
   if(t.dataset.aset&&ASK){
     const k=t.dataset.aset,v=t.dataset.av;
-    if(k==='where'){ASK.where=v;ASK.whereNm=(CATALOG.find(c=>c.k===v)||{}).nm||'';}
-    else if(k==='month')ASK.month=+v;
-    else if(k==='days')ASK.days=+v;
-    else if(k==='who'){if(v[0]==='a')ASK.adults=+v.slice(1);else ASK.kids=+v.slice(1);}
-    else if(k==='pace')ASK.pace=v;
+    let keepOpen=false;
+    if(k==='when'){
+      if(v[0]==='m')ASK.month=+v.slice(1);
+      else if(v[0]==='d')ASK.days=+v.slice(1);
+      else {ASK.dateMode=v;keepOpen=true;}       /* выбрал форму — вопрос остаётся открытым */
+      if(v[0]==='m'||v[0]==='d')keepOpen=(ASK.dateMode==='month'&&(ASK.month==null||!ASK.days));
+    }
+    else if(k==='who'){if(v[0]==='a')ASK.adults=+v.slice(1);else ASK.kids=+v.slice(1);
+      keepOpen=(ASK.adults==null||ASK.kids==null);}
+    else if(k==='places'){ASK.placesAny=!ASK.placesAny;if(ASK.placesAny)ASK.places='';}
     else if(k==='drive')ASK.drive=v;
-    delete _askOpen[k];renderLand();
+    else if(k==='booked'){
+      if(v==='none')ASK.booked=(ASK.booked.indexOf('none')>=0)?[]:['none'];
+      else{ASK.booked=ASK.booked.filter(x=>x!=='none');
+        const i=ASK.booked.indexOf(v);i<0?ASK.booked.push(v):ASK.booked.splice(i,1);
+        keepOpen=true;}                          /* отмечают обычно не одно */
+    }
+    else if(k==='likes'){
+      const nm=v.slice(1),i=ASK.likes.indexOf(nm);
+      if(i>=0)ASK.likes.splice(i,1);
+      else if(ASK.likes.length<LIKEMAX)ASK.likes.push(nm);
+      keepOpen=true;
+    }
+    else if(k==='pace')ASK.pace=v;
+    if(!keepOpen)delete _askOpen[k];else _askOpen[k]=1;
+    renderLand();
   }
 });
+/* поля ввода анкеты пишут прямо в ASK и НЕ перерисовывают экран: перерисовка на
+   каждой букве уводила бы курсор из поля */
+function setPath(o,path,val){
+  const p=path.split('.');let c=o;
+  for(let i=0;i<p.length-1;i++){if(!c[p[i]])c[p[i]]={};c=c[p[i]];}
+  c[p[p.length-1]]=val;
+}
 document.addEventListener('input',e=>{
-  if(e.target&&e.target.id==='aDays'&&ASK){const v=parseInt(e.target.value,10);if(v>0&&v<60)ASK.days=v;}
+  const el=e.target;if(!el||!ASK)return;
+  if(el.id==='aDays'){const v=parseInt(el.value,10);if(v>0&&v<60)ASK.days=v;return;}
+  if(el.id==='aAd'){const v=parseInt(el.value,10);if(v>0&&v<40)ASK.adults=v;return;}
+  if(el.id==='aKid'){const v=parseInt(el.value,10);if(v>=0&&v<20)ASK.kids=v;return;}
+  if(el.dataset&&el.dataset.abk){
+    setPath(ASK,el.dataset.abk,el.value);
+    if(el.dataset.abk==='places'&&el.value)ASK.placesAny=false;
+  }
 });
 
 /* Шапка поездки: у Колорадо она в разметке, у остальных маршрутов приходит
