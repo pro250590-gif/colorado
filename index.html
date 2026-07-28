@@ -152,6 +152,11 @@ body.athome,body.atland{padding-right:0!important}
 .qta{resize:none;overflow:hidden;line-height:1.4;display:block}
 .qtxt::placeholder{color:#a3a0b8;font-weight:500}
 .qhint{margin:7px 0 0;font:600 11.5px/1.45 "Inter",sans-serif;color:#8b8fa3}
+/* тихие выходы для тех, кто дат не знает: заметны, если ищешь, и не мешают,
+   если не ищешь (вариант «В») */
+.altrow{display:flex;flex-wrap:wrap;gap:8px;margin-top:11px}
+.altq{flex:1 1 130px;border:1.5px dashed #d8d5e6;background:none;border-radius:11px;padding:10px 8px;cursor:pointer;
+  font:700 11.5px/1.25 "Inter",sans-serif;color:#5b3fc4;-webkit-appearance:none;appearance:none}
 .qsub{margin:0 0 6px;font:700 11px/1 "Inter",sans-serif;color:#8b8fa3}
 .qsub+.qopts{margin-bottom:10px}
 .qf>label.done{border-left-color:#12a06a}
@@ -1607,6 +1612,9 @@ section h2.big{margin-bottom:4px}
 .scin{flex:1;min-width:0}
 .sclbl{display:block;font:800 15px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:-.03em}
 .scsub{display:block;font:500 11px/1.3 "Inter",sans-serif;color:#8b8fa3;margin-top:5px}
+/* дата, которую придумали мы, — видно сразу и без чтения мелкого шрифта */
+.scsub.warn{color:#b0530c;font-weight:700}
+.startcard.guess{border-color:rgba(216,140,20,.5);background:#fffaf2}
 .scdate{flex:none;border:1.5px solid rgba(91,63,196,.35);border-radius:12px;padding:10px 11px;font:700 13px/1 "Inter",sans-serif;background:linear-gradient(180deg,#fff,#f6f3ff);color:#1b1e2e}
 .scdate:focus{outline:2px solid rgba(91,63,196,.28);border-color:#5b3fc4}
 .ctransf b{color:#1b1e2e;font:800 14px/1 "Plus Jakarta Sans",sans-serif;display:inline-block;margin-right:8px}
@@ -1693,7 +1701,7 @@ section h2.big{margin-bottom:4px}
   <div class="routecard"><div class="routeline" id="routeLine"></div></div>
   <div class="eyebrow">Маршрут</div>
   <h2 class="big">Как добираешься</h2>
-  <div class="startcard"><span class="scmed" id="scMedIcon"></span><span class="scin"><span class="sclbl">Старт поездки</span><span class="scsub">меняешь дату — все дни и брони пересчитываются</span></span><input type="date" id="startDate" class="scdate"></div>
+  <div class="startcard"><span class="scmed" id="scMedIcon"></span><span class="scin"><span class="sclbl">Старт поездки</span><span class="scsub" id="scSub">меняешь дату — все дни и брони пересчитываются</span></span><input type="date" id="startDate" class="scdate"></div>
   <div class="peoplebar"><span class="pl">Сколько человек едет</span><span class="pstep"><button class="stepbtn" id="pMinus" aria-label="меньше человек">−</button><span class="pnum"><b id="pNum">2</b></span><button class="stepbtn" id="pPlus" aria-label="больше человек">+</button></span></div>
 </div></section>
 
@@ -2971,6 +2979,16 @@ function fitFoodTabs(){
 /* ================= ПЛАНИРОВЩИК НОЧЁВОК ================= */
 /* ===== состояние плана: дата старта + ночи (редактируемо, сохраняется) ===== */
 const PKEY='co-trip-2026-plan';let startIso=START;let PEOPLE=2;
+/* Насколько дата настоящая. Дата у поездки есть ВСЕГДА — иначе половина
+   расчётов (погода, цены, ссылки на брони, дни недели) повиснет, и в коде
+   разведутся частные случаи, на которых мы уже обожглись с Колорадо. Честность
+   держится не на отсутствии даты, а на этом поле и подписях рядом.
+     exact  — человек назвал сам или взяли из его брони;
+     approx — месяц его, число выбрали мы;
+     ours   — и месяц наш, выбрали по сезону. */
+let DATEACC='exact';
+const DATEACCTXT={approx:'даты примерные — вы называли только месяц',
+                  ours:'даты и месяц выбрали мы — поменяйте, когда решите'};
 /* ================= РАСПИСАНИЕ ДНЕЙ =================
    Дни НЕ лежат готовым списком — они считаются из городов и ночей.
    `d` у мест (P) и ключи ALT/LINES — это ID шаблона дня (бывший номер), а НЕ его позиция.
@@ -3686,7 +3704,7 @@ function rerenderTrip(){
      к числам. Догружаем недостающее; если всё уже есть, функция сразу выходит. */
   loadWeather();
 }
-function loadPlan(){try{const s=JSON.parse(localStorage.getItem(PKEY));if(s){if(s.start)startIso=s.start;if(typeof s.people==='number'&&s.people>=1)PEOPLE=s.people;/* >=0, а не >=1: ноль ночей — законное состояние, и с прежней проверкой
+function loadPlan(){try{const s=JSON.parse(localStorage.getItem(PKEY));if(s){if(s.start)startIso=s.start;DATEACC=s.acc||'exact';if(typeof s.people==='number'&&s.people>=1)PEOPLE=s.people;/* >=0, а не >=1: ноль ночей — законное состояние, и с прежней проверкой
    сохранённый ноль отбрасывался, а город возвращал себе дни из данных */
   if(Array.isArray(s.nights))BASES.forEach((b,i)=>{if(typeof s.nights[i]==='number'&&s.nights[i]>=0)b.nights=s.nights[i];});if(s.hidden&&typeof s.hidden==='object')HIDDEN=s.hidden;
   if(s.moved&&typeof s.moved==='object')MOVED=s.moved;
@@ -3697,9 +3715,19 @@ function loadPlan(){try{const s=JSON.parse(localStorage.getItem(PKEY));if(s){if(
   if(typeof s.crate==='number'&&s.crate>0)CRATE=s.crate;
   if(Array.isArray(s.custom))CUSTOM=s.custom;}}catch(e){}
   applyCurDefaults();mergeCustom();applyMoves();}
-function savePlan(){try{localStorage.setItem(PKEY,JSON.stringify({start:startIso,people:PEOPLE,
+function savePlan(){try{localStorage.setItem(PKEY,JSON.stringify({start:startIso,people:PEOPLE,acc:DATEACC,
   nights:BASES.map(b=>b.nights),hidden:HIDDEN,moved:MOVED,custom:CUSTOM,cur:CUR,crate:CRATE,
   temp:TEMP,dist:DIST,lang:LANG}));}catch(e){}}
+/* Если дату придумали мы — говорим это на самой странице, а не только всплывашкой
+   при сборке: по такой дате человек может купить билет. Назвал свою — надпись
+   исчезает сама. */
+function syncDateAcc(){
+  const el=document.getElementById('scSub');if(!el)return;
+  const t=DATEACCTXT[DATEACC];
+  el.textContent=t||'меняешь дату — все дни и брони пересчитываются';
+  el.classList.toggle('warn',!!t);
+  const card=el.closest('.startcard');if(card)card.classList.toggle('guess',!!t);
+}
 function nightsBefore(baseId){let s=0;for(const b of BASES){if(b.id===baseId)break;s+=b.nights;}return s;}
 function dayDateFor(tid){const e=SCHED_BY[tid];return e?e.date:addDays(startIso,0);}
 function totalNights(){return BASES.reduce((s,b)=>s+b.nights,0);}
@@ -4715,23 +4743,39 @@ function qBlock(f,a){
   if(f.k==='dest')return '<div class="qf">'+lab('Куда едете')
     +inp('dest','Юта · Париж · Норвегия · Япония · Патагония','text',a.dest)+'</div>';
   if(f.k==='when'){
-    /* когда обе даты выбраны, календарь сворачивается, а на кнопке вместо
-       «точные даты» стоит сам диапазон — нажатие открывает календарь обратно */
-    const picked=(a.dateMode==='exact'&&a.from&&a.to&&!_calOpen);
-    const md=[['exact',picked?(dmy(a.from)+' — '+dmy(a.to)+' '+String(a.to).slice(0,4)):'точные даты'],
-              ['month','месяц и сколько дней'],['days','только сколько дней']]
-      .map(x=>o(x[0],x[1],a.dateMode===x[0])).join('');
+    /* Вариант «В» (выбран клиентом после совета): человека не спрашивают, в
+       какой форме он хочет отвечать — сразу открывается календарь. Большинство
+       просто тыкает в даты. Кто дат не знает — увидит внизу два спокойных
+       выхода. Выбор из трёх кнопок убран: это был вопрос про нашу кухню. */
+    const alt=(v,t)=>'<button class="altq" data-aset="when" data-av="'+v+'">'+t+'</button>';
+    const nDays=[5,7,8,10,12,14];
+    const dayRow='<div class="qopts" style="margin-top:8px">'
+      +nDays.map(d=>o('d'+d,d,a.days===d)).join('')
+      +'<input class="qnum" id="aDays" inputmode="numeric" placeholder="своё" value="'+(a.days&&nDays.indexOf(a.days)<0?a.days:'')+'"></div>';
+    const md=a.dateMode||'exact';
     let body='';
-    if(a.dateMode==='exact')body=picked?'':calHTML(a);
-    else if(a.dateMode==='month')body='<div class="qopts" style="margin-top:8px">'
-      +MONNM.map((mn,i)=>o('m'+i,mn.slice(0,3),a.month===i)).join('')+'</div>'
-      +'<div class="qopts" style="margin-top:6px">'+[5,7,8,10,12,14].map(d=>o('d'+d,d,a.days===d)).join('')
-      +'<input class="qnum" id="aDays" inputmode="numeric" placeholder="своё" value="'+(a.days&&[5,7,8,10,12,14].indexOf(a.days)<0?a.days:'')+'"></div>';
-    else if(a.dateMode==='days')body='<div class="qopts" style="margin-top:8px">'
-      +[5,7,8,10,12,14].map(d=>o('d'+d,d,a.days===d)).join('')
-      +'<input class="qnum" id="aDays" inputmode="numeric" placeholder="своё" value="'+(a.days&&[5,7,8,10,12,14].indexOf(a.days)<0?a.days:'')+'"></div>'
-      +'<p class="qhint">Скажем сами, в каком месяце туда лучше всего.</p>';
-    return '<div class="qf">'+lab('Когда')+'<div class="qopts">'+md+'</div>'+body+'</div>';
+    if(md==='exact'){
+      const picked=(a.from&&a.to&&!_calOpen);
+      const n=askDays(a);
+      body=picked
+        ? '<div class="bksum"><span>'+dmy(a.from)+' — '+dmy(a.to)+' '+String(a.to).slice(0,4)
+          +' · '+n+' '+plural(n,'день','дня','дней')+'</span>'
+          +'<button class="bkedit" data-aset="when" data-av="exact">изменить</button></div>'
+        : calHTML(a);
+      body+='<div class="altrow">'+alt('month','знаю только месяц')+alt('days','знаю только сколько дней')+'</div>';
+    }
+    else if(md==='month'){
+      body='<div class="qopts">'+MONNM.map((mn,i)=>o('m'+i,mn.slice(0,3),a.month===i)).join('')+'</div>'
+        +dayRow
+        +'<p class="qhint">Даты поставим примерные и так и подпишем — вы поменяете их в маршруте.</p>'
+        +'<div class="altrow">'+alt('exact','знаю точные даты — открыть календарь')+'</div>';
+    }
+    else{
+      body=dayRow
+        +'<p class="qhint">Скажем сами, в каком месяце туда лучше всего, и объясним почему.</p>'
+        +'<div class="altrow">'+alt('exact','знаю точные даты — открыть календарь')+'</div>';
+    }
+    return '<div class="qf">'+lab('Когда')+body+'</div>';
   }
   /* взрослые и дети — двумя подписанными строками: два поля «своё» подряд читались
      неоднозначно, было не понять, какое из них чьё */
@@ -4867,8 +4911,10 @@ function applyAsk(a){
   const nights=spreadNights((askDays(a)||10)-1);
   BASES.forEach((b,i)=>{applyNights(i,nights[i]);});
   startIso=askStart(a);
+  /* откуда взялась дата — запоминаем сразу, потом её честно подписываем */
+  DATEACC=(a.dateMode==='exact'&&a.from&&a.to)?'exact':(a.month!=null?'approx':'ours');
   PEOPLE=Math.max(1,(a.adults||2)+(a.kids||0));
-  savePlan();
+  savePlan();syncDateAcc();
   try{localStorage.setItem(AKEY,JSON.stringify(a));}catch(e){}
 }
 /* направление человек пишет словами, а собрать мы сегодня умеем только два
@@ -5027,7 +5073,8 @@ loadHRates();   /* только здесь: BKEY к этому моменту у
 applyHero();
 ['tileIc1|clock','tileIc2|pin','tileIc3|money','tileIc4|tree'].forEach(p=>{const [id,ico]=p.split('|');const el=document.getElementById(id);if(el)el.innerHTML=ic(ico);});
 const scMed=document.getElementById('scMedIcon');if(scMed)scMed.innerHTML=ic('cal','i-sm');
-const sd0=document.getElementById('startDate');if(sd0){sd0.value=startIso;sd0.addEventListener('change',e=>{startIso=e.target.value||START;savePlan();rerenderTrip();});}
+/* назвал дату руками — она перестала быть нашей прикидкой */
+const sd0=document.getElementById('startDate');if(sd0){sd0.value=startIso;sd0.addEventListener('change',e=>{startIso=e.target.value||START;DATEACC='exact';savePlan();syncDateAcc();rerenderTrip();});}
 buildSchedule();
 renderUnits();buildRoute();buildElev();buildFilters();buildDays();buildCities();buildFood();buildBases();buildPlanner();wireButtons();wireBudget();buildBudgetStay();
 /* линия маршрута считается от ширины экрана и ширины подписей — пересобираем после ресайза и загрузки шрифтов */
@@ -5522,6 +5569,7 @@ function reinit(){try{
   try{const s=JSON.parse(localStorage.getItem(FKEY));if(Array.isArray(s))foodPicked=new Set(s);}catch(e){}
   loadHRates();
   const sd=document.getElementById('startDate');if(sd)sd.value=startIso;
+  syncDateAcc();
   const pn=document.getElementById('pNum');if(pn)pn.textContent=PEOPLE;
   syncCurBtn();
   buildSchedule();
