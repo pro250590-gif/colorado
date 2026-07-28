@@ -4354,9 +4354,12 @@ const AKEY='co-trip-ask';
 function askNew(){return {text:'',where:null,whereNm:'',days:null,month:null,adults:null,kids:0,
   pace:null,drive:null,likes:[],limits:[],extras:[]};}
 /* что мы умеем собрать сегодня. Пока один маршрут — врать про остальные не будем */
+/* cover — главная фотография маршрута. Нужна кабинету, чтобы показать обложку
+   поездки, чей файл сейчас НЕ загружен: иначе фото появлялось только после того,
+   как поездку хоть раз откроют (клиент это и заметила). */
 const CATALOG=[
-  {k:'co',file:'trip-colorado.js',rx:/колорадо|colorado|дуранго|аспен|денвер|силвертон/i,nm:'Колорадо, США'},
-  {k:'ut',file:'trip-utah.js',    rx:/юта|utah|зайон|zion|брайс|bryce|моаб|moab|арки|arches|каньонлендс/i,nm:'Юта, каньоны'}
+  {k:'co',file:'trip-colorado.js',rx:/колорадо|colorado|дуранго|аспен|денвер|силвертон/i,nm:'Колорадо, США',cover:'img/hero-w.webp'},
+  {k:'ut',file:'trip-utah.js',    rx:/юта|utah|зайон|zion|брайс|bryce|моаб|moab|арки|arches|каньонлендс/i,nm:'Юта, каньоны',cover:'img/ut_mes-l.jpg'}
 ];
 const MONRX=['январ','феврал','март','апрел','ма[йя]','июн','июл','август','сентябр','октябр','ноябр','декабр'];
 const NUMW={'один':1,'одну':1,'два':2,'две':2,'три':3,'четыре':4,'пять':5,'шесть':6,'семь':7,
@@ -4720,7 +4723,8 @@ function syncActiveIntoTrips(){
   const t=trips();t.data[t.active]=curKeys();
   const m=t.list.find(x=>x.id===t.active);
   if(m){
-    try{m.snap=tripStats(t.active);}catch(e){}
+    /* в снимок кладём и файл маршрута — чтобы потом было видно, на чём он снят */
+    try{m.snap=Object.assign({},tripStats(t.active),{file:window.__dataFile});}catch(e){}
     /* имя маршрута — чтобы плитка чужой поездки могла хотя бы назвать
        направление, не выдумывая города из открытого сейчас файла */
     if(typeof TRIP_NAME==='string'&&TRIP_NAME)m.route=TRIP_NAME;
@@ -4780,6 +4784,10 @@ function deleteTrip(id){
   t.list=t.list.filter(x=>x.id!==id);delete t.data[id];
   if(t.active===id){t.active=t.list[0].id;applyTripKeys(t.data[t.active]||{});tripsSave(t);reinit();}
   else tripsSave(t);
+  /* Удаление отправляем в облако СРАЗУ, не через обычную паузу в 1,2 секунды:
+     человек удалил и тут же ушёл со страницы — правка не успевала уехать,
+     и поездки возвращались из облака при следующем заходе. */
+  if(sb){clearTimeout(_cloudTimer);cloudPush().catch(e=>{_syncErr=(e&&e.message)||String(e);syncSay();});}
   syncHomeUI();return true;
 }
 /* ================= ЭКРАН «МОИ ПОЕЗДКИ» =================
@@ -4790,7 +4798,11 @@ function deleteTrip(id){
    городами Юты (поймано глазами на второй поездке). */
 function tripStats(id){
   const t=trips(),m=t.list.find(x=>x.id===id);
-  if(id!==t.active&&m&&m.snap)return m.snap;
+  /* Снимку верим, только если он снят НА ЭТОМ ЖЕ маршруте. У клиента остались
+     снимки, записанные до починки: поездка «Колорадо» была подписана городами
+     Юты, и эта подпись жила в данных. Снимок без пометки файла — из тех,
+     старых, и доверять ему нельзя. */
+  if(id!==t.active&&m&&m.snap&&m.snap.file&&m.snap.file===tripData(m))return m.snap;
   const own=(id===t.active);
   const keys=own?curKeys():(t.data[id]||{});
   let plan={};try{plan=JSON.parse(keys[PKEY]||'{}')||{};}catch(e){}
@@ -4827,7 +4839,27 @@ function heroPhoto(){
 function tripCover(m){
   const t=trips();
   if(m.id===t.active)return heroPhoto();
-  return m.cover||'';
+  if(m.cover)return m.cover;
+  /* файл этой поездки не загружен — берём обложку её маршрута из каталога,
+     чтобы плитка не была пустой до первого открытия */
+  const c=CATALOG.find(x=>x.file===tripData(m));
+  return (c&&c.cover)||'';
+}
+/* Обложку и название маршрута знает только тот, чей файл сейчас загружен.
+   Поэтому, открыв любой маршрут, проставляем их СРАЗУ ВСЕМ поездкам на этом
+   же файле, а не только активной. Иначе у старых поездок обложки не было бы
+   никогда — ровно это клиент и увидела: фото только у той, что открыта. */
+function stampRouteMeta(){
+  try{
+    const t=trips();let changed=false;
+    const cover=heroPhoto(),route=(typeof TRIP_NAME==='string'&&TRIP_NAME)||'';
+    t.list.forEach(m=>{
+      if(tripData(m)!==window.__dataFile)return;
+      if(cover&&m.cover!==cover){m.cover=cover;changed=true;}
+      if(route&&m.route!==route){m.route=route;changed=true;}
+    });
+    if(changed)tripsSave(t);
+  }catch(e){}
 }
 function homeHTML(){
   const t=trips();
@@ -5042,7 +5074,12 @@ async function cloudSync(session){
       .order('updated_at',{ascending:false}).limit(1);
     if(error){_syncErr=error.message||'не читается';syncSay();return;}
     const row=data&&data[0];
-    if(row&&row.plan&&!dirty()){
+    /* ⚠️ Облако принимаем, только если оно НЕ СТАРЕЕ того, что мы сами туда
+       отправили. Иначе наша же прошлая отправка (например, удаление поездок)
+       откатывалась более старой записью, и удалённое возвращалось. */
+    const cloudTs=row&&row.updated_at?new Date(row.updated_at).getTime():0;
+    const stale=cloudTs&&pushedTs()&&cloudTs<pushedTs();
+    if(row&&row.plan&&!dirty()&&!stale){
       /* своих несохранённых правок нет → берём облако, оно главное */
       const same=CLOUD_KEYS.every(k=>(row.plan[k]==null?null:row.plan[k])===localStorage.getItem(k));
       if(!same){
@@ -5126,6 +5163,9 @@ let openAuth=function(){};
     window.__askApplied=1;
   }catch(e){window.__pageErr.push('анкета: '+e.message);}
 })();
+/* ставим в самом конце: trips() и вся кухня со списком поездок объявлены
+   через const ниже по файлу — раньше вызвать нельзя (уже дважды обжигались) */
+stampRouteMeta();
 if(window.__askApplied);
 else if(/[?&]land\b/.test(location.search))showLand(null);else showHome();
 </script>
