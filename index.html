@@ -122,9 +122,13 @@ body.athome,body.atland{padding-right:0!important}
 .gchip em{font-style:normal;color:#a9a2cf;font-weight:600}
 .gchip.ask{border-color:rgba(168,99,10,.45);background:#fff8ee;color:#8a4b0a}
 .qs{border-top:1px solid #eeecf7;padding-top:16px}
-.qtitle{font:700 12.5px/1.4 "Inter",sans-serif;color:var(--ink);margin:0 0 12px}
-.qf{margin-bottom:15px}
-.qf>label{display:block;font:700 12px/1 "Inter",sans-serif;color:#3b2a8f;margin-bottom:8px}
+.qtitle{font:800 12px/1.4 "Inter",sans-serif;color:#8b8fa3;margin:0 0 10px;text-transform:uppercase;letter-spacing:.6px}
+/* Каждый вопрос — отдельная карточка с крупным заголовком и цветной меткой
+   слева. До этого всё было одним сплошным мелким текстом, и клиент сказала
+   верно: не видно, где кончается один вопрос и начинается следующий. */
+.qf{background:#fff;border-radius:16px;padding:14px 14px 16px;margin-bottom:10px;box-shadow:0 1px 2px rgba(20,18,40,.05)}
+.qf>label{display:flex;align-items:center;gap:7px;font:800 15px/1.3 "Plus Jakarta Sans",sans-serif;
+  color:var(--ink);margin-bottom:12px;border-left:3px solid #5b3fc4;padding-left:10px}
 .qopts{display:flex;flex-wrap:wrap;gap:6px}
 .qo{border:1.5px solid #e4e6f0;background:#fff;border-radius:11px;padding:9px 12px;cursor:pointer;
   font:700 12px/1 "Inter",sans-serif;color:#4a4f63;-webkit-appearance:none;appearance:none}
@@ -139,8 +143,8 @@ body.athome,body.atland{padding-right:0!important}
 .qhint{margin:7px 0 0;font:600 11.5px/1.45 "Inter",sans-serif;color:#8b8fa3}
 .qsub{margin:0 0 6px;font:700 11px/1 "Inter",sans-serif;color:#8b8fa3}
 .qsub+.qopts{margin-bottom:10px}
-.qf>label.done{display:flex;align-items:center;gap:5px;color:#0a7a4a}
-.qf>label.done .i{width:12px;height:12px;stroke-width:3}
+.qf>label.done{border-left-color:#12a06a}
+.qf>label.done .i{width:14px;height:14px;stroke-width:3;color:#12a06a;flex:none}
 /* календарь на две даты — «как на бронировании» (просьба клиента) */
 .cal{margin-top:9px;border:1.5px solid #e4e6f0;border-radius:14px;padding:11px 11px 9px;background:#fff}
 .calhd{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
@@ -160,7 +164,10 @@ body.athome,body.atland{padding-right:0!important}
 .bkf{display:flex;flex-direction:column;gap:4px;flex:1 1 132px;min-width:0}
 .bkf.wide{flex:1 1 100%}
 .bkf em{font-style:normal;font:700 11px/1 "Inter",sans-serif;color:#8b8fa3}
-.bkq{border:1.5px dashed rgba(91,63,196,.28);border-radius:14px;padding:12px 13px;background:#fbfaff}
+/* уточнение по брони — не самостоятельный вопрос, а приложение к нему:
+   пунктирная рамка, без цветной метки и без тени */
+.bkq{border:1.5px dashed rgba(91,63,196,.3);background:#fbfaff;box-shadow:none;margin-bottom:8px}
+.bkq>label{font:800 13px/1.3 "Plus Jakarta Sans",sans-serif;border-left:0;padding-left:0;margin-bottom:10px}
 .bkok{margin-top:11px;width:100%;min-height:40px;border:0;border-radius:11px;cursor:pointer;-webkit-appearance:none;appearance:none;
   background:#5b3fc4;color:#fff;font:800 12px/1 "Plus Jakarta Sans",sans-serif}
 .qerr{margin:9px 0 0;font:700 11.5px/1.45 "Inter",sans-serif;color:#c0392b}
@@ -4404,7 +4411,7 @@ function askNew(){return {text:'',dest:'',where:null,whereNm:'',
   dateMode:null,from:'',to:'',days:null,month:null,   /* три формы ответа на «когда» */
   adults:null,kids:null,places:'',placesAny:false,
   drive:null,booked:[],bk:{},
-  pace:null,likes:[],limits:[],extras:[]};}
+  pace:null,likes:[],limits:[],limitOther:'',extras:[]};}
 /* что мы умеем собрать сегодня. Пока два маршрута — врать про остальные не будем */
 /* cover — главная фотография маршрута. Нужна кабинету, чтобы показать обложку
    поездки, чей файл сейчас НЕ загружен: иначе фото появлялось только после того,
@@ -4750,7 +4757,11 @@ function gotHTML(){
       +PACES.map(x=>'<button class="qo'+(a.pace===x[0]?' on':'')+'" data-aset="pace" data-av="'+x[0]+'">'+x[1]+'</button>').join('')
     +'</div></div><div class="qf"><label>Ограничения</label><div class="qopts">'
       +['едем с собакой','коляска','боязнь высоты','еда: ограничения','не водим ночью'].map(x=>'<button class="qo'+(a.limits.indexOf(x)>=0?' on':'')+'" data-alim="'+x+'">'+x+'</button>').join('')
-    +'</div></div>';
+    +'</div>'
+    /* своё ограничение: список никогда не покроет всё — у кого-то спина, у кого-то
+       пост, у кого-то страх лифтов. Пусть напишет словами (просьба клиента) */
+    +'<div style="margin-top:9px">'+inp('limitOther','своё — напишите словами','text',a.limitOther)+'</div>'
+    +'</div>';
   return '<div class="wrap gotwrap">'
     +(a.text?'<div class="said"><div class="t">Вы сказали</div><p>'+esc0(a.text)+'</p></div>':'')
     +'<h1 class="goth">'+(a.text?'Правильно поняли?':'Расскажите про поездку')+'</h1>'
