@@ -1933,8 +1933,16 @@ function bookHotel(cityQ,ci,co,people){
     +'&group_adults='+(people||PEOPLE)+'&no_rooms='+Math.max(1,Math.ceil((people||PEOPLE)/2))+'&group_children=0';
   return 'https://www.booking.com/searchresults.html?'+p+(AFF.booking?'&aid='+AFF.booking:'');
 }
+/* Прокат ищем В АЭРОПОРТУ, если он известен: в посёлке у входа в парк
+   (Спрингдейл) прокатов нет вовсе, и Kayak честно отдавал «0 результатов».
+   Коды аэропортов Kayak понимает как есть: /cars/LAS/GJT/дата/дата */
 function bookCar(pickup,dropoff,ci,co){
   return 'https://www.kayak.com/cars/'+encodeURIComponent(pickup)+'/'+encodeURIComponent(dropoff)+'/'+fmtISO(ci)+'/'+fmtISO(co);
+}
+function carPlace(base){
+  const code=(typeof AIRPORT!=='undefined'&&AIRPORT[base.id])||'';
+  if(code)return code;
+  return String(base.q||base.name).split(',')[0].trim();
 }
 function bookActivity(q){
   return 'https://www.getyourguide.com/s/?q='+encodeURIComponent(q)+(AFF.gyg?'&partner_id='+AFF.gyg:'');
@@ -2426,7 +2434,7 @@ function buildCities(){
           +'<div class="cpt"><b>'+esc0(upCity)+'</b><span>забрать · '+(upCode||'аэропорт')+'</span></div>'
           +'<div class="cmid"><div class="cic">'+ic('car','i-sm')+'</div></div>'
           +'<div class="cpt r"><b>'+esc0(offCity)+'</b><span>сдать · '+offCode+'</span></div></div>'
-          +'<a class="cbook" href="'+bookCar(en(b.q),en(last.q),ci,tripEnd)+'" target="_blank" rel="noopener">'+ic('car','i-sm')+' Забронировать машину <small>Kayak</small></a></div></div>';
+          +'<a class="cbook" href="'+bookCar(carPlace(b),carPlace(last),ci,tripEnd)+'" target="_blank" rel="noopener">'+ic('car','i-sm')+' Забронировать машину <small>Kayak</small></a></div></div>';
     }
     /* проживание */
     /* Проживание: если жильё уже есть — показываем его, а Booking понижаем до «других вариантов» */

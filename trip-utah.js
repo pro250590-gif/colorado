@@ -144,8 +144,12 @@ const HERO={
   capTitle:'Меса-Арч',capSub:'шестой день · рассвет в Каньонлендсе',
   parks:'4',parksCap:'национальных парка'
 };
+/* Расширения нужны и для ФОТО ГОРОДОВ (zio/bry/moa), а не только для мест:
+   движок берёт расширение из этого же PHOTO по id из BPHOTO. Без них он искал
+   ut_zio-t.webp, а на диске лежит .jpg — фотографии городов не показывались. */
 const PHOTO={vir:'jpg',spr:'jpg',zvc:'jpg',nar:'jpg',ang:'jpg',cov:'jpg',red:'jpg',brp:'jpg',
-  nav:'jpg',sun:'jpg',cap:'jpg',arv:'jpg',del:'jpg',win:'jpg',mes:'jpg',gvp:'jpg',dhp:'jpg',fis:'jpg'};
+  nav:'jpg',sun:'jpg',cap:'jpg',arv:'jpg',del:'jpg',win:'jpg',mes:'jpg',gvp:'jpg',dhp:'jpg',fis:'jpg',
+  zio:'jpg',bry:'jpg',moa:'jpg'};
 const BPHOTO={zio:'zio',bry:'bry',moa:'moa'};
 
 const ALT={1:1200,2:1300,3:2400,4:1200,5:1500,6:1800,7:1400};
