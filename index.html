@@ -1577,7 +1577,7 @@ section h2.big{margin-bottom:4px}
 <body>
 
 <div class="topbar"><div class="wrap">
-  <button class="brand" id="brandHome" title="Мои поездки"><span id="brandName">KOLIBRI</span> <i>Pro</i></button>
+  <button class="brand" id="brandHome" title="Главная страница"><span id="brandName">KOLIBRI</span> <i>Pro</i></button>
   <span class="units" id="units"></span>
   <button class="ava" id="avaBtn" aria-label="аккаунт"><span class="avl">Я</span><i class="avc"></i></button>
 </div></div>
@@ -3744,7 +3744,9 @@ document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)r
   if(t.dataset.soon){accClose();
     popup('soon',t.dataset.soon,'Этого раздела ещё нет — сделаем следующим',
       '<div class="prow"><button class="pok" data-popclose="1">Понятно</button></div>');}
-  if(t.id==='brandHome'){closeDaySheet();leaveTrip(showHome);}
+  /* Логотип — как на обычном сайте: ведёт на главную (с анкетой), а не в кабинет.
+     «Мои поездки» никуда не делись — они в меню аккаунта (просьба клиента). */
+  if(t.id==='brandHome'){closeDaySheet();leaveTrip(()=>showLand(null));}
   if(t.dataset.gohome){accClose();closeDaySheet();leaveTrip(showHome);}
   if(t.dataset.goland){accClose();closeDaySheet();leaveTrip(()=>showLand(null));}
   if(t.dataset.topen){closeDaySheet();const id=t.dataset.topen;
