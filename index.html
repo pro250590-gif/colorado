@@ -136,8 +136,13 @@ body.athome,body.atland{padding-right:0!important}
 .qnum{width:74px;border:1.5px solid #e4e6f0;border-radius:11px;padding:9px 10px;font:700 12px/1 "Inter",sans-serif;
   color:var(--ink);background:#fff;outline:none}
 /* текстовые поля анкеты: направление, места, уточнения по броням */
-.qtxt{width:100%;border:1.5px solid #e4e6f0;border-radius:11px;padding:11px 12px;background:#fff;outline:none;
-  font:600 13px/1.3 "Inter",sans-serif;color:var(--ink);-webkit-appearance:none;appearance:none}
+.qtxt{width:100%;min-height:46px;border:1.5px solid #e4e6f0;border-radius:11px;padding:11px 12px;background:#fff;outline:none;
+  font:600 14.5px/1.25 "Inter",sans-serif;color:var(--ink);-webkit-appearance:none;appearance:none}
+/* Айфон рисует дату и время СВОИМ шрифтом: пустое поле выглядит мелким, а как
+   только выберешь дату — текст становится крупным. Задаём размер и высоту явно,
+   чтобы поле не прыгало (клиент прислала скрин). */
+.qtxt[type=date],.qtxt[type=time]{font:700 14.5px/1.25 "Inter",sans-serif;text-align:left;
+  min-height:46px;display:block}
 .qtxt:focus{border-color:#5b3fc4}
 .qtxt::placeholder{color:#a3a0b8;font-weight:500}
 .qhint{margin:7px 0 0;font:600 11.5px/1.45 "Inter",sans-serif;color:#8b8fa3}
