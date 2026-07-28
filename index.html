@@ -105,6 +105,11 @@ body.athome,body.atland{padding-right:0!important}
 .lchips button{border:1px solid #e4e6f0;background:#fff;border-radius:11px;padding:9px 11px;cursor:pointer;
   font:600 12px/1 "Inter",sans-serif;color:#8b8fa3}
 .lor{text-align:center;margin-top:16px;font:600 12.5px/1.5 "Inter",sans-serif;color:#8b8fa3}
+.lcont{display:block;width:100%;margin-top:18px;padding:14px;border:1.5px solid rgba(91,63,196,.28);border-radius:14px;
+  background:#fff;cursor:pointer;font:600 13px/1.3 "Inter",sans-serif;color:#5b3fc4;-webkit-appearance:none;appearance:none}
+.lcont b{font-weight:800;color:var(--ink)}
+.loginb{margin-left:auto;border:1.5px solid rgba(91,63,196,.32);background:#fff;border-radius:12px;padding:9px 15px;cursor:pointer;
+  font:800 12.5px/1 "Plus Jakarta Sans",sans-serif;color:#5b3fc4;-webkit-appearance:none;appearance:none}
 .lnk{border:0;background:none;padding:0;cursor:pointer;font:inherit;color:#5b3fc4;text-decoration:underline;
   text-decoration-color:rgba(91,63,196,.4)}
 /* ── ЭКРАН «ПРАВИЛЬНО ПОНЯЛИ?» ── */
@@ -1631,7 +1636,10 @@ section h2.big{margin-bottom:4px}
 <div class="topbar"><div class="wrap">
   <button class="brand" id="brandHome" title="Главная страница"><span id="brandName">KOLIBRI</span> <i>Pro</i></button>
   <span class="units" id="units"></span>
-  <button class="ava" id="avaBtn" aria-label="аккаунт"><span class="avl">Я</span><i class="avc"></i></button>
+  <!-- до входа в шапке только «Войти»; аккаунт со всеми разделами появляется
+       после регистрации (просьба клиента) -->
+  <button class="loginb" id="loginBtn" data-signin="1">Войти</button>
+  <button class="ava" id="avaBtn" aria-label="аккаунт" style="display:none"><span class="avl">Я</span><i class="avc"></i></button>
 </div></div>
 <div id="home" style="display:none"></div>
 <div id="land" style="display:none"></div>
@@ -3858,6 +3866,8 @@ document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)r
   if(t.dataset.goland){accClose();closeDaySheet();leaveTrip(()=>showLand(null));}
   if(t.dataset.topen){closeDaySheet();const id=t.dataset.topen;
     if(id!==trips().active)switchTrip(id);hideHome();window.scrollTo(0,0);}
+  if(t.dataset.openlast){closeDaySheet();const id=t.dataset.openlast;
+    if(id!==trips().active)switchTrip(id);hideLand();hideHome();window.scrollTo(0,0);}
   /* «Новая поездка» ведёт в АНКЕТУ, а не копирует открытую. Клиент: «когда
      создаю новую поездку, меня должно перекинуть туда, где мы спрашиваем
      клиента, а у меня открывается готовая Юта». Копия осталась отдельной
@@ -4753,7 +4763,18 @@ function landHTML(){
         .map(t=>'<button data-asktry="'+esc0(t)+'">'+t+'</button>').join('')
     +'</div>'
     +'<div class="lor">или <button class="lnk" data-askform="1">пройдите анкету</button> — спросим только нужное</div>'
+    +landCont()
     +'</div>';
+}
+/* Сайт теперь открывается главной, и собранная поездка перестала попадаться на
+   глаза сама. Если она есть — предлагаем вернуться к ней прямо здесь, иначе
+   человек решит, что его работа пропала. */
+function landCont(){
+  try{
+    const t=trips();if(!t||!t.list||!t.list.length)return '';
+    const m=t.list.filter(x=>x.id===t.active)[0]||t.list[0];
+    return '<button class="lcont" data-openlast="'+esc0(m.id)+'">Продолжить: <b>'+esc0(m.title)+'</b></button>';
+  }catch(e){return '';}
 }
 /* ВСЕ вопросы всегда на экране. Раньше отвеченное сворачивалось в галочку, а
    часть вопросов пряталась под «ответить ещё на пару» — клиент сказала прямо:
@@ -5364,6 +5385,15 @@ const ACCITEMS=[
   {k:'soon',ic:'info',t:'Помощь и контакты'},
   {k:'soon',ic:'doc',t:'Условия'}
 ];
+/* Шапка: пока не вошёл — только «Войти». Вошёл — аватар с меню, где кабинет,
+   профиль и остальное. Раньше меню со всеми разделами висело всегда, и клиент
+   верно сказала: до регистрации этого быть не должно. */
+function headerAuth(){
+  const lb=document.getElementById('loginBtn'),av=document.getElementById('avaBtn');
+  if(lb)lb.style.display=_signedIn?'none':'';
+  if(av)av.style.display=_signedIn?'':'none';
+  if(!_signedIn)accClose();
+}
 function accountSheet(){
   let el=document.getElementById('accMenu');
   if(!el){el=document.createElement('div');el.id='accMenu';document.body.appendChild(el);}
@@ -5550,6 +5580,7 @@ let openAuth=function(){};
     _signedIn=!!s;_userEmail=s?(s.user.email||''):'';
     const av=document.getElementById('avaBtn');
     const al=av&&av.querySelector('.avl');if(al)al.textContent=_userEmail?_userEmail[0].toUpperCase():'Я';
+    headerAuth();
   }catch(e){}}
   openAuth=open;
   window.authRefresh=refresh;
@@ -5599,8 +5630,12 @@ let openAuth=function(){};
 /* ставим в самом конце: trips() и вся кухня со списком поездок объявлены
    через const ниже по файлу — раньше вызвать нельзя (уже дважды обжигались) */
 stampRouteMeta();
+headerAuth();
+/* Сайт открывается ГЛАВНОЙ, а не кабинетом: кабинет — это раздел для того, кто
+   вошёл, а не витрина. Клиент: «главная страница должна быть та, которую мы
+   сделали для анкеты». В кабинет по-прежнему можно попасть по ?home. */
 if(window.__askApplied);
-else if(/[?&]land\b/.test(location.search))showLand(null);else showHome();
+else if(/[?&]home\b/.test(location.search))showHome();else showLand(null);
 </script>
 </body>
 </html>
