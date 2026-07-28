@@ -144,6 +144,7 @@ body.athome,body.atland{padding-right:0!important}
 .qtxt[type=date],.qtxt[type=time]{font:700 14.5px/1.25 "Inter",sans-serif;text-align:left;
   min-height:46px;display:block}
 .qtxt:focus{border-color:#5b3fc4}
+.qta{resize:none;overflow:hidden;line-height:1.4;display:block}
 .qtxt::placeholder{color:#a3a0b8;font-weight:500}
 .qhint{margin:7px 0 0;font:600 11.5px/1.45 "Inter",sans-serif;color:#8b8fa3}
 .qsub{margin:0 0 6px;font:700 11px/1 "Inter",sans-serif;color:#8b8fa3}
@@ -4450,12 +4451,12 @@ const BOOKED=[['flight','билеты'],['stay','жильё'],['car','машин
    клиент прислала скрин пустого поля «название или ссылка» со словами
    «непонятно, что тут заполнять». Комментарий есть у каждой брони: туда
    человек допишет то, о чём мы не догадались спросить. */
-const BKNOTE=['note','комментарий','text','wo','если есть что добавить — необязательно'];
+const BKNOTE=['note','комментарий','area','wo','если есть что добавить — необязательно'];
 const BKFIELDS={
   flight:[['inCity','прилетаю в','text','w','город или аэропорт'],['inDate','дата','date'],['inTime','время','time'],
           ['outCity','улетаю из','text','w','город или аэропорт'],['outDate','дата','date'],['outTime','время','time'],BKNOTE],
   stay:  [['city','город','text','w','город'],['from','с','date'],['to','по','date'],
-          ['addr','адрес','text','w','адрес или ссылка на Google Maps'],BKNOTE],
+          ['addr','адрес','area','w','адрес или ссылка на Google Maps'],BKNOTE],
   car:   [['takeCity','беру в','text','w','город или аэропорт'],['takeDate','дата','date'],
           ['dropCity','сдаю в','text','w','город или аэропорт'],['dropDate','дата','date'],BKNOTE],
   /* прибытие и конец — необязательные: паром обычно приходит в тот же день, а
@@ -4471,7 +4472,7 @@ const BKFIELDS={
      бывает онлайн-бронь и бывает экскурсия, которая забирает из отеля */
   other: [['what','что забронировано','text','w','экскурсия, ресторан, спа, билет в музей'],
           ['from','дата','date'],['to','конец, если не один день','date','o'],
-          ['addr','адрес','text','wo','адрес или ссылка на Google Maps — необязательно'],BKNOTE]
+          ['addr','адрес','area','wo','адрес или ссылка на Google Maps — необязательно'],BKNOTE]
 };
 const MONRX=['январ','феврал','март','апрел','ма[йя]','июн','июл','август','сентябр','октябр','ноябр','декабр'];
 const NUMW={'один':1,'одну':1,'два':2,'две':2,'три':3,'четыре':4,'пять':5,'шесть':6,'семь':7,
@@ -4638,9 +4639,15 @@ function calHTML(a){
 /* поле ввода внутри вопроса: пишет прямо в ASK, страницу не перерисовывает,
    иначе на каждой набранной букве терялся бы курсор */
 function inp(path,ph,type,val,w){
+  /* 'area' — поле, которое РАСТЁТ ВНИЗ. Длинный текст в обычной строке уезжает
+     влево, и начала уже не видно (клиент прислала скрин) */
+  if(type==='area')
+    return '<textarea class="qtxt qta" data-abk="'+path+'" rows="1" placeholder="'+esc0(ph||'')+'">'+esc0(val||'')+'</textarea>';
   return '<input class="qtxt" data-abk="'+path+'" type="'+(type||'text')+'"'
     +(w?' style="width:'+w+'"':'')+' placeholder="'+esc0(ph||'')+'" value="'+esc0(val||'')+'">';
 }
+function grow(el){if(!el)return;el.style.height='auto';el.style.height=(el.scrollHeight+2)+'px';}
+function growAll(){[].forEach.call(document.querySelectorAll('#land .qta'),grow);}
 /* бронь заполняется, проверяется и сворачивается в одну строку — клиент просила
    «нажать окей, проверить, что всё заполнено, и подписать снизу» */
 let _bkDone={},_bkErr={};
@@ -4726,7 +4733,7 @@ function qBlock(f,a){
       +[0,1,2,3].map(n=>o('k'+n,n?String(n):'нет',a.kids===n)).join('')
       +'<input class="qnum" id="aKid" inputmode="numeric" placeholder="своё" value="'+(a.kids&&a.kids>3?a.kids:'')+'"></div></div>';
   else if(f.k==='places')return '<div class="qf">'+lab('Какие места хотите посетить')
-    +inp('places','если есть на примете','text',a.places)
+    +inp('places','если есть на примете — можно списком','area',a.places)
     +'<div class="qopts" style="margin-top:7px">'+o('any','решите за меня',a.placesAny)+'</div></div>';
   else if(f.k==='drive')inner=DRIVE3.map(x=>o(x[0],x[1],a.drive===x[0])).join('');
   else if(f.k==='booked')inner=o('none','ничего',a.booked.indexOf('none')>=0)
@@ -4765,7 +4772,7 @@ function gotHTML(){
     +'</div>'
     /* своё ограничение: список никогда не покроет всё — у кого-то спина, у кого-то
        пост, у кого-то страх лифтов. Пусть напишет словами (просьба клиента) */
-    +'<div style="margin-top:9px">'+inp('limitOther','своё — напишите словами','text',a.limitOther)+'</div>'
+    +'<div style="margin-top:9px">'+inp('limitOther','своё — напишите словами','area',a.limitOther)+'</div>'
     +'</div>';
   return '<div class="wrap gotwrap">'
     +(a.text?'<div class="said"><div class="t">Вы сказали</div><p>'+esc0(a.text)+'</p></div>':'')
@@ -4788,6 +4795,7 @@ function gotHTML(){
 function renderLand(){
   const el=document.getElementById('land');if(!el)return;
   el.innerHTML=ASK?gotHTML():landHTML();
+  growAll();                       /* растущие поля подгоняем под уже введённый текст */
   const ta=document.getElementById('askText');if(ta)ta.focus();
 }
 function showLand(ask){
@@ -4948,13 +4956,28 @@ function setPath(o,path,val){
   for(let i=0;i<p.length-1;i++){if(!c[p[i]])c[p[i]]={};c=c[p[i]];}
   c[p[p.length-1]]=val;
 }
+/* Вписал своё число — подсветка с кнопки должна сняться. Перерисовывать экран
+   на каждой цифре нельзя (уйдёт курсор), поэтому подсветку правим руками.
+   Клиент написала 20 взрослых, а «6» оставалась выделенной, и было непонятно,
+   какое число мы возьмём. */
+function syncNums(){
+  if(!ASK)return;
+  [].forEach.call(document.querySelectorAll('#land [data-aset="who"],#land [data-aset="when"]'),b=>{
+    const v=b.dataset.av;let on=null;
+    if(v[0]==='a')on=(ASK.adults===+v.slice(1));
+    else if(v[0]==='k')on=(ASK.kids===+v.slice(1));
+    else if(v[0]==='d'&&v.length>1&&!isNaN(+v.slice(1)))on=(ASK.days===+v.slice(1));
+    if(on!==null)b.classList.toggle('on',on);
+  });
+}
 document.addEventListener('input',e=>{
   const el=e.target;if(!el||!ASK)return;
-  if(el.id==='aDays'){const v=parseInt(el.value,10);if(v>0&&v<60)ASK.days=v;return;}
-  if(el.id==='aAd'){const v=parseInt(el.value,10);if(v>0&&v<40)ASK.adults=v;return;}
-  if(el.id==='aKid'){const v=parseInt(el.value,10);if(v>=0&&v<20)ASK.kids=v;return;}
+  if(el.id==='aDays'){const v=parseInt(el.value,10);if(v>0&&v<60)ASK.days=v;syncNums();return;}
+  if(el.id==='aAd'){const v=parseInt(el.value,10);if(v>0&&v<40)ASK.adults=v;syncNums();return;}
+  if(el.id==='aKid'){const v=parseInt(el.value,10);if(v>=0&&v<20)ASK.kids=v;syncNums();return;}
   if(el.dataset&&el.dataset.abk){
     setPath(ASK,el.dataset.abk,el.value);
+    if(el.classList&&el.classList.contains('qta'))grow(el);
     if(el.dataset.abk==='places'&&el.value)ASK.placesAny=false;
   }
 });
