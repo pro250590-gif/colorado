@@ -161,6 +161,12 @@ body.athome,body.atland{padding-right:0!important}
 .bkf.wide{flex:1 1 100%}
 .bkf em{font-style:normal;font:700 11px/1 "Inter",sans-serif;color:#8b8fa3}
 .bkq{border:1.5px dashed rgba(91,63,196,.28);border-radius:14px;padding:12px 13px;background:#fbfaff}
+.bkok{margin-top:11px;width:100%;min-height:40px;border:0;border-radius:11px;cursor:pointer;-webkit-appearance:none;appearance:none;
+  background:#5b3fc4;color:#fff;font:800 12px/1 "Plus Jakarta Sans",sans-serif}
+.qerr{margin:9px 0 0;font:700 11.5px/1.45 "Inter",sans-serif;color:#c0392b}
+.bksum{display:flex;align-items:center;gap:10px;justify-content:space-between}
+.bksum span{font:700 12.5px/1.4 "Inter",sans-serif;color:var(--ink)}
+.bkedit{border:0;background:none;cursor:pointer;font:700 11.5px/1 "Inter",sans-serif;color:#5b3fc4;white-space:nowrap}
 .gogo{width:100%;min-height:48px;margin-top:6px;border:0;border-radius:14px;cursor:pointer;-webkit-appearance:none;appearance:none;
   background:linear-gradient(150deg,#7a5cf0,#5b3fc4);color:#fff;font:800 13px/1 "Plus Jakarta Sans",sans-serif}
 .gomore{display:block;width:100%;text-align:center;margin-top:13px;border:0;background:none;cursor:pointer;
@@ -4555,7 +4561,7 @@ function askFields(a){
 /* Календарь на две даты. Клиент попросила «как на бронировании»: открывается
    календарь, тыкаешь день приезда и день отъезда, а руками правишь только если
    ошибся. Поэтому поля ввода остаются под ним, но заполнять их не обязательно. */
-let _calM=null;
+let _calM=null,_calOpen=false;
 function isoOf(y,m,d){return y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');}
 function calMonth(a){
   if(_calM)return _calM;
@@ -4597,11 +4603,30 @@ function inp(path,ph,type,val,w){
   return '<input class="qtxt" data-abk="'+path+'" type="'+(type||'text')+'"'
     +(w?' style="width:'+w+'"':'')+' placeholder="'+esc0(ph||'')+'" value="'+esc0(val||'')+'">';
 }
+/* бронь заполняется, проверяется и сворачивается в одну строку — клиент просила
+   «нажать окей, проверить, что всё заполнено, и подписать снизу» */
+let _bkDone={},_bkErr={};
+function bkMissing(k,d){return BKFIELDS[k].filter(f=>!String(d[f[0]]||'').trim()).map(f=>f[1]);}
+function bkSummary(k,d){
+  const D=x=>dmy(d[x]),T=x=>d[x]?(' '+d[x]):'';
+  if(k==='flight')return d.inCity+', '+D('inDate')+T('inTime')+'  →  '+d.outCity+', '+D('outDate')+T('outTime');
+  if(k==='stay')  return d.city+', '+D('from')+' — '+D('to')+(d.name?(' · '+d.name):'');
+  if(k==='car')   return d.takeCity+', '+D('takeDate')+'  →  '+d.dropCity+', '+D('dropDate');
+  if(k==='ferry') return d.from+'  →  '+d.to+', '+D('date')+(d.dateEnd&&d.dateEnd!==d.date?(' — '+D('dateEnd')):'');
+  if(k==='event') return d.city+' · '+d.what+' · '+D('from')+(d.to&&d.to!==d.from?(' — '+D('to')):'');
+  return '';
+}
 function bkBlock(k,a){
-  const d=a.bk[k]||{};
+  const d=a.bk[k]||{},nm=(BOOKED.find(x=>x[0]===k)||[])[1],miss=bkMissing(k,d);
+  if(_bkDone[k]&&!miss.length)
+    return '<div class="qf bkq"><label class="done">'+chk+nm+'</label>'
+      +'<div class="bksum"><span>'+esc0(bkSummary(k,d))+'</span>'
+      +'<button class="bkedit" data-bkedit="'+k+'">изменить</button></div></div>';
   const rows=BKFIELDS[k].map(f=>'<span class="bkf'+(f[3]==='w'?' wide':'')+'"><em>'+f[1]+'</em>'
     +inp('bk.'+k+'.'+f[0],'',f[2],d[f[0]])+'</span>').join('');
-  return '<div class="qf bkq"><label>'+(BOOKED.find(x=>x[0]===k)||[])[1]+' — уточните</label><div class="bkrow">'+rows+'</div></div>';
+  return '<div class="qf bkq"><label>'+nm+' — уточните</label><div class="bkrow">'+rows+'</div>'
+    +(_bkErr[k]&&miss.length?'<p class="qerr">Не заполнено: '+esc0(miss.join(', '))+'</p>':'')
+    +'<button class="bkok" data-bkok="'+k+'">Готово</button></div>';
 }
 function qBlock(f,a){
   const o=(v,t,on)=>'<button class="qo'+(on?' on':'')+'" data-aset="'+f.k+'" data-av="'+v+'">'+t+'</button>';
@@ -4614,10 +4639,14 @@ function qBlock(f,a){
   if(f.k==='dest')return '<div class="qf">'+lab('Куда едете')
     +inp('dest','Юта · Париж · Норвегия · Япония · Патагония','text',a.dest)+'</div>';
   if(f.k==='when'){
-    const md=[['exact','точные даты'],['month','месяц и сколько дней'],['days','только сколько дней']]
+    /* когда обе даты выбраны, календарь сворачивается, а на кнопке вместо
+       «точные даты» стоит сам диапазон — нажатие открывает календарь обратно */
+    const picked=(a.dateMode==='exact'&&a.from&&a.to&&!_calOpen);
+    const md=[['exact',picked?(dmy(a.from)+' — '+dmy(a.to)+' '+String(a.to).slice(0,4)):'точные даты'],
+              ['month','месяц и сколько дней'],['days','только сколько дней']]
       .map(x=>o(x[0],x[1],a.dateMode===x[0])).join('');
     let body='';
-    if(a.dateMode==='exact')body=calHTML(a);
+    if(a.dateMode==='exact')body=picked?'':calHTML(a);
     else if(a.dateMode==='month')body='<div class="qopts" style="margin-top:8px">'
       +MONNM.map((mn,i)=>o('m'+i,mn.slice(0,3),a.month===i)).join('')+'</div>'
       +'<div class="qopts" style="margin-top:6px">'+[5,7,8,10,12,14].map(d=>o('d'+d,d,a.days===d)).join('')
@@ -4684,8 +4713,9 @@ function gotHTML(){
     +'<div class="qs">'
       +(miss.length?'<p class="qtitle">'+(miss.length===1?'Остался один вопрос — без него':'Осталось '+miss.length+' '+plural(miss.length,'вопрос','вопроса','вопросов')+' — без них')+' маршрут не посчитать</p>'
                    :'<p class="qtitle">Всё, что нужно, у нас есть — можно собирать</p>')
-      +fs.map(f=>qBlock(f,a)).join('')
-      +bks
+      /* уточнения по броням идут сразу за вопросом про брони, а не в конце
+         экрана: у клиента они улетали вниз, за приоритеты */
+      +fs.map(f=>qBlock(f,a)+(f.k==='booked'?bks:'')).join('')
       +extra
       +'<button class="gogo" data-abuild="1">Собрать маршрут</button>'
     +'</div>'
@@ -4699,6 +4729,7 @@ function renderLand(){
 }
 function showLand(ask){
   ASK=ask||null;_askOpen={};_askMore=false;
+  _calM=null;_calOpen=false;_bkDone={};_bkErr={};
   _atLand=true;_atHome=false;renderUnits();
   /* симметрично showHome: кабинет прячем целиком, а не только помечаем флагом */
   const h=document.getElementById('home');if(h){h.style.display='none';h.innerHTML='';}
@@ -4792,12 +4823,19 @@ document.addEventListener('click',e=>{
   if(t.dataset.cal&&ASK){
     const v=t.dataset.cal;
     /* первый тап — приезд, второй — отъезд. Тап раньше приезда начинает заново */
-    if(!ASK.from||ASK.to||v<ASK.from){ASK.from=v;ASK.to='';}
-    else ASK.to=v;
+    if(!ASK.from||ASK.to||v<ASK.from){ASK.from=v;ASK.to='';_calOpen=true;}
+    else {ASK.to=v;_calOpen=false;}          /* обе даты есть — календарь закрываем */
     ASK.dateMode='exact';ASK.month=+v.slice(5,7)-1;
     if(ASK.from&&ASK.to)ASK.days=askDays(ASK);
     _calM=v.slice(0,7);renderLand();
   }
+  if(t.dataset.bkok&&ASK){
+    const k=t.dataset.bkok;
+    if(bkMissing(k,ASK.bk[k]||{}).length)_bkErr[k]=1;
+    else {_bkDone[k]=1;_bkErr[k]=0;}
+    renderLand();
+  }
+  if(t.dataset.bkedit){_bkDone[t.dataset.bkedit]=0;_bkErr[t.dataset.bkedit]=0;renderLand();}
   if(t.dataset.aback!==undefined){showLand(null);}
   if(t.dataset.abuild!==undefined){buildFromAsk();}
   if(t.dataset.alim){const i=ASK.limits.indexOf(t.dataset.alim);i<0?ASK.limits.push(t.dataset.alim):ASK.limits.splice(i,1);renderLand();}
@@ -4808,7 +4846,7 @@ document.addEventListener('click',e=>{
       /* сначала СМЕНА ФОРМЫ, и только потом разбор «m8»/«d14». Иначе «month» и
          «days» ловились как «месяц m» и «день d», превращались в NaN, и человек
          больше не мог переключиться на другую форму — клиент это и поймала */
-      if(v==='exact'||v==='month'||v==='days')ASK.dateMode=v;
+      if(v==='exact'||v==='month'||v==='days'){ASK.dateMode=v;_calOpen=(v==='exact');}
       else if(v[0]==='m')ASK.month=+v.slice(1);
       else if(v[0]==='d')ASK.days=+v.slice(1);
     }
