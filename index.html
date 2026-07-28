@@ -3805,11 +3805,12 @@ document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)r
   if(t.dataset.goland){accClose();closeDaySheet();leaveTrip(()=>showLand(null));}
   if(t.dataset.topen){closeDaySheet();const id=t.dataset.topen;
     if(id!==trips().active)switchTrip(id);hideHome();window.scrollTo(0,0);}
-  /* Сначала спрашиваем имя, и только потом создаём. Раньше поездка появлялась
-     сразу, а окно «как назовём» показывалось уже поверх неё — и «Отмена»
-     ничего не отменяла: копия оставалась в списке (жалоба клиента). */
+  /* «Новая поездка» ведёт в АНКЕТУ, а не копирует открытую. Клиент: «когда
+     создаю новую поездку, меня должно перекинуть туда, где мы спрашиваем
+     клиента, а у меня открывается готовая Юта». Копия осталась отдельной
+     командой — «Сделать копию» в меню поездки. */
   if(t.dataset.newtrip){accClose();closeDaySheet();
-    leaveTrip(()=>{createTripSheet(null);});}
+    leaveTrip(()=>{showLand(parseAsk(''));});}
   if(t.dataset.tmenu){tripMenuSheet(t.dataset.tmenu);}
   if(t.dataset.trename){renameSheet(t.dataset.trename);}
   if(t.dataset.trsave){const v=((document.getElementById('trnm')||{}).value||'').trim();
@@ -4736,7 +4737,6 @@ function syncActiveIntoTrips(){
     /* имя маршрута — чтобы плитка чужой поездки могла хотя бы назвать
        направление, не выдумывая города из открытого сейчас файла */
     if(typeof TRIP_NAME==='string'&&TRIP_NAME)m.route=TRIP_NAME;
-    try{const c=heroPhoto();if(c)m.cover=c;}catch(e){}   /* обложка плитки — одна и та же всегда */
   }
   try{_rawSet(TKEY,JSON.stringify(t));}catch(e){}
   return t;
@@ -4844,14 +4844,17 @@ function heroPhoto(){
   const src=el&&el.getAttribute('src');
   return src||basePhoto(BASES[0].id)||'';
 }
+/* ⚠️ Обложку НЕ ЗАПОМИНАЕМ, а всегда выводим из маршрута поездки.
+   Трижды подряд клиент видела у Колорадо фотографию Юты: сохранённая обложка
+   протухала — записывалась при одном загруженном маршруте, а показывалась при
+   другом. Пока обложка где-то хранится, она может разойтись с правдой.
+   Теперь источник один: файл маршрута этой поездки → каталог → его фотография.
+   Никакой памяти, а значит и нечему протухать. */
 function tripCover(m){
-  const t=trips();
-  if(m.id===t.active)return heroPhoto();
-  if(m.cover)return m.cover;
-  /* файл этой поездки не загружен — берём обложку её маршрута из каталога,
-     чтобы плитка не была пустой до первого открытия */
   const c=CATALOG.find(x=>x.file===tripData(m));
-  return (c&&c.cover)||'';
+  if(c&&c.cover)return c.cover;
+  /* маршрута нет в каталоге — для открытой поездки берём фото из её шапки */
+  return (m.id===trips().active)?heroPhoto():'';
 }
 /* Обложку и название маршрута знает только тот, чей файл сейчас загружен.
    Поэтому, открыв любой маршрут, проставляем их СРАЗУ ВСЕМ поездкам на этом
@@ -4860,10 +4863,11 @@ function tripCover(m){
 function stampRouteMeta(){
   try{
     const t=trips();let changed=false;
-    const cover=heroPhoto(),route=(typeof TRIP_NAME==='string'&&TRIP_NAME)||'';
+    const route=(typeof TRIP_NAME==='string'&&TRIP_NAME)||'';
     t.list.forEach(m=>{
+      /* старые сохранённые обложки выбрасываем: теперь они считаются от маршрута */
+      if(m.cover){delete m.cover;changed=true;}
       if(tripData(m)!==window.__dataFile)return;
-      if(cover&&m.cover!==cover){m.cover=cover;changed=true;}
       if(route&&m.route!==route){m.route=route;changed=true;}
     });
     if(changed)tripsSave(t);
