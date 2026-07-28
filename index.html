@@ -139,6 +139,23 @@ body.athome,body.atland{padding-right:0!important}
 .qhint{margin:7px 0 0;font:600 11.5px/1.45 "Inter",sans-serif;color:#8b8fa3}
 .qsub{margin:0 0 6px;font:700 11px/1 "Inter",sans-serif;color:#8b8fa3}
 .qsub+.qopts{margin-bottom:10px}
+.qf>label.done{display:flex;align-items:center;gap:5px;color:#0a7a4a}
+.qf>label.done .i{width:12px;height:12px;stroke-width:3}
+/* календарь на две даты — «как на бронировании» (просьба клиента) */
+.cal{margin-top:9px;border:1.5px solid #e4e6f0;border-radius:14px;padding:11px 11px 9px;background:#fff}
+.calhd{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
+.calhd b{font:800 13px/1 "Plus Jakarta Sans",sans-serif;color:var(--ink);text-transform:capitalize}
+.calnav{width:30px;height:30px;border:1.5px solid #e4e6f0;border-radius:9px;background:#fff;cursor:pointer;
+  font:700 15px/1 "Inter",sans-serif;color:#5b3fc4;-webkit-appearance:none;appearance:none}
+.calg{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.calg.cw{margin-bottom:3px}
+.cd{height:34px;border:0;background:none;border-radius:9px;cursor:pointer;
+  font:700 12.5px/1 "Inter",sans-serif;color:var(--ink);-webkit-appearance:none;appearance:none}
+.cd.hd{font:700 10px/1 "Inter",sans-serif;color:#a3a0b8;height:16px;display:flex;align-items:center;justify-content:center}
+.cd.off{visibility:hidden}
+.cd.past{color:#c8c6d4}
+.cd.in{background:#f0ecff;border-radius:0}
+.cd.sel{background:#5b3fc4;color:#fff}
 .bkrow{display:flex;flex-wrap:wrap;gap:8px}
 .bkf{display:flex;flex-direction:column;gap:4px;flex:1 1 132px;min-width:0}
 .bkf.wide{flex:1 1 100%}
@@ -4423,6 +4440,14 @@ function parseAsk(raw){
   const s=a.text.toLowerCase().replace(/ё/g,'е');
   if(!s)return a;
   const cat=CATALOG.find(c=>c.rx.test(s));if(cat){a.where=cat.k;a.whereNm=cat.nm;a.dest=cat.nm;}
+  /* Направления, которого мы не знаем, выдумывать нельзя — но и терять нельзя:
+     клиент написала «Arizona», а в анкете куда-то ехать было пусто. Короткую
+     фразу без цифр считаем названием места и показываем как есть, чтобы человек
+     видел, что мы его услышали. Длинную — не трогаем, там спросим полем. */
+  if(!cat){
+    const short=a.text.replace(/[.,!?]+$/,'').trim();
+    if(short&&short.length<=32&&!/\d/.test(short)&&short.split(/\s+/).length<=3)a.dest=short;
+  }
   /* «с 10 по 20 августа» — точные даты человек называет сам куда чаще, чем месяц */
   let d=s.match(/с\s*(\d{1,2})\s*(?:по|до|-|—)\s*(\d{1,2})\s*([а-я]+)/);
   if(d){const mi=MONRX.findIndex(p=>new RegExp('^'+p).test(d[3]));
@@ -4527,6 +4552,45 @@ function askFields(a){
     {k:'likes',nm:'Что в приоритете',opt:1,val:a.likes.length?a.likes.join(', '):null,q:'что в приоритете?'}
   ];
 }
+/* Календарь на две даты. Клиент попросила «как на бронировании»: открывается
+   календарь, тыкаешь день приезда и день отъезда, а руками правишь только если
+   ошибся. Поэтому поля ввода остаются под ним, но заполнять их не обязательно. */
+let _calM=null;
+function isoOf(y,m,d){return y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');}
+function calMonth(a){
+  if(_calM)return _calM;
+  if(a.from)return a.from.slice(0,7);
+  const n=new Date();
+  if(a.month!=null){const y=n.getFullYear()+((a.month<n.getMonth())?1:0);return y+'-'+String(a.month+1).padStart(2,'0');}
+  return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0');
+}
+function calHTML(a){
+  const cur=calMonth(a),y=+cur.slice(0,4),m=+cur.slice(5,7)-1;
+  const first=new Date(y,m,1),last=new Date(y,m+1,0);
+  const sh=(first.getDay()+6)%7;                       /* неделя с понедельника */
+  const today=new Date();const tIso=isoOf(today.getFullYear(),today.getMonth(),today.getDate());
+  let cells='';
+  for(let i=0;i<sh;i++)cells+='<span class="cd off"></span>';
+  for(let d=1;d<=last.getDate();d++){
+    const iso=isoOf(y,m,d);
+    const sel=(a.from===iso||a.to===iso),inr=(a.from&&a.to&&iso>a.from&&iso<a.to);
+    cells+='<button class="cd'+(sel?' sel':'')+(inr?' in':'')+(iso<tIso?' past':'')+'" data-cal="'+iso+'">'+d+'</button>';
+  }
+  const n=askDays(a);
+  const hint=(a.from&&a.to)?('Выбрано: '+dmy(a.from)+' — '+dmy(a.to)+' · '+n+' '+plural(n,'день','дня','дней'))
+    :(a.from?'Теперь нажмите день отъезда':'Нажмите день приезда, потом день отъезда');
+  return '<div class="cal">'
+    +'<div class="calhd"><button class="calnav" data-calnav="-1">‹</button>'
+    +'<b>'+MONNM[m]+' '+y+'</b>'
+    +'<button class="calnav" data-calnav="1">›</button></div>'
+    +'<div class="calg cw">'+['пн','вт','ср','чт','пт','сб','вс'].map(x=>'<span class="cd hd">'+x+'</span>').join('')+'</div>'
+    +'<div class="calg">'+cells+'</div>'
+    +'<p class="qhint">'+hint+'</p>'
+    +'<div class="bkrow" style="margin-top:8px">'
+      +'<span class="bkf"><em>приезд</em>'+inp('from','','date',a.from)+'</span>'
+      +'<span class="bkf"><em>отъезд</em>'+inp('to','','date',a.to)+'</span></div>'
+    +'</div>';
+}
 /* поле ввода внутри вопроса: пишет прямо в ASK, страницу не перерисовывает,
    иначе на каждой набранной букве терялся бы курсор */
 function inp(path,ph,type,val,w){
@@ -4541,17 +4605,19 @@ function bkBlock(k,a){
 }
 function qBlock(f,a){
   const o=(v,t,on)=>'<button class="qo'+(on?' on':'')+'" data-aset="'+f.k+'" data-av="'+v+'">'+t+'</button>';
+  /* галочка прямо в заголовке вопроса: видно, на что уже ответили, и при этом
+     ничего не исчезает с экрана */
+  const lab=nm=>'<label class="'+(f.val?'done':'')+'">'+(f.val?chk:'')+nm+'</label>';
   let inner='';
   /* направление — обычное поле. Кнопок со странами нет и не будет: человек пишет
      свой город, а мир в наш каталог не помещается */
-  if(f.k==='dest')return '<div class="qf"><label>Куда едете</label>'
+  if(f.k==='dest')return '<div class="qf">'+lab('Куда едете')
     +inp('dest','Юта · Париж · Норвегия · Япония · Патагония','text',a.dest)+'</div>';
   if(f.k==='when'){
     const md=[['exact','точные даты'],['month','месяц и сколько дней'],['days','только сколько дней']]
       .map(x=>o(x[0],x[1],a.dateMode===x[0])).join('');
     let body='';
-    if(a.dateMode==='exact')body='<div class="bkrow"><span class="bkf"><em>с</em>'+inp('from','','date',a.from,'132px')
-      +'</span><span class="bkf"><em>по</em>'+inp('to','','date',a.to,'132px')+'</span></div>';
+    if(a.dateMode==='exact')body=calHTML(a);
     else if(a.dateMode==='month')body='<div class="qopts" style="margin-top:8px">'
       +MONNM.map((mn,i)=>o('m'+i,mn.slice(0,3),a.month===i)).join('')+'</div>'
       +'<div class="qopts" style="margin-top:6px">'+[5,7,8,10,12,14].map(d=>o('d'+d,d,a.days===d)).join('')
@@ -4560,18 +4626,18 @@ function qBlock(f,a){
       +[5,7,8,10,12,14].map(d=>o('d'+d,d,a.days===d)).join('')
       +'<input class="qnum" id="aDays" inputmode="numeric" placeholder="своё" value="'+(a.days&&[5,7,8,10,12,14].indexOf(a.days)<0?a.days:'')+'"></div>'
       +'<p class="qhint">Скажем сами, в каком месяце туда лучше всего.</p>';
-    return '<div class="qf"><label>Когда</label><div class="qopts">'+md+'</div>'+body+'</div>';
+    return '<div class="qf">'+lab('Когда')+'<div class="qopts">'+md+'</div>'+body+'</div>';
   }
   /* взрослые и дети — двумя подписанными строками: два поля «своё» подряд читались
      неоднозначно, было не понять, какое из них чьё */
-  if(f.k==='who')return '<div class="qf"><label>Кто едет</label>'
+  if(f.k==='who')return '<div class="qf">'+lab('Кто едет')
     +'<p class="qsub">взрослые</p><div class="qopts">'
       +[1,2,3,4,5,6].map(n=>o('a'+n,n,a.adults===n)).join('')
       +'<input class="qnum" id="aAd" inputmode="numeric" placeholder="своё" value="'+(a.adults&&a.adults>6?a.adults:'')+'"></div>'
     +'<p class="qsub">дети</p><div class="qopts">'
       +[0,1,2,3].map(n=>o('k'+n,n?String(n):'нет',a.kids===n)).join('')
       +'<input class="qnum" id="aKid" inputmode="numeric" placeholder="своё" value="'+(a.kids&&a.kids>3?a.kids:'')+'"></div></div>';
-  else if(f.k==='places')return '<div class="qf"><label>Какие места хотите посетить</label>'
+  else if(f.k==='places')return '<div class="qf">'+lab('Какие места хотите посетить')
     +inp('places','если есть на примете','text',a.places)
     +'<div class="qopts" style="margin-top:7px">'+o('any','решите за меня',a.placesAny)+'</div></div>';
   else if(f.k==='drive')inner=DRIVE3.map(x=>o(x[0],x[1],a.drive===x[0])).join('');
@@ -4579,7 +4645,7 @@ function qBlock(f,a){
     +BOOKED.map(x=>o(x[0],x[1],a.booked.indexOf(x[0])>=0)).join('');
   else if(f.k==='likes')inner=LIKES8.map(x=>o('L'+x,x,a.likes.indexOf(x)>=0)).join('');
   const hint=f.k==='likes'?'<p class="qhint">Не больше трёх — иначе это не приоритет.</p>':'';
-  return '<div class="qf"><label>'+f.nm+'</label><div class="qopts">'+inner+'</div>'+hint+'</div>';
+  return '<div class="qf">'+lab(f.nm)+'<div class="qopts">'+inner+'</div>'+hint+'</div>';
 }
 function landHTML(){
   return '<div class="wrap landwrap">'
@@ -4594,35 +4660,34 @@ function landHTML(){
     +'<div class="lor">или <button class="lnk" data-askform="1">пройдите анкету</button> — спросим только нужное</div>'
     +'</div>';
 }
+/* ВСЕ вопросы всегда на экране. Раньше отвеченное сворачивалось в галочку, а
+   часть вопросов пряталась под «ответить ещё на пару» — клиент сказала прямо:
+   «я выберу, и он пропадает, а вдруг я захочу изменить». Теперь ничего не
+   исчезает: на что ответили — то помечено галочкой в заголовке, и меняется на
+   месте. Заново мы всё равно ничего не спрашиваем: ответ уже стоит. */
 function gotHTML(){
   const a=ASK,fs=askFields(a);
-  const known=fs.filter(f=>f.val&&!_askOpen[f.k]);
-  /* необязательное не держит сборку: спрашиваем, но не требуем */
-  const miss=fs.filter(f=>(!f.val&&!f.opt)||_askOpen[f.k]);
-  const later=fs.filter(f=>!f.val&&f.opt&&!_askOpen[f.k]);
-  const chips=known.map(f=>'<button class="gchip" data-aopen="'+f.k+'">'+chk+esc0(f.val)+'</button>').join('')
-    +(a.limits.length?'<button class="gchip" data-aopen="limits">'+chk+esc0(a.limits.join(', '))+'</button>':'');
+  const miss=fs.filter(f=>!f.val&&!f.opt);
   /* уточнения по бронированному — только по тому, что человек отметил сам */
   const bks=a.booked.filter(k=>k!=='none').map(k=>bkBlock(k,a)).join('');
+  const extra='<div class="qf"><label>Темп</label><div class="qopts">'
+      +PACES.map(x=>'<button class="qo'+(a.pace===x[0]?' on':'')+'" data-aset="pace" data-av="'+x[0]+'">'+x[1]+'</button>').join('')
+    +'</div></div><div class="qf"><label>Ограничения</label><div class="qopts">'
+      +['едем с собакой','коляска','боязнь высоты','еда: ограничения','не водим ночью'].map(x=>'<button class="qo'+(a.limits.indexOf(x)>=0?' on':'')+'" data-alim="'+x+'">'+x+'</button>').join('')
+    +'</div></div>';
   return '<div class="wrap gotwrap">'
     +(a.text?'<div class="said"><div class="t">Вы сказали</div><p>'+esc0(a.text)+'</p></div>':'')
     +'<h1 class="goth">'+(a.text?'Правильно поняли?':'Расскажите про поездку')+'</h1>'
-    +'<p class="gothint">'+(a.text?'Нажмите на любое, чтобы поправить':'Спросим только то, без чего маршрут не собрать')+'</p>'
-    +(chips?'<p class="glbl">Мы это поняли так</p><div class="gots">'+chips+'</div>':'')
+    +'<p class="gothint">'+(a.text?'Что поняли — отмечено галочкой. Меняйте что угодно':'Спросим только то, без чего маршрут не собрать')+'</p>'
     +(a.extras.length?'<p class="glbl">Услышали ещё — учтём при сборке</p><div class="gots">'
       +a.extras.map(x=>'<span class="gchip">'+chk+esc0(x)+'</span>').join('')+'</div>':'')
     +'<div class="qs">'
-      +(miss.length?'<p class="qtitle">'+(miss.length===1?'Остался один вопрос — без него':'Осталось '+miss.length+' '+plural(miss.length,'вопрос','вопроса','вопросов')+' — без них')+' маршрут не посчитать</p>':'')
-      +miss.map(f=>qBlock(f,a)).join('')
+      +(miss.length?'<p class="qtitle">'+(miss.length===1?'Остался один вопрос — без него':'Осталось '+miss.length+' '+plural(miss.length,'вопрос','вопроса','вопросов')+' — без них')+' маршрут не посчитать</p>'
+                   :'<p class="qtitle">Всё, что нужно, у нас есть — можно собирать</p>')
+      +fs.map(f=>qBlock(f,a)).join('')
       +bks
-      +(later.length?'<p class="qtitle" style="margin-top:16px">Необязательно, но маршрут будет точнее</p>'+later.map(f=>qBlock(f,a)).join(''):'')
+      +extra
       +'<button class="gogo" data-abuild="1">Собрать маршрут</button>'
-      +'<button class="gomore" data-amore="1">едете с собакой, с коляской или не любите высоту?<br><u>'+(_askMore?'свернуть':'ответить ещё на пару вопросов')+'</u></button>'
-      +(_askMore?'<div class="qf" style="margin-top:14px"><label>Темп</label><div class="qopts">'
-        +PACES.map(x=>'<button class="qo'+(a.pace===x[0]?' on':'')+'" data-aset="pace" data-av="'+x[0]+'">'+x[1]+'</button>').join('')
-        +'</div></div><div class="qf"><label>Ограничения</label><div class="qopts">'
-        +['едем с собакой','коляска','боязнь высоты','еда: ограничения','не водим ночью'].map(x=>'<button class="qo'+(a.limits.indexOf(x)>=0?' on':'')+'" data-alim="'+x+'">'+x+'</button>').join('')
-        +'</div></div>':'')
     +'</div>'
     +'<button class="gback" data-aback="1">← назад</button>'
     +'</div>';
@@ -4719,6 +4784,20 @@ document.addEventListener('click',e=>{
   if(t.dataset.askform!==undefined){showLand(parseAsk(''));}
   if(t.dataset.aopen){_askOpen[t.dataset.aopen]=1;renderLand();}
   if(t.dataset.amore!==undefined){_askMore=!_askMore;renderLand();}
+  if(t.dataset.calnav&&ASK){
+    const cur=calMonth(ASK);let y=+cur.slice(0,4),m=+cur.slice(5,7)-1+(+t.dataset.calnav);
+    if(m<0){m=11;y--;}if(m>11){m=0;y++;}
+    _calM=y+'-'+String(m+1).padStart(2,'0');renderLand();
+  }
+  if(t.dataset.cal&&ASK){
+    const v=t.dataset.cal;
+    /* первый тап — приезд, второй — отъезд. Тап раньше приезда начинает заново */
+    if(!ASK.from||ASK.to||v<ASK.from){ASK.from=v;ASK.to='';}
+    else ASK.to=v;
+    ASK.dateMode='exact';ASK.month=+v.slice(5,7)-1;
+    if(ASK.from&&ASK.to)ASK.days=askDays(ASK);
+    _calM=v.slice(0,7);renderLand();
+  }
   if(t.dataset.aback!==undefined){showLand(null);}
   if(t.dataset.abuild!==undefined){buildFromAsk();}
   if(t.dataset.alim){const i=ASK.limits.indexOf(t.dataset.alim);i<0?ASK.limits.push(t.dataset.alim):ASK.limits.splice(i,1);renderLand();}
@@ -4726,10 +4805,12 @@ document.addEventListener('click',e=>{
     const k=t.dataset.aset,v=t.dataset.av;
     let keepOpen=false;
     if(k==='when'){
-      if(v[0]==='m')ASK.month=+v.slice(1);
+      /* сначала СМЕНА ФОРМЫ, и только потом разбор «m8»/«d14». Иначе «month» и
+         «days» ловились как «месяц m» и «день d», превращались в NaN, и человек
+         больше не мог переключиться на другую форму — клиент это и поймала */
+      if(v==='exact'||v==='month'||v==='days')ASK.dateMode=v;
+      else if(v[0]==='m')ASK.month=+v.slice(1);
       else if(v[0]==='d')ASK.days=+v.slice(1);
-      else {ASK.dateMode=v;keepOpen=true;}       /* выбрал форму — вопрос остаётся открытым */
-      if(v[0]==='m'||v[0]==='d')keepOpen=(ASK.dateMode==='month'&&(ASK.month==null||!ASK.days));
     }
     else if(k==='who'){if(v[0]==='a')ASK.adults=+v.slice(1);else ASK.kids=+v.slice(1);
       keepOpen=(ASK.adults==null||ASK.kids==null);}
