@@ -1148,6 +1148,9 @@ body{background:linear-gradient(168deg,#eef1f8,#e9edf6 60%,#e6eaf4)!important}
 .cbook{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:16px;padding:13px;border-radius:12px;text-decoration:none;background:#5b3fc4;color:#fff;font:700 13.5px/1 "Inter",sans-serif}
 .cbook small{font-weight:500;opacity:.78}
 .ctransf{margin-top:14px;padding-top:14px;border-top:1px solid #e8e9f2;text-align:center;font:500 12px/1 "Inter",sans-serif;color:#8b8fa3}
+/* «оттуда до города» — когда аэропорт и город ночёвки в разных местах */
+.cway{margin-top:10px;text-align:center;font:600 11.5px/1.4 "Inter",sans-serif;color:#8a4b0a;
+  background:#fff8ee;border:1px solid rgba(168,99,10,.25);border-radius:10px;padding:7px 10px}
 .cstay{display:flex;gap:15px;background:#fff;border:1px solid #e8e9f2;border-radius:18px;padding:14px}
 .cph{width:104px;height:104px;border-radius:13px;background:#e5e7f0 center/cover no-repeat;flex:none}
 .cin{flex:1;min-width:0;display:flex;flex-direction:column}
@@ -2373,12 +2376,21 @@ function buildCities(){
     let arrival;
     if(i>0&&!b.nights){arrival='';}
     else if(i===0){
+      /* В правой колонке — ГОРОД АЭРОПОРТА, а не город ночёвки: в Юте это
+         Лас-Вегас и Спрингдейл, между ними 270 км, и клиент справедливо
+         не понимала, куда же покупать билет. Ниже честно пишем, сколько
+         ещё ехать от аэропорта до первой базы. */
+      const arrCode=AIRPORT[b.id]||'';
+      const arrCity=(typeof AIRPORTNM!=='undefined'&&AIRPORTNM[arrCode])||shortName(b.name);
+      const arrWay=(typeof AIRPORTWAY!=='undefined'&&AIRPORTWAY[arrCode])||'';
       arrival='<div class="cnode"><span class="cdot">'+ic('plane','i-sm')+'</span>'
         +'<div class="clbl"><b>Прибытие</b><span>'+dm(ci)+'</span></div>'
         +'<div class="carr"><div class="crow">'
           +'<div class="cpt"><b>'+ORIGIN.city+'</b><span>'+ORIGIN.code+' · '+dm(ci)+'</span></div>'
           +'<div class="cmid"><div class="cic">'+ic('plane','i-sm')+'</div></div>'
-          +'<div class="cpt r"><b>'+shortName(b.name)+'</b><span>'+(AIRPORT[b.id]||'')+' · '+dm(ci)+'</span></div></div>'
+          +'<div class="cpt r"><b>'+esc0(arrCity)+'</b><span>'+arrCode+' · '+dm(ci)+'</span></div></div>'
+          +(arrWay&&arrCity!==shortName(b.name)
+            ? '<div class="cway">оттуда до города: '+esc0(convDist(arrWay))+'</div>':'')
           +'<a class="cbook" href="'+flightSearch()+'" target="_blank" rel="noopener">'+ic('plane','i-sm')+' Подобрать рейсы <small>туда+обратно</small></a></div></div>';
     }else{
       /* едем из последнего города, где ночевали: если сосед проездом, участки слились */
@@ -2403,11 +2415,15 @@ function buildCities(){
       const last=BASES[BASES.length-1];const en=x=>x.split(',')[0].trim();
       const tripEnd=addDays(startIso,totalNights());
       carHire='<div class="cnode"><span class="cdot">'+ic('car','i-sm')+'</span>'
-        +'<div class="clbl"><b>Аренда машины</b><span>на всю поездку · '+dm(ci)+'–'+dm(tripEnd)+'</span></div>'
-        +'<div class="carr"><div class="crow">'
-          +'<div class="cpt"><b>'+shortName(b.name)+'</b><span>забрать · '+(AIRPORT[b.id]||'аэропорт')+'</span></div>'
+        +'<div class="clbl"><b>Аренда машины</b><span>на всю поездку · '+dm(ci)+'–'+dm(tripEnd)+'</span></div>';
+      /* машину берут В АЭРОПОРТУ, а не в городе ночёвки — пишем город аэропорта */
+      const upCode=AIRPORT[b.id]||'',offCode=AIRPORT[last.id]||'';
+      const upCity=(typeof AIRPORTNM!=='undefined'&&AIRPORTNM[upCode])||shortName(b.name);
+      const offCity=(typeof AIRPORTNM!=='undefined'&&AIRPORTNM[offCode])||shortName(last.name);
+      carHire+='<div class="carr"><div class="crow">'
+          +'<div class="cpt"><b>'+esc0(upCity)+'</b><span>забрать · '+(upCode||'аэропорт')+'</span></div>'
           +'<div class="cmid"><div class="cic">'+ic('car','i-sm')+'</div></div>'
-          +'<div class="cpt r"><b>'+shortName(last.name)+'</b><span>сдать · '+(AIRPORT[last.id]||'')+'</span></div></div>'
+          +'<div class="cpt r"><b>'+esc0(offCity)+'</b><span>сдать · '+offCode+'</span></div></div>'
           +'<a class="cbook" href="'+bookCar(en(b.q),en(last.q),ci,tripEnd)+'" target="_blank" rel="noopener">'+ic('car','i-sm')+' Забронировать машину <small>Kayak</small></a></div></div>';
     }
     /* проживание */
