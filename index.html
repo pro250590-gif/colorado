@@ -1353,9 +1353,7 @@ body{background:linear-gradient(168deg,#eef1f8,#e9edf6 60%,#e6eaf4)!important}
   border-radius:12px;border:1.5px dashed rgba(91,63,196,.4);background:#faf9ff;color:#5b3fc4;
   font:800 11.5px/1 "Plus Jakarta Sans",sans-serif;cursor:pointer}
 .badd .i{width:14px;height:14px}
-.bdel{border:1.5px solid rgba(20,32,27,.13);background:#fff;color:#8b8fa3!important;cursor:pointer;
-  border-radius:9px;padding:4px 9px;margin-left:8px;font:700 10.5px/1 "Inter",sans-serif;white-space:nowrap}
-.bdel:active{transform:scale(.98)}
+.bmenu{width:26px;height:26px;border-radius:9px;font-size:13px;padding-bottom:4px;margin-left:2px}
 /* кнопка «добавить строку» — как «Забронировать…», только фиолетовая рамка пунктиром */
 .badd{width:calc(100% - 32px);border-style:dashed!important;cursor:pointer;text-align:left}
 .bkinds{grid-template-columns:repeat(2,1fr)}
@@ -4116,9 +4114,7 @@ document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)r
   if(t.dataset.dayoff){P.filter(p=>p.d===tidOf(t.dataset.dayoff)).forEach(p=>picked.delete(p.id));savePicks();syncChecks();applyFilter();}
   if(t.dataset.nd!==undefined){const i=+t.dataset.nd,dir=+t.dataset.dir;setNights(i,BASES[i].nights+dir);}
   if(t.dataset.undo){if(_undo)restoreState(_undo.prev);_undo=null;hideToast();}
-  /* «Хорошо» на плашке про облако значит «оставить моё» — и тогда своё надо
-     отправить в облако, иначе оно снова приедет и снова спросит */
-  if(t.dataset.tclose){if(_cloudRow)cloudKeepMine();else hideToast();}
+  if(t.dataset.tclose){hideToast();}
   if(t.dataset.pickday){pickDaySheet(t.dataset.pickday);}
   if(t.dataset.rmday){closeDaySheet();removeDay(t.dataset.rmbase,tidOf(t.dataset.rmday));}
   if(t.dataset.dsclose){closeDaySheet();}
@@ -4609,16 +4605,16 @@ function buildBudget(){
              :('на человека × <b data-ppl>'+PEOPLE+'</b> чел. × <b data-days>'+days+'</b> дн.');
         const totVal=Math.round((parseFloat(rate)||0)*itemQty(per,days));
         return '<div class="brow3'+(it.own?' own':'')+'" data-per="'+per+'">'
-          +'<div class="b3l"><b class="b3nm">'+esc0(it.nm)+'</b><span class="b3desc">'+desc
-            +(it.own?' <button class="bdel" data-bdel="'+it.k+'">убрать</button>':'')+'</span></div>'
+          +'<div class="b3l"><b class="b3nm">'+esc0(it.nm)+'</b><span class="b3desc">'+desc+'</span></div>'
           +'<span class="b3box b3rate"><input class="money perunit" data-k="'+it.k+'rate" inputmode="decimal" value="'+fmtIn(rate)+'"><span class="b3u">'+unit+'</span></span>'
-          +'<span class="b3box b3total"><input class="btotal" data-k="'+it.k+'" inputmode="decimal" value="'+fmtIn(totVal)+'"><span class="b3u">'+curSym()+'</span></span></div>';
+          +'<span class="b3box b3total"><input class="btotal" data-k="'+it.k+'" inputmode="decimal" value="'+fmtIn(totVal)+'"><span class="b3u">'+curSym()+'</span></span>'
+          +(it.own?'<button class="cpmv bmenu" data-bmenu="'+it.k+'" aria-label="что сделать со строкой" title="изменить или удалить">⋯</button>':'')+'</div>';
       }
       const desc=(it.sub||'')+(it.ok?' <span class="cf">'+ic('check','i-sm')+'</span>':(it.est?' <span class="est">~</span>':''));
       return '<div class="brow3'+(it.own?' own':'')+'">'
-        +'<div class="b3l"><b class="b3nm">'+esc0(it.nm)+'</b><span class="b3desc">'+desc
-          +(it.own?' <button class="bdel" data-bdel="'+it.k+'">убрать</button>':'')+'</span></div>'
-        +'<span class="b3box b3total"><input class="money" data-k="'+it.k+'" inputmode="decimal" value="'+fmtIn(val)+'"><span class="b3u">'+curSym()+'</span></span></div>';
+        +'<div class="b3l"><b class="b3nm">'+esc0(it.nm)+'</b><span class="b3desc">'+desc+'</span></div>'
+        +'<span class="b3box b3total"><input class="money" data-k="'+it.k+'" inputmode="decimal" value="'+fmtIn(val)+'"><span class="b3u">'+curSym()+'</span></span>'
+        +(it.own?'<button class="cpmv bmenu" data-bmenu="'+it.k+'" aria-label="что сделать со строкой" title="изменить или удалить">⋯</button>':'')+'</div>';
     }).join('');
     return '<div class="bgroup">'
       +'<div class="bghead"><span class="bgmed" style="background:linear-gradient(150deg,'+gr.c+','+gr.c2+')">'+ic(gr.ic)+'</span>'
@@ -4651,30 +4647,62 @@ function buildBudget(){
 /* Лист «Добавить строку в бюджет»: что это, сколько стоит и как считать.
    Способы счёта те же, что у наших строк, — других у нас нет и придумывать нечего. */
 let _bper='';
-function addBudgetSheet(g){
-  _bper='';
-  sheet('<div class="dsh"><b>Своя строка в бюджете</b><span>'+esc0(g)+' · посчитаем вместе с остальными</span></div>'
-    +'<div class="dsform"><input id="buNm" placeholder="Что это — например, прокат велосипедов" autocomplete="off">'
-      +'<div class="dspill"><b>'+curSym()+'</b><input id="buVal" inputmode="decimal" placeholder="0" autocomplete="off"></div>'
-      +'<div class="dskinds bkinds">'+BPER.map(x=>'<button class="dskind'+(x[0]===''?' on':'')+'" data-bper="'+x[0]+'"><span>'+x[1]+'</span></button>').join('')+'</div>'
-      +'<button class="dsgo" data-busave="'+esc0(g)+'">Добавить</button></div>'
+/* Один и тот же лист добавляет и правит: человек ошибся в названии или выбрал
+   «за человека» вместо «всего» — это правка, а не новая строка (просьба клиента). */
+function budgetVal(k){
+  let o={};try{o=JSON.parse(localStorage.getItem(BKEY))||{};}catch(e){}
+  const it=CUSTB.find(x=>x.k===k)||{};
+  return it.per?(o[k+'rate']!==undefined?o[k+'rate']:it.rate):(o[k]!==undefined?o[k]:it.v);
+}
+function addBudgetSheet(g,k){
+  const it=k?CUSTB.find(x=>x.k===k):null;
+  _bper=it?(it.per||''):'';
+  const val=it?budgetVal(k):'';
+  sheet('<div class="dsh"><b>'+(it?'Изменить строку':'Своя строка в бюджете')+'</b><span>'+esc0(it?it.g:g)+' · посчитаем вместе с остальными</span></div>'
+    +'<div class="dsform"><input id="buNm" placeholder="Что это — например, прокат велосипедов" autocomplete="off" value="'+esc0(it?it.nm:'')+'">'
+      +'<div class="dspill"><b>'+curSym()+'</b><input id="buVal" inputmode="decimal" placeholder="0" autocomplete="off" value="'+(val?fmtIn(val):'')+'"></div>'
+      +'<div class="dskinds bkinds">'+BPER.map(x=>'<button class="dskind'+(x[0]===_bper?' on':'')+'" data-bper="'+x[0]+'"><span>'+x[1]+'</span></button>').join('')+'</div>'
+      +'<button class="dsgo" data-busave="'+esc0(it?it.g:g)+'"'+(k?' data-buedit="'+k+'"':'')+'>'+(it?'Сохранить':'Добавить')+'</button></div>'
+    +(k?'<button class="dscancel del" data-bdel="'+k+'">Удалить строку</button>':'')
     +'<button class="dscancel" data-dsclose="1">Отмена</button>');
 }
-function saveBudgetRow(g){
+/* «⋯» у своей строки: изменить или удалить */
+function budgetRowSheet(k){
+  const it=CUSTB.find(x=>x.k===k);if(!it)return;
+  sheet('<div class="dsh"><b>'+esc0(it.nm)+'</b><span>'+esc0(it.g)+' · '+(BPER.find(x=>x[0]===(it.per||''))||['',''])[1]+'</span></div>'
+    +'<button class="dsgo" data-bedit="'+k+'">Изменить</button>'
+    +'<button class="dscancel del" data-bdel="'+k+'">Удалить строку</button>'
+    +'<button class="dscancel" data-dsclose="1">Отмена</button>');
+}
+function saveBudgetRow(g,k){
   const nm=(document.getElementById('buNm')||{}).value||'';
   const v=numIn((document.getElementById('buVal')||{}).value||'');
   if(!nm.trim()){const el=document.getElementById('buNm');if(el)el.focus();return;}
-  const k=custbNew();
-  CUSTB.push({k:k,g:g,nm:nm.trim(),per:_bper,own:1,
+  /* правка: меняем на месте, а не заводим новую строку */
+  if(k){
+    const it=CUSTB.find(x=>x.k===k);
+    if(it){
+      it.nm=nm.trim();it.per=_bper;it.sub=_bper?'':'на всех';
+      it.v=_bper?undefined:v;it.rate=_bper?v:undefined;
+      try{const o=JSON.parse(localStorage.getItem(BKEY))||{};
+        delete o[k];delete o[k+'rate'];
+        if(_bper)o[k+'rate']=v;else o[k]=v;
+        localStorage.setItem(BKEY,JSON.stringify(o));}catch(e){}
+    }
+    savePlan();closeDaySheet();buildBudget();return;
+  }
+  const kk=custbNew();
+  CUSTB.push({k:kk,g:g,nm:nm.trim(),per:_bper,own:1,
     sub:_bper?'':'на всех',v:_bper?undefined:v,rate:_bper?v:undefined});
   /* значение кладём туда же, где живут наши суммы: тогда и сохранение, и пересчёт
      валюты работают без единой отдельной строчки кода */
   try{const o=JSON.parse(localStorage.getItem(BKEY))||{};
-    if(_bper)o[k+'rate']=v;else o[k]=v;
+    if(_bper)o[kk+'rate']=v;else o[kk]=v;
     localStorage.setItem(BKEY,JSON.stringify(o));}catch(e){}
   savePlan();closeDaySheet();buildBudget();
 }
 function delBudgetRow(k){
+  closeDaySheet();
   CUSTB=CUSTB.filter(x=>x.k!==k);
   try{const o=JSON.parse(localStorage.getItem(BKEY))||{};delete o[k];delete o[k+'rate'];
     localStorage.setItem(BKEY,JSON.stringify(o));}catch(e){}
@@ -5510,9 +5538,10 @@ document.addEventListener('click',e=>{
   if(t.dataset.askgo!==undefined){const v=(document.getElementById('askText')||{}).value||'';showLand(parseAsk(v));}
   if(t.dataset.askcar!==undefined&&ASK){ASK.carOk=1;closeDaySheet();buildFromAsk();}
   if(t.dataset.asmsheet!==undefined){asmSheet();}
-  if(t.dataset.cloudtake!==undefined){cloudTake();}
   if(t.dataset.baddg!==undefined){addBudgetSheet(t.dataset.baddg);}
-  if(t.dataset.busave!==undefined){saveBudgetRow(t.dataset.busave);}
+  if(t.dataset.busave!==undefined){saveBudgetRow(t.dataset.busave,t.dataset.buedit||null);}
+  if(t.dataset.bmenu!==undefined){budgetRowSheet(t.dataset.bmenu);}
+  if(t.dataset.bedit!==undefined){addBudgetSheet('',t.dataset.bedit);}
   if(t.dataset.bdel!==undefined){delBudgetRow(t.dataset.bdel);}
   if(t.dataset.bper!==undefined){_bper=t.dataset.bper;
     [].forEach.call(document.querySelectorAll('.bkinds .dskind'),b=>b.classList.toggle('on',b.dataset.bper===t.dataset.bper));}
@@ -6184,23 +6213,6 @@ function reinit(){try{
   applyHero();
   renderUnits();buildRoute();buildDays();buildCities();buildFood();buildBases();buildPlanner();buildBudget();buildFilters();buildElev();recomputeDates();syncChecks();applyFilter();
 }catch(e){}}
-/* версия из облака, которую мы ПРЕДЛОЖИЛИ, но не применили без спроса */
-let _cloudRow=null;
-function cloudTake(){
-  const row=_cloudRow;if(!row||!row.plan)return;
-  _applying=true;
-  CLOUD_KEYS.forEach(k=>{if(row.plan[k]!=null)_rawSet(k,row.plan[k]);});
-  const cts=row.updated_at?new Date(row.updated_at).getTime():Date.now();
-  _rawSet('co-trip-ts',String(cts));_rawSet('co-trip-pushed',String(cts));
-  markClean();
-  reinit();_applying=false;_cloudRow=null;
-  hideToast();
-}
-/* «оставить моё» — своё главнее, отправляем его в облако */
-function cloudKeepMine(){
-  _cloudRow=null;markDirty();hideToast();
-  if(typeof cloudPush==='function')cloudPush();
-}
 async function cloudSync(session){
   if(!sb||!session)return;
   _signedIn=true;syncSay();
@@ -6216,28 +6228,27 @@ async function cloudSync(session){
        откатывалась более старой записью, и удалённое возвращалось. */
     const cloudTs=row&&row.updated_at?new Date(row.updated_at).getTime():0;
     const stale=cloudTs&&pushedTs()&&cloudTs<pushedTs();
-    /* метка, поставленная НАМИ при отправке: только её и можно сравнивать со своей */
+    /* Метку ставим МЫ при отправке (plan.__ts) — только её и можно сравнивать со
+       своей: часы сервера идут иначе, и версия 14-минутной давности однажды
+       вытеснила только что добавленное жильё.
+       Нет метки (старая запись в облаке) — считаем, что она НЕ новее: на экране
+       живая правка, и рисковать ею нельзя. */
     const mineTs=(row&&row.plan&&+row.plan.__ts)||0;
-    const older=mineTs&&mineTs<=localTs();      /* облако не новее нашего — не трогаем экран */
-    if(row&&row.plan&&!dirty()&&!stale&&!older){
+    const newer=mineTs&&mineTs>localTs();       /* в облаке правка ПОЗЖЕ нашей */
+    if(row&&row.plan&&!dirty()&&!stale&&newer){
       /* своих несохранённых правок нет → берём облако, оно главное */
       const same=CLOUD_KEYS.every(k=>(row.plan[k]==null?null:row.plan[k])===localStorage.getItem(k));
+      /* ⚠️ ПРАВИЛО КЛИЕНТА: «неважно, с какого устройства — сохраняется то, что я
+         правила последней». Никаких вопросов и плашек: правка, сделанная позже,
+         и есть правда. Сравниваем ТОЛЬКО свои метки времени (plan.__ts), потому что
+         сравнение с часами сервера один раз уже вытеснило свежее старым. */
       if(!same){
-        /* ⚠️ НЕ ТРОГАЕМ ЭКРАН БЕЗ СПРОСА. Раньше мы подменяли открытую поездку
-           версией из облака и предлагали «вернуть» — то есть сначала удаляли,
-           а потом спрашивали. Клиент назвала это неправильной логикой, и она права:
-           так человек теряет своё одним неверным нажатием. Теперь спрашиваем ДО. */
-        _cloudRow=row;
-        const when=row.updated_at?new Date(row.updated_at):null;
-        toast('<b>В облаке другая версия поездки</b><i>сохранена'
-          +(when?(' '+dm(when)+' в '+String(when.getHours()).padStart(2,'0')+':'+String(when.getMinutes()).padStart(2,'0')):'')
-          +' на другом устройстве или в другой вкладке. На экране сейчас ваша — мы её не трогали</i>',null,null);
-        const el=document.getElementById('toast');
-        if(el){
-          const btns=el.querySelector('.tb.ok');
-          if(btns)btns.textContent='Оставить моё';
-          el.insertAdjacentHTML('beforeend','<button class="tb v" data-cloudtake="1">Показать облачную</button>');
-        }
+        _applying=true;
+        CLOUD_KEYS.forEach(k=>{if(row.plan[k]!=null)_rawSet(k,row.plan[k]);});
+        _rawSet('co-trip-ts',String(mineTs||Date.now()));
+        _rawSet('co-trip-pushed',String(cloudTs||mineTs||Date.now()));
+        markClean();
+        reinit();_applying=false;
       }
       _syncErr='';syncSay();return;
     }
