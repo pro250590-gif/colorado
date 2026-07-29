@@ -6729,7 +6729,10 @@ document.addEventListener('click',function(e){
   if(!_stale)return;
   const t=e.target&&e.target.closest?e.target.closest('button,a,input,select,textarea,label,summary,[data-city],[data-goday]'):null;
   if(!t)return;
-  if(t.closest('#toast'))return;                       /* кнопки самой плашки */
+  /* кнопки самой плашки и верхней полосы — единственный выход отсюда.
+     Без .stalebar блокировка съедала и собственную кнопку «Обновить»:
+     клиент осталась на странице, где не нажимается вообще ничего. */
+  if(t.closest('#toast')||t.closest('.stalebar'))return;
   if(t.tagName==='SUMMARY')return;                     /* раскрыть день — это просмотр */
   if(t.tagName==='A'){
     const h=t.getAttribute('href')||'';
