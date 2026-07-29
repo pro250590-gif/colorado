@@ -2087,9 +2087,19 @@ function buildRoute(){
   /* узлы: первая строка слева направо, вторая — обратно */
   const place=t=>{
     const xB=W-padR-(t?R+TIN:0),out=[];
-    split(t).forEach((row,ri)=>{const k=row.length;
-      row.forEach((st,i)=>{const f=k>1?i/(k-1):.5;
-        out.push({st:st,x:ri===0?padL+(xB-padL)*f:xB-(xB-padL)*f,row:ri});});});
+    const rows=split(t);
+    /* ШАГ МЕЖДУ ТОЧКАМИ ОДИН НА ОБЕ СТРОКИ. Раньше каждая строка растягивалась на
+       всю ширину, и строка из двух точек превращалась в длинный пустой перелёт
+       (клиент обвела это на скриншоте). Теперь расстояние одинаковое, а короткая
+       строка просто не доходит до края. */
+    const maxN=Math.max.apply(null,rows.map(r=>r.length));
+    const step=maxN>1?(xB-padL)/(maxN-1):0;
+    rows.forEach((row,ri)=>{
+      row.forEach((st,i)=>{
+        const x=ri===0?(padL+step*i):(xB-step*i);
+        out.push({st:st,x:row.length>1?x:(padL+xB)/2,row:ri});
+      });
+    });
     return out;
   };
   /* подпись центрируется по узлу, но не вылезает за карточку — крайние прижимаются */
@@ -5891,7 +5901,20 @@ let sb=null;
 try{if(window.supabase&&window.supabase.createClient)sb=window.supabase.createClient(SB_URL,SB_KEY);}catch(e){}
 /* сайт всегда открывается сверху (не восстанавливать прокрутку); авто-скролл аккордеонов — только после действия пользователя */
 try{if('scrollRestoration' in history)history.scrollRestoration='manual';}catch(e){}
-window.scrollTo(0,0);window.addEventListener('load',()=>window.scrollTo(0,0));
+/* Открываемся ВСЕГДА сверху. Одного scrollTo мало: страница дорастает уже после
+   запуска (фотографии, карта, погода), и браузер возвращает прежнее место —
+   клиент: «обновляю и оказываюсь где-то внизу, непонятно где». Поэтому
+   поправляем несколько раз, пока человек сам не тронул страницу. */
+function bootTop(){
+  let touched=false;
+  const stop=()=>{touched=true;};
+  ['wheel','touchstart','keydown','pointerdown'].forEach(ev=>window.addEventListener(ev,stop,{passive:true,once:true}));
+  const go=()=>{if(!touched)window.scrollTo(0,0);};
+  go();
+  window.addEventListener('load',go);
+  [120,400,900,1600].forEach(ms=>setTimeout(go,ms));
+}
+bootTop();
 /* ---- облачное сохранение плана (даты/цены/ночи/люди/выборы) ---- */
 /* ================= НЕСКОЛЬКО ПОЕЗДОК =================
    Движок как читал, так и читает четыре своих ключа — это ВСЕГДА открытая сейчас
@@ -6467,7 +6490,7 @@ headerAuth();
 if(window.__askApplied);
 else if(/[?&]home/.test(location.search))showHome();
 else if(/[?&]land/.test(location.search))showLand(null);
-else if(lastScreen()==='trip'){hideLand();hideHome();window.scrollTo(0,0);}
+else if(lastScreen()==='trip'){hideLand();hideHome();bootTop();}
 else if(lastScreen()==='home')showHome();
 else showLand(null);
 </script>
