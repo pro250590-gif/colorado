@@ -1354,6 +1354,12 @@ body{background:linear-gradient(168deg,#eef1f8,#e9edf6 60%,#e6eaf4)!important}
   font:800 11.5px/1 "Plus Jakarta Sans",sans-serif;cursor:pointer}
 .badd .i{width:14px;height:14px}
 .bmenu{width:26px;height:26px;border-radius:9px;font-size:13px;padding-bottom:4px;margin-left:2px}
+/* оригинальное название: читаем русское, показываем это */
+.orig{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;
+  border:0;background:none;padding:0;margin:3px 0 0;cursor:pointer;color:#8b8fa3!important;
+  font:600 11px/1.3 "Inter",sans-serif;border-bottom:1px dotted rgba(139,143,163,.55)}
+.orig.big{font-size:12.5px;margin:-4px 0 8px}
+.orig:active{color:#5b3fc4!important}
 /* устаревшая вкладка: поля не редактируются, пока не обновили страницу */
 body.stale input,body.stale textarea,body.stale select{pointer-events:none!important}
 /* кнопка «добавить строку» — как «Забронировать…», только фиолетовая рамка пунктиром */
@@ -2240,6 +2246,10 @@ function animPlane(marker,a,bb,period){if(!marker)return;let t=0;const step=40/(
 function mapFallback(msg){const el=document.getElementById('map');if(el)el.innerHTML='<div class="mapph">'+ic('map','i-lg')+' <b>'+(msg||'Карта не загрузилась')+'</b><br>Открой страницу по обычной ссылке (Netlify/GitHub) в браузере при интернете. Список и ссылки на Google Maps работают всегда.</div>';}
 function popupHTML(nm,q,why,label,color,photo,foodicon,plate){
   const gm='<a class="mpop-gm" href="'+gurl(q)+'" target="_blank" rel="noopener">'+ic('pin','i-sm')+' Открыть в Google Maps →</a>';
+  /* оригинальное название и на карте: то, что человек показывает на месте,
+     должно быть видно везде, где он смотрит на место */
+  const or=(q&&String(q).trim()&&String(q).trim()!==String(nm).trim())
+    ?('<button class="orig" data-copy="'+esc0(String(q).trim())+'" title="нажмите, чтобы скопировать">'+esc0(String(q).trim())+'</button>'):'';
   if(foodicon){/* вариант B — рестораны: 3D-иконка еды (как в разделе «Еда») слева, фото нет */
     const ico=FOOD_ICONS[foodicon]||FOOD_ICONS.plate;
     return '<div class="mpop mpopB">'
@@ -2249,7 +2259,7 @@ function popupHTML(nm,q,why,label,color,photo,foodicon,plate){
           +'<div class="mpop-eye" style="color:#5b3fc4">Еда</div>'
           +'<div class="mpop-nm">'+nm+'</div>'
         +'</div></div>'
-      +'<div class="mpop-bd mpopB-bd"><div class="mpop-why">'+why+'</div>'+gm+'</div></div>';
+      +'<div class="mpop-bd mpopB-bd">'+or+'<div class="mpop-why">'+why+'</div>'+gm+'</div></div>';
   }
   /* нет фото — в плашке показываем иконку типа места, а не пустой фиолетовый прямоугольник */
   return '<div class="mpop">'
@@ -2257,7 +2267,7 @@ function popupHTML(nm,q,why,label,color,photo,foodicon,plate){
       +(photo?'':'<span class="mpop-ico">'+ic(plate||'pin','i-lg')+'</span>')+'</div>'
     +'<div class="mpop-bd">'
     +(label?'<div class="mpop-eye" style="color:'+color+'">'+label+'</div>':'')
-    +'<div class="mpop-nm">'+nm+'</div>'
+    +'<div class="mpop-nm">'+nm+'</div>'+or
     +'<div class="mpop-why">'+why+'</div>'
     +gm+'</div></div>';
 }
@@ -2552,6 +2562,7 @@ function buildCities(){
     const mine=stayPlaces(b.id),guests=PEOPLE+' '+plural(PEOPLE,'гостя','гостей','гостей');
     const stayCard=mine.map(h=>'<div class="cstay myst">'
         +'<div class="ahead"><span class="aic">'+ic('bed','i-sm')+'</span><h3>'+h.nm+'</h3></div>'
+        +origHTML(h)
         +'<div class="cmeta">'+shortName(b.name)+' · '+dm(ci)+'–'+dm(co)+' · '+b.nights+' '+nights(b.nights)+' · на '+guests+'</div>'
         +(h.rate?'<div class="aprice"><b>'+money(h.rate)+'</b> за ночь <span class="sep">·</span> <b>'+money((+h.tot||0)||h.rate*b.nights)+'</b> всего</div>':'')
         +(typeof h.lat==='number'
@@ -2601,7 +2612,7 @@ function buildCities(){
         +(d&&d.leg?'<div class="cleg"><b>'+d.pill+'</b> '+convDist(d.leg)+'</div>':'')
         +'<ul class="cplaces">'+list.map(p=>{const emo=p.star?'<span class="cstar">'+ic('star','i-sm')+'</span>':'';const on=picked.has(p.id);
           return '<li class="'+(on?'':'off')+'" data-pl="'+p.id+'"><div class="cpl-row"><div class="cpl-main">'
-            +'<span class="cpnm">'+emo+'<a href="'+gurl(p.q)+'" target="_blank" rel="noopener">'+p.nm+'</a></span></div>'
+            +'<span class="cpnm">'+emo+'<a href="'+gurl(p.q)+'" target="_blank" rel="noopener">'+p.nm+'</a></span>'+origHTML(p)+'</div>'
             +'<span class="cpact">'
             +'<span class="cpsw'+(on?' on':'')+'" data-pl="'+p.id+'" role="switch" aria-checked="'+on+'" aria-label="показывать на карте" tabindex="0"><i></i></span>'
             +'<button class="cpmv" data-mvopen="'+p.id+'" aria-label="перенести или убрать" title="перенести или убрать">⋯</button>'
@@ -2627,7 +2638,7 @@ function buildCities(){
         +'<b class="lclose">Свернуть список</b>'
         +'<span class="cgo">'+ic('chevron','i-sm')+'</span></summary>'
       +'<div class="cmorebody"><ul class="cplaces">'+sp.map(p=>'<li data-pl="'+p.id+'"><div class="cpl-row"><div class="cpl-main">'
-        +'<span class="cpnm"><a href="'+gurl(p.q)+'" target="_blank" rel="noopener">'+p.nm+'</a></span></div>'
+        +'<span class="cpnm"><a href="'+gurl(p.q)+'" target="_blank" rel="noopener">'+p.nm+'</a></span>'+origHTML(p)+'</div>'
         +'<button class="cpup" data-mvopen="'+p.id+'">'+ic('plus','i-sm')+' в день</button></div>'
         +metaStrip(p)+(p.why?'<span class="cwhy">'+convDist(p.why)+'</span>':'')+'</li>').join('')
       +'</ul><div class="cmoren">Тап «в день» — место встанет в выбранный день. Вернёшь ночь — вернётся и убранный день.</div></div></details></div>'):'';
@@ -2641,7 +2652,7 @@ function buildCities(){
       +'<div class="chead"><span class="ckick">База '+(i+1)+' из '+CB.length+' · '+dmRange(ci,co)
         +(w?(' · <button class="wtemp" data-weather="'+b.id+'" title="откуда эти градусы">'
              +ic('sun','i-w wsun')+' ≈'+fmtTempShort(w.d)+' '+ic('moon','i-w wmoon')+' ≈'+fmtTempShort(w.n)+'</button>'):'')+'</span>'
-      +'<h2>'+shortName(b.name)+'</h2><p>'+convDist(b.desc)+'</p>'+nb+'</div>'
+      +'<h2>'+shortName(b.name)+'</h2>'+origHTML(b,'big')+'<p>'+convDist(b.desc)+'</p>'+nb+'</div>'
       +'<div class="ctl">'+arrival+carHire+stay+route+more+'</div></div></section>';
   }).join('');
 
@@ -2677,6 +2688,32 @@ function buildCities(){
 }
 
 function dayPhoto(n){const p=P.find(x=>x.d===n&&PHOTO[x.id]);return p?pimg(p.id,'t'):'';}
+/* ОРИГИНАЛЬНОЕ НАЗВАНИЕ. Её правило: русское имя человек читает, а оригинал —
+   ПОКАЗЫВАЕТ: таксисту, на стойке, в поиске. Поэтому пишем рядом всегда и без
+   исключений (даже у Нью-Йорка: не прочитает — покажет пальцем), и по нажатию
+   копируем, чтобы можно было вставить куда угодно.
+   Берём поисковую строку места — ту самую, что уходит в Google Maps и в брони. */
+function origOf(x){
+  const q=String((x&&x.q)||'').trim();
+  if(!q)return '';
+  const nm=String((x&&(x.nm||x.name))||'').trim();
+  return (q===nm)?'':q;
+}
+function origHTML(x,cls){
+  const o=origOf(x);if(!o)return '';
+  return '<button class="orig'+(cls?' '+cls:'')+'" data-copy="'+esc0(o)+'" title="нажмите, чтобы скопировать">'+esc0(o)+'</button>';
+}
+/* ⚠️ Отметки «показывать на карте» хранятся списком id мест. Если поездка создана
+   на ОДНОМ маршруте, а открыта на другом (у клиента так вышло с Ютой), в списке
+   лежат чужие id — и тогда на карте не видно НИ ОДНОЙ точки, только линии.
+   Чужие id выбрасываем, а если своих не осталось — показываем всё. */
+function loadPicks(){
+  const all=P.map(p=>p.id);
+  let s=null;try{s=JSON.parse(localStorage.getItem(KEY));}catch(e){}
+  if(!Array.isArray(s))return new Set(all);
+  const mine=s.filter(id=>P.some(p=>p.id===id));
+  return new Set(mine.length?mine:all);
+}
 function basePhoto(id){return BPHOTO[id]?pimg(BPHOTO[id],'t'):'';}
 function dayPts(n){return P.filter(p=>p.d===n&&p.cat!=='food').length;}
 function catPts(k){return k==='star'?P.filter(p=>p.star).length:P.filter(p=>p.cat===k).length;}
@@ -2786,7 +2823,7 @@ function applyFilter(){
 
 /* ================= СПИСОК ДНЕЙ ================= */
 const KEY='co-trip-2026-picks';let picked;
-try{picked=new Set(JSON.parse(localStorage.getItem(KEY))||P.map(p=>p.id));}catch(e){picked=new Set(P.map(p=>p.id));}
+picked=loadPicks();
 function savePicks(){try{localStorage.setItem(KEY,JSON.stringify([...picked]));}catch(e){}}
 
 /* Мета-строка по каждому месту: цена · время · лучшее время · по пути/крюк */
@@ -2828,7 +2865,7 @@ function buildDays(){
         +(PHOTO[p.id]?'<span class="thumb" style="background-image:url('+pimg(p.id,'t')+')"></span>'
                      :'<span class="thumb noimg">'+ic(CATS[p.cat]?CATS[p.cat].e:'pin','i-lg')+'</span>')
         +'<input type="checkbox" class="tick" data-tick="'+p.id+'" aria-label="показать на карте"></span>'
-        +'<span class="sinfo"><span class="snm">'+emo+'<a href="'+gurl(p.q)+'" target="_blank" rel="noopener">'+p.nm+'</a>'+(p.tag?'<span class="tag '+p.tag[1]+'">'+p.tag[0]+'</span>':'')+'</span>'
+        +'<span class="sinfo"><span class="snm">'+emo+'<a href="'+gurl(p.q)+'" target="_blank" rel="noopener">'+p.nm+'</a>'+(p.tag?'<span class="tag '+p.tag[1]+'">'+p.tag[0]+'</span>':'')+'</span>'+origHTML(p)
         +metaStrip(p)
         +'<span class="why">'+convDist(p.why)+'</span></span></li>';}).join('')+'</ul>'
       +(d.note?'<div class="dnote">'+convDist(d.note)+'</div>':'')+'</div></details>';
@@ -2961,6 +2998,7 @@ function buildFood(){
           +'<span class="cpsw'+(fon?' on':'')+'" data-food-sw="'+id+'" role="switch" aria-checked="'+fon+'" aria-label="показывать на карте" tabindex="0"><i></i></span>'
           +'<span class="ficon"><img class="fimg" src="'+encodeURI(F3D+ico.f)+'" alt="" loading="lazy" onerror="this.closest(\'.ficon\').classList.add(\'noimg\');this.remove();"><span class="femoji">'+ico.e+'</span></span></div>'
           +'<div class="fcbody"><div class="fcnm"><a href="'+gmSearch(s.nm+' '+c.q)+'" target="_blank" rel="noopener">'+s.nm+'</a></div>'
+          +'<button class="orig" data-copy="'+esc0(s.nm+', '+c.q)+'" title="нажмите, чтобы скопировать">'+esc0(s.nm+', '+c.q)+'</button>'
           +'<div class="fcwhy">'+s.why+'</div>'
           +'<div class="fcmeta"><span class="fchip pr">'+s.price+'</span></div></div></div>';
       }).join('');
@@ -4127,6 +4165,18 @@ document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)r
   if(t.dataset.nd!==undefined){const i=+t.dataset.nd,dir=+t.dataset.dir;setNights(i,BASES[i].nights+dir);}
   if(t.dataset.undo){if(_undo)restoreState(_undo.prev);_undo=null;hideToast();}
   if(t.dataset.staleup!==undefined){staleReload();return;}
+  /* оригинальное название — в буфер: чтобы показать таксисту или вставить в поиск */
+  if(t.dataset.copy!==undefined){
+    const v=t.dataset.copy;
+    const done=()=>toast('<b>Скопировано</b><i>'+esc0(v)+'</i>',null,null);
+    try{
+      if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(v).then(done,done);
+      else{const ta=document.createElement('textarea');ta.value=v;ta.style.position='fixed';ta.style.opacity='0';
+        document.body.appendChild(ta);ta.select();try{document.execCommand('copy');}catch(err){}
+        document.body.removeChild(ta);done();}
+    }catch(err){done();}
+    e.stopPropagation();return;
+  }
   if(t.dataset.tclose){hideToast();}
   if(t.dataset.pickday){pickDaySheet(t.dataset.pickday);}
   if(t.dataset.rmday){closeDaySheet();removeDay(t.dataset.rmbase,tidOf(t.dataset.rmday));}
@@ -4821,7 +4871,7 @@ let ASM=null;
    «машину не берём» — так делать нельзя: это её ответ, а не наш. */
 let CARMODE=null;
 const AKEY='co-trip-ask';
-function askNew(){return {text:'',dest:'',where:null,whereNm:'',only:null,onlyNm:'',
+function askNew(){return {text:'',dest:'',where:null,whereNm:'',only:null,onlyNm:'',wholeOk:0,
   dateMode:null,from:'',to:'',days:null,month:null,   /* три формы ответа на «когда» */
   adults:null,kids:null,places:'',placesAny:false,
   drive:null,booked:[],bk:{},
@@ -5335,9 +5385,12 @@ function likeOf(i,likes){
 }
 function assemble(a){
   const notes=[],warn=[];
-  /* Человек назвал один город — значит поездка в один город, а не весь маршрут.
-     Остальные города не «проездом», их в поездке просто нет. */
-  setOnly(a.only);
+  /* ⚠️ ГОТОВЫЙ МАРШРУТ НЕ РЕЖЕМ. Раньше «Дуранго на 4 дня» вырезал город из
+     Колорадо. Клиент: «конструктор нужен не для того, чтобы из готовой поездки
+     собрать Денвер на один день; готовая поездка — готовая, а новая собирается
+     генерацией с нуля». Поэтому набор городов у готового маршрута неизменен —
+     меняем только дни, ночи, людей и даты. */
+  setOnly(null);
   const idx=BASES.map((b,i)=>i).filter(i=>!BASES[i].off);
   if(!idx.length)return {days:2,nights:BASES.map(()=>0),notes:notes,warn:warn,drop:[],keep:[]};
   const first=idx[0],last=idx[idx.length-1];
@@ -5533,8 +5586,17 @@ function buildFromAsk(){
   /* «не вожу» — не мелочь, а вопрос, существует ли поездка. Между нашими городами
      нет ни поездов, ни автобусов, и придумывать их нельзя. Спрашиваем ДО того,
      как собрали: человек либо согласится на машину, либо поменяет ответ. */
-  const oneCity=!!(a.only&&a.only.length===1);
-  if(a.drive==='no'&&cat.needsCar&&!oneCity&&!a.carOk){
+  /* Назвал город, а не направление: готового маршрута по одному городу у нас нет,
+     а вырезать его из большого нельзя. Говорим прямо и предлагаем то, что есть. */
+  if(a.only&&a.only.length&&!a.wholeOk){
+    sheet('<div class="dsh"><b>Готового маршрута по '+esc0(a.onlyNm)+' у нас нет</b>'
+        +'<span>Есть готовый маршрут «'+esc0(cat.nm)+'» — '+esc0(a.onlyNm)+' входит в него. '
+        +'Можно открыть его целиком и убрать лишние дни внутри</span></div>'
+      +'<button class="dsgo" data-askwhole="1">Открыть «'+esc0(cat.nm.split(',')[0])+'»</button>'
+      +'<button class="dscancel" data-dsclose="1">Вернуться и поменять ответ</button>');
+    return;
+  }
+  if(a.drive==='no'&&cat.needsCar&&!a.carOk){
     sheet('<div class="dsh"><b>Без машины этот маршрут не проехать</b><span>'+esc0(cat.nm)
         +' — дорога между городами. Поездов и автобусов там нет: это не наша лень, их правда нет. '
         +'Можно взять машину с водителем, но подобрать её мы пока не умеем</span></div>'
@@ -5543,7 +5605,7 @@ function buildFromAsk(){
     return;
   }
   const mm=askMonth(a);
-  const title=(a.onlyNm||cat.nm.split(',')[0])+(mm.m!=null?(' · '+monthNm(mm.m)):'');
+  const title=cat.nm.split(',')[0]+(mm.m!=null?(' · '+monthNm(mm.m)):'');
   /* другой маршрут — другой файл данных, он подключается только при загрузке */
   if(cat.file!==window.__dataFile)return newTripFromData(title,cat.file,a);
   newTripFromCurrent(title);
@@ -5557,6 +5619,7 @@ document.addEventListener('click',e=>{
   const t=e.target.closest('button');if(!t)return;
   if(t.dataset.askgo!==undefined){const v=(document.getElementById('askText')||{}).value||'';showLand(parseAsk(v));}
   if(t.dataset.askcar!==undefined&&ASK){ASK.carOk=1;closeDaySheet();buildFromAsk();}
+  if(t.dataset.askwhole!==undefined&&ASK){ASK.wholeOk=1;closeDaySheet();buildFromAsk();}
   if(t.dataset.asmsheet!==undefined){asmSheet();}
   if(t.dataset.baddg!==undefined){addBudgetSheet(t.dataset.baddg);}
   if(t.dataset.busave!==undefined){saveBudgetRow(t.dataset.busave,t.dataset.buedit||null);}
@@ -6316,7 +6379,7 @@ function cloudSave(){if(!sb||_applying)return;clearTimeout(_cloudTimer);syncSay(
 /* перерисовка НА МЕСТЕ (без перезагрузки!) после загрузки плана из облака */
 function reinit(){try{
   loadPlan();
-  try{picked=new Set(JSON.parse(localStorage.getItem(KEY))||P.map(p=>p.id));}catch(e){picked=new Set(P.map(p=>p.id));}
+  picked=loadPicks();
   try{const s=JSON.parse(localStorage.getItem(FKEY));if(Array.isArray(s))foodPicked=new Set(s);}catch(e){}
   loadHRates();
   const sd=document.getElementById('startDate');if(sd)sd.value=startIso;
