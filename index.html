@@ -1354,6 +1354,8 @@ body{background:linear-gradient(168deg,#eef1f8,#e9edf6 60%,#e6eaf4)!important}
   font:800 11.5px/1 "Plus Jakarta Sans",sans-serif;cursor:pointer}
 .badd .i{width:14px;height:14px}
 .bmenu{width:26px;height:26px;border-radius:9px;font-size:13px;padding-bottom:4px;margin-left:2px}
+/* устаревшая вкладка: поля не редактируются, пока не обновили страницу */
+body.stale input,body.stale textarea,body.stale select{pointer-events:none!important}
 /* кнопка «добавить строку» — как «Забронировать…», только фиолетовая рамка пунктиром */
 .badd{width:calc(100% - 32px);border-style:dashed!important;cursor:pointer;text-align:left}
 .bkinds{grid-template-columns:repeat(2,1fr)}
@@ -4114,6 +4116,7 @@ document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)r
   if(t.dataset.dayoff){P.filter(p=>p.d===tidOf(t.dataset.dayoff)).forEach(p=>picked.delete(p.id));savePicks();syncChecks();applyFilter();}
   if(t.dataset.nd!==undefined){const i=+t.dataset.nd,dir=+t.dataset.dir;setNights(i,BASES[i].nights+dir);}
   if(t.dataset.undo){if(_undo)restoreState(_undo.prev);_undo=null;hideToast();}
+  if(t.dataset.staleup!==undefined){staleReload();return;}
   if(t.dataset.tclose){hideToast();}
   if(t.dataset.pickday){pickDaySheet(t.dataset.pickday);}
   if(t.dataset.rmday){closeDaySheet();removeDay(t.dataset.rmbase,tidOf(t.dataset.rmday));}
@@ -5660,6 +5663,16 @@ function heroTitle(){
   const k=Math.ceil(list.length/2);
   return {h1:list.slice(0,k).join(' → '),em:list.slice(k).join(' → ')};
 }
+/* Самое красивое место поездки: обязательное (звезда), с фотографией, из тех
+   городов, где мы ночуем. Именно оно и должно стоять в шапке. */
+function heroPick(){
+  const ids=tripBases().filter(b=>b.nights>0).map(b=>b.id);
+  const cand=P.filter(p=>p.cat!=='food'&&ids.indexOf(p.base)>=0&&PHOTO[p.id]&&dayOf(p.d));
+  if(!cand.length)return null;
+  const best=cand.find(p=>p.star)||cand.find(p=>prioOf(p)==='must')||cand[0];
+  const e=dayOf(best.d),city=shortName(baseById(best.base).name);
+  return {p:best,img:pimg(best.id,'l'),sub:city+(e?' · день '+e.disp:'')};
+}
 function applyHero(){
   const q=s=>document.querySelector(s);
   const H=(typeof HERO!=='undefined'&&HERO)||null;
@@ -5677,12 +5690,19 @@ function applyHero(){
     const b=CB[0];
     const sub0=q('header.hero .sub');
     if(sub0)sub0.textContent=(CB.length===1&&b&&b.desc)?b.desc:'';
-    const im0=q('header.hero .tile-photo img'),ph=b?basePhoto(b.id):'';
-    if(im0&&ph){im0.src=ph;im0.alt=b.name;}
+    /* фотография — САМОЕ КРАСИВОЕ МЕСТО поездки, а не первая попавшаяся картинка
+       города: клиент справедливо заметила, что вид из окна поезда вместо
+       Меса-Верде обесценивает всю шапку */
+    const best=heroPick();
+    const im0=q('header.hero .tile-photo img'),ph=best?best.img:(b?basePhoto(b.id):'');
+    if(im0&&ph){im0.src=ph;im0.alt=best?best.p.nm:(b?b.name:'');}
     const cn0=q('header.hero .tile-photo .cnt');
-    if(cn0&&b){
-      const before=nightsBefore(b.id),ci=addDays(startIso,before),co=addDays(startIso,before+b.nights);
-      cn0.innerHTML='<h2>'+esc0(shortName(b.name))+'</h2><p>'+esc0(dmRange(ci,co)+' · '+b.nights+' '+nights(b.nights))+'</p>';
+    if(cn0){
+      if(best)cn0.innerHTML='<h2>'+esc0(shortName(best.p.nm))+'</h2><p>'+esc0(best.sub)+'</p>';
+      else if(b){
+        const before=nightsBefore(b.id),ci=addDays(startIso,before),co=addDays(startIso,before+b.nights);
+        cn0.innerHTML='<h2>'+esc0(shortName(b.name))+'</h2><p>'+esc0(dmRange(ci,co)+' · '+b.nights+' '+nights(b.nights))+'</p>';
+      }
     }
     return;
   }
@@ -6213,6 +6233,37 @@ function reinit(){try{
   applyHero();
   renderUnits();buildRoute();buildDays();buildCities();buildFood();buildBases();buildPlanner();buildBudget();buildFilters();buildElev();recomputeDates();syncChecks();applyFilter();
 }catch(e){}}
+/* ── СТРАНИЦА УСТАРЕЛА ──
+   Поездку изменили на другом устройстве. Пока человек не обновил страницу,
+   правки на этой вкладке запрещены: иначе он будет править старую версию,
+   а потом гадать, куда делось сделанное. Смотреть можно. */
+let _stale=null;
+function staleAsk(row){
+  if(row)_stale=row;
+  if(!_stale)return;
+  document.body.classList.add('stale');
+  toast('<b>Поездку изменили на другом устройстве</b>'
+    +'<i>Обновите страницу, чтобы увидеть новую версию. Пока страница только для просмотра — правки на ней сохранить нельзя</i>',null,null);
+  const el=document.getElementById('toast');
+  if(el){
+    const ok=el.querySelector('.tb.ok');if(ok)ok.textContent='Позже';
+    el.insertAdjacentHTML('beforeend','<button class="tb v" data-staleup="1">Обновить страницу</button>');
+  }
+}
+/* обновляем: кладём свежую версию и перезагружаемся — дальше всё как обычно */
+function staleReload(){
+  const row=_stale;
+  try{
+    if(row&&row.plan){
+      _applying=true;
+      CLOUD_KEYS.forEach(k=>{if(row.plan[k]!=null)_rawSet(k,row.plan[k]);});
+      const ts=(+row.plan.__ts)||(row.updated_at?new Date(row.updated_at).getTime():Date.now());
+      _rawSet('co-trip-ts',String(ts));_rawSet('co-trip-pushed',String(ts));
+      markClean();_applying=false;
+    }
+  }catch(e){}
+  location.reload();
+}
 async function cloudSync(session){
   if(!sb||!session)return;
   _signedIn=true;syncSay();
@@ -6238,24 +6289,34 @@ async function cloudSync(session){
     if(row&&row.plan&&!dirty()&&!stale&&newer){
       /* своих несохранённых правок нет → берём облако, оно главное */
       const same=CLOUD_KEYS.every(k=>(row.plan[k]==null?null:row.plan[k])===localStorage.getItem(k));
-      /* ⚠️ ПРАВИЛО КЛИЕНТА: «неважно, с какого устройства — сохраняется то, что я
-         правила последней». Никаких вопросов и плашек: правка, сделанная позже,
-         и есть правда. Сравниваем ТОЛЬКО свои метки времени (plan.__ts), потому что
-         сравнение с часами сервера один раз уже вытеснило свежее старым. */
-      if(!same){
-        _applying=true;
-        CLOUD_KEYS.forEach(k=>{if(row.plan[k]!=null)_rawSet(k,row.plan[k]);});
-        _rawSet('co-trip-ts',String(mineTs||Date.now()));
-        _rawSet('co-trip-pushed',String(cloudTs||mineTs||Date.now()));
-        markClean();
-        reinit();_applying=false;
-      }
+      /* ⚠️ ПРАВИЛО КЛИЕНТА. Побеждает та правка, что сделана позже — но экран
+         сам собой не меняется: «пусть компьютер напишет, что изменения внесены
+         на другом устройстве, и попросит обновить страницу, а пока только смотреть».
+         Молча подменять открытую страницу нельзя: человек может как раз на неё
+         смотреть. Поэтому — просьба обновить и запрет правок до обновления. */
+      if(!same)staleAsk(row);
       _syncErr='';syncSay();return;
     }
     /* есть свои несохранённые правки (или в облаке пусто) — отправляем их */
     await cloudPush();
   }catch(e){_syncErr=(e&&e.message)||String(e);syncSay();}}
 /* перехват записи наших ключей → отметка времени + авто-сохранение */
+/* Пока страница устарела, ловим ЛЮБУЮ попытку что-то изменить и вместо правки
+   снова просим обновиться. Смотреть, листать и открывать ссылки — можно. */
+document.addEventListener('click',function(e){
+  if(!_stale)return;
+  const t=e.target&&e.target.closest?e.target.closest('button,a,input,select,textarea,label,summary,[data-city],[data-goday]'):null;
+  if(!t)return;
+  if(t.closest('#toast'))return;                       /* кнопки самой плашки */
+  if(t.tagName==='SUMMARY')return;                     /* раскрыть день — это просмотр */
+  if(t.tagName==='A'){
+    const h=t.getAttribute('href')||'';
+    if(t.getAttribute('target')==='_blank'||h.charAt(0)==='#')return;   /* навигация и брони */
+  }
+  if(t.classList&&(t.classList.contains('cst')||t.classList.contains('mfb')))return;  /* степпер и вкладки карты */
+  e.preventDefault();e.stopPropagation();
+  staleAsk();
+},true);
 localStorage.setItem=function(k,v){_rawSet(k,v);if(!_applying&&CLOUD_KEYS.indexOf(k)>=0){_rawSet('co-trip-ts',String(Date.now()));markDirty();cloudSave();}};
 /* открыть окно входа умеет и меню аккаунта */
 let openAuth=function(){};
