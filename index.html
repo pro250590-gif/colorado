@@ -1376,6 +1376,15 @@ body{background:linear-gradient(168deg,#eef1f8,#e9edf6 60%,#e6eaf4)!important}
 .orig:active{color:#5b3fc4!important}
 /* устаревшая вкладка: поля не редактируются, пока не обновили страницу */
 body.stale input,body.stale textarea,body.stale select{pointer-events:none!important}
+/* и об этом должно быть ВИДНО: плашку-подсказку можно закрыть, а полоса
+   висит сверху, пока страницу не обновили — иначе кажется, что сайт умер */
+.stalebar{position:fixed;top:0;left:0;right:0;z-index:9999;display:flex;align-items:center;gap:10px;
+  padding:9px 12px;background:linear-gradient(150deg,#7a5cf0,#5b3fc4);color:#fff;
+  font:700 12.5px/1.3 "Inter",sans-serif;box-shadow:0 4px 14px rgba(20,32,27,.22)}
+.stalebar span{flex:1;min-width:0}
+.stalebar button{flex:none;border:0;border-radius:999px;padding:7px 13px;background:#fff;color:#5b3fc4;
+  font:800 12px/1 "Inter",sans-serif;cursor:pointer}
+body.stale{padding-top:44px}
 /* кнопка «добавить строку» — как «Забронировать…», только фиолетовая рамка пунктиром */
 .badd{width:calc(100% - 32px);border-style:dashed!important;cursor:pointer;text-align:left}
 .bkinds{grid-template-columns:repeat(2,1fr)}
@@ -2907,9 +2916,15 @@ function metaStrip(p){
    транспорт особый (катер, фуникулёр, поезд) — берём из данных места: hop. */
 /* чем передвигаются в этом городе: сперва то, что вывел движок (там учтён
    прокат), потом то, что написано в файле маршрута */
+/* ЛОВУШКА: PARTS объявлен через let ниже по файлу, и `typeof PARTS` в этот
+   момент не спасает — сам typeof бросает ошибку. Без try/catch первый же вызов
+   ронял загрузку страницы, и не нажималась ни одна кнопка. */
 function moveOf(bid){
-  const p=((typeof PARTS!=='undefined'&&PARTS.points)||[]).find(x=>x.id===bid&&x.kind==='city');
-  return (p&&p.city_transport)||(typeof CITYMOVE!=='undefined'&&CITYMOVE&&CITYMOVE[bid])||'';
+  let p=null;
+  try{p=(PARTS.points||[]).find(x=>x.id===bid&&x.kind==='city');}catch(e){}
+  let own='';
+  try{own=(CITYMOVE&&CITYMOVE[bid])||'';}catch(e){}
+  return (p&&p.city_transport)||own||'';
 }
 function hopWord(bid){
   const m=moveOf(bid);
@@ -2939,6 +2954,9 @@ function hopHTML(a,b){
 /* после включения-выключения места подписи пересчитываем: путь идёт по тем
    точкам, что остались на виду, иначе «7 минут» вели бы к выключенной */
 function refreshHops(){
+  try{refreshHops_();}catch(e){}   /* подпись между точками не имеет права ронять страницу */
+}
+function refreshHops_(){
   document.querySelectorAll('ul.cplaces,ul.stops').forEach(ul=>{
     let prev=null;
     [...ul.children].forEach(li=>{
@@ -6639,6 +6657,13 @@ function staleAsk(row){
   if(row)_stale=row;
   if(!_stale)return;
   document.body.classList.add('stale');
+  /* полоса сверху — она не закрывается: пока её не нажали, страница только
+     для просмотра, и человек должен видеть ПОЧЕМУ ничего не нажимается */
+  if(!document.querySelector('.stalebar')){
+    document.body.insertAdjacentHTML('afterbegin',
+      '<div class="stalebar"><span>Поездку изменили на другом устройстве — страница пока только для просмотра</span>'
+      +'<button data-staleup="1">Обновить</button></div>');
+  }
   toast('<b>Поездку изменили на другом устройстве</b>'
     +'<i>Обновите страницу, чтобы увидеть новую версию. Пока страница только для просмотра — правки на ней сохранить нельзя</i>',null,null);
   const el=document.getElementById('toast');

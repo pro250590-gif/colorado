@@ -194,12 +194,16 @@ const HERO={
   parks:'2',parksCap:'города в поездке'
 };
 
+/* Фото ставим только там, где своими глазами проверили, что на снимке ИМЕННО
+   это место. Автомат ошибается: приносил портрет певца вместо Ла Скала и
+   «дорожку влюблённых» из Градары вместо Варенны. Где снимка нет — рисуется
+   значок, и это честнее чужой картинки. */
 const PHOTO={duo:'jpg',ter:'jpg',gal:'jpg',sfo:'jpg',bre:'jpg',nav:'jpg',
  mxp:'jpg',cad:'jpg',col:'jpg',lor:'jpg',eus:'jpg',tic:'jpg',dar:'jpg',lav:'jpg',
- rea:'jpg',mer:'jpg',amb:'jpg',sca:'jpg',rin:'jpg',sem:'jpg',bra:'jpg',arc:'jpg',
- tri:'jpg',cen:'jpg',leo:'jpg',amr:'jpg',mau:'jpg',clg:'jpg',cdu:'jpg',fun:'jpg',
- vol:'jpg',bpr:'jpg',mel:'jpg',vpr:'jpg',inn:'jpg',mos:'jpg',vez:'jpg',vst:'jpg',
- ort:'jpg',pol:'jpg',mon:'jpg',bab:'jpg'};
+ rea:'jpg',mer:'jpg',amb:'jpg',rin:'jpg',sem:'jpg',bra:'jpg',arc:'jpg',
+ cen:'jpg',leo:'jpg',amr:'jpg',mau:'jpg',clg:'jpg',cdu:'jpg',fun:'jpg',
+ vol:'jpg',bpr:'jpg',mel:'jpg',vpr:'jpg',mos:'jpg',vst:'jpg',
+ pol:'jpg',mon:'jpg',bab:'jpg'};
 const BPHOTO={mil:'duo'};
 
 const ALT={};
