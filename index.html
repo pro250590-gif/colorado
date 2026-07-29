@@ -1479,6 +1479,12 @@ header.hero h1 em{background:none!important;-webkit-background-clip:border-box!i
 .cplaces{list-style:none;margin:0;padding:0}
 .cplaces li{padding:13px 0;border-top:1px solid #eef0f6}
 .cplaces li:first-child{border-top:0}
+/* подпись между точками: сколько идти от предыдущей и чем (просьба клиента) */
+.cplaces li.chop,.stops li.chop{padding:0;border-top:0;margin:0;background:none;box-shadow:none;display:block}
+.hopin{display:flex;align-items:center;gap:7px;font:600 11.5px/1.3 "Inter",sans-serif;
+  color:#8e93a8;padding:7px 0 7px 3px}
+.hopin::before{content:'';flex:none;width:0;height:15px;border-left:2px dotted #cdd2e2;margin-left:6px}
+.cplaces li.chop+li{border-top:0}
 .cpl-row{display:flex;align-items:flex-start;gap:12px}
 .cpl-main{flex:1;min-width:0;transition:opacity .2s}
 .cplaces li.off .cpl-main,.cplaces li.off .meta,.cplaces li.off .cwhy{opacity:.4}
@@ -2644,8 +2650,9 @@ function buildCities(){
         +'<span class="cgo">'+ic('chevron','i-sm')+'</span></summary>'
         +'<div class="cdaybody">'
         +(d&&d.leg?'<div class="cleg"><b>'+d.pill+'</b> '+convDist(d.leg)+'</div>':'')
-        +'<ul class="cplaces">'+list.map(p=>{const emo=p.star?'<span class="cstar">'+ic('star','i-sm')+'</span>':'';const on=picked.has(p.id);
-          return '<li class="'+(on?'':'off')+'" data-pl="'+p.id+'"><div class="cpl-row"><div class="cpl-main">'
+        +'<ul class="cplaces">'+list.map((p,pi)=>{const emo=p.star?'<span class="cstar">'+ic('star','i-sm')+'</span>':'';const on=picked.has(p.id);
+          return hopHTML(pi?list[pi-1]:null,p)
+            +'<li class="'+(on?'':'off')+'" data-pl="'+p.id+'"><div class="cpl-row"><div class="cpl-main">'
             +'<span class="cpnm">'+emo+'<a href="'+gurl(p.q)+'" target="_blank" rel="noopener">'+p.nm+'</a></span>'+origHTML(p)+'</div>'
             +'<span class="cpact">'
             +'<span class="cpsw'+(on?' on':'')+'" data-pl="'+p.id+'" role="switch" aria-checked="'+on+'" aria-label="показывать на карте" tabindex="0"><i></i></span>'
@@ -2839,6 +2846,7 @@ function applyFilter(){
   const ft=document.getElementById('foodToggle');if(ft)ft.classList.toggle('act',foodOn);
   // строки списка (только маршрутные точки; еда — отдельный раздел ниже)
   P.forEach(p=>{if(p.cat==='food')return;const li=document.querySelector('li[data-id="'+p.id+'"]');if(li)li.classList.toggle('hiddenrow',!matchesPrimary(p));});
+  refreshHops();   /* спрятали строки фильтром — подписи «сколько идти» пересчитываем */
   // карточки дней
   SCHED.forEach(e=>{const card=document.querySelector('details.day[data-day="'+e.tid+'"]');if(!card)return;
     const anyVis=P.some(p=>p.d===e.tid&&matchesPrimary(p));
@@ -2892,6 +2900,59 @@ function metaStrip(p){
   if(m.route)out+='<span class="mpill route">'+ic('route','i-sm')+' '+m.route+'</span>';
   return out+'</span>';
 }
+/* ── «сколько между точками» ──────────────────────────────────────────────
+   Просьба клиента: «между точками нужно писать расстояние — 5 минут пешком,
+   10 минут метро, полчаса на машине; и точки должны идти друг за другом».
+   Считаем сами по координатам, чтобы это работало на любом маршруте, а где
+   транспорт особый (катер, фуникулёр, поезд) — берём из данных места: hop. */
+/* чем передвигаются в этом городе: сперва то, что вывел движок (там учтён
+   прокат), потом то, что написано в файле маршрута */
+function moveOf(bid){
+  const p=((typeof PARTS!=='undefined'&&PARTS.points)||[]).find(x=>x.id===bid&&x.kind==='city');
+  return (p&&p.city_transport)||(typeof CITYMOVE!=='undefined'&&CITYMOVE&&CITYMOVE[bid])||'';
+}
+function hopWord(bid){
+  const m=moveOf(bid);
+  if(m==='car_all'||m==='car_trips')return 'на машине';
+  if(m==='metro_walk')return 'на метро';
+  return 'на транспорте';
+}
+function hopText(a,b){
+  if(b&&b.hop)return b.hop;                      /* написано руками — оно и главнее */
+  if(!a||!b||typeof a.lat!=='number'||typeof b.lat!=='number')return '';
+  const d=kmBetween(a.lat,a.lng,b.lat,b.lng)*1.25;   /* по улицам всегда длиннее прямой */
+  if(d<0.09)return 'рядом, в двух шагах';
+  const mv=moveOf(b.base);
+  const car=(mv==='car_all'||mv==='car_trips');
+  /* где ездят на машине, «двадцать минут пешком» — это не совет, а насмешка:
+     пешком пишем только совсем близкое */
+  if(d<(car?0.5:1.7)){const n=Math.max(1,Math.round(d/4.6*60));
+    return n+' '+plural(n,'минута','минуты','минут')+' пешком';}
+  const speed=car?50:(mv==='metro_walk'?20:25);
+  const n=Math.max(5,Math.round(d/speed*60/5)*5);
+  return fmtKm(d)+' · '+n+' мин '+hopWord(b.base);
+}
+function hopHTML(a,b){
+  const t=hopText(a,b);
+  return t?'<li class="chop"><span class="hopin">'+t+'</span></li>':'';
+}
+/* после включения-выключения места подписи пересчитываем: путь идёт по тем
+   точкам, что остались на виду, иначе «7 минут» вели бы к выключенной */
+function refreshHops(){
+  document.querySelectorAll('ul.cplaces,ul.stops').forEach(ul=>{
+    let prev=null;
+    [...ul.children].forEach(li=>{
+      if(li.classList.contains('chop'))return;
+      const id=li.dataset.pl||li.dataset.id;if(!id)return;
+      const p=P.find(x=>x.id===id);if(!p)return;
+      const gap=li.previousElementSibling&&li.previousElementSibling.classList.contains('chop')
+        ? li.previousElementSibling.querySelector('.hopin') : null;
+      const on=picked.has(id)&&!li.classList.contains('hiddenrow');
+      if(gap){const t=on?hopText(prev,p):'';gap.textContent=t;gap.parentElement.style.display=t?'':'none';}
+      if(on)prev=p;
+    });
+  });
+}
 function buildDays(){
   const host=document.getElementById('days');let out='';
   SCHED.forEach(e=>{
@@ -2904,8 +2965,9 @@ function buildDays(){
       +'<div class="day-body">'
       +'<div class="leg"><span class="pill">'+d.pill+'</span> <b>'+convDist(d.leg)+'</b><a class="dirlink" href="#" data-dir="'+e.tid+'" target="_blank" rel="noopener">Маршрут в Google Maps →</a></div>'
       +'<div class="daytools"><button class="tiny" data-dayon="'+e.tid+'">Отметить день</button><button class="tiny" data-dayoff="'+e.tid+'">Снять день</button></div>'
-      +'<ul class="stops">'+list.map(p=>{const emo=p.star?'<span class="cemo star">'+ic('star','i-sm')+'</span>':'';
-        return '<li data-id="'+p.id+'" data-cat="'+p.cat+'" data-day="'+p.d+'" data-base="'+p.base+'">'
+      +'<ul class="stops">'+list.map((p,pi)=>{const emo=p.star?'<span class="cemo star">'+ic('star','i-sm')+'</span>':'';
+        return hopHTML(pi?list[pi-1]:null,p)
+        +'<li data-id="'+p.id+'" data-cat="'+p.cat+'" data-day="'+p.d+'" data-base="'+p.base+'">'
         +'<span class="pic">'
         +(PHOTO[p.id]?'<span class="thumb" style="background-image:url('+pimg(p.id,'t')+')"></span>'
                      :'<span class="thumb noimg">'+ic(CATS[p.cat]?CATS[p.cat].e:'pin','i-lg')+'</span>')
@@ -2943,7 +3005,8 @@ function updateDirLinks(){document.querySelectorAll('a[data-dir]').forEach(a=>{c
 function syncChecks(){P.forEach(p=>{const on=picked.has(p.id);
   const b=document.querySelector('[data-tick="'+p.id+'"]');if(b)b.checked=on;
   const li=document.querySelector('li[data-id="'+p.id+'"]');if(li)li.style.opacity=on?'1':'.55';
-  const sw=document.querySelector('.cpsw[data-pl="'+p.id+'"]');if(sw){sw.classList.toggle('on',on);sw.setAttribute('aria-checked',on);const cli=sw.closest('li');if(cli)cli.classList.toggle('off',!on);}});}
+  const sw=document.querySelector('.cpsw[data-pl="'+p.id+'"]');if(sw){sw.classList.toggle('on',on);sw.setAttribute('aria-checked',on);const cli=sw.closest('li');if(cli)cli.classList.toggle('off',!on);}});
+  refreshHops();}
 
 
 /* фото для заведения подбираем по типу кухни */
@@ -5022,8 +5085,8 @@ const CATALOG=[
    cities:[[/зайон|zion|спрингдейл|springdale/i,'zio','Зайон'],[/брайс|bryce/i,'bry','Брайс'],
            [/моаб|moab|арки|arches|каньонлендс|canyonlands/i,'moa','Моаб']],
    best:{m:9,why:'октябрь: в каньонах уже не +40, а вода в Narrows ещё тёплая'}},
-  /* пять новых направлений, каждое своей формы: город без машины · город +
-     озеро с поездом · перелёт посреди поездки · круг на машине · поезд между
+  /* пять новых направлений, каждое своей формы: город без машины · город с
+     выездом на день · перелёт посреди поездки · круг на машине · поезд между
      далёкими городами. Так видно, что движок собирает разные поездки, а не одну
      и ту же под разными именами. */
   {k:'pa',file:'trip-paris.js',rx:/париж|paris|версал|versailles|монмартр/i,nm:'Париж, Франция',cover:'img/pa_eif-l.jpg',needsCar:false,
@@ -5031,8 +5094,8 @@ const CATALOG=[
    region:/франц|france/i,cities:[[/париж|paris/i,'par','Париж']],
    best:{m:8,why:'сентябрь: жара спала, а террасы ещё открыты'}},
   {k:'mi',file:'trip-milan.js',rx:/милан|milan|комо|como|белладжо|bellagio/i,nm:'Милан и озеро Комо',cover:'img/mi_duo-l.jpg',needsCar:false,
-   days:5,shape:'поезд между городами',sub:'Город и озеро, катер в Белладжо',
-   region:/итали|italy/i,cities:[[/милан|milan/i,'mil','Милан'],[/комо|como/i,'com','Комо']],
+   days:5,shape:'город и выезд на день',sub:'Озеро Комо — поездом и катером, без ночёвки',
+   region:/итали|italy/i,cities:[[/милан|milan/i,'mil','Милан']],
    best:{m:8,why:'сентябрь: на озере ещё тепло, а в городе уже не душно'}},
   {k:'us',file:'trip-usa2.js',rx:/нью-йорк|new york|лос-анджелес|los angeles|манхэттен|малибу|malibu/i,nm:'Нью-Йорк и Лос-Анджелес',cover:'img/us_bro-l.jpg',needsCar:true,
    days:8,shape:'перелёт посреди поездки',sub:'Метро на востоке, машина на западе',
