@@ -1874,6 +1874,9 @@ section h2.big{margin-bottom:4px}
   document.write('<scr'+'ipt src="'+f+'"></scr'+'ipt>');
 })();
 </script>
+<!-- Правила конструктора (те же, что в терминале): движок проверяет ими собранную
+     поездку. Файл ничего не рисует и наружу отдаёт одно имя — CONSTRUCTOR. -->
+<script src="constructor.js"></script>
 <script>
 
 /* ================= ИКОНКИ (SVG вместо эмодзи) ================= */
@@ -1992,11 +1995,17 @@ function skyscanner(from,to,iso){
   const d=addDays(iso,0);const yy=String(d.getFullYear()).slice(2),mm=('0'+(d.getMonth()+1)).slice(-2),dd=('0'+d.getDate()).slice(-2);
   return 'https://www.skyscanner.ru/transport/flights/'+from.toLowerCase()+'/'+to.toLowerCase()+'/'+yy+mm+dd+'/';
 }
-/* весь перелёт одним поиском (мультигород/open-jaw): туда ORIGIN→1-й аэропорт, обратно последний аэропорт→ORIGIN */
+/* весь перелёт одним поиском (мультигород/open-jaw). Аэропорты и даты берём из
+   отрезков-перелётов, а не из «первого и последнего города»: аэропорт вылета
+   бывает совсем в другом месте (Юта: ночуем в Моабе, улетаем из Гранд-Джанкшена). */
 function flightSearch(){
-  const outAir=AIRPORT[BASES[0].id]||'',backAir=AIRPORT[BASES[BASES.length-1].id]||'';
-  const back=fmtISO(addDays(startIso,totalNights()));
-  return 'https://www.kayak.com/flights/'+ORIGIN.code+'-'+outAir+'/'+startIso+'/'+backAir+'-'+ORIGIN.code+'/'+back+'/'+PEOPLE+'adults?sort=price_a';
+  const out=PARTS.legs.find(l=>l.mode==='flight'&&l.from==='home');
+  const back=PARTS.legs.slice().reverse().find(l=>l.mode==='flight'&&l.to==='home');
+  const outAir=out?((partPoint(out.to)||{}).air||''):(AIRPORT[BASES[0].id]||'');
+  const backAir=back?((partPoint(back.from)||{}).air||''):(AIRPORT[BASES[BASES.length-1].id]||'');
+  const outIso=out?fmtISO(dayDate(out.day)):startIso;
+  const backIso=back?fmtISO(dayDate(back.day)):fmtISO(addDays(startIso,totalNights()));
+  return 'https://www.kayak.com/flights/'+ORIGIN.code+'-'+outAir+'/'+outIso+'/'+backAir+'-'+ORIGIN.code+'/'+backIso+'/'+PEOPLE+'adults?sort=price_a';
 }
 function fmtISO(d){return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);}
 /* ================= ПАРТНЁРСКИЕ ССЫЛКИ БРОНИ ================= */
@@ -2012,11 +2021,6 @@ function bookHotel(cityQ,ci,co,people){
    Коды аэропортов Kayak понимает как есть: /cars/LAS/GJT/дата/дата */
 function bookCar(pickup,dropoff,ci,co){
   return 'https://www.kayak.com/cars/'+encodeURIComponent(pickup)+'/'+encodeURIComponent(dropoff)+'/'+fmtISO(ci)+'/'+fmtISO(co);
-}
-function carPlace(base){
-  const code=(typeof AIRPORT!=='undefined'&&AIRPORT[base.id])||'';
-  if(code)return code;
-  return String(base.q||base.name).split(',')[0].trim();
 }
 function bookActivity(q){
   return 'https://www.getyourguide.com/s/?q='+encodeURIComponent(q)+(AFF.gyg?'&partner_id='+AFF.gyg:'');
@@ -2039,14 +2043,17 @@ function buildRoute(){
   const host=document.getElementById('routeLine');if(!host||!BASES.length)return;
   const W=Math.max(260,Math.round(host.getBoundingClientRect().width)||340);
   const q=v=>Math.round(v*10)/10;
-  /* остановки: дом, города, дом */
-  const stops=[{gh:1,name:ORIGIN.city}];
+  /* остановки: дом ставим только если из дома действительно есть отрезок.
+     Поездка может начинаться и не дома (человек уже на месте) — тогда дома в плашке нет. */
+  const homeOut=PARTS.legs.find(l=>l.from==='home'),homeBack=PARTS.legs.slice().reverse().find(l=>l.to==='home');
+  const stops=[];
+  if(homeOut)stops.push({gh:1,name:ORIGIN.city});
   BASES.forEach(b=>{
     const before=nightsBefore(b.id);
     const ci=addDays(startIso,before),co=addDays(startIso,before+b.nights);
     stops.push({id:b.id,name:shortName(b.name),dates:dm(ci)+' – '+dm(co),nights:b.nights});
   });
-  stops.push({gh:1,name:ORIGIN.city});
+  if(homeBack)stops.push({gh:1,name:ORIGIN.city});
   const solo=BASES.length===1;
   const R=30,padL=10,padR=10,TIN=22;   /* TIN — отступ узлов от дуги: подписи не лезут в поворот */
   const FN=solo?'800 19px "Plus Jakarta Sans",sans-serif':'800 12.5px "Plus Jakarta Sans",sans-serif';
@@ -2102,7 +2109,14 @@ function buildRoute(){
   const P=place(two);
   P.forEach(p=>{p.y=rowY[p.row];});
   const H=two?rowY[1]+13+labH({})+4:rowY[0]+16;
-  const segType=i=>(i===0||i===P.length-2)?'flight':(SEGMENT[P[i+1].st.id]||'car');
+  /* чем едет каждый кусок линии — из отрезков маршрута, а не «первый и последний
+     всегда самолёт»: перелёт бывает и посреди поездки (Нью-Йорк → Майами) */
+  const segType=i=>{
+    const a=P[i].st,b=P[i+1].st;
+    if(a.gh)return homeOut?homeOut.mode:'flight';
+    if(b.gh)return homeBack?homeBack.mode:'flight';
+    return modeIntoBase(b.id);
+  };
   const dash=t=>t==='flight'?'stroke="#c6cbd8" stroke-width="2" stroke-dasharray="3 4"':'stroke="url(#rgrad)" stroke-width="3"';
   const glyph=(x,y,t)=>{
     const g=ic(t==='flight'?'flight':t==='train'?'train':t==='ferry'?'ferry':'car','');
@@ -2324,17 +2338,14 @@ function initMap(){
     /* ── Оформление карты СТРОИТСЯ ИЗ ДАННЫХ, а не зашито под один маршрут ──
        Раньше тут стояли константы Дуранго/Денвер/Майами и carPath=LINES[0..2],
        поэтому на втором маршруте (Юта) самолёт улетал в Колорадо, а финишный
-       флаг вставал в первом городе. Теперь всё берётся из BASES/AIRPORT/LINES. */
-    /* координаты аэропортов — из мест типа transport: код рейса стоит в названии «(LAS)» */
-    const airLL=code=>{
-      if(!code)return null;
-      const p=P.find(x=>x.cat==='transport'&&typeof x.lat==='number'
-        &&(new RegExp('\\('+code+'\\)','i').test(x.nm||'')||new RegExp('\\b'+code+'\\b','i').test(x.q||'')));
-      return p?[p.lat,p.lng]:null;
-    };
+       флаг вставал в первом городе. Теперь всё берётся из деталей маршрута (PARTS)
+       и LINES: где перелёт — там и самолёт. */
+    /* аэропорты прилёта и вылета — из деталей маршрута (PARTS), а не «первый и
+       последний город»: в Юте вылет из Гранд-Джанкшена, а ночуем в Моабе */
     const homeLL=(ORIGIN&&ORIGIN.ll)||null;                 /* откуда летим (город клиента) */
-    const arrLL=airLL(AIRPORT[BASES[0].id]);                /* аэропорт прилёта */
-    const depLL=airLL(AIRPORT[BASES[BASES.length-1].id]);   /* аэропорт вылета */
+    const arrAirP=arrivalAirport(),depAirP=departureAirport();
+    const arrLL=arrAirP&&typeof arrAirP.lat==='number'?[arrAirP.lat,arrAirP.lng]:null;
+    const depLL=depAirP&&typeof depAirP.lat==='number'?[depAirP.lat,depAirP.lng]:null;
     /* эмодзи-самолёт ✈️ (на iPhone — сине-белый Apple). По умолчанию смотрит вправо-вверх (~45°), поэтому +45° к углу линии, чтобы летел строго вдоль пунктира */
     const planeHTML=(rot)=>'<div class="planemk" style="transform:rotate('+(rot+45)+'deg);font-size:21px;line-height:1">✈️</div>';
     const onLine=(A,B,f)=>[A[0]+(B[0]-A[0])*f,A[1]+(B[1]-A[1])*f];
@@ -2442,7 +2453,6 @@ let fopen=null;                       /* какой список сейчас р
 /* фото для карточки: берём первый снимок из точек дня */
 /* ================= ЛЕНТА ПО ГОРОДАМ (Layla-style) ================= */
 
-function citySeg(base){return SEGMENT[base]||'car';}
 function buildCities(){
   const host=document.getElementById('cities');if(!host)return;
   const stepHost=document.getElementById('cityStep');
@@ -2455,61 +2465,56 @@ function buildCities(){
     const ci=addDays(startIso,before),co=addDays(startIso,before+b.nights);
     const days=daysOfBase(b.id);
     const firstDay=days.length?days[0].disp:1,lastDay=days.length?days[days.length-1].disp:1;
-    /* прибытие: первый город — перелёт; остальные — переезд из предыдущего.
-       У города без ночёвки своего переезда нет: он уже внутри слитого участка соседа. */
-    let arrival;
-    if(i>0&&!b.nights){arrival='';}
-    else if(i===0){
-      /* В правой колонке — ГОРОД АЭРОПОРТА, а не город ночёвки: в Юте это
-         Лас-Вегас и Спрингдейл, между ними 270 км, и клиент справедливо
-         не понимала, куда же покупать билет. Ниже честно пишем, сколько
-         ещё ехать от аэропорта до первой базы. */
-      const arrCode=AIRPORT[b.id]||'';
-      const arrCity=(typeof AIRPORTNM!=='undefined'&&AIRPORTNM[arrCode])||shortName(b.name);
-      const arrWay=(typeof AIRPORTWAY!=='undefined'&&AIRPORTWAY[arrCode])||'';
+    /* Прибытие — из деталей маршрута, а не «если это первый город, значит перелёт».
+       Перелёт: показываем ГОРОД АЭРОПОРТА, а не город ночёвки (в Юте это Лас-Вегас и
+       Спрингдейл, между ними 270 км — клиент справедливо не понимала, куда брать билет),
+       и честно пишем, сколько ещё ехать от аэропорта.
+       Города без ночёвки своего блока не получают: их участок уже внутри соседнего. */
+    const ar=arrivalInfo(b.id);
+    let arrival='';
+    if(ar&&ar.kind==='air'){
+      const arrCode=ar.to.air||'',arrCity=ar.to.name||shortName(b.name),arrWay=ar.way||'';
       arrival='<div class="cnode"><span class="cdot">'+ic('plane','i-sm')+'</span>'
         +'<div class="clbl"><b>Прибытие</b><span>'+dm(ci)+'</span></div>'
         +'<div class="carr"><div class="crow">'
-          +'<div class="cpt"><b>'+ORIGIN.city+'</b><span>'+ORIGIN.code+' · '+dm(ci)+'</span></div>'
+          +'<div class="cpt"><b>'+esc0((ar.from&&ar.from.name)||'')+'</b><span>'+((ar.from&&ar.from.air)||'')+' · '+dm(ci)+'</span></div>'
           +'<div class="cmid"><div class="cic">'+ic('plane','i-sm')+'</div></div>'
           +'<div class="cpt r"><b>'+esc0(arrCity)+'</b><span>'+arrCode+' · '+dm(ci)+'</span></div></div>'
           +(arrWay&&arrCity!==shortName(b.name)
             ? '<div class="cway">оттуда до города: '+esc0(convDist(arrWay))+'</div>':'')
           +'<a class="cbook" href="'+flightSearch()+'" target="_blank" rel="noopener">'+ic('plane','i-sm')+' Подобрать рейсы <small>туда+обратно</small></a></div></div>';
-    }else{
-      /* едем из последнего города, где ночевали: если сосед проездом, участки слились */
-      const pi=prevStayIdx(i),pv=BASES[pi],seg=citySeg(b.id);
-      const via=skippedBetween(pi,i),sum=via.length?legSum(pi,i):null;
-      arrival='<div class="cnode"><span class="cdot">'+ic(seg==='flight'?'plane':seg==='train'?'train':seg==='ferry'?'ferry':'car','i-sm')+'</span>'
+    }else if(ar){
+      const seg=ar.mode,segIc=seg==='flight'?'plane':seg==='train'?'train':seg==='ferry'?'ferry':'car';
+      const via=ar.via||[];
+      arrival='<div class="cnode"><span class="cdot">'+ic(segIc,'i-sm')+'</span>'
         +'<div class="clbl"><b>Переезд</b><span>'+dm(ci)+'</span></div>'
         +'<div class="carr"><div class="crow">'
-          +'<div class="cpt"><b>'+shortName(pv.name)+'</b><span>'+dm(ci)+'</span></div>'
-          +'<div class="cmid"><div class="cic">'+ic(seg==='flight'?'plane':seg==='train'?'train':seg==='ferry'?'ferry':'car','i-sm')+'</div></div>'
+          +'<div class="cpt"><b>'+shortName((ar.from&&ar.from.name)||'')+'</b><span>'+dm(ci)+'</span></div>'
+          +'<div class="cmid"><div class="cic">'+ic(segIc,'i-sm')+'</div></div>'
           +'<div class="cpt r"><b>'+shortName(b.name)+'</b><span>'+dm(ci)+'</span></div></div>'
           +(seg==='flight'
-            ? '<a class="cbook" href="'+skyscanner(AIRPORT[pv.id]||'',AIRPORT[b.id]||'',fmtISO(ci))+'" target="_blank" rel="noopener">'+ic('plane','i-sm')+' Подобрать рейсы</a>'
-            : '<div class="ctransf">'+(sum
-                ? ('<b>'+fmtKm(sum.km)+'</b><span>'+(sum.h?('~'+sum.h+' ч чистого хода'):'на машине')+'</span><span>через '+via.map(x=>shortName(x.name)).join(', ')+'</span>')
-                : (TRANSFER[b.id]?('<b>'+fmtKm(TRANSFER[b.id].km)+'</b><span>'+TRANSFER[b.id].clean+' чистого хода</span><span>'+TRANSFER[b.id].stops+' с остановками</span>'):'на машине'))+'</div>')
+            ? '<a class="cbook" href="'+skyscanner((ar.from&&ar.from.air)||AIRPORT[ar.from?ar.from.id:'']||'',AIRPORT[b.id]||'',fmtISO(ci))+'" target="_blank" rel="noopener">'+ic('plane','i-sm')+' Подобрать рейсы</a>'
+            : '<div class="ctransf">'+(via.length
+                ? ('<b>'+fmtKm(ar.km)+'</b><span>'+(ar.hours?('~'+ar.hours+' ч чистого хода'):'на машине')+'</span><span>через '+via.map(x=>shortName(x.name)).join(', ')+'</span>')
+                : (ar.km?('<b>'+fmtKm(ar.km)+'</b><span>'+ar.clean+' чистого хода</span><span>'+ar.stops+' с остановками</span>'):'на машине'))+'</div>')
           +'</div></div>';
     }
-    /* аренда машины — берётся в первом городе, едет всю поездку до последнего */
+    /* Аренда машины — из деталей: где её берут, там блок и стоит. «Взять» и «сдать» —
+       два разных события, поэтому машина может появиться и в середине поездки
+       (в Нью-Йорке она не нужна, в Майами нужна), а может не появиться вовсе. */
     let carHire='';
-    if(i===0){
-      const last=BASES[BASES.length-1];const en=x=>x.split(',')[0].trim();
-      const tripEnd=addDays(startIso,totalNights());
-      carHire='<div class="cnode"><span class="cdot">'+ic('car','i-sm')+'</span>'
-        +'<div class="clbl"><b>Аренда машины</b><span>на всю поездку · '+dm(ci)+'–'+dm(tripEnd)+'</span></div>';
-      /* машину берут В АЭРОПОРТУ, а не в городе ночёвки — пишем город аэропорта */
-      const upCode=AIRPORT[b.id]||'',offCode=AIRPORT[last.id]||'';
-      const upCity=(typeof AIRPORTNM!=='undefined'&&AIRPORTNM[upCode])||shortName(b.name);
-      const offCity=(typeof AIRPORTNM!=='undefined'&&AIRPORTNM[offCode])||shortName(last.name);
-      carHire+='<div class="carr"><div class="crow">'
-          +'<div class="cpt"><b>'+esc0(upCity)+'</b><span>забрать · '+(upCode||'аэропорт')+'</span></div>'
+    vehiclesTakenAt(b.id).forEach(v=>{
+      const tp=partPoint(v.take.at)||{},dp=partPoint(v.drop.at)||{};
+      const from=dayDate(v.take.day),to=dayDate(v.drop.day);
+      const whole=v.take.day===1&&v.drop.day===PARTS.days;
+      carHire+='<div class="cnode"><span class="cdot">'+ic('car','i-sm')+'</span>'
+        +'<div class="clbl"><b>Аренда машины</b><span>'+(whole?'на всю поездку':('дни '+v.take.day+'–'+v.drop.day))+' · '+dm(from)+'–'+dm(to)+'</span></div>'
+        +'<div class="carr"><div class="crow">'
+          +'<div class="cpt"><b>'+esc0(tp.name||'')+'</b><span>забрать · '+(tp.air||'аэропорт')+'</span></div>'
           +'<div class="cmid"><div class="cic">'+ic('car','i-sm')+'</div></div>'
-          +'<div class="cpt r"><b>'+esc0(offCity)+'</b><span>сдать · '+offCode+'</span></div></div>'
-          +'<a class="cbook" href="'+bookCar(carPlace(b),carPlace(last),ci,tripEnd)+'" target="_blank" rel="noopener">'+ic('car','i-sm')+' Забронировать машину <small>Kayak</small></a></div></div>';
-    }
+          +'<div class="cpt r"><b>'+esc0(dp.name||'')+'</b><span>сдать · '+(dp.air||'')+'</span></div></div>'
+          +'<a class="cbook" href="'+bookCar(partPlace(v.take.at),partPlace(v.drop.at),from,to)+'" target="_blank" rel="noopener">'+ic('car','i-sm')+' Забронировать машину <small>Kayak</small></a></div></div>';
+    });
     /* проживание */
     /* Проживание: если жильё уже есть — показываем его, а Booking понижаем до «других вариантов» */
     const mine=stayPlaces(b.id),guests=PEOPLE+' '+plural(PEOPLE,'гостя','гостей','гостей');
@@ -3046,7 +3051,155 @@ function buildSchedule(){
     if(pin.last)SCHED.push({tid:pin.last.n,base:b.id,tpl:pin.last,fin:1,pin:1});
   });
   SCHED.forEach((e,i)=>{e.disp=i+1;e.date=addDays(startIso,i);SCHED_BY[e.tid]=e;});
+  buildParts();                       /* дни поменялись — детали маршрута тоже */
 }
+/* ================= ДЕТАЛИ КОНСТРУКТОРА =================
+   Маршрут = точки · отрезки · ночи · транспорт · выезды на день. Ровно те детали,
+   что описаны в constructor.js, и теми же правилами проверяются.
+
+   Зачем. Движок ЗНАЛ частные случаи Колорадо: первый город обязательно с перелётом,
+   машина берётся в первом городе и сдаётся в последнем, плашка всегда «дом → города → дом»,
+   между городами всегда машина. Из-за этого «Париж на выходные» (машины нет вовсе) и
+   «Нью-Йорк + Майами» (перелёт посреди поездки) в движок не влезали.
+   Теперь это не знание, а данные: PARTS собирается из файла маршрута и текущего
+   расписания, а экран спрашивает PARTS вместо номера города.
+
+   PARTS пересобирается на каждом buildSchedule(): ночи меняются — меняются дни, даты
+   и то, сколько дней машина на руках.
+
+   ВХОД ДЛЯ ШАГА 2: файл маршрута может отдать детали сам — `const TRIPPARTS={...}`.
+   Тогда ничего не выводим и берём как есть; так будет отдавать сборка из анкеты. */
+let PARTS={days:0,points:[],legs:[],nights:[],vehicles:[],daytrips:[]};
+function partPoint(id){return PARTS.points.find(p=>p.id===id)||null;}
+function airCodeOf(bid){return (typeof AIRPORT!=='undefined'&&AIRPORT[bid])||'';}
+/* координаты аэропорта — из места типа transport: код стоит в названии «(LAS)» */
+function airLL(code){
+  if(!code)return null;
+  const p=P.find(x=>x.cat==='transport'&&typeof x.lat==='number'
+    &&(new RegExp('\\('+code+'\\)','i').test(x.nm||'')||new RegExp('\\b'+code+'\\b','i').test(x.q||'')));
+  return p?[p.lat,p.lng]:null;
+}
+function dayDate(disp){return addDays(startIso,Math.max(0,(disp||1)-1));}
+function buildParts(){
+  if(typeof TRIPPARTS!=='undefined'&&TRIPPARTS&&Array.isArray(TRIPPARTS.points)){PARTS=TRIPPARTS;return;}
+  const pts=[],legs=[],nts=[],veh=[],trips=[],days=SCHED.length;
+  const O=(typeof ORIGIN!=='undefined'&&ORIGIN)||null;
+  const home=O&&O.city?{id:'home',kind:'home',name:O.city,air:O.code||'',
+    lat:(O.ll||[])[0],lng:(O.ll||[])[1]}:null;
+  if(home)pts.push(home);
+  BASES.forEach(b=>pts.push({id:b.id,kind:'city',name:b.name,lat:b.lat,lng:b.lng,q:b.q,
+    nights:b.nights,pass:!b.nights,base:b.id}));
+  /* аэропорт — отдельная точка, а не свойство города: в Юте прилёт в Лас-Вегас,
+     а первая ночёвка в Спрингдейле, между ними 270 км */
+  const airPt=(code,near)=>{
+    if(!code)return null;
+    const id='air:'+code;let p=pts.find(x=>x.id===id);
+    if(!p){
+      const ll=airLL(code);
+      p={id:id,kind:'airport',air:code,base:near?near.id:'',
+        name:(typeof AIRPORTNM!=='undefined'&&AIRPORTNM[code])||(near?shortName(near.name):code),
+        way:(typeof AIRPORTWAY!=='undefined'&&AIRPORTWAY[code])||'',
+        q:near?near.q:'',
+        lat:ll?ll[0]:(near?near.lat:null),lng:ll?ll[1]:(near?near.lng:null)};
+      pts.push(p);
+    }
+    return p;
+  };
+  const stay=BASES.map((b,i)=>i).filter(i=>BASES[i].nights>0);
+  const startDay=bid=>{const d=daysOfBase(bid);return d.length?d[0].disp:1;};
+  const modeTo=bid=>(typeof SEGMENT!=='undefined'&&SEGMENT[bid])||'car';
+  if(stay.length){
+    const fb=BASES[stay[0]],lb=BASES[stay[stay.length-1]];
+    /* как попадаем в поездку */
+    const arrMode=modeTo(fb.id),arrAir=airPt(airCodeOf(fb.id),fb);
+    if(arrMode==='flight'&&home&&arrAir){
+      legs.push({from:home.id,to:arrAir.id,mode:'flight',day:1,why:'перелёт из дома в начало маршрута'});
+      legs.push({from:arrAir.id,to:fb.id,mode:'car',day:1,way:arrAir.way||'',why:'от аэропорта до первого города'});
+    }else if(home){
+      legs.push({from:home.id,to:fb.id,mode:arrMode,day:1,why:'дорога из дома в начало маршрута'});
+    }
+    /* переезды между городами, где ночуем. Город без ночёвки цепочку не рвёт —
+       он «по пути», его участки складываются в один (via) */
+    for(let k=1;k<stay.length;k++){
+      const pi=stay[k-1],i=stay[k],b=BASES[i];
+      const via=skippedBetween(pi,i),sum=legSum(pi,i);
+      const t=(typeof TRANSFER!=='undefined'&&TRANSFER[b.id])||null;
+      legs.push({from:BASES[pi].id,to:b.id,mode:modeTo(b.id),day:startDay(b.id),
+        km:via.length?sum.km:(t?t.km:null),
+        hours:via.length?sum.h:(t?legHours(t.clean):null),
+        clean:via.length?'':(t?t.clean:''),stops:via.length?'':(t?t.stops:''),
+        via:via.map(x=>x.id),why:'переезд в следующий город'});
+    }
+    /* как уезжаем домой */
+    const depAir=airPt(airCodeOf(lb.id),lb);
+    if(home&&depAir){
+      legs.push({from:lb.id,to:depAir.id,mode:'car',day:days,way:depAir.way||'',why:'дорога в аэропорт вылета'});
+      legs.push({from:depAir.id,to:home.id,mode:'flight',day:days,why:'перелёт домой'});
+    }
+  }
+  /* ночь после каждого дня, кроме последнего — то же правило, что в расписании */
+  SCHED.slice(0,-1).forEach((e,i)=>{
+    const own=stayPlaces(e.base)[0];
+    nts.push({n:i+1,at:e.base,stay:'hotel',name:own?own.nm:''});
+  });
+  /* машина: взять и сдать — два разных события. Берём там, где начинается дорога
+     (аэропорт, если он известен), сдаём там, где она кончается. */
+  const anyCar=legs.some(l=>l.mode==='car');
+  if(anyCar&&stay.length){
+    const fb=BASES[stay[0]],lb=BASES[stay[stay.length-1]];
+    const tp=pts.find(x=>x.id==='air:'+airCodeOf(fb.id))||pts.find(x=>x.id===fb.id);
+    const dp=pts.find(x=>x.id==='air:'+airCodeOf(lb.id))||pts.find(x=>x.id===lb.id);
+    if(tp&&dp)veh.push({type:'rental',take:{at:tp.id,day:1,base:fb.id},
+      drop:{at:dp.id,day:days,base:lb.id},why:'между городами добираемся своим ходом'});
+  }
+  pts.forEach(p=>{if(p.kind==='city')p.city_transport=anyCar?'car_all':'walk';});
+  /* выезд на день — день города, который не день приезда и не день вылета:
+     жильё и машину такой день не трогает */
+  SCHED.forEach(e=>{
+    if(e.pin||e.fin||!e.tpl)return;
+    trips.push({at:e.base,day:e.disp,name:e.tpl.title||'',by:anyCar?'own':'walk',why:''});
+  });
+  PARTS={days:days,points:pts,legs:legs,nights:nts,vehicles:veh,daytrips:trips};
+}
+/* «2 ч» / «4,5 ч» из данных → число, чтобы участки складывались */
+function legHours(txt){const m=String(txt||'').match(/[\d.,]+/);return m?parseFloat(m[0].replace(',','.')):null;}
+/* ── чтение деталей: этим пользуются все билдеры вместо «первый город / последний город» ── */
+function arrivalAirport(){const l=PARTS.legs.find(x=>x.mode==='flight'&&x.from==='home');return l?partPoint(l.to):null;}
+function departureAirport(){const l=PARTS.legs.slice().reverse().find(x=>x.mode==='flight'&&x.to==='home');return l?partPoint(l.from):null;}
+/* чем попадаем в город; город без ночёвки едет тем же, чем весь слитый участок */
+function modeIntoBase(bid){
+  const l=PARTS.legs.find(x=>x.to===bid);
+  if(l)return l.mode;
+  const v=PARTS.legs.find(x=>(x.via||[]).indexOf(bid)>=0);
+  return v?v.mode:'car';
+}
+/* Чем добираемся до города: перелётом из дома или переездом из прошлого города.
+   Одна функция вместо прежнего «если это первый город — значит перелёт». */
+function arrivalInfo(bid){
+  const to=PARTS.legs.filter(x=>x.to===bid);
+  if(!to.length)return null;
+  const l=to[to.length-1],fp=partPoint(l.from);
+  if(fp&&fp.kind==='airport'){
+    const fl=PARTS.legs.find(x=>x.to===fp.id&&x.mode==='flight');
+    if(fl)return {kind:'air',mode:'flight',from:partPoint(fl.from),to:fp,way:l.way||fp.way||'',leg:fl};
+  }
+  return {kind:'road',mode:l.mode,from:fp,to:partPoint(bid),km:l.km,hours:l.hours,
+          clean:l.clean,stops:l.stops,via:(l.via||[]).map(id=>partPoint(id)).filter(Boolean),leg:l};
+}
+function vehiclesTakenAt(bid){return PARTS.vehicles.filter(v=>v.take&&v.take.base===bid);}
+/* что писать в ссылку проката: код аэропорта, если он есть, иначе название города */
+function partPlace(id){const p=partPoint(id);if(!p)return '';
+  return p.air||String(p.q||p.name||'').split(',')[0].trim();}
+/* Проверка собранной поездки теми же правилами, что в терминале. Наружу не показываем —
+   это инструмент для нас и для тестов: window.__tripCheck(). */
+function tripCheck(){
+  if(typeof CONSTRUCTOR==='undefined')return {err:['constructor.js не загружен'],warn:[]};
+  const t={name:(typeof TRIP_NAME!=='undefined'&&TRIP_NAME)||'поездка',days:PARTS.days,
+    points:PARTS.points.filter(p=>!p.pass),   /* город без ночёвки — не остановка, а «по пути» */
+    legs:PARTS.legs,nights:PARTS.nights,vehicles:PARTS.vehicles,daytrips:PARTS.daytrips};
+  return CONSTRUCTOR.check(t);
+}
+window.__tripCheck=tripCheck;window.__parts=()=>PARTS;
 /* ── важность и время места ──
    Выводим из того, что уже есть в данных (star / tag / META.best), поэтому новый маршрут
    ничего вручную заполнять не обязан. Явные поля place.prio / place.when, если заданы, главнее. */
@@ -4384,7 +4537,12 @@ function groupBook(g){
   const ci=addDays(startIso,0),co=addDays(startIso,totalNights());
   let url,label,icon;
   if(g==='Перелёт'){url=flightSearch();label='Подобрать билеты (туда-обратно)';icon='flight';}
-  else if(g==='Машина'){const en=s=>s.split(',')[0].trim();url=bookCar(en(BASES[0].q),en(BASES[BASES.length-1].q),ci,co);label='Забронировать машину';icon='car';}
+  /* прокат ищем там же, где он записан в деталях (обычно аэропорт), и на те же даты,
+     что в ленте: раньше здесь стояли города ночёвки — в Спрингдейле прокатов нет вовсе */
+  else if(g==='Машина'){const v=PARTS.vehicles[0];
+    url=v?bookCar(partPlace(v.take.at),partPlace(v.drop.at),dayDate(v.take.day),dayDate(v.drop.day))
+        :bookCar(String(BASES[0].q).split(',')[0].trim(),String(BASES[BASES.length-1].q).split(',')[0].trim(),ci,co);
+    label='Забронировать машину';icon='car';}
   else if(g==='Входы и активности'){url=bookActivity(BASES[0].q+' tours tickets');label='Забронировать активности';icon='ticket';}
   else return '';
   return '<a class="bbook" href="'+url+'" target="_blank" rel="noopener">'+ic(icon,'i-sm')+'<span>'+label+'</span></a>';

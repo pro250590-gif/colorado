@@ -2,6 +2,7 @@
 # Репозиторий публичный — всё остальное сюда не выкладываем.
 *
 !index.html
+!constructor.js
 !trip-colorado.js
 !trip-utah.js
 !.gitignore
