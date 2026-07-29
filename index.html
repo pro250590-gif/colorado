@@ -1359,6 +1359,20 @@ body{background:linear-gradient(168deg,#eef1f8,#e9edf6 60%,#e6eaf4)!important}
   border:0;background:none;padding:0;margin:3px 0 0;cursor:pointer;color:#8b8fa3!important;
   font:600 11px/1.3 "Inter",sans-serif;border-bottom:1px dotted rgba(139,143,163,.55)}
 .orig.big{font-size:12.5px;margin:-4px 0 8px}
+/* витрина готовых маршрутов на главной */
+.ready{margin:34px 0 8px}
+.rdh{font:800 13px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:.02em;color:#1b1e2e}
+.rdlede{font:600 12.5px/1.5 "Inter",sans-serif;color:#6b7086;margin:8px 0 14px}
+.rdgrid{display:grid;grid-template-columns:1fr;gap:12px}
+@media(min-width:760px){.rdgrid{grid-template-columns:1fr 1fr}}
+.rdcard{position:relative;display:block;width:100%;min-height:150px;border:0;padding:0;cursor:pointer;text-align:left;
+  border-radius:20px;overflow:hidden;background:#e7e9f3 center/cover no-repeat;box-shadow:0 14px 30px -22px rgba(27,30,46,.65)}
+.rdcard:active{transform:scale(.995)}
+.rdin{display:block;padding:64px 16px 16px;color:#fff;
+  background:linear-gradient(180deg,rgba(12,14,26,0) 20%,rgba(12,14,26,.72) 75%,rgba(12,14,26,.85))}
+.rdin b{display:block;font:800 19px/1.15 "Plus Jakarta Sans",sans-serif;letter-spacing:-.02em}
+.rdsub{display:block;font:600 12px/1.4 "Inter",sans-serif;opacity:.92;margin-top:5px}
+.rdmeta{display:block;font:700 11px/1 "Inter",sans-serif;opacity:.8;margin-top:7px}
 .orig:active{color:#5b3fc4!important}
 /* устаревшая вкладка: поля не редактируются, пока не обновили страницу */
 body.stale input,body.stale textarea,body.stale select{pointer-events:none!important}
@@ -1921,6 +1935,8 @@ const ICONS={
  town:'<path d="M3 21h18M5 21V9l7-5 7 5v12M10 21v-6h4v6"/>',
  springs:'<path d="M12 22a7 7 0 0 0 7-7c0-2.2-1.2-4.3-3.2-6.3L12 3 8.2 8.7C6.2 10.7 5 12.8 5 15a7 7 0 0 0 7 7Z"/>',
  train:'<path d="M5 15V6a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v9a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3Z"/><path d="M5 10h14M8 18l-2 4M16 18l2 4M10 6h4M9 14h.01M15 14h.01"/>',
+ /* автобус: понадобился, когда между городами появился не только самолёт и машина */
+ bus:'<path d="M4 16V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10"/><path d="M3 16h18M4 16v2a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-2M17 16v2a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-2M5 8h14M7 12h.01M17 12h.01"/>',
  star:'<path d="m12 2.6 2.9 6.1 6.6.9-4.8 4.6 1.2 6.7L12 17.7 6.1 20.9l1.2-6.7-4.8-4.6 6.6-.9L12 2.6Z"/>',
  check:'<path d="M20 6 9 17l-5-5"/>',
  close:'<path d="M18 6 6 18M6 6l12 12"/>',
@@ -2201,8 +2217,17 @@ function buildElev(){
   const host=document.getElementById('elev');if(!host)return;
   /* только те дни, что есть в расписании — убрал ночь, точка ушла с профиля */
   const ds=Object.keys(ALT).map(Number).filter(n=>!!dayOf(n)).sort((a,b)=>dispOf(a)-dispOf(b));
-  if(ds.length<2){host.innerHTML='';return;}
-  const W=1000,H=100,lo=1400,hi=3800,pad=6;
+  if(ds.length<2){host.innerHTML='';host.style.display='none';return;}
+  host.style.display='';
+  const W=1000,H=100,pad=6;
+  /* Диапазон высот был зашит под Колорадо (1400–3800). Для Исландии или Парижа
+     это значит «всё по нижнему краю». Если данные выходят за прежние границы —
+     считаем свои; если укладываются, оставляем как было, чтобы старые маршруты
+     выглядели ровно так же. */
+  const vals=ds.map(d=>+ALT[d]||0);
+  const mn=Math.min.apply(null,vals),mx=Math.max.apply(null,vals);
+  let lo=1400,hi=3800;
+  if(mn<lo||mx>hi){const g=Math.max(80,(mx-mn)*0.3);lo=Math.floor(mn-g);hi=Math.ceil(mx+g);}
   const x=i=>pad+i*(W-pad*2)/(ds.length-1);
   const y=v=>H-((v-lo)/(hi-lo))*(H-14)-7;
   const pts=ds.map((d,i)=>[x(i),y(ALT[d])]);
@@ -2525,8 +2550,14 @@ function buildCities(){
             ? '<div class="cway">оттуда до города: '+esc0(convDist(arrWay))+'</div>':'')
           +'<a class="cbook" href="'+flightSearch()+'" target="_blank" rel="noopener">'+ic('plane','i-sm')+' Подобрать рейсы <small>туда+обратно</small></a></div></div>';
     }else if(ar){
-      const seg=ar.mode,segIc=seg==='flight'?'plane':seg==='train'?'train':seg==='ferry'?'ferry':'car';
+      const seg=ar.mode,segIc=seg==='flight'?'plane':seg==='train'?'train':seg==='ferry'?'ferry':seg==='bus'?'bus':'car';
       const via=ar.via||[];
+      /* Поезд, автобус, паром — не машина: у них расписание и билеты, а не «часы
+         чистого хода». Ведём в маршруты Google на общественном транспорте: они
+         знают расписание везде и бесплатны, врать про конкретный рейс не надо. */
+      const MOVENM={train:'поезд',bus:'автобус',ferry:'паром',transfer:'трансфер'};
+      const transit=(a1,b1)=>'https://www.google.com/maps/dir/?api=1&origin='+encodeURIComponent(a1)
+        +'&destination='+encodeURIComponent(b1)+'&travelmode=transit';
       arrival='<div class="cnode"><span class="cdot">'+ic(segIc,'i-sm')+'</span>'
         +'<div class="clbl"><b>Переезд</b><span>'+dm(ci)+'</span></div>'
         +'<div class="carr"><div class="crow">'
@@ -2535,6 +2566,10 @@ function buildCities(){
           +'<div class="cpt r"><b>'+shortName(b.name)+'</b><span>'+dm(ci)+'</span></div></div>'
           +(seg==='flight'
             ? '<a class="cbook" href="'+skyscanner((ar.from&&ar.from.air)||AIRPORT[ar.from?ar.from.id:'']||'',AIRPORT[b.id]||'',fmtISO(ci))+'" target="_blank" rel="noopener">'+ic('plane','i-sm')+' Подобрать рейсы</a>'
+            : (seg==='train'||seg==='bus'||seg==='ferry')
+            ? '<div class="ctransf">'+(ar.km?'<b>'+fmtKm(ar.km)+'</b>':'')+'<span>'+esc0(MOVENM[seg])+(ar.clean?(' · '+ar.clean):'')+'</span>'
+              +(ar.stops?'<span>'+esc0(ar.stops)+'</span>':'')+'</div>'
+              +'<a class="cbookl" href="'+transit((ar.from&&ar.from.q)||(ar.from&&ar.from.name)||'',b.q||b.name)+'" target="_blank" rel="noopener">Расписание и билеты на Google Maps</a>'
             : '<div class="ctransf">'+(via.length
                 ? ('<b>'+fmtKm(ar.km)+'</b><span>'+(ar.hours?('~'+ar.hours+' ч чистого хода'):'на машине')+'</span><span>через '+via.map(x=>shortName(x.name)).join(', ')+'</span>')
                 : (ar.km?('<b>'+fmtKm(ar.km)+'</b><span>'+ar.clean+' чистого хода</span><span>'+ar.stops+' с остановками</span>'):'на машине'))+'</div>')
@@ -3225,23 +3260,46 @@ function buildParts(){
   const stay=BASES.map((b,i)=>i).filter(i=>BASES[i].nights>0&&!BASES[i].off);
   const startDay=bid=>{const d=daysOfBase(bid);return d.length?d[0].disp:1;};
   const modeTo=bid=>(typeof SEGMENT!=='undefined'&&SEGMENT[bid])||'car';
+  /* нужна ли машина в этом городе: сказано в данных маршрута, иначе — как во всей
+     поездке (в дорожной петле вроде Колорадо она нужна везде) */
+  const cityNeedsCar=bid=>{
+    const own=(typeof CITYMOVE!=='undefined'&&CITYMOVE&&CITYMOVE[bid])||'';
+    if(own)return own==='car_all'||own==='car_trips';
+    return null;   /* не сказано — решим по поездке целиком */
+  };
+  /* дорога из аэропорта: если в городе нужна машина, её там и берут; иначе трансфер */
+  const airHop=bid=>{const n=cityNeedsCar(bid);return n===false?'transfer':'car';};
   if(stay.length){
     const fb=BASES[stay[0]],lb=BASES[stay[stay.length-1]];
     /* как попадаем в поездку */
     const arrMode=modeTo(fb.id),arrAir=airPt(airCodeOf(fb.id),fb);
     if(arrMode==='flight'&&home&&arrAir){
       legs.push({from:home.id,to:arrAir.id,mode:'flight',day:1,why:'перелёт из дома в начало маршрута'});
-      legs.push({from:arrAir.id,to:fb.id,mode:'car',day:1,way:arrAir.way||'',why:'от аэропорта до первого города'});
+      legs.push({from:arrAir.id,to:fb.id,mode:airHop(fb.id),day:1,way:arrAir.way||'',why:'от аэропорта до первого города'});
     }else if(home){
       legs.push({from:home.id,to:fb.id,mode:arrMode,day:1,why:'дорога из дома в начало маршрута'});
     }
     /* переезды между городами, где ночуем. Город без ночёвки цепочку не рвёт —
        он «по пути», его участки складываются в один (via) */
     for(let k=1;k<stay.length;k++){
-      const pi=stay[k-1],i=stay[k],b=BASES[i];
+      const pi=stay[k-1],i=stay[k],b=BASES[i],pb=BASES[pi];
       const via=skippedBetween(pi,i),sum=legSum(pi,i);
       const t=(typeof TRANSFER!=='undefined'&&TRANSFER[b.id])||null;
-      legs.push({from:BASES[pi].id,to:b.id,mode:modeTo(b.id),day:startDay(b.id),
+      const mode=modeTo(b.id),day=startDay(b.id);
+      /* ПЕРЕЛЁТ ПОСРЕДИ ПОЕЗДКИ разворачиваем честно: до аэропорта, перелёт,
+         из аэропорта. Иначе получается «летим из Нью-Йорка», хотя аэропорт —
+         это отдельная точка, и правило «перелёт только между аэропортами»
+         справедливо ругается. */
+      if(mode==='flight'){
+        const a1=airPt(airCodeOf(pb.id),pb),a2=airPt(airCodeOf(b.id),b);
+        if(a1&&a2){
+          legs.push({from:pb.id,to:a1.id,mode:'transfer',day:day,why:'в аэропорт вылета'});
+          legs.push({from:a1.id,to:a2.id,mode:'flight',day:day,why:'перелёт между городами поездки'});
+          legs.push({from:a2.id,to:b.id,mode:airHop(b.id),day:day,way:a2.way||'',why:'из аэропорта в город'});
+          continue;
+        }
+      }
+      legs.push({from:pb.id,to:b.id,mode:mode,day:day,
         km:via.length?sum.km:(t?t.km:null),
         hours:via.length?sum.h:(t?legHours(t.clean):null),
         clean:via.length?'':(t?t.clean:''),stops:via.length?'':(t?t.stops:''),
@@ -3250,7 +3308,7 @@ function buildParts(){
     /* как уезжаем домой */
     const depAir=airPt(airCodeOf(lb.id),lb);
     if(home&&depAir){
-      legs.push({from:lb.id,to:depAir.id,mode:'car',day:days,way:depAir.way||'',why:'дорога в аэропорт вылета'});
+      legs.push({from:lb.id,to:depAir.id,mode:airHop(lb.id),day:days,way:depAir.way||'',why:'дорога в аэропорт вылета'});
       legs.push({from:depAir.id,to:home.id,mode:'flight',day:days,why:'перелёт домой'});
     }
   }
@@ -3264,23 +3322,76 @@ function buildParts(){
      Поэтому смотрим только на отрезки «город → город». */
   const isCity=id=>{const p=pts.find(x=>x.id===id);return !!p&&p.kind==='city';};
   const cityCar=legs.some(l=>l.mode==='car'&&isCity(l.from)&&isCity(l.to));
+  /* Машина нужна не только для переездов: в Лос-Анджелесе переездов на машине
+     нет вовсе (туда прилетели), а без проката город не пройти. Такие города
+     помечены в данных маршрута (CITYMOVE = car_all / car_trips). */
+  const needCity=(typeof CITYMOVE!=='undefined'&&CITYMOVE)
+    ?tripBases().some(b=>b.nights&&(CITYMOVE[b.id]==='car_all'||CITYMOVE[b.id]==='car_trips')):false;
   /* CARMODE — решение сборки по ответу человека («вожу»/«не вожу»); null — сами */
-  const anyCar=(CARMODE===null)?cityCar:!!CARMODE;
+  const anyCar=(CARMODE===null)?(cityCar||needCity):!!CARMODE;
   /* проката нет — значит и «на машине» писать нельзя: это трансфер, такси, шаттл */
   if(!anyCar)legs.forEach(l=>{if(l.mode==='car')l.mode='transfer';});
-  if(anyCar&&stay.length){
-    const fb=BASES[stay[0]],lb=BASES[stay[stay.length-1]];
-    const tp=pts.find(x=>x.id==='air:'+airCodeOf(fb.id))||pts.find(x=>x.id===fb.id);
-    const dp=pts.find(x=>x.id==='air:'+airCodeOf(lb.id))||pts.find(x=>x.id===lb.id);
-    if(tp&&dp)veh.push({type:'rental',take:{at:tp.id,day:1,base:fb.id},
-      drop:{at:dp.id,day:days,base:lb.id},why:'между городами добираемся своим ходом'});
+  /* ── МАШИНА БЕРЁТСЯ НА ТЕ ДНИ, КОГДА ОНА НУЖНА ──
+     Раньше прокат был один на всю поездку. Так нельзя, когда посреди поездки
+     перелёт: в Нью-Йорке машина не нужна и стоит денег, а в Лос-Анджелесе без
+     неё не обойтись. Поэтому считаем по дням: нужна ли машина в этот день —
+     потому что в этот день переезд на машине или потому что в городе без неё
+     нельзя, — и берём её на каждый сплошной кусок таких дней.
+     Где берут и где сдают: если в этот день есть отрезок из аэропорта или в
+     аэропорт — там, иначе в самом городе. */
+  if(anyCar){
+    const cityOfDay=d=>{const e=SCHED[d-1];return e?BASES.find(x=>x.id===e.base):null;};
+    const needDay=d=>{
+      if(legs.some(l=>l.day===d&&l.mode==='car'))return true;
+      const b=cityOfDay(d);if(!b)return false;
+      const n=cityNeedsCar(b.id);
+      return n===null?cityCar:n;
+    };
+    const ptOfDay=(d,side)=>{
+      const dl=legs.filter(l=>l.day===d);
+      /* сперва смотрим на сам отрезок «на машине»: где он начался, там её и взяли.
+         Иначе в день с перелётом машину «брали» в аэропорту вылета, а не прилёта. */
+      const cl=dl.filter(l=>l.mode==='car');
+      if(cl.length){
+        const id=side==='take'?cl[0].from:cl[cl.length-1].to;
+        const p=pts.find(x=>x.id===id);if(p)return p;
+      }
+      const air=side==='take'
+        ? dl.map(l=>pts.find(x=>x.id===l.from)).find(x=>x&&x.kind==='airport')
+        : dl.map(l=>pts.find(x=>x.id===l.to)).find(x=>x&&x.kind==='airport');
+      if(air)return air;
+      const b=cityOfDay(d);
+      return b?pts.find(x=>x.id===b.id):null;
+    };
+    let d0=null;
+    for(let d=1;d<=days+1;d++){
+      const need=d<=days&&needDay(d);
+      if(need&&d0===null)d0=d;
+      if(!need&&d0!==null){
+        const d1=d-1,tp=ptOfDay(d0,'take'),dp=ptOfDay(d1,'drop');
+        if(tp&&dp)veh.push({type:'rental',
+          take:{at:tp.id,day:d0,base:tp.base||tp.id},
+          drop:{at:dp.id,day:d1,base:dp.base||dp.id},
+          why:'в эти дни без машины не обойтись'});
+        d0=null;
+      }
+    }
   }
-  pts.forEach(p=>{if(p.kind==='city')p.city_transport=anyCar?'car_all':'walk';});
+  /* как передвигаются ВНУТРИ города: из данных маршрута, иначе выводим сами */
+  const carDays=(bid)=>veh.some(v=>{
+    const d=daysOfBase(bid);
+    return d.some(e=>e.disp>=v.take.day&&e.disp<=v.drop.day);
+  });
+  pts.forEach(p=>{if(p.kind!=='city')return;
+    const own=(typeof CITYMOVE!=='undefined'&&CITYMOVE&&CITYMOVE[p.id])||'';
+    p.city_transport=own||(carDays(p.id)?'car_all':'walk');});
   /* выезд на день — день города, который не день приезда и не день вылета:
      жильё и машину такой день не трогает */
   SCHED.forEach(e=>{
     if(e.pin||e.fin||!e.tpl)return;
-    trips.push({at:e.base,day:e.disp,name:e.tpl.title||'',by:anyCar?'own':'walk',why:''});
+    /* чем едет выезд — зависит от города: в Нью-Йорке метро, в Лос-Анджелесе машина */
+    const hasCar=veh.some(v=>v.take.day<=e.disp&&v.drop.day>=e.disp);
+    trips.push({at:e.base,day:e.disp,name:e.tpl.title||'',by:hasCar?'own':'walk',why:''});
   });
   PARTS={days:days,points:pts,legs:legs,nights:nts,vehicles:veh,daytrips:trips};
 }
@@ -4900,15 +5011,41 @@ const CATALOG=[
      region / cities — чтобы отличить «Колорадо» (весь маршрут) от «Дуранго»
      (один город) ещё до того, как загружен файл данных. */
   {k:'co',file:'trip-colorado.js',rx:/колорадо|colorado|дуранго|аспен|денвер|силвертон/i,nm:'Колорадо, США',cover:'img/hero-w.webp',needsCar:true,
+   days:10,shape:'круг на машине',sub:'Паровоз, скальные города и перевалы',
    region:/колорадо|colorado/i,
    cities:[[/дуранго|durango/i,'dur','Дуранго'],[/урей|ouray/i,'our','Урей'],
            [/аспен|aspen|басальт|basalt/i,'asp','Аспен'],[/денвер|denver/i,'den','Денвер']],
    best:{m:8,why:'сентябрь: осины золотые, жара спала, толпы разъехались'}},
   {k:'ut',file:'trip-utah.js',    rx:/юта|utah|зайон|zion|брайс|bryce|моаб|moab|арки|arches|каньонлендс/i,nm:'Юта, каньоны',cover:'img/ut_mes-l.jpg',needsCar:true,
+   days:7,shape:'круг на машине',sub:'Зайон, Брайс и Арки за неделю',
    region:/юта|utah/i,
    cities:[[/зайон|zion|спрингдейл|springdale/i,'zio','Зайон'],[/брайс|bryce/i,'bry','Брайс'],
            [/моаб|moab|арки|arches|каньонлендс|canyonlands/i,'moa','Моаб']],
-   best:{m:9,why:'октябрь: в каньонах уже не +40, а вода в Narrows ещё тёплая'}}
+   best:{m:9,why:'октябрь: в каньонах уже не +40, а вода в Narrows ещё тёплая'}},
+  /* пять новых направлений, каждое своей формы: город без машины · город +
+     озеро с поездом · перелёт посреди поездки · круг на машине · поезд между
+     далёкими городами. Так видно, что движок собирает разные поездки, а не одну
+     и ту же под разными именами. */
+  {k:'pa',file:'trip-paris.js',rx:/париж|paris|версал|versailles|монмартр/i,nm:'Париж, Франция',cover:'img/pa_eif-l.jpg',needsCar:false,
+   days:4,shape:'город без машины',sub:'Метро и пешком, Версаль поездом',
+   region:/франц|france/i,cities:[[/париж|paris/i,'par','Париж']],
+   best:{m:8,why:'сентябрь: жара спала, а террасы ещё открыты'}},
+  {k:'mi',file:'trip-milan.js',rx:/милан|milan|комо|como|белладжо|bellagio/i,nm:'Милан и озеро Комо',cover:'img/mi_duo-l.jpg',needsCar:false,
+   days:5,shape:'поезд между городами',sub:'Город и озеро, катер в Белладжо',
+   region:/итали|italy/i,cities:[[/милан|milan/i,'mil','Милан'],[/комо|como/i,'com','Комо']],
+   best:{m:8,why:'сентябрь: на озере ещё тепло, а в городе уже не душно'}},
+  {k:'us',file:'trip-usa2.js',rx:/нью-йорк|new york|лос-анджелес|los angeles|манхэттен|малибу|malibu/i,nm:'Нью-Йорк и Лос-Анджелес',cover:'img/us_bro-l.jpg',needsCar:true,
+   days:8,shape:'перелёт посреди поездки',sub:'Метро на востоке, машина на западе',
+   region:/сша|usa|америк/i,cities:[[/нью-йорк|new york/i,'nyc','Нью-Йорк'],[/лос-анджелес|los angeles/i,'lax','Лос-Анджелес']],
+   best:{m:9,why:'октябрь: в Нью-Йорке уже не жарко, в Калифорнии ещё тепло'}},
+  {k:'ic',file:'trip-iceland.js',rx:/исланди|iceland|рейкьявик|reykjavik|вик|йокульсарлон/i,nm:'Исландия, юг острова',cover:'img/ic_jok-l.jpg',needsCar:true,
+   days:6,shape:'круг на машине',sub:'Водопады, чёрные пляжи, ледниковая лагуна',
+   region:/исланди|iceland/i,cities:[[/рейкьявик|reykjavik/i,'rey','Рейкьявик'],[/вик|vik/i,'vik','Вик'],[/хёбн|hofn/i,'hof','Хёбн']],
+   best:{m:7,why:'август: дороги открыты, светло почти круглые сутки'}},
+  {k:'ja',file:'trip-japan.js',rx:/япони|japan|токио|tokyo|киото|kyoto|осак|osaka/i,nm:'Токио и Киото',cover:'img/ja_fus-l.jpg',needsCar:false,
+   days:7,shape:'скоростной поезд',sub:'Без машины: метро и синкансэн',
+   region:/япони|japan/i,cities:[[/токио|tokyo/i,'tok','Токио'],[/киото|kyoto/i,'kyo','Киото']],
+   best:{m:10,why:'ноябрь: клёны краснеют, дожди кончились'}}
 ];
 /* восемь приоритетов. Список нарочно такой, чтобы каждый пункт был осмыслен для
    ЛЮБОГО места на земле: направление человек пишет словами, каталога стран у нас
@@ -5280,7 +5417,25 @@ function landHTML(){
     +'</div>'
     +'<div class="lor">или <button class="lnk" data-askform="1">пройдите анкету</button> — спросим только нужное</div>'
     +landCont()
+    +readyHTML()
     +'</div>';
+}
+/* ── ГОТОВЫЕ МАРШРУТЫ ──
+   Витрина того, что можно открыть прямо сейчас. Клиент: «сделай пять разных,
+   утром проверю». Каждый маршрут — своя форма поездки (город без машины, круг
+   на машине, перелёт посреди поездки, поезд между городами), чтобы было видно,
+   что движок собирает не одну и ту же поездку под разными именами. */
+function readyHTML(){
+  const cards=CATALOG.map(c=>
+    '<button class="rdcard" data-ready="'+esc0(c.k)+'"'+(c.cover?' style="background-image:url('+esc0(c.cover)+')"':'')+'>'
+      +'<span class="rdin">'
+        +'<b>'+esc0(c.nm)+'</b>'
+        +(c.sub?'<span class="rdsub">'+esc0(c.sub)+'</span>':'')
+        +(c.days?'<span class="rdmeta">'+c.days+' '+plural(c.days,'день','дня','дней')+(c.shape?' · '+esc0(c.shape):'')+'</span>':'')
+      +'</span></button>').join('');
+  return '<div class="ready"><div class="rdh">Готовые маршруты</div>'
+    +'<p class="rdlede">Открывайте и меняйте под себя: дни, людей, даты. Всё пересчитается.</p>'
+    +'<div class="rdgrid">'+cards+'</div></div>';
 }
 /* Сайт теперь открывается главной, и собранная поездка перестала попадаться на
    глаза сама. Если она есть — предлагаем вернуться к ней прямо здесь, иначе
@@ -5584,6 +5739,15 @@ function destCat(a){
   const s=String(a.dest||'').toLowerCase();
   return s?(CATALOG.find(c=>c.rx.test(s))||null):null;
 }
+/* Открыть готовый маршрут как новую поездку — без анкеты и без вопросов:
+   человек нажал на витрине, значит он уже выбрал. Дни, людей и даты поменяет внутри. */
+function openReady(k){
+  const cat=CATALOG.find(c=>c.k===k);if(!cat)return;
+  const title=cat.nm.split(',')[0];
+  if(cat.file!==window.__dataFile)return newTripFromData(title,cat.file,{__open:1});
+  newTripFromCurrent(title);
+  reinit();hideLand();hideHome();rerenderTrip();window.scrollTo(0,0);
+}
 function buildFromAsk(){
   const a=ASK;if(!a)return;
   const fs=askFields(a);
@@ -5632,6 +5796,7 @@ document.addEventListener('click',e=>{
   if(t.dataset.askgo!==undefined){const v=(document.getElementById('askText')||{}).value||'';showLand(parseAsk(v));}
   if(t.dataset.askcar!==undefined&&ASK){ASK.carOk=1;closeDaySheet();buildFromAsk();}
   if(t.dataset.askwhole!==undefined&&ASK){ASK.wholeOk=1;closeDaySheet();buildFromAsk();}
+  if(t.dataset.ready!==undefined)openReady(t.dataset.ready);
   if(t.dataset.asmsheet!==undefined){asmSheet();}
   if(t.dataset.baddg!==undefined){addBudgetSheet(t.dataset.baddg);}
   if(t.dataset.busave!==undefined){saveBudgetRow(t.dataset.busave,t.dataset.buedit||null);}
@@ -6548,6 +6713,8 @@ let openAuth=function(){};
   localStorage.removeItem(PENDKEY);
   if(!a)return;
   try{
+    /* открыли готовый маршрут с витрины: анкеты нет, применять нечего */
+    if(a.__open){reinit();hideLand();hideHome();rerenderTrip();window.scrollTo(0,0);window.__askApplied=1;return;}
     applyAsk(a);reinit();hideLand();hideHome();rerenderTrip();window.scrollTo(0,0);
     asmSheet();                       /* тот же отчёт, что и при сборке без перезагрузки */
     window.__askApplied=1;
