@@ -4019,7 +4019,6 @@ function nightsBefore(baseId){let s=0;for(const b of BASES){if(b.id===baseId)bre
 function dayDateFor(tid){const e=SCHED_BY[tid];return e?e.date:addDays(startIso,0);}
 function totalNights(){return BASES.reduce((s,b)=>s+b.nights,0);}
 /* в скобках показываем только латинское название (Ouray), русские уточнения не дублируем */
-function altName(s){const m=s.match(/\((.+?)\)/);return m&&/^[A-Za-z][A-Za-z .-]*$/.test(m[1])?m[1]:'';}
 function shortName(s){return s.replace(/\s*\(.*?\)/,'').replace(/\s*\/.*$/,'').trim();}
 function dm(dt){return dt.getDate()+' '+MONTHS[dt.getMonth()].slice(0,3);}
 /* «7–10 авг» вместо «7 авг–10 авг»: месяц повторять незачем, если он тот же */
@@ -4072,7 +4071,10 @@ function renderStays(){
     return '<div class="hrow'+(zero?' zero':'')+'">'
       +'<span class="hdot" style="background:linear-gradient(150deg,'+b.color+','+(BCOL2[b.id]||b.color)+')">'+ic(b.emoji)+'</span>'
       +'<span class="hmain">'
-        +'<span class="hname">'+shortName(b.name)+(altName(b.name)?'<i>'+altName(b.name)+'</i>':'')+'</span>'
+        /* Латинское имя тут не нужно: строка про деньги, а не про то, что показывать
+           таксисту. И подписан был только Урей — единственный город со скобками в
+           названии, отчего список выглядел кривым (клиент обвела). */
+        +'<span class="hname">'+shortName(b.name)+'</span>'
         +'<span class="hdate">'+(zero?'без ночёвки · '+dm(ci):dm(ci)+' → '+dm(co))+'</span>'
         +'<span class="hstep"><button class="stepbtn" data-nd="'+i+'" data-dir="-1" aria-label="меньше ночей">−</button>'
           +'<span class="hn"><b data-hn="'+i+'">'+b.nights+'</b> <span data-hw="'+i+'">'+nights(b.nights)+'</span></span>'
