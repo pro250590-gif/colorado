@@ -1348,6 +1348,14 @@ body{background:linear-gradient(168deg,#eef1f8,#e9edf6 60%,#e6eaf4)!important}
 .dsrow{display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:#fff;border:1.5px solid rgba(20,32,27,.09);
   border-radius:14px;padding:11px 12px;margin-bottom:8px;cursor:pointer;color:var(--ink)}
 .dsrow.far{opacity:.72}
+/* своя строка бюджета: кнопка добавления и крестик у добавленной */
+.badd{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;margin-top:9px;padding:10px;
+  border-radius:12px;border:1.5px dashed rgba(91,63,196,.4);background:#faf9ff;color:#5b3fc4;
+  font:800 11.5px/1 "Plus Jakarta Sans",sans-serif;cursor:pointer}
+.badd .i{width:14px;height:14px}
+.bdel{border:0;background:none;color:#8b8fa3!important;cursor:pointer;padding:0;margin-left:6px;
+  font:700 11px/1 "Inter",sans-serif;text-decoration:underline}
+.bkinds{grid-template-columns:repeat(2,1fr)}
 /* строка отчёта «Как мы собрали»: решение и причина. Не кнопка — нажимать нечего */
 .asmrow{background:#fff;border:1.5px solid rgba(20,32,27,.09);border-radius:14px;padding:11px 12px;margin-bottom:8px}
 .asmrow b{display:block;font:800 12.5px/1.3 "Plus Jakarta Sans",sans-serif;letter-spacing:-.02em}
@@ -1639,7 +1647,7 @@ section h2.big{margin-bottom:4px}
 /* ── ЕДИНЫЙ ВИД СТРОК БЮДЖЕТА ── */
 .brow3{display:flex;align-items:center;gap:9px;padding:12px 16px;border-bottom:1px solid #eef0f6}
 .b3l{flex:1;min-width:0}
-.b3nm{display:block;font:700 15px/1.2 "Plus Jakarta Sans",sans-serif;letter-spacing:-.02em}
+.b3nm{display:block;font:700 15px/1.2 "Plus Jakarta Sans",sans-serif;letter-spacing:-.02em;overflow-wrap:break-word}
 .b3desc{display:block;font:500 11.5px/1.35 "Inter",sans-serif;color:#8b8fa3;margin-top:4px}
 .b3desc b{color:#5b3fc4;font-weight:700}
 .b3desc .cf{color:#5b3fc4}.b3desc .est{color:#8b8fa3;font-weight:800}
@@ -3933,13 +3941,14 @@ function loadPlan(){try{const s=JSON.parse(localStorage.getItem(PKEY));if(s){if(
   if(Array.isArray(s.custom))CUSTOM=s.custom;
   ASM=(s.asm&&Array.isArray(s.asm.notes))?s.asm:null;
   CARMODE=(typeof s.car==='boolean')?s.car:null;
+  if(Array.isArray(s.custb))CUSTB=s.custb;
   /* какие города в этой поездке. Пусто = все, как в файле маршрута */
   if(Array.isArray(s.off)&&s.off.length)setOnly(BASES.filter(b=>s.off.indexOf(b.id)<0).map(b=>b.id));
   else setOnly(null);}}catch(e){}
   applyCurDefaults();mergeCustom();applyMoves();}
 function savePlan(){try{localStorage.setItem(PKEY,JSON.stringify({start:startIso,people:PEOPLE,acc:DATEACC,
   nights:BASES.map(b=>b.nights),hidden:HIDDEN,moved:MOVED,custom:CUSTOM,cur:CUR,crate:CRATE,
-  temp:TEMP,dist:DIST,lang:LANG,asm:ASM,off:offIds(),car:CARMODE}));}catch(e){}}
+  temp:TEMP,dist:DIST,lang:LANG,asm:ASM,off:offIds(),car:CARMODE,custb:CUSTB}));}catch(e){}}
 /* Если дату придумали мы — говорим это на самой странице, а не только всплывашкой
    при сборке: по такой дате человек может купить билет. Назвал свою — надпись
    исчезает сама. */
@@ -4004,6 +4013,8 @@ function buildPlanner(){
 function renderStays(){
   const rows=BASES.map((b,i)=>{if(b.off)return '';const before=nightsBefore(b.id);const ci=addDays(startIso,before),co=addDays(startIso,before+b.nights);
     const rate=hotelRate(i), tot=rate*b.nights;
+    const own=stayRates(b.id);           /* свои дома: цену меняют в их карточках */
+    const ro=own.length?' readonly title="цена берётся из карточек жилья"':'';
     const zero=!b.nights;   /* 0 ночей — ни цены, ни брони: ночевать негде и незачем */
     return '<div class="hrow'+(zero?' zero':'')+'">'
       +'<span class="hdot" style="background:linear-gradient(150deg,'+b.color+','+(BCOL2[b.id]||b.color)+')">'+ic(b.emoji)+'</span>'
@@ -4015,8 +4026,8 @@ function renderStays(){
           +'<button class="stepbtn" data-nd="'+i+'" data-dir="1" aria-label="больше ночей">+</button></span>'
       +'</span>'
       +(zero?'':'<span class="hmoney">'
-        +'<span class="hf"><label>за ночь</label><span class="hpill"><input class="hrate" data-hi="'+i+'" inputmode="decimal" value="'+(rate?fmtIn(rate):'')+'" placeholder="0"><span class="hu">'+curSym()+'</span></span></span>'
-        +'<span class="hf"><label>всего</label><span class="hpill"><input class="htot" data-hi="'+i+'" inputmode="decimal" value="'+(tot?fmtIn(tot):'')+'" placeholder="0"><span class="hu">'+curSym()+'</span></span></span>'
+        +'<span class="hf"><label>за ночь'+(own.length>1?' · '+own.length+' жилья':'')+'</label><span class="hpill"><input class="hrate" data-hi="'+i+'" inputmode="decimal" value="'+(rate?fmtIn(rate):'')+'" placeholder="0"'+ro+'><span class="hu">'+curSym()+'</span></span></span>'
+        +'<span class="hf"><label>всего</label><span class="hpill"><input class="htot" data-hi="'+i+'" inputmode="decimal" value="'+(tot?fmtIn(tot):'')+'" placeholder="0"'+ro+'><span class="hu">'+curSym()+'</span></span></span>'
       +'</span>')
       /* жильё в этом городе уже своё — Booking понижаем в «другие варианты», как в ленте */
       +(zero?'<span class="hpass">Проездом · жильё не ищем</span>'
@@ -4048,7 +4059,16 @@ function loadHRates(){
     if(h)saveHotelRate(i,numIn(h.rate));
   });
 }
-function hotelRate(i){return HRATE[i]||0;}
+/* Цена ночи в городе. Если человек вписал СВОЁ жильё — берём сумму по всем его
+   домам, а не последний введённый: клиент добавила два дома в Дуранго (267 и 600),
+   а в бюджете считался только один — второй молча затирал первый. */
+function stayRates(bid){return stayPlaces(bid).map(p=>+p.rate||0).filter(v=>v>0);}
+function hotelRate(i){
+  const b=BASES[i];if(!b)return 0;
+  const own=stayRates(b.id);
+  if(own.length)return own.reduce((s,v)=>s+v,0);
+  return HRATE[i]||0;
+}
 function hotelTotal(){return BASES.reduce((a,b,i)=>a+hotelRate(i)*b.nights,0);}
 function saveHotelRate(i,rate){HRATE[i]=rate;let s={};try{s=JSON.parse(localStorage.getItem(BKEY))||{};}catch(e){}
   s['h'+(i+1)+'rate']=rate;try{localStorage.setItem(BKEY,JSON.stringify(s));}catch(e){}}
@@ -4540,11 +4560,26 @@ function refreshBudgetCounts(){
   if(typeof calcBudget==='function')calcBudget();
 }
 /* ================= БЮДЖЕТ: группы-карточки ================= */
+/* СВОИ СТРОКИ БЮДЖЕТА. Клиент: «хотим ещё активность, а в бюджете её нет — нужно
+   добавить свою строку и цену». Считаются теми же способами, что и наши:
+   за человека · за день · на человека в день · всего.
+   Живут в плане (как свои места), значение — в общем хранилище сумм рядом с нашими,
+   поэтому пересчёт валюты и сохранение работают без отдельного кода. */
+let CUSTB=[];
+const BPER=[['','всего'],['person','за человека'],['day','за день'],['personday','на человека в день']];
+const OTHERG={g:'Другое',ic:'plus',c:'#5b3fc4',c2:'#3b3080',items:[],own:1};
+/* группы бюджета = наши + свои строки в них + всегда последняя группа «Другое» */
+function budgetGroups(){
+  const out=BUDGET.map(gr=>Object.assign({},gr,{items:gr.items.concat(CUSTB.filter(x=>x.g===gr.g))}));
+  out.push(Object.assign({},OTHERG,{items:CUSTB.filter(x=>!BUDGET.some(g=>g.g===x.g))}));
+  return out;
+}
+function custbNew(){return 'u'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);}
 
 function buildBudget(){
   const host=document.getElementById('budgetBox');if(!host)return;
   let saved={};try{saved=JSON.parse(localStorage.getItem(BKEY))||{};}catch(e){}
-  host.innerHTML=BUDGET.map(gr=>{
+  host.innerHTML=budgetGroups().map(gr=>{
     const days=totalNights()+1;
     const rows=gr.items.map(it=>{
       const val=saved[it.k]!==undefined?saved[it.k]:it.v;
@@ -4557,21 +4592,25 @@ function buildBudget(){
              :per==='person'?('на человека × <b data-ppl>'+PEOPLE+'</b> чел.')
              :('на человека × <b data-ppl>'+PEOPLE+'</b> чел. × <b data-days>'+days+'</b> дн.');
         const totVal=Math.round((parseFloat(rate)||0)*itemQty(per,days));
-        return '<div class="brow3" data-per="'+per+'">'
-          +'<div class="b3l"><b class="b3nm">'+it.nm+'</b><span class="b3desc">'+desc+'</span></div>'
+        return '<div class="brow3'+(it.own?' own':'')+'" data-per="'+per+'">'
+          +'<div class="b3l"><b class="b3nm">'+esc0(it.nm)+'</b><span class="b3desc">'+desc
+            +(it.own?' <button class="bdel" data-bdel="'+it.k+'">убрать</button>':'')+'</span></div>'
           +'<span class="b3box b3rate"><input class="money perunit" data-k="'+it.k+'rate" inputmode="decimal" value="'+fmtIn(rate)+'"><span class="b3u">'+unit+'</span></span>'
           +'<span class="b3box b3total"><input class="btotal" data-k="'+it.k+'" inputmode="decimal" value="'+fmtIn(totVal)+'"><span class="b3u">'+curSym()+'</span></span></div>';
       }
-      const desc=it.sub+(it.ok?' <span class="cf">'+ic('check','i-sm')+'</span>':(it.est?' <span class="est">~</span>':''));
-      return '<div class="brow3">'
-        +'<div class="b3l"><b class="b3nm">'+it.nm+'</b><span class="b3desc">'+desc+'</span></div>'
+      const desc=(it.sub||'')+(it.ok?' <span class="cf">'+ic('check','i-sm')+'</span>':(it.est?' <span class="est">~</span>':''));
+      return '<div class="brow3'+(it.own?' own':'')+'">'
+        +'<div class="b3l"><b class="b3nm">'+esc0(it.nm)+'</b><span class="b3desc">'+desc
+          +(it.own?' <button class="bdel" data-bdel="'+it.k+'">убрать</button>':'')+'</span></div>'
         +'<span class="b3box b3total"><input class="money" data-k="'+it.k+'" inputmode="decimal" value="'+fmtIn(val)+'"><span class="b3u">'+curSym()+'</span></span></div>';
     }).join('');
     return '<div class="bgroup">'
       +'<div class="bghead"><span class="bgmed" style="background:linear-gradient(150deg,'+gr.c+','+gr.c2+')">'+ic(gr.ic)+'</span>'
       +'<span class="bgt"><b>'+gr.g+'</b>'+(gr.note?'<span>'+gr.note+'</span>':'')+'</span>'
       +'<span class="bgsum" data-gsum="'+gr.g+'">—</span></div>'
-      +rows+groupBook(gr.g)+'</div>';
+      +rows
+      +'<button class="badd" data-baddg="'+esc0(gr.g)+'">'+ic('plus','i-sm')+' Добавить строку</button>'
+      +groupBook(gr.g)+'</div>';
   }).join('');
   host.querySelectorAll('.brow3').forEach(row=>{
     const per=row.dataset.per;
@@ -4590,10 +4629,44 @@ function buildBudget(){
   calcBudget();
   sizeMoneyInputs();
 }
+/* Лист «Добавить строку в бюджет»: что это, сколько стоит и как считать.
+   Способы счёта те же, что у наших строк, — других у нас нет и придумывать нечего. */
+let _bper='';
+function addBudgetSheet(g){
+  _bper='';
+  sheet('<div class="dsh"><b>Своя строка в бюджете</b><span>'+esc0(g)+' · посчитаем вместе с остальными</span></div>'
+    +'<div class="dsform"><input id="buNm" placeholder="Что это — например, прокат велосипедов" autocomplete="off">'
+      +'<div class="dspill"><b>'+curSym()+'</b><input id="buVal" inputmode="decimal" placeholder="0" autocomplete="off"></div>'
+      +'<div class="dskinds bkinds">'+BPER.map(x=>'<button class="dskind'+(x[0]===''?' on':'')+'" data-bper="'+x[0]+'"><span>'+x[1]+'</span></button>').join('')+'</div>'
+      +'<button class="dsgo" data-busave="'+esc0(g)+'">Добавить</button></div>'
+    +'<button class="dscancel" data-dsclose="1">Отмена</button>');
+}
+function saveBudgetRow(g){
+  const nm=(document.getElementById('buNm')||{}).value||'';
+  const v=numIn((document.getElementById('buVal')||{}).value||'');
+  if(!nm.trim()){const el=document.getElementById('buNm');if(el)el.focus();return;}
+  const k=custbNew();
+  CUSTB.push({k:k,g:g,nm:nm.trim(),per:_bper,own:1,
+    sub:_bper?'':'на всех',v:_bper?undefined:v,rate:_bper?v:undefined});
+  /* значение кладём туда же, где живут наши суммы: тогда и сохранение, и пересчёт
+     валюты работают без единой отдельной строчки кода */
+  try{const o=JSON.parse(localStorage.getItem(BKEY))||{};
+    if(_bper)o[k+'rate']=v;else o[k]=v;
+    localStorage.setItem(BKEY,JSON.stringify(o));}catch(e){}
+  savePlan();closeDaySheet();buildBudget();
+}
+function delBudgetRow(k){
+  CUSTB=CUSTB.filter(x=>x.k!==k);
+  try{const o=JSON.parse(localStorage.getItem(BKEY))||{};delete o[k];delete o[k+'rate'];
+    localStorage.setItem(BKEY,JSON.stringify(o));}catch(e){}
+  savePlan();buildBudget();
+}
 /* авто-ширина поля ввода под число (цифры моноширинные → 1 символ = 1ch); запас под большие суммы и будущие валюты */
 function sizeInput(i){if(!i)return;
   const s=(i.value&&i.value.length)?String(i.value):(i.placeholder||'0');
-  const chars=Math.min(12,Math.max(6,s.length+0.6));
+  /* нижняя граница 4, а не 6: два поля по 6 символов съедали ширину у названия,
+     и своя строка «Прокат велосипедов» ломалась посреди слова */
+  const chars=Math.min(12,Math.max(4,s.length+0.6));
   const cs=getComputedStyle(i);let extra=0;
   if(cs.boxSizing==='border-box')extra=(parseFloat(cs.paddingLeft)||0)+(parseFloat(cs.paddingRight)||0)+(parseFloat(cs.borderLeftWidth)||0)+(parseFloat(cs.borderRightWidth)||0);
   i.style.width=extra?('calc('+chars+'ch + '+extra+'px)'):(chars+'ch');}
@@ -4628,7 +4701,7 @@ function calcBudget(){
 /* сумма групп + итоги + сохранение (поля «всего» — источник суммы) */
 function sumBudget(){
   let sum=0;const days=totalNights()+1;
-  BUDGET.forEach(gr=>{
+  budgetGroups().forEach(gr=>{
     let gsum=0;
     gr.items.forEach(it=>{
       const sel=it.per?'input.btotal[data-k="'+it.k+'"]':'#budgetBox input.money[data-k="'+it.k+'"]';
@@ -5418,6 +5491,12 @@ document.addEventListener('click',e=>{
   if(t.dataset.askgo!==undefined){const v=(document.getElementById('askText')||{}).value||'';showLand(parseAsk(v));}
   if(t.dataset.askcar!==undefined&&ASK){ASK.carOk=1;closeDaySheet();buildFromAsk();}
   if(t.dataset.asmsheet!==undefined){asmSheet();}
+  if(t.dataset.cloudback!==undefined){cloudRestoreMine();}
+  if(t.dataset.baddg!==undefined){addBudgetSheet(t.dataset.baddg);}
+  if(t.dataset.busave!==undefined){saveBudgetRow(t.dataset.busave);}
+  if(t.dataset.bdel!==undefined){delBudgetRow(t.dataset.bdel);}
+  if(t.dataset.bper!==undefined){_bper=t.dataset.bper;
+    [].forEach.call(document.querySelectorAll('.bkinds .dskind'),b=>b.classList.toggle('on',b.dataset.bper===t.dataset.bper));}
   if(t.dataset.asktry){const ta=document.getElementById('askText');if(ta){ta.value=t.dataset.asktry;ta.focus();}}
   if(t.dataset.askform!==undefined){showLand(parseAsk(''));}
   if(t.dataset.aopen){_askOpen[t.dataset.aopen]=1;renderLand();}
@@ -6082,6 +6161,18 @@ function reinit(){try{
   applyHero();
   renderUnits();buildRoute();buildDays();buildCities();buildFood();buildBases();buildPlanner();buildBudget();buildFilters();buildElev();recomputeDates();syncChecks();applyFilter();
 }catch(e){}}
+/* что было на экране ДО того, как мы приняли облако — чтобы можно было вернуть */
+let _cloudMine=null;
+function cloudRestoreMine(){
+  if(!_cloudMine)return;
+  _applying=true;
+  CLOUD_KEYS.forEach(k=>{const v=_cloudMine[k];if(v!=null)_rawSet(k,v);});
+  _rawSet('co-trip-ts',String(Date.now()));
+  markDirty();                 /* своё снова главнее — отправим в облако */
+  reinit();_applying=false;_cloudMine=null;
+  hideToast();
+  if(typeof cloudPush==='function')cloudPush();
+}
 async function cloudSync(session){
   if(!sb||!session)return;
   _signedIn=true;syncSay();
@@ -6101,12 +6192,24 @@ async function cloudSync(session){
       /* своих несохранённых правок нет → берём облако, оно главное */
       const same=CLOUD_KEYS.every(k=>(row.plan[k]==null?null:row.plan[k])===localStorage.getItem(k));
       if(!same){
+        /* ⚠️ Молча подменять то, что человек видит на экране, НЕЛЬЗЯ. Клиент вписала
+           два дома, отошла в Google Maps, вернулась — а на экране другая поездка и
+           другие даты, и она решила, что сохранение не работает. Теперь: запоминаем
+           своё ДО подмены, говорим о ней вслух и даём вернуть одной кнопкой. */
+        const mine={};CLOUD_KEYS.forEach(k=>{mine[k]=localStorage.getItem(k);});
         _applying=true;
         CLOUD_KEYS.forEach(k=>{if(row.plan[k]!=null)_rawSet(k,row.plan[k]);});
         const cts=row.updated_at?new Date(row.updated_at).getTime():Date.now();
         _rawSet('co-trip-ts',String(cts));_rawSet('co-trip-pushed',String(cts));
         markClean();           /* приняли облако целиком — своего неотправленного нет */
         reinit();_applying=false;
+        _cloudMine=mine;
+        const when=row.updated_at?new Date(row.updated_at):null;
+        toast('<b>Показываем версию из облака</b><i>она сохранена'
+          +(when?(' '+dm(when)+' в '+String(when.getHours()).padStart(2,'0')+':'+String(when.getMinutes()).padStart(2,'0')):'')
+          +' на другом устройстве или в другой вкладке. Если на этом экране было что-то своё — верните</i>',null,null);
+        const el=document.getElementById('toast');
+        if(el)el.insertAdjacentHTML('beforeend','<button class="tb v" data-cloudback="1">Вернуть моё</button>');
       }
       _syncErr='';syncSay();return;
     }
