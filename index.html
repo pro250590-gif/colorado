@@ -1375,7 +1375,9 @@ body{background:linear-gradient(168deg,#eef1f8,#e9edf6 60%,#e6eaf4)!important}
 .rdmeta{display:block;font:700 11px/1 "Inter",sans-serif;opacity:.8;margin-top:7px}
 .orig:active{color:#5b3fc4!important}
 /* устаревшая вкладка: поля не редактируются, пока не обновили страницу */
-body.stale input,body.stale textarea,body.stale select{pointer-events:none!important}
+body.stale #cities input,body.stale #cities textarea,body.stale #cities select,
+body.stale #budgetBox input,body.stale #planner input,body.stale #s-route input,
+body.stale #stayBox input{pointer-events:none!important}
 /* и об этом должно быть ВИДНО: плашку-подсказку можно закрыть, а полоса
    висит сверху, пока страницу не обновили — иначе кажется, что сайт умер */
 .stalebar{position:fixed;top:0;left:0;right:0;z-index:9999;display:flex;align-items:center;gap:10px;
@@ -6723,16 +6725,23 @@ async function cloudSync(session){
     await cloudPush();
   }catch(e){_syncErr=(e&&e.message)||String(e);syncSay();}}
 /* перехват записи наших ключей → отметка времени + авто-сохранение */
-/* Пока страница устарела, ловим ЛЮБУЮ попытку что-то изменить и вместо правки
-   снова просим обновиться. Смотреть, листать и открывать ссылки — можно. */
+/* Пока страница устарела, не даём ПРАВИТЬ ПОЕЗДКУ — и только это.
+   ⚠️ БЫЛО ХУЖЕ НЕКУДА: ловили любое нажатие на всей странице, и сайт выглядел
+   мёртвым — не работали ни главная, ни язык с валютой, ни аватар, ни выход.
+   Клиент: «я на сайте не могу нажать вообще никакую кнопку». Теперь молчим
+   везде, кроме тех блоков, где правка и вправду меняет план. */
+const STALE_ZONES='#cities,#days,#budgetBox,#planner,#s-route,#stayBox';
 document.addEventListener('click',function(e){
   if(!_stale)return;
-  const t=e.target&&e.target.closest?e.target.closest('button,a,input,select,textarea,label,summary,[data-city],[data-goday]'):null;
+  /* тумблер места — это span с role=switch: в старом списке его не было,
+     и места включались-выключались даже на устаревшей вкладке */
+  const t=e.target&&e.target.closest?e.target.closest('button,a,input,select,textarea,label,summary,[role="switch"],[data-pl],[data-city],[data-goday]'):null;
   if(!t)return;
   /* кнопки самой плашки и верхней полосы — единственный выход отсюда.
      Без .stalebar блокировка съедала и собственную кнопку «Обновить»:
      клиент осталась на странице, где не нажимается вообще ничего. */
   if(t.closest('#toast')||t.closest('.stalebar'))return;
+  if(!t.closest(STALE_ZONES))return;                   /* шапка, главная, кабинет — не наше дело */
   if(t.tagName==='SUMMARY')return;                     /* раскрыть день — это просмотр */
   if(t.tagName==='A'){
     const h=t.getAttribute('href')||'';
