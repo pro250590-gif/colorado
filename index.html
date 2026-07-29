@@ -1353,8 +1353,11 @@ body{background:linear-gradient(168deg,#eef1f8,#e9edf6 60%,#e6eaf4)!important}
   border-radius:12px;border:1.5px dashed rgba(91,63,196,.4);background:#faf9ff;color:#5b3fc4;
   font:800 11.5px/1 "Plus Jakarta Sans",sans-serif;cursor:pointer}
 .badd .i{width:14px;height:14px}
-.bdel{border:0;background:none;color:#8b8fa3!important;cursor:pointer;padding:0;margin-left:6px;
-  font:700 11px/1 "Inter",sans-serif;text-decoration:underline}
+.bdel{border:1.5px solid rgba(20,32,27,.13);background:#fff;color:#8b8fa3!important;cursor:pointer;
+  border-radius:9px;padding:4px 9px;margin-left:8px;font:700 10.5px/1 "Inter",sans-serif;white-space:nowrap}
+.bdel:active{transform:scale(.98)}
+/* кнопка «добавить строку» — как «Забронировать…», только фиолетовая рамка пунктиром */
+.badd{width:calc(100% - 32px);border-style:dashed!important;cursor:pointer;text-align:left}
 .bkinds{grid-template-columns:repeat(2,1fr)}
 /* строка отчёта «Как мы собрали»: решение и причина. Не кнопка — нажимать нечего */
 .asmrow{background:#fff;border:1.5px solid rgba(20,32,27,.09);border-radius:14px;padding:11px 12px;margin-bottom:8px}
@@ -2540,7 +2543,7 @@ function buildCities(){
     const stayCard=mine.map(h=>'<div class="cstay myst">'
         +'<div class="ahead"><span class="aic">'+ic('bed','i-sm')+'</span><h3>'+h.nm+'</h3></div>'
         +'<div class="cmeta">'+shortName(b.name)+' · '+dm(ci)+'–'+dm(co)+' · '+b.nights+' '+nights(b.nights)+' · на '+guests+'</div>'
-        +(h.rate?'<div class="aprice"><b>'+money(h.rate)+'</b> за ночь <span class="sep">·</span> <b>'+money(h.rate*b.nights)+'</b> всего</div>':'')
+        +(h.rate?'<div class="aprice"><b>'+money(h.rate)+'</b> за ночь <span class="sep">·</span> <b>'+money((+h.tot||0)||h.rate*b.nights)+'</b> всего</div>':'')
         +(typeof h.lat==='number'
           ? (h.approx?'<div class="cmeta"><b class="apx">Точка примерная — центр города, поправь её</b></div>':'')
           : '<div class="cmeta"><b class="nopt">Точки на карте нет — не нашли адрес</b></div>')
@@ -3401,24 +3404,26 @@ function addStaySheet(bid,id){
   /* два поля цены считают друг друга — как строки в бюджете */
   const n=b.nights,rt=document.getElementById('stRate'),tt=document.getElementById('stTot');
   if(rt&&tt){
-    rt.addEventListener('input',()=>{const v=numIn(rt.value);tt.value=v?fmtIn(Math.round(v*n)):'';});
-    tt.addEventListener('input',()=>{const v=numIn(tt.value);rt.value=(v&&n)?fmtIn(Math.round(v/n)):'';});
+    /* 100 за три ночи — это 33,33, а не 33: округление превращало «всего» в 99,
+       и человек справедливо считал это ошибкой. Держим копейки. */
+    rt.addEventListener('input',()=>{const v=numIn(rt.value);tt.value=v?fmtIn(Math.round(v*n*100)/100):'';});
+    tt.addEventListener('input',()=>{const v=numIn(tt.value);rt.value=(v&&n)?fmtIn(Math.round(v/n*100)/100):'';});
   }
 }
 /* сохранить своё жильё: точку ищем как обычно, цену кладём в бюджет города */
-function saveStay(bid,id,val,rate){
+function saveStay(bid,id,val,rate,tot){
   const nm0=String(val||'').trim();if(!nm0)return;
   const done=(nm,q,lat,lng,exact)=>{
     const i=BASES.findIndex(x=>x.id===bid);
     /* точка «в центре города» — не адрес. Помечаем и сразу зовём поставить вручную */
     const approx=(typeof lat==='number')&&exact===false;
     let p=id?placeById(id):null;
-    if(p){p.nm=nm;p.q=q||nm;if(typeof lat==='number'){p.lat=lat;p.lng=lng;p.approx=approx?1:0;}p.rate=rate||0;
-      const c=CUSTOM.find(x=>x.id===id);if(c){c.nm=p.nm;c.q=p.q;c.lat=p.lat;c.lng=p.lng;c.approx=p.approx;c.rate=p.rate;}}
+    if(p){p.nm=nm;p.q=q||nm;if(typeof lat==='number'){p.lat=lat;p.lng=lng;p.approx=approx?1:0;}p.rate=rate||0;p.tot=tot||0;
+      const c=CUSTOM.find(x=>x.id===id);if(c){c.nm=p.nm;c.q=p.q;c.lat=p.lat;c.lng=p.lng;c.approx=p.approx;c.rate=p.rate;c.tot=p.tot;}}
     else{
       const nid='h'+Date.now().toString(36)+Math.floor(Math.random()*1e3).toString(36);
       p={id:nid,d:homeTid(bid),base:bid,cat:'town',kind:'stay',nm:nm,q:q||nm,why:'',lat:lat,lng:lng,
-         approx:approx?1:0,rate:rate||0,custom:1,meta:{}};
+         approx:approx?1:0,rate:rate||0,tot:tot||0,custom:1,meta:{}};
       CUSTOM.push(p);P.push(p);picked.add(nid);savePicks();
     }
     if(rate&&i>=0)saveHotelRate(i,rate);          /* цена — в строку жилья этого города */
@@ -4012,7 +4017,7 @@ function buildPlanner(){
 }
 function renderStays(){
   const rows=BASES.map((b,i)=>{if(b.off)return '';const before=nightsBefore(b.id);const ci=addDays(startIso,before),co=addDays(startIso,before+b.nights);
-    const rate=hotelRate(i), tot=rate*b.nights;
+    const rate=hotelRate(i), tot=stayPlaces(b.id).length?stayTotal(b.id,b.nights):rate*b.nights;
     const own=stayRates(b.id);           /* свои дома: цену меняют в их карточках */
     const ro=own.length?' readonly title="цена берётся из карточек жилья"':'';
     const zero=!b.nights;   /* 0 ночей — ни цены, ни брони: ночевать негде и незачем */
@@ -4063,13 +4068,19 @@ function loadHRates(){
    домам, а не последний введённый: клиент добавила два дома в Дуранго (267 и 600),
    а в бюджете считался только один — второй молча затирал первый. */
 function stayRates(bid){return stayPlaces(bid).map(p=>+p.rate||0).filter(v=>v>0);}
+/* «всего» по своим домам: берём то, что человек вписал в поле «всего», а не
+   цену×ночи — иначе 100 за три ночи превращается в 99 */
+function stayTotal(bid,nights){
+  const own=stayPlaces(bid);if(!own.length)return 0;
+  return own.reduce((s,p)=>s+((+p.tot||0)||((+p.rate||0)*nights)),0);
+}
 function hotelRate(i){
   const b=BASES[i];if(!b)return 0;
   const own=stayRates(b.id);
   if(own.length)return own.reduce((s,v)=>s+v,0);
   return HRATE[i]||0;
 }
-function hotelTotal(){return BASES.reduce((a,b,i)=>a+hotelRate(i)*b.nights,0);}
+function hotelTotal(){return BASES.reduce((a,b,i)=>a+(stayPlaces(b.id).length?stayTotal(b.id,b.nights):hotelRate(i)*b.nights),0);}
 function saveHotelRate(i,rate){HRATE[i]=rate;let s={};try{s=JSON.parse(localStorage.getItem(BKEY))||{};}catch(e){}
   s['h'+(i+1)+'rate']=rate;try{localStorage.setItem(BKEY,JSON.stringify(s));}catch(e){}}
 /* два поля: за ночь ↔ всего, второе считается */
@@ -4105,7 +4116,9 @@ document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)r
   if(t.dataset.dayoff){P.filter(p=>p.d===tidOf(t.dataset.dayoff)).forEach(p=>picked.delete(p.id));savePicks();syncChecks();applyFilter();}
   if(t.dataset.nd!==undefined){const i=+t.dataset.nd,dir=+t.dataset.dir;setNights(i,BASES[i].nights+dir);}
   if(t.dataset.undo){if(_undo)restoreState(_undo.prev);_undo=null;hideToast();}
-  if(t.dataset.tclose){hideToast();}
+  /* «Хорошо» на плашке про облако значит «оставить моё» — и тогда своё надо
+     отправить в облако, иначе оно снова приедет и снова спросит */
+  if(t.dataset.tclose){if(_cloudRow)cloudKeepMine();else hideToast();}
   if(t.dataset.pickday){pickDaySheet(t.dataset.pickday);}
   if(t.dataset.rmday){closeDaySheet();removeDay(t.dataset.rmbase,tidOf(t.dataset.rmday));}
   if(t.dataset.dsclose){closeDaySheet();}
@@ -4188,9 +4201,12 @@ document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)r
   if(t.dataset.staysave){
     const v=((document.getElementById('stNm')||{}).value||'').trim();
     if(!v){const i=document.getElementById('stNm');if(i)i.focus();return;}
-    const rate=Math.round(numIn((document.getElementById('stRate')||{}).value));
+    /* держим копейки: 100 за три ночи это 33,33, и округление до 33 превращало
+       «всего» в 99 — клиент справедливо назвала это ошибкой */
+    const rate=Math.round(numIn((document.getElementById('stRate')||{}).value)*100)/100;
+    const tot=Math.round(numIn((document.getElementById('stTot')||{}).value)*100)/100;
     t.textContent='Ищем на карте…';t.disabled=true;
-    closeDaySheet();saveStay(t.dataset.staysave,t.dataset.stayid||null,v,rate);
+    closeDaySheet();saveStay(t.dataset.staysave,t.dataset.stayid||null,v,rate,tot);
   }
   if(t.dataset.edopen){editPlaceSheet(t.dataset.edopen);}
   if(t.dataset.edsave){
@@ -4609,7 +4625,10 @@ function buildBudget(){
       +'<span class="bgt"><b>'+gr.g+'</b>'+(gr.note?'<span>'+gr.note+'</span>':'')+'</span>'
       +'<span class="bgsum" data-gsum="'+gr.g+'">—</span></div>'
       +rows
-      +'<button class="badd" data-baddg="'+esc0(gr.g)+'">'+ic('plus','i-sm')+' Добавить строку</button>'
+      /* Кнопка «добавить» одна на весь бюджет и стоит в «Другом» — так решила клиент:
+         в каждой группе она превращала бюджет в частокол пунктирных кнопок.
+         Вид у неё тот же, что у «Забронировать…», чтобы ряд кнопок был ровным. */
+      +(gr.own?'<button class="bbook badd" data-baddg="'+esc0(gr.g)+'">'+ic('plus','i-sm')+'<span>Добавить строку</span></button>':'')
       +groupBook(gr.g)+'</div>';
   }).join('');
   host.querySelectorAll('.brow3').forEach(row=>{
@@ -5491,7 +5510,7 @@ document.addEventListener('click',e=>{
   if(t.dataset.askgo!==undefined){const v=(document.getElementById('askText')||{}).value||'';showLand(parseAsk(v));}
   if(t.dataset.askcar!==undefined&&ASK){ASK.carOk=1;closeDaySheet();buildFromAsk();}
   if(t.dataset.asmsheet!==undefined){asmSheet();}
-  if(t.dataset.cloudback!==undefined){cloudRestoreMine();}
+  if(t.dataset.cloudtake!==undefined){cloudTake();}
   if(t.dataset.baddg!==undefined){addBudgetSheet(t.dataset.baddg);}
   if(t.dataset.busave!==undefined){saveBudgetRow(t.dataset.busave);}
   if(t.dataset.bdel!==undefined){delBudgetRow(t.dataset.bdel);}
@@ -6130,7 +6149,11 @@ async function cloudPush(){
   const{data}=await sb.auth.getSession();const s=data&&data.session;
   if(!s){_syncErr='';return false;}
   const stamp=localTs()||Date.now();
-  const row={user_id:s.user.id,plan:localBundle(),updated_at:new Date(stamp).toISOString()};
+  /* В сам план кладём НАШУ метку времени. updated_at пишется часами сервера, и
+     сравнивать его с часами телефона нельзя: у клиента облачная версия 14-минутной
+     давности вытеснила только что добавленное жильё. Своё сравниваем со своим. */
+  const bundle=localBundle();bundle.__ts=stamp;
+  const row={user_id:s.user.id,plan:bundle,updated_at:new Date(stamp).toISOString()};
   let err=null;
   const up=await sb.from('user_plans').upsert(row,{onConflict:'user_id'});
   if(up.error){
@@ -6161,16 +6184,21 @@ function reinit(){try{
   applyHero();
   renderUnits();buildRoute();buildDays();buildCities();buildFood();buildBases();buildPlanner();buildBudget();buildFilters();buildElev();recomputeDates();syncChecks();applyFilter();
 }catch(e){}}
-/* что было на экране ДО того, как мы приняли облако — чтобы можно было вернуть */
-let _cloudMine=null;
-function cloudRestoreMine(){
-  if(!_cloudMine)return;
+/* версия из облака, которую мы ПРЕДЛОЖИЛИ, но не применили без спроса */
+let _cloudRow=null;
+function cloudTake(){
+  const row=_cloudRow;if(!row||!row.plan)return;
   _applying=true;
-  CLOUD_KEYS.forEach(k=>{const v=_cloudMine[k];if(v!=null)_rawSet(k,v);});
-  _rawSet('co-trip-ts',String(Date.now()));
-  markDirty();                 /* своё снова главнее — отправим в облако */
-  reinit();_applying=false;_cloudMine=null;
+  CLOUD_KEYS.forEach(k=>{if(row.plan[k]!=null)_rawSet(k,row.plan[k]);});
+  const cts=row.updated_at?new Date(row.updated_at).getTime():Date.now();
+  _rawSet('co-trip-ts',String(cts));_rawSet('co-trip-pushed',String(cts));
+  markClean();
+  reinit();_applying=false;_cloudRow=null;
   hideToast();
+}
+/* «оставить моё» — своё главнее, отправляем его в облако */
+function cloudKeepMine(){
+  _cloudRow=null;markDirty();hideToast();
   if(typeof cloudPush==='function')cloudPush();
 }
 async function cloudSync(session){
@@ -6188,28 +6216,28 @@ async function cloudSync(session){
        откатывалась более старой записью, и удалённое возвращалось. */
     const cloudTs=row&&row.updated_at?new Date(row.updated_at).getTime():0;
     const stale=cloudTs&&pushedTs()&&cloudTs<pushedTs();
-    if(row&&row.plan&&!dirty()&&!stale){
+    /* метка, поставленная НАМИ при отправке: только её и можно сравнивать со своей */
+    const mineTs=(row&&row.plan&&+row.plan.__ts)||0;
+    const older=mineTs&&mineTs<=localTs();      /* облако не новее нашего — не трогаем экран */
+    if(row&&row.plan&&!dirty()&&!stale&&!older){
       /* своих несохранённых правок нет → берём облако, оно главное */
       const same=CLOUD_KEYS.every(k=>(row.plan[k]==null?null:row.plan[k])===localStorage.getItem(k));
       if(!same){
-        /* ⚠️ Молча подменять то, что человек видит на экране, НЕЛЬЗЯ. Клиент вписала
-           два дома, отошла в Google Maps, вернулась — а на экране другая поездка и
-           другие даты, и она решила, что сохранение не работает. Теперь: запоминаем
-           своё ДО подмены, говорим о ней вслух и даём вернуть одной кнопкой. */
-        const mine={};CLOUD_KEYS.forEach(k=>{mine[k]=localStorage.getItem(k);});
-        _applying=true;
-        CLOUD_KEYS.forEach(k=>{if(row.plan[k]!=null)_rawSet(k,row.plan[k]);});
-        const cts=row.updated_at?new Date(row.updated_at).getTime():Date.now();
-        _rawSet('co-trip-ts',String(cts));_rawSet('co-trip-pushed',String(cts));
-        markClean();           /* приняли облако целиком — своего неотправленного нет */
-        reinit();_applying=false;
-        _cloudMine=mine;
+        /* ⚠️ НЕ ТРОГАЕМ ЭКРАН БЕЗ СПРОСА. Раньше мы подменяли открытую поездку
+           версией из облака и предлагали «вернуть» — то есть сначала удаляли,
+           а потом спрашивали. Клиент назвала это неправильной логикой, и она права:
+           так человек теряет своё одним неверным нажатием. Теперь спрашиваем ДО. */
+        _cloudRow=row;
         const when=row.updated_at?new Date(row.updated_at):null;
-        toast('<b>Показываем версию из облака</b><i>она сохранена'
+        toast('<b>В облаке другая версия поездки</b><i>сохранена'
           +(when?(' '+dm(when)+' в '+String(when.getHours()).padStart(2,'0')+':'+String(when.getMinutes()).padStart(2,'0')):'')
-          +' на другом устройстве или в другой вкладке. Если на этом экране было что-то своё — верните</i>',null,null);
+          +' на другом устройстве или в другой вкладке. На экране сейчас ваша — мы её не трогали</i>',null,null);
         const el=document.getElementById('toast');
-        if(el)el.insertAdjacentHTML('beforeend','<button class="tb v" data-cloudback="1">Вернуть моё</button>');
+        if(el){
+          const btns=el.querySelector('.tb.ok');
+          if(btns)btns.textContent='Оставить моё';
+          el.insertAdjacentHTML('beforeend','<button class="tb v" data-cloudtake="1">Показать облачную</button>');
+        }
       }
       _syncErr='';syncSay();return;
     }
