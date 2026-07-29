@@ -3194,7 +3194,9 @@ function buildParts(){
      ещё не значит прокат: в поездку по одному городу из аэропорта едут на такси.
      Поэтому смотрим только на отрезки «город → город». */
   const isCity=id=>{const p=pts.find(x=>x.id===id);return !!p&&p.kind==='city';};
-  const anyCar=legs.some(l=>l.mode==='car'&&isCity(l.from)&&isCity(l.to));
+  const cityCar=legs.some(l=>l.mode==='car'&&isCity(l.from)&&isCity(l.to));
+  /* CARMODE — решение сборки по ответу человека («вожу»/«не вожу»); null — сами */
+  const anyCar=(CARMODE===null)?cityCar:!!CARMODE;
   /* проката нет — значит и «на машине» писать нельзя: это трансфер, такси, шаттл */
   if(!anyCar)legs.forEach(l=>{if(l.mode==='car')l.mode='transfer';});
   if(anyCar&&stay.length){
@@ -3930,13 +3932,14 @@ function loadPlan(){try{const s=JSON.parse(localStorage.getItem(PKEY));if(s){if(
   if(typeof s.crate==='number'&&s.crate>0)CRATE=s.crate;
   if(Array.isArray(s.custom))CUSTOM=s.custom;
   ASM=(s.asm&&Array.isArray(s.asm.notes))?s.asm:null;
+  CARMODE=(typeof s.car==='boolean')?s.car:null;
   /* какие города в этой поездке. Пусто = все, как в файле маршрута */
   if(Array.isArray(s.off)&&s.off.length)setOnly(BASES.filter(b=>s.off.indexOf(b.id)<0).map(b=>b.id));
   else setOnly(null);}}catch(e){}
   applyCurDefaults();mergeCustom();applyMoves();}
 function savePlan(){try{localStorage.setItem(PKEY,JSON.stringify({start:startIso,people:PEOPLE,acc:DATEACC,
   nights:BASES.map(b=>b.nights),hidden:HIDDEN,moved:MOVED,custom:CUSTOM,cur:CUR,crate:CRATE,
-  temp:TEMP,dist:DIST,lang:LANG,asm:ASM,off:offIds()}));}catch(e){}}
+  temp:TEMP,dist:DIST,lang:LANG,asm:ASM,off:offIds(),car:CARMODE}));}catch(e){}}
 /* Если дату придумали мы — говорим это на самой странице, а не только всплывашкой
    при сборке: по такой дате человек может купить билет. Назвал свою — надпись
    исчезает сама. */
@@ -4680,6 +4683,10 @@ let _atLand=false,ASK=null,_askOpen={},_askMore=false;
 /* ASM — что мы решили при сборке и почему. Живёт в плане поездки, чтобы человек
    мог открыть «Как мы собрали» и через неделю, а не только сразу после сборки. */
 let ASM=null;
+/* Берём ли машину. null — решает движок по переездам; true/false — решила сборка
+   по ответу человека. Клиент выбрала «вожу, поеду сколько нужно», а мы написали
+   «машину не берём» — так делать нельзя: это её ответ, а не наш. */
+let CARMODE=null;
 const AKEY='co-trip-ask';
 function askNew(){return {text:'',dest:'',where:null,whereNm:'',only:null,onlyNm:'',
   dateMode:null,from:'',to:'',days:null,month:null,   /* три формы ответа на «когда» */
@@ -4757,23 +4764,32 @@ const NUMW={'один':1,'одну':1,'два':2,'две':2,'три':3,'четы
   'восемь':8,'девять':9,'десять':10,'одиннадцать':11,'двенадцать':12,'две недели':14,'неделю':7,'неделя':7};
 /* Разбор своими силами: пока без ИИ. Понимает простые фразы, остальное честно
    отправляется в вопросы — «не разобрали» лучше, чем выдуманное значение. */
+/* Куда едем — разбираем И из общей фразы, И из поля «Куда едете», когда человек
+   правит его руками. Раньше поле писало только текст, а «какой это маршрут» и
+   «это один город или весь маршрут» оставались от первой фразы — и «Дуранго»,
+   вписанное руками, снова превращалось в весь Колорадо. */
+function readDest(a,raw){
+  const s=String(raw||'').toLowerCase().replace(/ё/g,'е');
+  a.only=null;a.onlyNm='';
+  const cat=s?CATALOG.find(c=>c.rx.test(s)):null;
+  if(!cat){a.where=null;a.whereNm='';return null;}
+  a.where=cat.k;a.whereNm=cat.nm;a.dest=cat.nm;
+  /* «Дуранго на 4 дня» — это поездка в ОДИН ГОРОД, а не весь Колорадо.
+     Подставить за человека весь маршрут мы права не имеем: он этого не говорил.
+     Назвал и город, и регион («Колорадо, начнём с Дуранго») — значит маршрут. */
+  const named=(cat.cities||[]).filter(c=>c[0].test(s));
+  if(named.length&&!(cat.region&&cat.region.test(s))){
+    a.only=named.map(c=>c[1]);
+    a.onlyNm=named.map(c=>c[2]).join(' и ');
+    a.dest=a.onlyNm+' ('+cat.nm.split(',')[0]+')';
+  }
+  return cat;
+}
 function parseAsk(raw){
   const a=askNew();a.text=String(raw||'').trim();
   const s=a.text.toLowerCase().replace(/ё/g,'е');
   if(!s)return a;
-  const cat=CATALOG.find(c=>c.rx.test(s));
-  if(cat){
-    a.where=cat.k;a.whereNm=cat.nm;a.dest=cat.nm;
-    /* «Дуранго на 4 дня» — это поездка в ОДИН ГОРОД, а не весь Колорадо.
-       Подставить за человека весь маршрут мы права не имеем: он этого не говорил.
-       Назвал и город, и регион («Колорадо, начнём с Дуранго») — значит маршрут. */
-    const named=(cat.cities||[]).filter(c=>c[0].test(s));
-    if(named.length&&!(cat.region&&cat.region.test(s))){
-      a.only=named.map(c=>c[1]);
-      a.onlyNm=named.map(c=>c[2]).join(' и ');
-      a.dest=a.onlyNm+' ('+cat.nm.split(',')[0]+')';
-    }
-  }
+  const cat=readDest(a,s);
   /* Направления, которого мы не знаем, выдумывать нельзя — но и терять нельзя:
      клиент написала «Arizona», а в анкете куда-то ехать было пусто. Короткую
      фразу без цифр считаем названием места и показываем как есть, чтобы человек
@@ -5277,20 +5293,39 @@ function assemble(a){
   /* Машина нужна ПОД ПЕРЕЕЗДЫ. В поездке по одному городу её нет и не надо —
      клиент справедливо возмутилась, когда мы потребовали машину для четырёх дней
      в Дуранго. А вот места за городом — есть, и об этом надо сказать честно. */
+  /* ── МАШИНА ──
+     Раньше правило было «один город → машины нет», и человек, ответивший «вожу,
+     поеду сколько нужно», получал «машину не берём». Это не наше решение, а его.
+     Машина нужна, если есть переезды между городами ИЛИ человек водит, а часть
+     мест лежит за городом. Не водит — говорим, чем это обернётся. */
   const oneCity=keep.length===1;
-  if(drive==='no'&&!oneCity)warn.push({t:'Без машины этот маршрут не проехать',
-    why:'между городами нет ни поездов, ни автобусов — мы собрали с машиной. Иначе поездка не существует'});
+  /* места, до которых от своего города дальше 25 км: пешком туда не дойти */
+  const far=[];
+  keep.forEach(i=>{const b=BASES[i];
+    P.forEach(p=>{
+      if(p.base!==b.id||p.cat==='food'||typeof p.lat!=='number')return;
+      const d=kmBetween(p.lat,p.lng,b.lat,b.lng);
+      if(d>25)far.push({p:p,km:d});
+    });});
+  far.sort((x,y)=>y.km-x.km);
+  const farKm=far.length?Math.round(far[0].km):0;
+  const drives=drive!=='no';
+  const carNeed=(!oneCity)||(drives&&far.length>0);
+  CARMODE=carNeed;
   if(oneCity){
     const b=BASES[keep[0]];
-    notes.push({t:'Машину не берём',
-      why:'поездка в один город: по '+shortName(b.name)+' — пешком, на местном транспорте и такси'});
-    const far=P.filter(p=>p.base===b.id&&p.cat!=='food'&&typeof p.lat==='number'
-      &&kmBetween(p.lat,p.lng,b.lat,b.lng)>25);
-    if(far.length)warn.push({t:far.length+' '+plural(far.length,'место','места','мест')+' за городом (до '
-      +Math.round(Math.max.apply(null,far.map(p=>kmBetween(p.lat,p.lng,b.lat,b.lng))))+' км)',
-      why:'без машины туда только с экскурсией или на такси — например «'+shortName(far[0].nm)+'». Уберите их из дней, если не поедете'});
+    if(carNeed)notes.push({t:'Машина будет',
+      why:'вы водите, а '+far.length+' '+plural(far.length,'место','места','мест')+' лежат за городом — до '+farKm+' км. По самому '+shortName(b.name)+' машина не нужна, её можно взять не на все дни'});
+    else{
+      notes.push({t:'Машину не берём',
+        why:'вы ответили, что не водите. По '+shortName(b.name)+' — пешком, на местном транспорте и такси'});
+      if(far.length)warn.push({t:far.length+' '+plural(far.length,'место','места','мест')+' за городом (до '+farKm+' км)',
+        why:'без машины туда только с экскурсией или на такси — например «'+shortName(far[0].p.nm)+'». Уберите их из дней, если не поедете'});
+    }
   }
-  return {days:days,nights:nts,notes:notes,warn:warn,drop:drop,keep:keep,oneCity:oneCity};
+  if(drive==='no'&&!oneCity)warn.push({t:'Без машины этот маршрут не проехать',
+    why:'между городами нет ни поездов, ни автобусов — мы собрали с машиной. Иначе поездка не существует'});
+  return {days:days,nights:nts,notes:notes,warn:warn,drop:drop,keep:keep,oneCity:oneCity,car:carNeed};
 }
 /* «5 ч» / «4,5 ч» — часы человеческим языком */
 function fmtH(h){if(!h)return '0 ч';const r=Math.round(h*10)/10;return String(r).replace('.',',')+' ч';}
@@ -5478,6 +5513,8 @@ document.addEventListener('input',e=>{
   if(el.id==='aKid'){const v=parseInt(el.value,10);if(v>=0&&v<20)ASK.kids=v;syncNums();return;}
   if(el.dataset&&el.dataset.abk){
     setPath(ASK,el.dataset.abk,el.value);
+    /* вписал направление руками — заново решаем, что это: маршрут или один город */
+    if(el.dataset.abk==='dest'){const t=el.value;readDest(ASK,t);ASK.dest=t;}
     if(el.classList&&el.classList.contains('qta'))grow(el);
     if(el.dataset.abk==='places'&&el.value)ASK.placesAny=false;
   }
