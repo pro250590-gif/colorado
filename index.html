@@ -2248,8 +2248,7 @@ function popupHTML(nm,q,why,label,color,photo,foodicon,plate){
   const gm='<a class="mpop-gm" href="'+gurl(q)+'" target="_blank" rel="noopener">'+ic('pin','i-sm')+' Открыть в Google Maps →</a>';
   /* оригинальное название и на карте: то, что человек показывает на месте,
      должно быть видно везде, где он смотрит на место */
-  const or=(q&&String(q).trim()&&String(q).trim()!==String(nm).trim())
-    ?('<button class="orig" data-copy="'+esc0(String(q).trim())+'" title="нажмите, чтобы скопировать">'+esc0(String(q).trim())+'</button>'):'';
+  const or=origHTML({q:q,nm:String(nm||'').replace(/<[^>]*>/g,'')});
   if(foodicon){/* вариант B — рестораны: 3D-иконка еды (как в разделе «Еда») слева, фото нет */
     const ico=FOOD_ICONS[foodicon]||FOOD_ICONS.plate;
     return '<div class="mpop mpopB">'
@@ -2697,7 +2696,18 @@ function origOf(x){
   const q=String((x&&x.q)||'').trim();
   if(!q)return '';
   const nm=String((x&&(x.nm||x.name))||'').trim();
-  return (q===nm)?'':q;
+  /* Название и так на языке места («Independence Pass», «Twin Lakes») — второй
+     строкой дублировать нечего: клиент обвела ровно это. Подписываем только то,
+     что написано по-русски. Хвосты в скобках и после «+», «/», «:» отбрасываем:
+     «Coal Bank Pass (3 231 м)» — это латиница с русской высотой, а не перевод. */
+  const norm=t=>t.toLowerCase().replace(/[«»"'’`.,()]/g,' ').replace(/\s+/g,' ').trim();
+  const core=nm.split(/[(+\/:—–]/)[0].trim();
+  if(core&&!/[А-Яа-яЁё]/.test(core)&&norm(q).indexOf(norm(core))===0)return '';
+  if(!/[А-Яа-яЁё]/.test(nm))return '';
+  /* «Twin Lakes» и «Twin Lakes, Colorado» — то же самое, только с хвостом */
+  const a=norm(q),b=norm(nm);
+  if(!b||a===b||a.indexOf(b)===0)return '';
+  return q;
 }
 function origHTML(x,cls){
   const o=origOf(x);if(!o)return '';
