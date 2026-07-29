@@ -1348,6 +1348,13 @@ body{background:linear-gradient(168deg,#eef1f8,#e9edf6 60%,#e6eaf4)!important}
 .dsrow{display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:#fff;border:1.5px solid rgba(20,32,27,.09);
   border-radius:14px;padding:11px 12px;margin-bottom:8px;cursor:pointer;color:var(--ink)}
 .dsrow.far{opacity:.72}
+/* строка отчёта «Как мы собрали»: решение и причина. Не кнопка — нажимать нечего */
+.asmrow{background:#fff;border:1.5px solid rgba(20,32,27,.09);border-radius:14px;padding:11px 12px;margin-bottom:8px}
+.asmrow b{display:block;font:800 12.5px/1.3 "Plus Jakarta Sans",sans-serif;letter-spacing:-.02em}
+.asmrow span{display:block;font:600 10.5px/1.45 "Inter",sans-serif;color:var(--mut);margin-top:5px}
+.asmrow.warn{border-color:rgba(216,140,20,.5);background:#fffaf2}
+.asmlnk{border:0;background:none;padding:0;margin-left:6px;color:#5b3fc4;cursor:pointer;
+  font:800 11.5px/1.4 "Inter",sans-serif;text-decoration:underline}
 .dsfar{display:none}
 .dsfar.on{display:block}
 .dsmore{width:100%;border:1.5px dashed rgba(20,32,27,.16);background:#fff;color:#8b8698;border-radius:13px;padding:11px;
@@ -1682,7 +1689,7 @@ section h2.big{margin-bottom:4px}
     <div class="kickrow"><div class="kicker" id="heroDate">7–16 августа 2026</div>
       <button class="shbtn" data-ushare="1">Поделиться</button></div>
     <h1>Дуранго → Урей<em>Аспен → Денвер</em></h1>
-    <p class="sub">Десять дней поперёк Скалистых гор: паровоз на Силвертон, скальные города Меса-Верде, Million Dollar Highway без отбойников, Чёрный каньон и перевал Independence на 3 687 метрах.</p>
+    <p class="sub">Поперёк Скалистых гор: паровоз на Силвертон, скальные города Меса-Верде, Million Dollar Highway без отбойников, Чёрный каньон и перевал Independence на 3 687 метрах.</p>
     <div class="bento">
       <div class="tile wide tile-photo">
         <img src="img/hero-w.webp" alt="Maroon Bells, Колорадо" decoding="async" fetchpriority="high">
@@ -3006,6 +3013,9 @@ const DATEACCTXT={approx:'даты примерные — вы называли 
    Шаблонов больше слотов — лишние уходят в «Ещё в городе» (STASH, ничего не теряется);
    слотов больше — появляются свободные дни, которые наполняет пользователь. */
 let SCHED=[],STASH={},SCHED_BY={},HIDDEN={};
+/* Ночи, как их задумал автор маршрута. Снимаем СРАЗУ при загрузке: дальше
+   BASES.nights меняет и пользователь, и сборка из анкеты, и «замысел» теряется. */
+const NIGHTS0=BASES.map(b=>b.nights);
 function dayTpls(bid){return DAYS.filter(d=>DAY_BASE[d.n]===bid);}
 /* HIDDEN — какие дни города убраны. Порядок дней НЕ меняется: убрали второй день,
    вернули — он снова второй, а не последний. Первый день города (прилёт/переезд)
@@ -3855,6 +3865,7 @@ function uiRestore(s){
 function rerenderTrip(){
   const snap=uiSnapshot();
   buildSchedule();
+  applyHero();          /* город ушёл проездом — заголовок поездки тоже другой */
   renderUnits();renderStays();buildRoute();buildDays();buildCities();buildFilters();buildElev();
   recomputeDates();refreshBudgetCounts();syncChecks();updateMarkerStyles();applyFilter();updateDirLinks();
   uiRestore(snap);
@@ -3871,11 +3882,12 @@ function loadPlan(){try{const s=JSON.parse(localStorage.getItem(PKEY));if(s){if(
   if(s.dist==='km'||s.dist==='mi')DIST=s.dist;
   if(s.lang&&LANGS.some(x=>x.c===s.lang))LANG=s.lang;
   if(typeof s.crate==='number'&&s.crate>0)CRATE=s.crate;
-  if(Array.isArray(s.custom))CUSTOM=s.custom;}}catch(e){}
+  if(Array.isArray(s.custom))CUSTOM=s.custom;
+  ASM=(s.asm&&Array.isArray(s.asm.notes))?s.asm:null;}}catch(e){}
   applyCurDefaults();mergeCustom();applyMoves();}
 function savePlan(){try{localStorage.setItem(PKEY,JSON.stringify({start:startIso,people:PEOPLE,acc:DATEACC,
   nights:BASES.map(b=>b.nights),hidden:HIDDEN,moved:MOVED,custom:CUSTOM,cur:CUR,crate:CRATE,
-  temp:TEMP,dist:DIST,lang:LANG}));}catch(e){}}
+  temp:TEMP,dist:DIST,lang:LANG,asm:ASM}));}catch(e){}}
 /* Если дату придумали мы — говорим это на самой странице, а не только всплывашкой
    при сборке: по такой дате человек может купить билет. Назвал свою — надпись
    исчезает сама. */
@@ -3883,6 +3895,9 @@ function syncDateAcc(){
   const el=document.getElementById('scSub');if(!el)return;
   const t=DATEACCTXT[DATEACC];
   el.textContent=t||'меняешь дату — все дни и брони пересчитываются';
+  /* поездка собрана по ответам — даём спросить «почему так» в любой момент,
+     а не только плашкой сразу после сборки */
+  if(ASM)el.insertAdjacentHTML('beforeend','<button class="asmlnk" data-asmsheet="1">Как мы собрали</button>');
   el.classList.toggle('warn',!!t);
   const card=el.closest('.startcard');if(card)card.classList.toggle('guess',!!t);
 }
@@ -4613,6 +4628,9 @@ function wireBudget(){
    его надиктовать всё и потом заполнять то же руками нельзя (просьба клиента).
    Правило: ничего не подставляем молча — либо вынули из текста, либо спросили. */
 let _atLand=false,ASK=null,_askOpen={},_askMore=false;
+/* ASM — что мы решили при сборке и почему. Живёт в плане поездки, чтобы человек
+   мог открыть «Как мы собрали» и через неделю, а не только сразу после сборки. */
+let ASM=null;
 const AKEY='co-trip-ask';
 function askNew(){return {text:'',dest:'',where:null,whereNm:'',
   dateMode:null,from:'',to:'',days:null,month:null,   /* три формы ответа на «когда» */
@@ -4626,9 +4644,11 @@ function askNew(){return {text:'',dest:'',where:null,whereNm:'',
    best — лучший месяц. Нужен, когда человек назвал только длину поездки: тогда
    месяц подсказываем мы, но говорим об этом вслух, а не подставляем молча. */
 const CATALOG=[
-  {k:'co',file:'trip-colorado.js',rx:/колорадо|colorado|дуранго|аспен|денвер|силвертон/i,nm:'Колорадо, США',cover:'img/hero-w.webp',
+  /* needsCar — можно ли эту поездку прожить без машины. Знаем это МЫ, а не человек:
+     он отвечает «вожу / не вожу», а нужна ли машина в Колорадо — наше дело. */
+  {k:'co',file:'trip-colorado.js',rx:/колорадо|colorado|дуранго|аспен|денвер|силвертон/i,nm:'Колорадо, США',cover:'img/hero-w.webp',needsCar:true,
    best:{m:8,why:'сентябрь: осины золотые, жара спала, толпы разъехались'}},
-  {k:'ut',file:'trip-utah.js',    rx:/юта|utah|зайон|zion|брайс|bryce|моаб|moab|арки|arches|каньонлендс/i,nm:'Юта, каньоны',cover:'img/ut_mes-l.jpg',
+  {k:'ut',file:'trip-utah.js',    rx:/юта|utah|зайон|zion|брайс|bryce|моаб|moab|арки|arches|каньонлендс/i,nm:'Юта, каньоны',cover:'img/ut_mes-l.jpg',needsCar:true,
    best:{m:9,why:'октябрь: в каньонах уже не +40, а вода в Narrows ещё тёплая'}}
 ];
 /* восемь приоритетов. Список нарочно такой, чтобы каждый пункт был осмыслен для
@@ -5050,18 +5070,156 @@ function hideLand(){
   const el=document.getElementById('land');if(el)el.style.display='none';
   document.body.classList.remove('atland');
 }
-/* раскладываем дни по городам: пропорционально нынешним ночам, метод наибольших остатков */
-function spreadNights(total){
-  const cur=BASES.map(b=>b.nights||1),sum=cur.reduce((a,b)=>a+b,0);
-  const n=BASES.length;
-  if(total<=0)return BASES.map(()=>0);
-  if(total<n){return BASES.map((b,i)=>i<total?1:0);}   /* городов больше, чем ночей */
-  const raw=cur.map(v=>v/sum*total),out=raw.map(v=>Math.max(1,Math.floor(v)));
-  let left=total-out.reduce((a,b)=>a+b,0);
-  const order=raw.map((v,i)=>[v-Math.floor(v),i]).sort((x,y)=>y[0]-x[0]);
-  for(let k=0;left>0;k++,left--)out[order[k%n][1]]++;
-  while(left<0){const i=out.indexOf(Math.max(...out));out[i]--;left++;}
-  return out;
+/* Раскладку дней по городам делает assemble() ниже: пропорция по нынешним ночам
+   («spreadNights») не годилась — она не знала ни про часы за рулём, ни про то,
+   что у города кончается содержание, и молча ставила по одной ночи всем подряд. */
+/* ================= СБОРКА МАРШРУТА ИЗ ОТВЕТОВ =================
+   Правилами, без ИИ: анкета задаёт рамки, файл маршрута даёт содержание,
+   конструктор проверяет, что получилось.
+
+   Что мы решаем: сколько ночей какому городу, где не ночевать вовсе, что не
+   влезло и чего из ответов выполнить не вышло. Чего НЕ делаем: не придумываем
+   города и места — их неоткуда взять (это шаг 3, генерация).
+
+   Главное правило: молча не решаем ничего. Каждое решение кладём в `notes`
+   строкой «что сделали» + «почему», и человек видит их листом «Как мы собрали».
+   Иначе он решит, что мы просто ошиблись, и будет прав — проверить нечем. */
+const DRIVE_H={any:99,short:3,no:0};   /* «вожу, но недолго» = не больше 3 ч за раз */
+const FAR_H=2.5;                       /* ехали дольше — ставить одну ночь незачем */
+const LONG_H=6;                        /* дольше — это весь день за рулём, надо сказать */
+const MAXDAY_H=8;                      /* дольше за день не проехать: такой переезд не собираем */
+/* часы переезда В город i по данным маршрута (в первый город не едем — там прилёт) */
+function hoursTo(i){
+  const b=BASES[i];if(!b||i===0)return 0;
+  const t=(typeof TRANSFER!=='undefined'&&TRANSFER[b.id])||null;
+  return t?(legHours(t.clean)||0):0;
+}
+/* сколько ночей город вообще способен занять: больше, чем дней придумано автором,
+   ставить нечем — получатся пустые «свободные дни». У последнего города день
+   вылета ночи не требует. */
+function maxNightsOf(i){const t=dayTpls(BASES[i].id).length;return Math.max(0,t-(i===BASES.length-1?1:0));}
+function mustOf(i){return P.filter(p=>p.base===BASES[i].id&&p.cat!=='food'&&prioOf(p)==='must').length;}
+/* совпадение города с тем, что человек любит. Считаем грубо и используем только
+   как последний довод при равном счёте — врать про «мы подобрали под ваши вкусы» не будем */
+const LIKECAT={'Природа и виды':['nature'],'Города и архитектура':['town'],
+  'Музеи, искусство, история':['town'],'Еда и напитки':['food'],'Тишина и отдых':['springs']};
+function likeOf(i,likes){
+  const cats=[];(likes||[]).forEach(l=>(LIKECAT[l]||[]).forEach(c=>cats.push(c)));
+  if(!cats.length)return 0;
+  return P.filter(p=>p.base===BASES[i].id&&cats.indexOf(p.cat)>=0).length;
+}
+function assemble(a){
+  const n=BASES.length,last=n-1,notes=[],warn=[];
+  const natural=NIGHTS0.reduce((s,v)=>s+v,0)+1;
+  const days=Math.max(2,askDays(a)||natural);
+  const N=days-1;                                  /* ночей ровно на одну меньше дней */
+  const drive=a.drive||'any',limH=DRIVE_H[drive]!=null?DRIVE_H[drive]:99;
+  /* с детьми темп сам собой спокойный — переезд через день никто не выдержит */
+  const calm=(a.pace==='calm')||!!(a.kids);
+  const fewer=(a.limits||[]).indexOf('меньше городов')>=0;
+  const minOf=i=>{
+    if(i===last)return 1;                          /* последняя ночь — у аэропорта */
+    let m=1;
+    if(hoursTo(i)>FAR_H)m=2;
+    if(calm)m=Math.max(m,2);
+    return Math.min(m,Math.max(1,maxNightsOf(i)));
+  };
+  const keep=BASES.map((b,i)=>i),drop=[];
+  /* сколько часов дороги между двумя городами, если между ними никто не ночует */
+  const legH=(from,to)=>{let h=0;for(let j=from+1;j<=to;j++)h+=hoursTo(j);return h;};
+  /* Убрать город можно только если без него дорога остаётся дорогой одного дня.
+     Иначе «сокращение» превращается в 11 часов за рулём: в Колорадо без Аспена
+     Урей и Денвер разделяют 590 км. Такое сокращение хуже, чем длинная поездка. */
+  const canDrop=i=>{
+    const k=keep.indexOf(i);
+    if(k<1||k>=keep.length-1)return false;
+    return legH(keep[k-1],keep[k+1])<=MAXDAY_H;
+  };
+  /* кого убираем первым: до кого дольше ехать, у кого меньше обязательных мест,
+     кто меньше совпал с интересами. Первый и последний город не трогаем — в них
+     прилёт и вылет. Убрать — значит поставить 0 ночей: город остаётся на дороге. */
+  /* «города по минимуму» — это про СОДЕРЖАНИЕ, а не команда выбросить остановку:
+     человек в той же фразе просит горы и водопады, и выкинуть за это горный
+     городок было бы издевательством. Поэтому пожелание работает только тогда,
+     когда убрать город приходится всё равно: первым уходит самый «городской». */
+  const townOf=i=>P.filter(p=>p.base===BASES[i].id&&p.cat==='town').length;
+  const dropNext=()=>keep.filter(i=>i!==0&&i!==last&&canDrop(i))
+    .sort((x,y)=>(fewer?(townOf(y)-townOf(x)):0)||(hoursTo(y)-hoursTo(x))||(mustOf(x)-mustOf(y))||(likeOf(x,a.likes)-likeOf(y,a.likes))||(y-x))[0];
+  const sumMin=()=>keep.reduce((s,i)=>s+minOf(i),0);
+  while(sumMin()>N){
+    const i=dropNext();
+    if(i==null)break;
+    keep.splice(keep.indexOf(i),1);drop.push(i);
+    notes.push({t:shortName(BASES[i].name)+' — проездом, без ночёвки',
+      why:'на '+days+' '+plural(days,'день','дня','дней')+' всё не влезает: до него '+fmtH(hoursTo(i))+' дороги, а обязательных мест меньше, чем у соседей'});
+  }
+  const nts=BASES.map(()=>0);
+  keep.forEach(i=>{nts[i]=minOf(i);});
+  let over=keep.reduce((s,i)=>s+nts[i],0)-N;
+  /* дней меньше, чем нужно даже на минимум — режем ночи с конца списка «на выброс» */
+  while(over>0){
+    const c=keep.filter(i=>nts[i]>1).sort((x,y)=>(hoursTo(y)-hoursTo(x))||(mustOf(x)-mustOf(y)))[0];
+    if(c==null)break;
+    nts[c]--;over--;
+  }
+  if(over>0){
+    notes.push({t:'Поездка короче, чем маршрут',
+      why:'на '+days+' '+plural(days,'день','дня','дней')+' этот маршрут не раскладывается: даже по одной ночи на город нужно больше. Оставили начало и конец'});
+    keep.slice(1,-1).forEach(i=>{if(over>0&&nts[i]){over-=nts[i];nts[i]=0;drop.push(i);}});
+  }
+  /* остаток раздаём по замыслу маршрута: где автор задумал больше — туда и добавляем */
+  let left=N-nts.reduce((s,v)=>s+v,0);
+  while(left>0){
+    const c=keep.filter(i=>nts[i]<maxNightsOf(i))
+      .sort((x,y)=>((NIGHTS0[y]-nts[y])-(NIGHTS0[x]-nts[x]))||(mustOf(y)-mustOf(x))||(x-y))[0];
+    if(c==null)break;
+    nts[c]++;left--;
+  }
+  if(left>0){
+    /* содержания меньше, чем дней. Врать «мы придумали чем занять» нельзя —
+       говорим прямо: это будут свободные дни */
+    const c=keep.slice().sort((x,y)=>(mustOf(y)-mustOf(x))||(x-y))[0];
+    nts[c]+=left;
+    notes.push({t:left+' '+plural(left,'свободный день','свободных дня','свободных дней')+' в городе '+shortName(BASES[c].name),
+      why:'в маршруте столько дней не задумано. Дни поставили, но наполнять их вам — или уберите их кнопкой «−»'});
+    left=0;
+  }
+  /* что получилось по ночам — тоже решение, о нём надо сказать */
+  keep.forEach(i=>{
+    if(nts[i]!==NIGHTS0[i])notes.push({t:shortName(BASES[i].name)+' — '+nts[i]+' '+nights(nts[i]),
+      why:'в маршруте задумано '+NIGHTS0[i]+' '+nights(NIGHTS0[i])+', подогнали под ваши '+days+' '+plural(days,'день','дня','дней')});
+  });
+  /* дорога длиннее, чем человек согласился ехать. Убрать город тут НЕ помогает:
+     без него перегон становится ещё длиннее — поэтому честно предупреждаем, а не «чиним». */
+  for(let k=1;k<keep.length;k++){
+    const h=legH(keep[k-1],keep[k]);
+    const nm=shortName(BASES[keep[k-1]].name)+' → '+shortName(BASES[keep[k]].name)+': '+fmtH(h)+' за рулём';
+    if(h>limH&&limH<99)warn.push({t:nm,
+      why:'вы просили недолго за рулём, но другой дороги тут нет. Разбить переезд ночёвкой негде — в этом маршруте такой точки нет'});
+    else if(h>=LONG_H)warn.push({t:nm,
+      why:'это весь день в дороге. Выезжайте рано и не ставьте на этот день ничего сверху'});
+  }
+  if(drive==='no')warn.push({t:'Без машины этот маршрут не проехать',
+    why:'между городами нет ни поездов, ни автобусов — мы собрали с машиной. Иначе поездка не существует'});
+  return {days:days,nights:nts,notes:notes,warn:warn,drop:drop,keep:keep};
+}
+/* «5 ч» / «4,5 ч» — часы человеческим языком */
+function fmtH(h){if(!h)return '0 ч';const r=Math.round(h*10)/10;return String(r).replace('.',',')+' ч';}
+/* Лист «Как мы собрали»: что решили и почему. Открывается сразу после сборки и
+   потом в любой момент из карточки «Старт поездки» — человек должен иметь
+   возможность спросить нас «почему так», а не гадать. */
+function asmSheet(){
+  const r=ASM;if(!r)return;
+  const row=(x,cls)=>'<div class="asmrow'+(cls?' '+cls:'')+'"><b>'+esc0(x.t)+'</b><span>'+esc0(x.why)+'</span></div>';
+  const chk=(typeof tripCheck==='function')?tripCheck():{err:[],warn:[]};
+  sheet('<div class="dsh"><b>Как мы собрали</b><span>Поездка на '+r.days+' '+plural(r.days,'день','дня','дней')
+      +'. Всё, что решили за вас, — здесь. Любое можно поменять руками, всё пересчитается</span></div>'
+    +(r.notes.length?'<div class="dssep">Что сделали</div>'+r.notes.map(x=>row(x)).join(''):
+      '<div class="asmrow"><b>Взяли маршрут как есть</b><span>ваши ответы совпали с тем, как он задуман</span></div>')
+    +(r.warn.length?'<div class="dssep">О чём надо знать</div>'+r.warn.map(x=>row(x,'warn')).join(''):'')
+    +(chk.err.length?'<div class="dssep">Проверка не прошла</div>'
+        +chk.err.map(e=>'<div class="asmrow warn"><b>'+esc0(e)+'</b><span>это наша ошибка сборки — напишите нам</span></div>').join(''):'')
+    +'<button class="dsgo" data-dsclose="1">Понятно</button>');
 }
 /* месяц: назвал сам — берём его; назвал только длину — подсказываем лучший и
    говорим об этом вслух (askMonth возвращает ещё и откуда он взялся) */
@@ -5080,8 +5238,9 @@ function askStart(a){
 }
 /* раскладываем ответы анкеты по уже загруженному маршруту */
 function applyAsk(a){
-  const nights=spreadNights((askDays(a)||10)-1);
-  BASES.forEach((b,i)=>{applyNights(i,nights[i]);});
+  const r=assemble(a);
+  ASM={notes:r.notes,warn:r.warn,days:r.days};      /* чтобы лист «Как мы собрали» можно было открыть снова */
+  BASES.forEach((b,i)=>{applyNights(i,r.nights[i]);});
   startIso=askStart(a);
   /* откуда взялась дата — запоминаем сразу, потом её честно подписываем */
   DATEACC=(a.dateMode==='exact'&&a.from&&a.to)?'exact':(a.month!=null?'approx':'ours');
@@ -5107,6 +5266,17 @@ function buildFromAsk(){
     _askOpen.dest=1;renderLand();return;
   }
   a.where=cat.k;a.whereNm=cat.nm;
+  /* «не вожу» — не мелочь, а вопрос, существует ли поездка. Между нашими городами
+     нет ни поездов, ни автобусов, и придумывать их нельзя. Спрашиваем ДО того,
+     как собрали: человек либо согласится на машину, либо поменяет ответ. */
+  if(a.drive==='no'&&cat.needsCar&&!a.carOk){
+    sheet('<div class="dsh"><b>Без машины этот маршрут не проехать</b><span>'+esc0(cat.nm)
+        +' — дорога между городами. Поездов и автобусов там нет: это не наша лень, их правда нет. '
+        +'Можно взять машину с водителем, но подобрать её мы пока не умеем</span></div>'
+      +'<button class="dsgo" data-askcar="1">Всё равно собрать — машина будет</button>'
+      +'<button class="dscancel" data-dsclose="1">Вернуться и поменять ответ</button>');
+    return;
+  }
   const mm=askMonth(a);
   const title=cat.nm.split(',')[0]+(mm.m!=null?(' · '+monthNm(mm.m)):'');
   /* другой маршрут — другой файл данных, он подключается только при загрузке */
@@ -5114,13 +5284,15 @@ function buildFromAsk(){
   newTripFromCurrent(title);
   applyAsk(a);
   reinit();hideLand();hideHome();rerenderTrip();window.scrollTo(0,0);
-  toast('<b>Маршрут собран: '+esc0(title)+'</b>'
-    +'<i>'+(mm.why?('месяц выбрали мы — '+esc0(mm.why)+'. '):'')
-    +'дни разложены по городам — меняйте что угодно, всё пересчитается</i>',null,null);
+  /* показываем не «готово», а ЧТО ИМЕННО мы решили: это и есть ответ на её
+     «нажимаю — открывается старая Юта». Плашка тут была бы слишком мелкой. */
+  asmSheet();
 }
 document.addEventListener('click',e=>{
   const t=e.target.closest('button');if(!t)return;
   if(t.dataset.askgo!==undefined){const v=(document.getElementById('askText')||{}).value||'';showLand(parseAsk(v));}
+  if(t.dataset.askcar!==undefined&&ASK){ASK.carOk=1;closeDaySheet();buildFromAsk();}
+  if(t.dataset.asmsheet!==undefined){asmSheet();}
   if(t.dataset.asktry){const ta=document.getElementById('askText');if(ta){ta.value=t.dataset.asktry;ta.focus();}}
   if(t.dataset.askform!==undefined){showLand(parseAsk(''));}
   if(t.dataset.aopen){_askOpen[t.dataset.aopen]=1;renderLand();}
@@ -5223,19 +5395,35 @@ document.addEventListener('input',e=>{
 
 /* Шапка поездки: у Колорадо она в разметке, у остальных маршрутов приходит
    данными (HERO в файле маршрута). Без HERO ничего не трогаем. */
+/* Поездка совпадает с тем, как её задумал автор маршрута? */
+function isAuthored(){return BASES.every((b,i)=>b.nights===NIGHTS0[i]);}
+/* Заголовок поездки — из городов, где реально ночуем. Написанный от руки
+   («Зайон → Брайс / Моаб → Арки») годится, только пока маршрут не тронут:
+   после сборки под ответы город может уйти проездом, и заголовок начнёт врать. */
+function heroTitle(){
+  const list=BASES.filter(b=>b.nights>0).map(b=>shortName(b.name));
+  if(!list.length)return null;
+  const k=Math.ceil(list.length/2);
+  return {h1:list.slice(0,k).join(' → '),em:list.slice(k).join(' → ')};
+}
 function applyHero(){
-  if(typeof HERO==='undefined'||!HERO)return;
   const q=s=>document.querySelector(s);
-  const h1=q('header.hero h1');if(h1&&HERO.h1)h1.innerHTML=esc0(HERO.h1)+(HERO.em?'<em>'+esc0(HERO.em)+'</em>':'');
-  const sub=q('header.hero .sub');if(sub&&HERO.sub)sub.textContent=HERO.sub;
+  const H=(typeof HERO!=='undefined'&&HERO)||null;
+  const h1=q('header.hero h1');
+  if(h1){
+    const t=(H&&H.h1&&isAuthored())?{h1:H.h1,em:H.em||''}:heroTitle();
+    if(t)h1.innerHTML=esc0(t.h1)+(t.em?'<em>'+esc0(t.em)+'</em>':'');
+  }
+  if(!H)return;
+  const sub=q('header.hero .sub');if(sub&&H.sub)sub.textContent=H.sub;
   const img=q('header.hero .tile-photo img');
-  if(img&&HERO.photo){img.src=HERO.photo;img.alt=HERO.alt||'';}
+  if(img&&H.photo){img.src=H.photo;img.alt=H.alt||'';}
   const cnt=q('header.hero .tile-photo .cnt');
-  if(cnt&&HERO.capTitle)cnt.innerHTML='<h2>'+esc0(HERO.capTitle)+'</h2><p>'+esc0(HERO.capSub||'')+'</p>';
-  if(HERO.parks){
+  if(cnt&&H.capTitle)cnt.innerHTML='<h2>'+esc0(H.capTitle)+'</h2><p>'+esc0(H.capSub||'')+'</p>';
+  if(H.parks){
     const t=document.querySelectorAll('header.hero .tile-g.d b, header.hero .tile-g.d .tcap');
-    if(t[0])t[0].textContent=HERO.parks;
-    if(t[1])t[1].textContent=HERO.parksCap||t[1].textContent;
+    if(t[0])t[0].textContent=H.parks;
+    if(t[1])t[1].textContent=H.parksCap||t[1].textContent;
   }
 }
 
@@ -5248,6 +5436,7 @@ const scMed=document.getElementById('scMedIcon');if(scMed)scMed.innerHTML=ic('ca
 /* назвал дату руками — она перестала быть нашей прикидкой */
 const sd0=document.getElementById('startDate');if(sd0){sd0.value=startIso;sd0.addEventListener('change',e=>{startIso=e.target.value||START;DATEACC='exact';savePlan();syncDateAcc();rerenderTrip();});}
 buildSchedule();
+syncDateAcc();     /* и подпись под датой, и ссылка «Как мы собрали» — она живёт в плане */
 renderUnits();buildRoute();buildElev();buildFilters();buildDays();buildCities();buildFood();buildBases();buildPlanner();wireButtons();wireBudget();buildBudgetStay();
 /* линия маршрута считается от ширины экрана и ширины подписей — пересобираем после ресайза и загрузки шрифтов */
 let _rrt;addEventListener('resize',()=>{clearTimeout(_rrt);_rrt=setTimeout(buildRoute,160);});
@@ -5745,6 +5934,7 @@ function reinit(){try{
   const pn=document.getElementById('pNum');if(pn)pn.textContent=PEOPLE;
   syncCurBtn();
   buildSchedule();
+  applyHero();
   renderUnits();buildRoute();buildDays();buildCities();buildFood();buildBases();buildPlanner();buildBudget();buildFilters();buildElev();recomputeDates();syncChecks();applyFilter();
 }catch(e){}}
 async function cloudSync(session){
@@ -5842,8 +6032,7 @@ let openAuth=function(){};
   if(!a)return;
   try{
     applyAsk(a);reinit();hideLand();hideHome();rerenderTrip();window.scrollTo(0,0);
-    const nm=(CATALOG.find(c=>c.k===a.where)||{}).nm||'';
-    toast('<b>Маршрут собран: '+esc0(nm.split(',')[0])+'</b><i>дни разложены по городам — меняйте что угодно, всё пересчитается</i>',null,null);
+    asmSheet();                       /* тот же отчёт, что и при сборке без перезагрузки */
     window.__askApplied=1;
   }catch(e){window.__pageErr.push('анкета: '+e.message);}
 })();
