@@ -5264,6 +5264,7 @@ function renderLand(){
   const ta=document.getElementById('askText');if(ta)ta.focus();
 }
 function showLand(ask){
+  setScreen('land');
   ASK=ask||null;_askOpen={};_askMore=false;
   _calM=null;_calOpen=false;_bkDone={};_bkErr={};
   _atLand=true;_atHome=false;renderUnits();
@@ -5273,6 +5274,12 @@ function showLand(ask){
   const el=document.getElementById('land');if(el)el.style.display='';
   renderLand();window.scrollTo(0,0);
 }
+/* Где человек находится: 'trip' — внутри поездки, 'home' — кабинет, 'land' —
+   главная. Держим в памяти браузера, чтобы ОБНОВЛЕНИЕ СТРАНИЦЫ возвращало туда
+   же, где он был. Клиент: «нажимаю обновить — меня выкидывает на главную». */
+const SCREENK='co-trip-screen';
+function setScreen(v){try{localStorage.setItem(SCREENK,v);}catch(e){}}
+function lastScreen(){try{return localStorage.getItem(SCREENK)||'';}catch(e){return '';}}
 function hideLand(){
   _atLand=false;ASK=null;
   const el=document.getElementById('land');if(el)el.style.display='none';
@@ -5665,6 +5672,45 @@ function heroTitle(){
 }
 /* Самое красивое место поездки: обязательное (звезда), с фотографией, из тех
    городов, где мы ночуем. Именно оно и должно стоять в шапке. */
+/* Заголовок поездки: города переносились как попало («Спрингдейл → Брайс-» и
+   «Каньон-Сити» на второй строке). Не гадаем — МЕРЯЕМ (просьба клиента):
+   1) пробуем все способы разбить города на две строки и берём тот, где самая
+      длинная строка короче;
+   2) уменьшаем кегль, пока строки не встанут целиком. Ниже 24 px не опускаемся. */
+function fitHeroTitle(){
+  const h1=document.querySelector('header.hero h1');if(!h1)return;
+  h1.style.fontSize='';
+  const cs=getComputedStyle(h1),base=parseFloat(cs.fontSize),w=h1.clientWidth;
+  if(!w||!base)return;
+  const fontAt=px=>cs.fontStyle+' '+cs.fontWeight+' '+px+'px '+cs.fontFamily;
+  const fitSize=lines=>{
+    let px=base;
+    const widest=q=>Math.max.apply(null,lines.map(t=>txtW(t,fontAt(q))));
+    while(px>24&&widest(px)>w)px-=1;
+    return px;
+  };
+  const names=h1.dataset.cities?h1.dataset.cities.split('|'):null;
+  if(names&&names.length>1){
+    /* какой раскрой строк даёт самый крупный шрифт — тот и берём */
+    let best=null;
+    for(let k=1;k<names.length;k++){
+      const lines=[names.slice(0,k).join(' → '),names.slice(k).join(' → ')];
+      const px=fitSize(lines);
+      if(!best||px>best.px)best={px:px,lines:lines};
+    }
+    if(best){
+      h1.innerHTML=esc0(best.lines[0])+'<em>'+esc0(best.lines[1])+'</em>';
+      h1.style.fontSize=best.px<base?(best.px+'px'):'';
+      return;
+    }
+  }
+  const em=h1.querySelector('em'),lines=[];
+  h1.childNodes.forEach(n=>{if(n.nodeType===3&&n.textContent.trim())lines.push(n.textContent.trim());});
+  if(em&&em.textContent.trim())lines.push(em.textContent.trim());
+  if(!lines.length)return;
+  const px=fitSize(lines);
+  if(px<base)h1.style.fontSize=px+'px';
+}
 function inTripPlace(id){
   const p=P.find(x=>x.id===id);
   if(!p)return false;
@@ -5690,39 +5736,42 @@ function applyHero(){
   if(h1){
     const t=(H&&H.h1&&own)?{h1:H.h1,em:H.em||''}:heroTitle();
     if(t)h1.innerHTML=esc0(t.h1)+(t.em?'<em>'+esc0(t.em)+'</em>':'');
+    /* список городов держим на самом заголовке: раскрой строк пересчитывается
+       при каждом замере, а не гадается один раз при сборке */
+    const cl=CB.filter(b=>b.nights>0).map(b=>shortName(b.name));
+    if(!(H&&H.h1&&own)&&cl.length>1)h1.dataset.cities=cl.join('|');else delete h1.dataset.cities;
+    fitHeroTitle();
   }
   /* Шапка написана про ВЕСЬ маршрут. Если поездку пересобрали под ответы, её текст
      и фотография начинают врать: в поездке по одному Дуранго нет ни Million Dollar
      Highway, ни Maroon Bells на картинке. Тогда берём то, что правда есть. */
   if(!own){
+    /* ⚠️ ФОТОГРАФИЯ ШАПКИ ПРИНАДЛЕЖИТ МАРШРУТУ, А НЕ РАСКЛАДКЕ ДНЕЙ.
+       Её правило: в готовом маршруте нельзя менять НАБОР ГОРОДОВ — можно менять
+       дни, людей, даты. Значит и снимок меняться не должен: он у маршрута один,
+       самый красивый, с авторской подписью. Я это вчера сломала, подставив первую
+       картинку города, — возвращено как было.
+       Новый набор городов — это уже ДРУГОЙ маршрут (его соберёт генерация), и
+       фотография у него будет своя. */
     const b=CB[0];
     const sub0=q('header.hero .sub');
-    if(sub0)sub0.textContent=(CB.length===1&&b&&b.desc)?b.desc:'';
-    /* Фотография — САМОЕ фотографируемое место поездки. Пока место из шапки
-       маршрута (HERO.place) остаётся в поездке, держим авторский снимок и подпись:
-       клиент: «раньше подбиралась самая красивая картинка и писалось, чем место
-       знаменито, а теперь просто Дуранго и 3 ночи». */
-    if(H&&H.place&&H.photo&&inTripPlace(H.place)){
+    /* поездка в один город — берём его описание: рассказ про весь маршрут тут не про неё */
+    if(sub0&&CB.length===1&&b&&b.desc)sub0.textContent=b.desc;
+    else if(sub0&&H&&H.sub)sub0.textContent=H.sub;
+    if(H&&H.photo){
       const im1=q('header.hero .tile-photo img');
       if(im1){im1.src=H.photo;im1.alt=H.alt||'';}
       const cn1=q('header.hero .tile-photo .cnt');
-      /* подпись пересобираем: у автора там «седьмой день», а в перекроенной
-         поездке это уже другой день — цифру берём из расписания */
-      const pl=P.find(x=>x.id===H.place),e=pl?dayOf(pl.d):null;
-      const why=(pl&&pl.tag&&pl.tag[0])||(H.capSub||'');
-      if(cn1&&H.capTitle)cn1.innerHTML='<h2>'+esc0(H.capTitle)+'</h2><p>'+esc0(why+(e?' · день '+e.disp:''))+'</p>';
+      if(cn1&&H.capTitle)cn1.innerHTML='<h2>'+esc0(H.capTitle)+'</h2><p>'+esc0(H.capSub||'')+'</p>';
       return;
     }
+    /* у маршрута нет своей шапки (так будет у сгенерированных) — выбираем сами */
     const best=heroPick();
-    const im0=q('header.hero .tile-photo img'),ph=best?best.img:(b?basePhoto(b.id):'');
-    if(im0&&ph){im0.src=ph;im0.alt=best?best.p.nm:(b?b.name:'');}
-    const cn0=q('header.hero .tile-photo .cnt');
-    if(cn0){
-      if(best)cn0.innerHTML='<h2>'+esc0(shortName(best.p.nm))+'</h2><p>'+esc0(best.sub)+'</p>';
-      else if(b){
-        const before=nightsBefore(b.id),ci=addDays(startIso,before),co=addDays(startIso,before+b.nights);
-        cn0.innerHTML='<h2>'+esc0(shortName(b.name))+'</h2><p>'+esc0(dmRange(ci,co)+' · '+b.nights+' '+nights(b.nights))+'</p>';
-      }
+    if(best){
+      const im0=q('header.hero .tile-photo img');
+      if(im0){im0.src=best.img;im0.alt=best.p.nm;}
+      const cn0=q('header.hero .tile-photo .cnt');
+      if(cn0)cn0.innerHTML='<h2>'+esc0(shortName(best.p.nm))+'</h2><p>'+esc0(best.sub)+'</p>';
     }
     return;
   }
@@ -5751,8 +5800,8 @@ buildSchedule();
 syncDateAcc();     /* и подпись под датой, и ссылка «Как мы собрали» — она живёт в плане */
 renderUnits();buildRoute();buildElev();buildFilters();buildDays();buildCities();buildFood();buildBases();buildPlanner();wireButtons();wireBudget();buildBudgetStay();
 /* линия маршрута считается от ширины экрана и ширины подписей — пересобираем после ресайза и загрузки шрифтов */
-let _rrt;addEventListener('resize',()=>{clearTimeout(_rrt);_rrt=setTimeout(buildRoute,160);});
-if(document.fonts&&document.fonts.ready)document.fonts.ready.then(buildRoute);
+let _rrt;addEventListener('resize',()=>{clearTimeout(_rrt);_rrt=setTimeout(()=>{buildRoute();fitHeroTitle();},160);});
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{buildRoute();fitHeroTitle();});
 recomputeDates();
 syncChecks();applyFilter();
 backfillPoints();
@@ -6047,6 +6096,7 @@ function homeHTML(){
 }
 function esc0(x){return String(x==null?'':x).replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));}
 function showHome(){
+  setScreen('home');
   /* Кабинет и главная — РАЗНЫЕ экраны, и показывать их одновременно нельзя.
      showHome не прятал главную, поэтому после «Новой поездки» анкета
      оставалась висеть ПОД списком поездок (клиент прислала скрин). */
@@ -6059,6 +6109,7 @@ function showHome(){
   window.scrollTo(0,0);
 }
 function hideHome(){
+  setScreen('trip');          /* вышли из кабинета внутрь поездки */
   _atHome=false;renderUnits();
   const h=document.getElementById('home');if(h)h.style.display='none';
   document.body.classList.remove('athome');
@@ -6411,8 +6462,14 @@ headerAuth();
 /* Сайт открывается ГЛАВНОЙ, а не кабинетом: кабинет — это раздел для того, кто
    вошёл, а не витрина. Клиент: «главная страница должна быть та, которую мы
    сделали для анкеты». В кабинет по-прежнему можно попасть по ?home. */
+/* Обновление страницы не должно выбрасывать из поездки: возвращаем туда, где
+   человек был. Экран запоминается в setScreen() при каждом переходе. */
 if(window.__askApplied);
-else if(/[?&]home\b/.test(location.search))showHome();else showLand(null);
+else if(/[?&]home/.test(location.search))showHome();
+else if(/[?&]land/.test(location.search))showLand(null);
+else if(lastScreen()==='trip'){hideLand();hideHome();window.scrollTo(0,0);}
+else if(lastScreen()==='home')showHome();
+else showLand(null);
 </script>
 </body>
 </html>
