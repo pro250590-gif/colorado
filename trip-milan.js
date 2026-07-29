@@ -200,9 +200,9 @@ const HERO={
    значок, и это честнее чужой картинки. */
 const PHOTO={duo:'jpg',ter:'jpg',gal:'jpg',sfo:'jpg',bre:'jpg',nav:'jpg',
  mxp:'jpg',cad:'jpg',col:'jpg',lor:'jpg',eus:'jpg',tic:'jpg',dar:'jpg',lav:'jpg',
- rea:'jpg',mer:'jpg',amb:'jpg',rin:'jpg',sem:'jpg',bra:'jpg',arc:'jpg',
- cen:'jpg',leo:'jpg',amr:'jpg',mau:'jpg',clg:'jpg',cdu:'jpg',fun:'jpg',
- vol:'jpg',bpr:'jpg',mel:'jpg',vpr:'jpg',mos:'jpg',vst:'jpg',
+ rea:'jpg',mer:'jpg',amb:'jpg',sem:'jpg',bra:'jpg',arc:'jpg',sca:'jpg',tri:'jpg',
+ cen:'jpg',leo:'jpg',amr:'jpg',mau:'jpg',clg:'jpg',cdu:'jpg',fun:'jpg',vez:'jpg',
+ vol:'jpg',bpr:'jpg',mel:'jpg',vpr:'jpg',mos:'jpg',vst:'jpg',inn:'jpg',ort:'jpg',
  pol:'jpg',mon:'jpg',bab:'jpg'};
 const BPHOTO={mil:'duo'};
 
