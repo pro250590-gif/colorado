@@ -5665,13 +5665,21 @@ function heroTitle(){
 }
 /* Самое красивое место поездки: обязательное (звезда), с фотографией, из тех
    городов, где мы ночуем. Именно оно и должно стоять в шапке. */
+function inTripPlace(id){
+  const p=P.find(x=>x.id===id);
+  if(!p)return false;
+  const b=BASES.find(x=>x.id===p.base);
+  return !!b&&!b.off&&b.nights>0&&!!dayOf(p.d);
+}
 function heroPick(){
   const ids=tripBases().filter(b=>b.nights>0).map(b=>b.id);
   const cand=P.filter(p=>p.cat!=='food'&&ids.indexOf(p.base)>=0&&PHOTO[p.id]&&dayOf(p.d));
   if(!cand.length)return null;
   const best=cand.find(p=>p.star)||cand.find(p=>prioOf(p)==='must')||cand[0];
-  const e=dayOf(best.d),city=shortName(baseById(best.base).name);
-  return {p:best,img:pimg(best.id,'l'),sub:city+(e?' · день '+e.disp:'')};
+  const e=dayOf(best.d);
+  /* подпись в том же духе, что писал автор: чем это место знаменито + день */
+  const why=(best.tag&&best.tag[0])||shortName(baseById(best.base).name);
+  return {p:best,img:pimg(best.id,'l'),sub:why+(e?' · день '+e.disp:'')};
 }
 function applyHero(){
   const q=s=>document.querySelector(s);
@@ -5690,9 +5698,21 @@ function applyHero(){
     const b=CB[0];
     const sub0=q('header.hero .sub');
     if(sub0)sub0.textContent=(CB.length===1&&b&&b.desc)?b.desc:'';
-    /* фотография — САМОЕ КРАСИВОЕ МЕСТО поездки, а не первая попавшаяся картинка
-       города: клиент справедливо заметила, что вид из окна поезда вместо
-       Меса-Верде обесценивает всю шапку */
+    /* Фотография — САМОЕ фотографируемое место поездки. Пока место из шапки
+       маршрута (HERO.place) остаётся в поездке, держим авторский снимок и подпись:
+       клиент: «раньше подбиралась самая красивая картинка и писалось, чем место
+       знаменито, а теперь просто Дуранго и 3 ночи». */
+    if(H&&H.place&&H.photo&&inTripPlace(H.place)){
+      const im1=q('header.hero .tile-photo img');
+      if(im1){im1.src=H.photo;im1.alt=H.alt||'';}
+      const cn1=q('header.hero .tile-photo .cnt');
+      /* подпись пересобираем: у автора там «седьмой день», а в перекроенной
+         поездке это уже другой день — цифру берём из расписания */
+      const pl=P.find(x=>x.id===H.place),e=pl?dayOf(pl.d):null;
+      const why=(pl&&pl.tag&&pl.tag[0])||(H.capSub||'');
+      if(cn1&&H.capTitle)cn1.innerHTML='<h2>'+esc0(H.capTitle)+'</h2><p>'+esc0(why+(e?' · день '+e.disp:''))+'</p>';
+      return;
+    }
     const best=heroPick();
     const im0=q('header.hero .tile-photo img'),ph=best?best.img:(b?basePhoto(b.id):'');
     if(im0&&ph){im0.src=ph;im0.alt=best?best.p.nm:(b?b.name:'');}
