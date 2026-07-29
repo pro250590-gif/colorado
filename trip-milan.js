@@ -18,6 +18,12 @@
    · один район — один день, чтобы не возвращаться сюда же послезавтра;
    · точек кладём с запасом (9–10), лишнее человек снимает тумблером.
 
+   ОТБОР МЕСТ. Что попадает в день, решаем не «на вкус»: спрашиваем у карты,
+   что есть вокруг каждой точки, и у Google — сколько у этих мест отзывов и
+   какая оценка. Берём то, куда люди правда ходят. Сами оценки нигде не
+   храним (правилами нельзя дольше 30 дней) — они нужны только в момент
+   отбора; в базе places-db.json остаются лишь номер места и координата.
+
    КООРДИНАТЫ. Ни одна не написана по памяти. Каждая сверена по четырём
    источникам (OpenStreetMap, Photon, путеводитель Wikivoyage, Google
    Geocoding) — в файле стоит та, на которой источники сошлись.
@@ -60,16 +66,23 @@ const P=[
   why:'Шестнадцать римских колонн II века, перенесённых сюда в IV-м. Вечером на ступенях сидит пол-Милана.'},
  {id:'lor',d:1,base:'mil',cat:'town',lat:45.458085,lng:9.182011,nm:'Basilica di San Lorenzo Maggiore',q:'Basilica di San Lorenzo Maggiore, Milano',tag:['рядом','t-easy'],
   why:'Церковь IV века, одна из старейших в Европе: круглая, с византийскими мозаиками в капелле Сант-Аквилино.'},
+ {id:'bas',d:1,base:'mil',cat:'nature',lat:45.455779,lng:9.182226,nm:'Parco delle Basiliche',q:'Parco Giovanni Paolo II, Milano',tag:['по дороге','t-easy'],
+  why:'Парк ровно между двумя базиликами: газоны, платаны и вид на обе церкви сразу. Мы всё равно идём через него.'},
  {id:'eus',d:1,base:'mil',cat:'town',lat:45.453971,lng:9.181468,nm:'Basilica di Sant’Eustorgio',q:'Basilica di Sant\'Eustorgio, Milano',tag:['по пути','t-easy'],
   why:'Сюда, по преданию, привезли мощи волхвов. В капелле Портинари — фрески раннего Ренессанса и гробница на четырёх ангелах.'},
- {id:'tic',d:1,base:'mil',cat:'town',lat:45.452138,lng:9.178401,nm:'Porta Ticinese',q:'Porta Ticinese, Milano',tag:['ворота','t-easy'],
-  why:'Городские ворота, за которыми начинается район каналов. Отсюда весь вечер идёшь вдоль воды.'},
+ /* в Милане ДВОЕ ворот с этим именем: наши — неоклассические, на площади
+    XXIV Maggio у самой Дарсены; средневековые стоят севернее, в поиске уводят
+    не туда, поэтому в q вписан адрес */
+ {id:'tic',d:1,base:'mil',cat:'town',lat:45.452138,lng:9.178401,nm:'Porta Ticinese',q:'Porta Ticinese, Piazza XXIV Maggio, Milano',tag:['ворота','t-easy'],
+  why:'Ворота на площади XXIV Maggio, за которыми начинается район каналов. Отсюда весь вечер идёшь вдоль воды.'},
  {id:'dar',d:1,base:'mil',cat:'town',lat:45.452911,lng:9.178572,nm:'Darsena di Milano',q:'Darsena di Milano',tag:['порт','t-easy'],star:1,
   why:'Старый городской порт: сюда по каналам везли мрамор на собор. Сейчас — набережная с барами и лодками.'},
  {id:'lav',d:1,base:'mil',cat:'town',lat:45.452028,lng:9.174712,nm:'Vicolo dei Lavandai',q:'Vicolo dei Lavandai, Milano',tag:['уголок','t-easy'],
   why:'Крошечный переулок с деревянными мостками, где до середины XX века стирали бельё прямо в канале.'},
- {id:'nav',d:1,base:'mil',cat:'town',lat:45.451260,lng:9.172320,nm:'Naviglio Grande',q:'Naviglio Grande, Milano',tag:['аперитив','t-must'],star:1,
-  why:'Канал, к которому приложил руку Леонардо. Вечером вдоль обеих набережных — весь миланский аперитив.'},
+ /* канал длинный, до Аббьятеграссо; наша точка — оживлённый участок набережной
+    у Vicolo dei Lavandai, а не «адрес канала» */
+ {id:'nav',d:1,base:'mil',cat:'town',lat:45.451260,lng:9.172320,nm:'Naviglio Grande',q:'Naviglio Grande, Alzaia Naviglio Grande, Milano',tag:['аперитив','t-must'],star:1,
+  why:'Канал, к которому приложил руку Леонардо. Наша точка — оживлённый участок у Vicolo dei Lavandai: вечером вдоль обеих набережных весь миланский аперитив.'},
 
  /* ── день 2: площадь Дуомо и всё вокруг неё, в пределах пятисот метров ── */
  {id:'duo',d:2,base:'mil',cat:'town',lat:45.464167,lng:9.191612,nm:'Duomo di Milano',q:'Duomo di Milano',tag:['главное','t-must'],star:1,
@@ -79,10 +92,16 @@ const P=[
   why:'Крыша собора: между шпилями ходишь по мрамору, в ясный день видно Альпы. Пешком по лестнице дешевле, лифтом быстрее.'},
  {id:'rea',d:2,base:'mil',cat:'town',lat:45.462903,lng:9.190870,nm:'Palazzo Reale',q:'Palazzo Reale, Milano',tag:['выставки','t-easy'],
   why:'Королевский дворец вплотную к собору: здесь всегда идут две-три больших выставки, и это лучший вариант, если пошёл дождь.'},
- {id:'mer',d:2,base:'mil',cat:'town',lat:45.464630,lng:9.187691,nm:'Piazza dei Mercanti',q:'Piazza dei Mercanti, Milano',tag:['старый город','t-easy'],
-  why:'Средневековая торговая площадь: лоджия XIII века, колодец и тишина в двух шагах от толпы у собора.'},
+ {id:'nov',d:2,base:'mil',cat:'town',lat:45.463408,lng:9.190169,nm:'Museo del Novecento',q:'Museo del Novecento, Milano',tag:['на площади','t-easy'],
+  why:'Итальянский XX век — футуристы, Моранди, Фонтана. Из окна верхнего зала собор виден так, как его не увидишь с площади.'},
+ {id:'oss',d:2,base:'mil',cat:'town',lat:45.462417,lng:9.195541,nm:'Santuario di San Bernardino alle Ossa',q:'Santuario di San Bernardino alle Ossa, Milano',tag:['необычное','t-must'],star:1,
+  why:'Часовня, стены которой выложены человеческими костями из старого кладбища. Пять минут внутри — и запоминается на всю поездку. Вход свободный.'},
+ {id:'sat',d:2,base:'mil',cat:'town',lat:45.462877,lng:9.187689,nm:'Santa Maria presso San Satiro',q:'Chiesa di Santa Maria presso San Satiro, Milano',tag:['обман зрения','t-easy'],
+  why:'Места на алтарную часть не хватило, и Браманте нарисовал её: кажется, что за колоннами глубина в несколько метров, а там сантиметры.'},
  {id:'amb',d:2,base:'mil',cat:'town',lat:45.463640,lng:9.186007,nm:'Pinacoteca Ambrosiana',q:'Pinacoteca Ambrosiana, Milano',tag:['музей','t-easy'],
   why:'Здесь лежит «Атлантический кодекс» Леонардо и висит «Корзина с фруктами» Караваджо. Народу заметно меньше, чем в Брере.'},
+ {id:'mer',d:2,base:'mil',cat:'town',lat:45.464630,lng:9.187691,nm:'Piazza dei Mercanti',q:'Piazza dei Mercanti, Milano',tag:['старый город','t-easy'],
+  why:'Средневековая торговая площадь: лоджия XIII века, колодец и тишина в двух шагах от толпы у собора.'},
  {id:'gal',d:2,base:'mil',cat:'town',lat:45.465642,lng:9.190006,nm:'Galleria Vittorio Emanuele II',q:'Galleria Vittorio Emanuele II, Milano',tag:['рядом','t-easy'],star:1,
   why:'Стеклянная галерея 1877 года: мозаики на полу, кафе под куполом и самый дорогой шопинг Италии.'},
  {id:'sca',d:2,base:'mil',cat:'town',lat:45.467604,lng:9.189114,nm:'Teatro alla Scala',q:'Teatro alla Scala, Milano',tag:['театр','t-easy'],
@@ -116,15 +135,21 @@ const P=[
   why:'Вокзал, куда приходит поезд с Cadorna. Стоит прямо на набережной: до причалов триста метров пешком, никуда ехать не надо.'},
  {id:'cdu',d:4,base:'mil',cat:'town',lat:45.811768,lng:9.083661,nm:'Cattedrale di Santa Maria Assunta',q:'Cattedrale di Santa Maria Assunta, Como',tag:['собор','t-easy'],
   why:'Собор Комо, который строили четыреста лет: снизу готика, сверху ренессансный купол. Вход свободный.'},
+ {id:'fed',d:4,base:'mil',cat:'town',lat:45.809688,lng:9.084330,nm:'Basilica di San Fedele',q:'Basilica di San Fedele, Como',tag:['старый Комо','t-easy'],
+  why:'Романская церковь XII века на бывшей рыночной площади: резной портал со зверями и тихий двор в двух шагах от собора.'},
  {id:'fun',d:4,base:'mil',cat:'nature',lat:45.817644,lng:9.082854,nm:'Funicolare Como–Brunate',q:'Funicolare Como-Brunate, Piazza Alcide De Gasperi, Como',tag:['наверх','t-must'],star:1,
   why:'Фуникулёр 1894 года поднимает за семь минут на 500 метров в деревню Брунате: сверху видно всё озеро и Альпы, вдоль дороги — смотровые площадки и кафе.'},
  {id:'vol',d:4,base:'mil',cat:'town',lat:45.814832,lng:9.075253,nm:'Tempio Voltiano',q:'Tempio Voltiano, Como',tag:['набережная','t-easy'],
   why:'Круглый белый павильон на самой воде — музей Алессандро Вольты, который здесь родился и придумал батарейку.'},
+ {id:'lif',d:4,base:'mil',cat:'town',lat:45.815375,lng:9.080258,nm:'Life Electric',q:'Life Electric, Como',tag:['на молу','t-easy'],
+  why:'Стальная скульптура Даниэля Либескинда на самом краю мола — памятник Вольте и лучшая точка, чтобы снять озеро с воды. Бесплатно, пять минут.'},
  {id:'pie',d:4,base:'mil',cat:'transport',lat:45.813976,lng:9.080794,nm:'Imbarcadero di Como · Navigazione Laghi',q:'Navigazione Lago di Como, Piazza Cavour, Como',tag:['катер','t-must'],star:1,
   why:'Причал, от которого уходят катера по озеру. Билет берут в кассе на пирсе: быстрый до Белладжо идёт 45 минут, обычный — около двух часов.'},
  {id:'bpr',d:4,base:'mil',cat:'town',lat:45.987381,lng:9.260105,nm:'Imbarcadero di Bellagio',q:'Imbarcadero Bellagio',tag:['Белладжо','t-must'],star:1,
   hop:'катер 45 мин быстрый, 2 ч обычный',
   why:'Катер причаливает в самом центре деревни: от трапа сразу начинаются лестницы-улицы, лавки и кафе над водой.'},
+ {id:'spa',d:4,base:'mil',cat:'nature',lat:45.991284,lng:9.265488,nm:'Punta Spartivento',q:'Punta Spartivento, Bellagio',tag:['мыс','t-must'],star:1,
+  why:'Мыс на самом носу Белладжо, где озеро расходится на два рукава: справа Лекко, слева Комо, впереди Альпы. Десять минут от причала по набережной, бесплатно.'},
  {id:'mel',d:4,base:'mil',cat:'nature',lat:45.979058,lng:9.253158,nm:'Giardini di Villa Melzi',q:'Villa Melzi, Bellagio',tag:['сады','t-easy'],
   why:'Сады виллы вдоль самой воды: платаны, японский пруд и статуи. От причала — десять минут по набережной.'},
  {id:'vpr',d:4,base:'mil',cat:'town',lat:46.014027,lng:9.282884,nm:'Imbarcadero di Varenna',q:'Imbarcadero Varenna',tag:['Варенна','t-easy'],
@@ -140,6 +165,10 @@ const P=[
   why:'Отсюда прямой поезд в Милан, час до Centrale. Возвращаться катером в Комо не нужно — вечером их мало.'},
 
  /* ── день 5: Брера, золотой квадрат и вылет ── */
+ {id:'car',d:5,base:'mil',cat:'town',lat:45.470332,lng:9.185704,nm:'Chiesa del Carmine',q:'Chiesa del Carmine, Milano',tag:['начало Бреры','t-easy'],
+  why:'Кирпичная готика на площади, с которой начинается квартал Брера. Внутри прохладно и почти всегда пусто.'},
+ {id:'sim',d:5,base:'mil',cat:'town',lat:45.473846,lng:9.184445,nm:'Basilica di San Simpliciano',q:'Basilica di San Simpliciano, Milano',tag:['IV век','t-easy'],
+  why:'Одна из четырёх базилик, заложенных святым Амвросием. Тихий двор с колоннами в стороне от туристических улиц.'},
  {id:'bre',d:5,base:'mil',cat:'town',lat:45.472242,lng:9.188407,nm:'Pinacoteca di Brera',q:'Pinacoteca di Brera, Milano',tag:['галерея','t-must'],star:1,
   why:'Главная картинная галерея Милана: Рафаэль, Мантенья, Караваджо. Вокруг — квартал академии художеств с мастерскими и барами.'},
  {id:'ort',d:5,base:'mil',cat:'nature',lat:45.471035,lng:9.189699,nm:'Orto Botanico di Brera',q:'Orto Botanico di Brera, Milano',tag:['тишина','t-easy'],
@@ -152,24 +181,31 @@ const P=[
   why:'Дом двух братьев-собирателей XIX века, обставленный под ренессанс: резные потолки, доспехи и посуда, которой пользовались хозяева.'},
  {id:'spi',d:5,base:'mil',cat:'town',lat:45.469506,lng:9.197665,nm:'Via della Spiga',q:'Via della Spiga, Milano',tag:['пешеходная','t-easy'],
   why:'Пешеходная улица золотого квадрата: без машин, с витринами и кофейнями во дворах.'},
+ {id:'nec',d:5,base:'mil',cat:'town',lat:45.468371,lng:9.201793,nm:'Villa Necchi Campiglio',q:'Villa Necchi Campiglio, Milano',tag:['дом-музей','t-must'],star:1,
+  why:'Дом миланских промышленников 1930-х с бассейном во дворе — тот самый, где снимали «Я — это любовь». Всё оставлено как было, вплоть до посуды.'},
  {id:'bab',d:5,base:'mil',cat:'town',lat:45.466374,lng:9.197707,nm:'Piazza San Babila',q:'Piazza San Babila, Milano',tag:['конец','t-easy'],
   why:'Отсюда метро М1 идёт до Cadorna, а с Cadorna — поезд в аэропорт. Удобная точка, чтобы закончить прогулку.'}
 ];
 
 const FOODCITIES=[
+ /* Проверено по отзывам: из прежнего списка две позиции оказались слабыми
+    (мороженое в Комо 3,9 и ресторан над Варенной 3,7) — заменены на те, что
+    рядом и оценены выше. Оценки нигде не храним, они нужны были для выбора. */
  {city:'Милан',base:'mil',q:'Milan, Italy',lat:45.4642,lng:9.1900,
   spots:[
    {nm:'Luini Panzerotti',best:'перекус',price:'€',veg:'вег ok',tag:'жареные пирожки в двух шагах от собора, с 1949 года'},
-   {nm:'Trattoria Milanese',best:'ужин',price:'€€',veg:'кое-что',tag:'оссобуко и ризотто по-милански в старом городе'},
-   {nm:'Pasticceria Marchesi 1824',best:'завтрак',price:'€€',veg:'вег ok',tag:'кофе и выпечка в интерьере XIX века'},
+   {nm:'Gloria Osteria',best:'ужин',price:'€€',veg:'кое-что',tag:'миланская кухня в Брере — одно из самых любимых мест города'},
+   {nm:'Piz',best:'обед',price:'€€',veg:'вег ok',tag:'пиццерия у Дуомо: три вида пиццы и очередь на улице'},
+   {nm:'Debbie’s',best:'завтрак',price:'€',veg:'вег ok',tag:'кофе и выпечка в Брере, открывается рано'},
    {nm:'Ristorante Rita',best:'аперитив',price:'€€',veg:'вег ok',tag:'коктейли на Навильи — как раз к первому вечеру'},
    {nm:'Nottingham Forest',best:'вечер',price:'€€',veg:'вег ok',tag:'коктейльный бар, известный на всю Италию'}
   ]},
  {city:'Комо и Варенна',base:'mil',q:'Como, Italy',lat:45.8081,lng:9.0852,
   spots:[
    {nm:'Osteria del Gallo',best:'обед',price:'€€',veg:'кое-что',tag:'семейная остерия в переулке у собора Комо'},
-   {nm:'Gelateria Ceccato',best:'после обеда',price:'€',veg:'вег ok',tag:'мороженое на набережной, по дороге к причалу'},
-   {nm:'Il Caminetto',best:'ужин',price:'€€',veg:'кое-что',tag:'над Варенной, с видом на озеро — если задерживаешься'}
+   {nm:'Gelateria Lariana',best:'после обеда',price:'€',veg:'вег ok',tag:'мороженое на набережной, по дороге к причалу'},
+   {nm:'Passion Como',best:'завтрак',price:'€',veg:'вег ok',tag:'кофе и выпечка у вокзала Комо'},
+   {nm:'Bar La Cambusa',best:'ужин',price:'€€',veg:'кое-что',tag:'у причала Варенны — пока ждёшь поезд домой'}
   ]}
 ];
 
@@ -203,7 +239,8 @@ const PHOTO={duo:'jpg',ter:'jpg',gal:'jpg',sfo:'jpg',bre:'jpg',nav:'jpg',
  rea:'jpg',mer:'jpg',amb:'jpg',sem:'jpg',bra:'jpg',arc:'jpg',sca:'jpg',tri:'jpg',
  cen:'jpg',leo:'jpg',amr:'jpg',mau:'jpg',clg:'jpg',cdu:'jpg',fun:'jpg',vez:'jpg',
  vol:'jpg',bpr:'jpg',mel:'jpg',vpr:'jpg',mos:'jpg',vst:'jpg',inn:'jpg',ort:'jpg',
- pol:'jpg',mon:'jpg',bab:'jpg'};
+ pol:'jpg',mon:'jpg',bab:'jpg',
+ bas:'jpg',nov:'jpg',oss:'jpg',sat:'jpg',fed:'jpg',lif:'jpg',spa:'jpg',car:'jpg',sim:'jpg',nec:'jpg'};
 const BPHOTO={mil:'duo'};
 
 const ALT={};
@@ -219,6 +256,16 @@ const TRANSFER={};
 const META={
  cad:{dur:'50 мин из аэропорта',route:'Malpensa Express'},
  nav:{price:'аперитив €10–15',dur:'вечер',best:'с 18:00',route:'метро Porta Genova'},
+ bas:{price:'бесплатно',dur:'15 мин',route:'между двумя базиликами'},
+ nov:{price:'€10',dur:'1 ч',best:'вид на собор из окна',route:'на самой площади'},
+ oss:{price:'бесплатно',dur:'15 мин',best:'необычное',route:'5 мин от собора'},
+ sat:{price:'бесплатно',dur:'20 мин',route:'via Torino'},
+ fed:{price:'бесплатно',dur:'20 мин',route:'2 мин от собора Комо'},
+ lif:{price:'бесплатно',dur:'5 мин',route:'на молу у причала'},
+ spa:{price:'бесплатно',dur:'40 мин',best:'ясный день',route:'10 мин от причала'},
+ car:{price:'бесплатно',dur:'15 мин',route:'начало Бреры'},
+ sim:{price:'бесплатно',dur:'20 мин',route:'север Бреры'},
+ nec:{price:'€15',dur:'1 ч',best:'по сеансам',route:'via Mozart'},
  dar:{price:'бесплатно',dur:'30 мин',best:'на закате',route:'метро Porta Genova'},
  eus:{price:'€6 капелла',dur:'30 мин',route:'трамвай 3'},
  duo:{price:'€10 собор',dur:'1 ч',best:'до 10 утра',route:'метро Duomo'},

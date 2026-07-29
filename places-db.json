@@ -493,5 +493,115 @@
   "off_m": 3,
   "checked": "2026-07-29",
   "by": "google-places-new"
+ },
+ "milan:bas": {
+  "place_id": "ChIJZQG5jQDEhkcRBTZ-oLBZMlU",
+  "name": "Parco Giovanni Paolo II",
+  "lat": 45.455779,
+  "lng": 9.182226,
+  "our_lat": 45.455779,
+  "our_lng": 9.182226,
+  "off_m": 0,
+  "checked": "2026-07-29",
+  "by": "google-places-new"
+ },
+ "milan:nov": {
+  "place_id": "ChIJLd2VYRsuVUARNjgLnq9U2dE",
+  "name": "Museo del Novecento",
+  "lat": 45.463408,
+  "lng": 9.190169,
+  "our_lat": 45.463408,
+  "our_lng": 9.190169,
+  "off_m": 0,
+  "checked": "2026-07-29",
+  "by": "google-places-new"
+ },
+ "milan:oss": {
+  "place_id": "ChIJhfp35qXGhkcR_dPp7rKmopg",
+  "name": "Santuario di San Bernardino alle Ossa",
+  "lat": 45.462417,
+  "lng": 9.195541,
+  "our_lat": 45.462417,
+  "our_lng": 9.195541,
+  "off_m": 0,
+  "checked": "2026-07-29",
+  "by": "google-places-new"
+ },
+ "milan:sat": {
+  "place_id": "ChIJt1PB9qvGhkcRwIetkCDW1qM",
+  "name": "Chiesa di Santa Maria",
+  "lat": 45.462877,
+  "lng": 9.187689,
+  "our_lat": 45.462877,
+  "our_lng": 9.187689,
+  "off_m": 0,
+  "checked": "2026-07-29",
+  "by": "google-places-new"
+ },
+ "milan:fed": {
+  "place_id": "ChIJu_OnVbWdhkcRbrMnRbWTZMw",
+  "name": "Basilica di San Fedele",
+  "lat": 45.809688,
+  "lng": 9.08433,
+  "our_lat": 45.809688,
+  "our_lng": 9.08433,
+  "off_m": 0,
+  "checked": "2026-07-29",
+  "by": "google-places-new"
+ },
+ "milan:lif": {
+  "place_id": "ChIJ3XNeo0uchkcRTbJQBdIhkg0",
+  "name": "Life Electric",
+  "lat": 45.815375,
+  "lng": 9.080258,
+  "our_lat": 45.815375,
+  "our_lng": 9.080258,
+  "off_m": 0,
+  "checked": "2026-07-29",
+  "by": "google-places-new"
+ },
+ "milan:spa": {
+  "place_id": "ChIJF3anm_4XhEcRS9w7ks_ZBhQ",
+  "name": "Punta Spartivento",
+  "lat": 45.991284,
+  "lng": 9.265488,
+  "our_lat": 45.991284,
+  "our_lng": 9.265488,
+  "off_m": 0,
+  "checked": "2026-07-29",
+  "by": "google-places-new"
+ },
+ "milan:car": {
+  "place_id": "ChIJGXJo1EzBhkcRHiUjaQb05WM",
+  "name": "Chiesa del Carmine",
+  "lat": 45.470332,
+  "lng": 9.185704,
+  "our_lat": 45.470332,
+  "our_lng": 9.185704,
+  "off_m": 0,
+  "checked": "2026-07-29",
+  "by": "google-places-new"
+ },
+ "milan:sim": {
+  "place_id": "ChIJxU1UdEvBhkcRSQeXwW6D9ag",
+  "name": "Basilica of San Simpliciano",
+  "lat": 45.473846,
+  "lng": 9.184445,
+  "our_lat": 45.473846,
+  "our_lng": 9.184445,
+  "off_m": 0,
+  "checked": "2026-07-29",
+  "by": "google-places-new"
+ },
+ "milan:nec": {
+  "place_id": "ChIJn2UxgrvGhkcRNLCIIIOoylM",
+  "name": "Villa Necchi Campiglio",
+  "lat": 45.468371,
+  "lng": 9.201793,
+  "our_lat": 45.468371,
+  "our_lng": 9.201793,
+  "off_m": 0,
+  "checked": "2026-07-29",
+  "by": "google-places-new"
  }
 }
