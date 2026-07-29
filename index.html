@@ -1425,6 +1425,17 @@ body.stale{padding-top:44px}
 .dsgo{border:0;background:linear-gradient(150deg,#7a5cf0,#5b3fc4);color:#fff!important;border-radius:12px;padding:12px;
   font:800 12px/1 "Plus Jakarta Sans",sans-serif;cursor:pointer}
 .dshint{font:600 10.5px/1.45 "Inter",sans-serif;color:#8b8698}
+/* выбор города вылета: поле поиска и строки с кодом аэропорта */
+.airbox{margin:2px 4px 6px}
+.airbox input{width:100%;box-sizing:border-box;border:1.5px solid rgba(91,63,196,.25);border-radius:13px;
+  padding:12px 13px;font:600 14px/1.2 "Inter",sans-serif;color:#1b1e2e;background:#fff;outline:none}
+.airbox input:focus{border-color:#5b3fc4}
+.airnote{font:600 11.5px/1.45 "Inter",sans-serif;color:#8b8698;margin:0 6px 9px}
+#airlist .airhint{font:600 11.5px/1.45 "Inter",sans-serif;color:#8b8698;margin:4px 6px 8px}
+#airlist{max-height:46vh;overflow:auto;margin:0 2px}
+.airrow{margin-bottom:7px}
+.aircode{flex:none;min-width:44px;text-align:center;background:#f2effc;color:#5b3fc4;border-radius:9px;
+  padding:7px 6px;font:800 12.5px/1 "Inter",sans-serif;letter-spacing:.03em}
 .dscancel.alt{background:#f6f2ff;color:#5b3fc4!important;margin-bottom:8px}
 .dscancel.del{background:#fdeeec;color:#c0392b!important;margin-bottom:8px}
 /* действия у места в дне */
@@ -2062,9 +2073,111 @@ function flightSearch(){
   const backAir=back?((partPoint(back.from)||{}).air||''):(AIRPORT[BASES[BASES.length-1].id]||'');
   const outIso=out?fmtISO(dayDate(out.day)):startIso;
   const backIso=back?fmtISO(dayDate(back.day)):fmtISO(addDays(startIso,totalNights()));
-  return 'https://www.kayak.com/flights/'+ORIGIN.code+'-'+outAir+'/'+outIso+'/'+backAir+'-'+ORIGIN.code+'/'+backIso+'/'+PEOPLE+'adults?sort=price_a';
+  const O=originNow();
+  return 'https://www.kayak.com/flights/'+O.code+'-'+outAir+'/'+outIso+'/'+backAir+'-'+O.code+'/'+backIso+'/'+PEOPLE+'adults?sort=price_a';
 }
 function fmtISO(d){return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);}
+/* ── ОТКУДА ЛЕТИТ ЧЕЛОВЕК ─────────────────────────────────────────────────
+   Город вылета — свойство ЧЕЛОВЕКА, а не маршрута: Милан один и тот же, а
+   летят в него из Майами, Тбилиси и Алматы. В файле маршрута ORIGIN остаётся
+   значением по умолчанию, но если человек выбрал свой город — главнее он.
+   Настройка одна на все поездки и уезжает в облако вместе с остальным. */
+const HOMEK='co-trip-home';
+let HOME=null;
+try{const _h=localStorage.getItem(HOMEK);if(_h)HOME=JSON.parse(_h);}catch(e){}
+function originNow(){
+  if(HOME&&HOME.code)return HOME;
+  return (typeof ORIGIN!=='undefined'&&ORIGIN)||{city:'',code:'',ll:null};
+}
+function saveHome(h){
+  HOME=h;
+  try{h?localStorage.setItem(HOMEK,JSON.stringify(h)):localStorage.removeItem(HOMEK);}catch(e){}
+  rerenderTrip();
+  /* карту собираем заново: на ней и дуга перелёта, и подпись города вылета */
+  try{if(map){map.remove();map=null;initMap();}}catch(e){}
+}
+/* База аэропортов мира лежит отдельным файлом и грузится ТОЛЬКО когда человек
+   открыл выбор города: 340 КБ не должны висеть на каждом посетителе.
+   Тегом script, а не fetch: страница работает и с диска, где fetch к соседнему
+   файлу браузер запрещает. */
+let _airWait=[];
+function loadAirports(cb){
+  if(window.AIRPORTS)return cb(window.AIRPORTS);
+  _airWait.push(cb);
+  if(_airWait.length>1)return;                  /* уже грузится */
+  const sc=document.createElement('script');
+  sc.src='airports.js';
+  sc.onload=()=>{const q=_airWait;_airWait=[];q.forEach(f=>f(window.AIRPORTS||null));};
+  sc.onerror=()=>{const q=_airWait;_airWait=[];q.forEach(f=>f(null));};
+  document.head.appendChild(sc);
+}
+/* Поиск по коду, городу и названию аэропорта. Сначала точное совпадение кода,
+   потом города, потом вхождение; внутри — крупные аэропорты выше. */
+function airFind(q,limit){
+  const A=window.AIRPORTS;if(!A)return [];
+  const t=String(q||'').trim().toLowerCase();
+  if(t.length<2)return [];
+  const out=[];
+  for(let i=0;i<A.length;i++){
+    const a=A[i],code=a[0].toLowerCase(),city=(a[2]||'').toLowerCase(),nm=(a[1]||'').toLowerCase();
+    let sc=0;
+    if(code===t)sc=100;
+    else if(city===t)sc=90;
+    else if(city.indexOf(t)===0)sc=70;
+    else if(nm.indexOf(t)===0)sc=60;
+    else if(city.indexOf(t)>0)sc=40;
+    else if(nm.indexOf(t)>0)sc=30;
+    if(sc)out.push([sc*10+a[7],a]);
+  }
+  out.sort((x,y)=>y[0]-x[0]);
+  return out.slice(0,limit||14).map(x=>x[1]);
+}
+function airRow(a){
+  /* Регион и страна в строке обязательны: именно так не перепутаешь Ванкувер в
+     Канаде с Ванкувером в штате Вашингтон (просьба клиента).
+     Название аэропорта первым, а населённый пункт добавляем, только если он в
+     названии не назван: у Мальпенсы деревня Ferno, и «Ferno» жирным сбивало. */
+  const nm=a[1]||'',city=a[2]||'';
+  const head=nm+((city&&nm.toLowerCase().indexOf(city.toLowerCase())<0)?(' · '+city):'');
+  return '<button class="dsrow airrow" data-airpick="'+a[0]+'">'
+    +'<span class="aircode">'+a[0]+'</span>'
+    +'<span class="dst"><b>'+esc0(head)+'</b>'
+    +'<span>'+esc0([a[3],a[4]].filter(Boolean).join(' · '))+'</span></span></button>';
+}
+function homeSheet(){
+  const cur=originNow();
+  const head='<div class="dsh"><b>Откуда вы летите?</b>'
+    +'<span>'+(cur.code?('сейчас '+esc0(cur.city||'')+' · '+esc0(cur.code)):'город не выбран')+'</span></div>'
+    +'<div class="airbox"><input id="airq" type="search" placeholder="Город или код аэропорта" autocomplete="off"></div>'
+    +'<div class="airnote">Начните печатать и выберите строку из списка: рядом с городом видно регион и страну, чтобы не перепутать одноимённые.</div>'
+    +'<div id="airlist"></div>'
+    +(HOME?'<button class="dscancel alt" data-airreset="1">Вернуть город маршрута</button>':'')
+    +'<button class="dscancel" data-dsclose="1">Отмена</button>';
+  sheet(head);
+  const inp=document.getElementById('airq'),box=document.getElementById('airlist');
+  const draw=()=>{
+    const list=airFind(inp.value,14);
+    box.innerHTML=list.length?list.map(airRow).join('')
+      :(inp.value.trim().length<2?'':'<div class="airhint">Ничего не нашли. Попробуйте код аэропорта — например MIA.</div>');
+  };
+  box.innerHTML='<div class="airhint">Загружаю список аэропортов…</div>';
+  loadAirports(ok=>{
+    box.innerHTML=ok?'':'<div class="airhint">Список не загрузился. Обновите страницу и попробуйте снова.</div>';
+    if(ok&&inp.value)draw();
+  });
+  inp.addEventListener('input',draw);
+  setTimeout(()=>inp.focus(),80);
+}
+function airPick(code){
+  const A=window.AIRPORTS||[];
+  const a=A.find(x=>x[0]===code);if(!a)return;
+  /* город показываем короткий: для Мальпенсы это «Milan Malpensa», а не деревня Ferno */
+  const city=(a[2]&&(a[1]||'').toLowerCase().indexOf(a[2].toLowerCase())<0)?a[1]:(a[2]||a[1]);
+  saveHome({city:city,code:a[0],name:a[1],region:a[3],country:a[4],ll:[a[5],a[6]]});
+  closeDaySheet();
+  toast('<b>Летим из '+esc0(city)+'</b><i>Аэропорт '+esc0(a[0])+' · '+esc0(a[1])
+    +'. Карта, карточка перелёта и подбор рейсов пересчитаны</i>',null,null);
+}
 /* ================= ПАРТНЁРСКИЕ ССЫЛКИ БРОНИ ================= */
 /* AFF — метки партнёрок; пусто = ссылки работают, но без нашего процента. Заполнить после регистрации. */
 const AFF={booking:'',gyg:'',kayak:''};
@@ -2104,14 +2217,14 @@ function buildRoute(){
      Поездка может начинаться и не дома (человек уже на месте) — тогда дома в плашке нет. */
   const homeOut=PARTS.legs.find(l=>l.from==='home'),homeBack=PARTS.legs.slice().reverse().find(l=>l.to==='home');
   const stops=[];
-  if(homeOut)stops.push({gh:1,name:ORIGIN.city});
+  if(homeOut)stops.push({gh:1,name:originNow().city});
   const CB=tripBases();
   CB.forEach(b=>{
     const before=nightsBefore(b.id);
     const ci=addDays(startIso,before),co=addDays(startIso,before+b.nights);
     stops.push({id:b.id,name:shortName(b.name),dates:dm(ci)+' – '+dm(co),nights:b.nights});
   });
-  if(homeBack)stops.push({gh:1,name:ORIGIN.city});
+  if(homeBack)stops.push({gh:1,name:originNow().city});
   const solo=CB.length===1;
   const R=30,padL=10,padR=10,TIN=22;   /* TIN — отступ узлов от дуги: подписи не лезут в поворот */
   const FN=solo?'800 19px "Plus Jakarta Sans",sans-serif':'800 12.5px "Plus Jakarta Sans",sans-serif';
@@ -2424,7 +2537,7 @@ function initMap(){
        и LINES: где перелёт — там и самолёт. */
     /* аэропорты прилёта и вылета — из деталей маршрута (PARTS), а не «первый и
        последний город»: в Юте вылет из Гранд-Джанкшена, а ночуем в Моабе */
-    const homeLL=(ORIGIN&&ORIGIN.ll)||null;                 /* откуда летим (город клиента) */
+    const homeLL=(originNow().ll)||null;                 /* откуда летим (город клиента) */
     const arrAirP=arrivalAirport(),depAirP=departureAirport();
     const arrLL=arrAirP&&typeof arrAirP.lat==='number'?[arrAirP.lat,arrAirP.lng]:null;
     const depLL=depAirP&&typeof depAirP.lat==='number'?[depAirP.lat,depAirP.lng]:null;
@@ -2449,7 +2562,7 @@ function initMap(){
       animPlane(depPlane,onLine(depLL,homeLL,0.004),onLine(depLL,homeLL,0.05),7000);
     }
     if(homeLL)decoLayer.addLayer(L.marker(homeLL,{icon:L.divIcon({className:'',iconSize:[84,24],iconAnchor:[42,12],
-      html:'<div class="miamichip">✈ '+esc0(ORIGIN.city||'')+'</div>'})}));
+      html:'<div class="miamichip">✈ '+esc0(originNow().city||'')+'</div>'})}));
     /* Путь машинки: переезды по порядку дней. Точки внутри линии в разных файлах
        записаны в разную сторону (Колорадо — с конца, Юта — с начала), поэтому
        разворачиваем по факту: какой конец ближе к тому, где мы сейчас. */
@@ -2565,7 +2678,11 @@ function buildCities(){
           +'<div class="cpt r"><b>'+esc0(arrCity)+'</b><span>'+arrCode+' · '+dm(ci)+'</span></div></div>'
           +(arrWay&&arrCity!==shortName(b.name)
             ? '<div class="cway">оттуда до города: '+esc0(convDist(arrWay))+'</div>':'')
-          +'<a class="cbook" href="'+flightSearch()+'" target="_blank" rel="noopener">'+ic('plane','i-sm')+' Подобрать рейсы <small>туда+обратно</small></a></div></div>';
+          +'<a class="cbook" href="'+flightSearch()+'" target="_blank" rel="noopener">'+ic('plane','i-sm')+' Подобрать рейсы <small>туда+обратно</small></a>'
+          /* город вылета — свойство человека, а не маршрута: меняется прямо здесь,
+             и карта с подбором рейсов пересчитываются (просьба клиента) */
+          +'<button class="cbookl" data-homeopen="1">Лечу из другого города</button>'
+          +'</div></div>';
     }else if(ar){
       const seg=ar.mode,segIc=seg==='flight'?'plane':seg==='train'?'train':seg==='ferry'?'ferry':seg==='bus'?'bus':'car';
       const via=ar.via||[];
@@ -2583,6 +2700,9 @@ function buildCities(){
           +'<div class="cpt r"><b>'+shortName(b.name)+'</b><span>'+dm(ci)+'</span></div></div>'
           +(seg==='flight'
             ? '<a class="cbook" href="'+skyscanner((ar.from&&ar.from.air)||AIRPORT[ar.from?ar.from.id:'']||'',AIRPORT[b.id]||'',fmtISO(ci))+'" target="_blank" rel="noopener">'+ic('plane','i-sm')+' Подобрать рейсы</a>'
+              /* город вылета меняется здесь же: маршрут один и тот же, а летят
+                 в него из разных городов (просьба клиента) */
+              +'<button class="cbookl" data-homeopen="1">Лечу из другого города</button>'
             : (seg==='train'||seg==='bus'||seg==='ferry')
             ? '<div class="ctransf">'+(ar.km?'<b>'+fmtKm(ar.km)+'</b>':'')+'<span>'+esc0(MOVENM[seg])+(ar.clean?(' · '+ar.clean):'')+'</span>'
               +(ar.stops?'<span>'+esc0(ar.stops)+'</span>':'')+'</div>'
@@ -3318,7 +3438,7 @@ function dayDate(disp){return addDays(startIso,Math.max(0,(disp||1)-1));}
 function buildParts(){
   if(typeof TRIPPARTS!=='undefined'&&TRIPPARTS&&Array.isArray(TRIPPARTS.points)){PARTS=TRIPPARTS;return;}
   const pts=[],legs=[],nts=[],veh=[],trips=[],days=SCHED.length;
-  const O=(typeof ORIGIN!=='undefined'&&ORIGIN)||null;
+  const O=originNow();
   const home=O&&O.city?{id:'home',kind:'home',name:O.city,air:O.code||'',
     lat:(O.ll||[])[0],lng:(O.ll||[])[1]}:null;
   if(home)pts.push(home);
@@ -4387,6 +4507,10 @@ document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)r
   if(t.dataset.pickday){pickDaySheet(t.dataset.pickday);}
   if(t.dataset.rmday){closeDaySheet();removeDay(t.dataset.rmbase,tidOf(t.dataset.rmday));}
   if(t.dataset.dsclose){closeDaySheet();}
+  /* город вылета: открыть выбор, выбрать аэропорт, вернуть городу маршрута */
+  if(t.dataset.homeopen!==undefined){homeSheet();}
+  if(t.dataset.airpick){airPick(t.dataset.airpick);}
+  if(t.dataset.airreset){saveHome(null);closeDaySheet();}
   if(t.dataset.rmthis){removeDay(t.dataset.rmbase,tidOf(t.dataset.rmthis));}
   /* редактор дня: перенести / убрать в город / добавить место */
   if(t.dataset.mvopen){movePlaceSheet(t.dataset.mvopen);}
@@ -6248,7 +6372,9 @@ bootTop();
 const TRIP_TITLE=(typeof TRIP_NAME!=='undefined'&&TRIP_NAME)||'Моя поездка';
 const TRIP_KEYS=['co-trip-2026-plan','co-trip-2026-budget','co-trip-2026-picks','co-trip-2026-food'];
 const TKEY='co-trip-trips';
-const CLOUD_KEYS=TRIP_KEYS.concat([TKEY]);
+/* co-trip-home — город вылета: он общий для всех поездок, поэтому лежит
+   отдельно от них, но в облако едет вместе */
+const CLOUD_KEYS=TRIP_KEYS.concat([TKEY,'co-trip-home']);
 const _rawSet=localStorage.setItem.bind(localStorage);
 let _applying=false,_cloudTimer=null;
 function tripId(){return 't'+Date.now().toString(36)+Math.floor(Math.random()*1e3).toString(36);}
