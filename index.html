@@ -1688,7 +1688,7 @@ section h2.big{margin-bottom:4px}
 #s-route .startcard{margin:0 0 11px}
 #s-route .startcard:first-of-type{margin-top:14px}
 /* последняя карточка блока — отступ до следующего раздела */
-#s-route .startcard:last-of-type{margin-bottom:16px}
+#s-route .startcard:last-of-type{margin-bottom:22px}
 /* три карточки одной высоты: названия в одну строку, поля справа выровнены */
 #s-route .startcard{min-height:72px}
 #s-route .sclbl{white-space:nowrap}
@@ -1818,11 +1818,6 @@ section h2.big{margin-bottom:4px}
 </header>
 
 <section id="s-route"><div class="wrap">
-  <!-- Заголовок раздела стоит НАД плашкой-маршрутом: он объясняет весь блок,
-       а не только поля под ним (просьба клиента) -->
-  <div class="eyebrow">Маршрут</div>
-  <h2 class="big">Как добираешься</h2>
-  <div class="routecard"><div class="routeline" id="routeLine"></div></div>
   <div class="startcard"><span class="scmed" id="scMedIcon"></span><span class="scin"><span class="sclbl">Старт поездки</span><span class="scsub" id="scSub"></span></span><input type="date" id="startDate" class="scdate"></div>
   <!-- Город вылета — вторым, сразу после даты: обе вещи задают всю поездку и
        должны выглядеть одинаково (выбор клиента из двух эскизов). -->
@@ -1830,6 +1825,11 @@ section h2.big{margin-bottom:4px}
   <!-- Все три строки блока — одной формы и одной высоты: значок, название и
        поле справа. Просьба клиента: «чтобы визуально было красиво и равномерно». -->
   <div class="startcard"><span class="scmed"><svg class="i i-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg></span><span class="scin"><span class="sclbl">Сколько людей</span></span><span class="pstep"><button class="stepbtn" id="pMinus" aria-label="меньше человек">−</button><span class="pnum"><b id="pNum">2</b></span><button class="stepbtn" id="pPlus" aria-label="больше человек">+</button></span></div>
+  <!-- Порядок раздела (правка клиента): сразу после фотографии идут поля,
+       которые человек заполняет, а заголовок со схемой маршрута — под ними -->
+  <div class="eyebrow">Маршрут</div>
+  <h2 class="big">Как добираешься</h2>
+  <div class="routecard"><div class="routeline" id="routeLine"></div></div>
 </div></section>
 
 <div class="citystep" id="cityStep"></div>
