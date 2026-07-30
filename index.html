@@ -1697,6 +1697,10 @@ section h2.big{margin-bottom:4px}
 .startcard.guess{border-color:rgba(216,140,20,.5);background:#fffaf2}
 .scdate{flex:none;border:1.5px solid rgba(91,63,196,.35);border-radius:12px;padding:10px 11px;font:700 13px/1 "Inter",sans-serif;background:linear-gradient(180deg,#fff,#f6f3ff);color:#1b1e2e}
 .scdate:focus{outline:2px solid rgba(91,63,196,.28);border-color:#5b3fc4}
+/* город вылета: та же «коробочка», что и у даты, чтобы читалось как поле */
+.scfrom{display:flex;align-items:center;gap:7px;cursor:pointer;max-width:52%}
+.scfrom span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.scfrom svg{flex:none;opacity:.7}
 .ctransf b{color:#1b1e2e;font:800 14px/1 "Plus Jakarta Sans",sans-serif;display:inline-block;margin-right:8px}
 .ctransf span{display:inline-block;margin-right:10px;color:#8b8fa3}
 .ctransf{line-height:1.7}
@@ -1782,6 +1786,9 @@ section h2.big{margin-bottom:4px}
   <div class="eyebrow">Маршрут</div>
   <h2 class="big">Как добираешься</h2>
   <div class="startcard"><span class="scmed" id="scMedIcon"></span><span class="scin"><span class="sclbl">Старт поездки</span><span class="scsub" id="scSub">меняешь дату — все дни и брони пересчитываются</span></span><input type="date" id="startDate" class="scdate"></div>
+  <!-- Город вылета — вторым, сразу после даты: обе вещи задают всю поездку и
+       должны выглядеть одинаково (выбор клиента из двух эскизов). -->
+  <div class="startcard"><span class="scmed"><svg class="i i-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2 16 11l3.5-3.5a2.1 2.1 0 0 0-3-3L13 8 4.8 6.2a.6.6 0 0 0-.6.9L7 12l-2 2H3l1.5 2.5L7 18l2-2 4.9 2.8a.6.6 0 0 0 .9-.6Z"/></svg></span><span class="scin"><span class="sclbl">Город вылета</span></span><button class="scdate scfrom" id="fromBtn" data-homeopen="1">—</button></div>
   <div class="peoplebar"><span class="pl">Сколько человек едет</span><span class="pstep"><button class="stepbtn" id="pMinus" aria-label="меньше человек">−</button><span class="pnum"><b id="pNum">2</b></span><button class="stepbtn" id="pPlus" aria-label="больше человек">+</button></span></div>
 </div></section>
 
@@ -2725,11 +2732,9 @@ function buildCities(){
           +'<div class="cpt r"><b>'+esc0(arrCity)+'</b><span>'+arrCode+' · '+dm(ci)+'</span></div></div>'
           +(arrWay&&arrCity!==shortName(b.name)
             ? '<div class="cway">оттуда до города: '+esc0(convDist(arrWay))+'</div>':'')
-          +'<a class="cbook" href="'+flightSearch()+'" target="_blank" rel="noopener">'+ic('plane','i-sm')+' Подобрать рейсы <small>туда+обратно</small></a>'
-          /* город вылета — свойство человека, а не маршрута: меняется прямо здесь,
-             и карта с подбором рейсов пересчитываются (просьба клиента) */
-          +'<button class="cbookl" data-homeopen="1">Лечу из другого города</button>'
-          +'</div></div>';
+          /* город вылета меняется наверху, в блоке «Как добираешься», рядом с
+             датой старта — здесь кнопки нет, чтобы одно и то же не жило дважды */
+          +'<a class="cbook" href="'+flightSearch()+'" target="_blank" rel="noopener">'+ic('plane','i-sm')+' Подобрать рейсы <small>туда+обратно</small></a></div></div>';
     }else if(ar){
       const seg=ar.mode,segIc=seg==='flight'?'plane':seg==='train'?'train':seg==='ferry'?'ferry':seg==='bus'?'bus':'car';
       const via=ar.via||[];
@@ -2747,9 +2752,6 @@ function buildCities(){
           +'<div class="cpt r"><b>'+shortName(b.name)+'</b><span>'+dm(ci)+'</span></div></div>'
           +(seg==='flight'
             ? '<a class="cbook" href="'+skyscanner((ar.from&&ar.from.air)||AIRPORT[ar.from?ar.from.id:'']||'',AIRPORT[b.id]||'',fmtISO(ci))+'" target="_blank" rel="noopener">'+ic('plane','i-sm')+' Подобрать рейсы</a>'
-              /* город вылета меняется здесь же: маршрут один и тот же, а летят
-                 в него из разных городов (просьба клиента) */
-              +'<button class="cbookl" data-homeopen="1">Лечу из другого города</button>'
             : (seg==='train'||seg==='bus'||seg==='ferry')
             ? '<div class="ctransf">'+(ar.km?'<b>'+fmtKm(ar.km)+'</b>':'')+'<span>'+esc0(MOVENM[seg])+(ar.clean?(' · '+ar.clean):'')+'</span>'
               +(ar.stops?'<span>'+esc0(ar.stops)+'</span>':'')+'</div>'
@@ -4342,8 +4344,17 @@ function uiRestore(s){
   if(s.anchor){const el=document.getElementById(s.anchor);
     if(el)window.scrollBy(0,el.getBoundingClientRect().top-s.dy);}
 }
+/* подпись на кнопке «Город вылета»: код и город того, что выбрано сейчас */
+function syncFromBtn(){
+  const b=document.getElementById('fromBtn');if(!b)return;
+  const o=originNow();
+  const txt=(o.code?o.code+' · ':'')+(o.city||'выбрать');
+  b.innerHTML='<span>'+esc0(txt)+'</span>'
+    +'<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m9.5 18 6-6-6-6"/></svg>';
+}
 function rerenderTrip(){
   const snap=uiSnapshot();
+  syncFromBtn();
   buildSchedule();
   applyHero();          /* город ушёл проездом — заголовок поездки тоже другой */
   renderUnits();renderStays();buildRoute();buildDays();buildCities();buildFilters();buildElev();
@@ -6841,6 +6852,7 @@ function reinit(){try{
   try{const s=JSON.parse(localStorage.getItem(FKEY));if(Array.isArray(s))foodPicked=new Set(s);}catch(e){}
   loadHRates();
   const sd=document.getElementById('startDate');if(sd)sd.value=startIso;
+  syncFromBtn();
   syncDateAcc();
   const pn=document.getElementById('pNum');if(pn)pn.textContent=PEOPLE;
   syncCurBtn();
