@@ -1698,9 +1698,14 @@ section h2.big{margin-bottom:4px}
    цифра стояла посередине». Размер задан жёстко всем троим: полю даты, кнопке
    города и счётчику людей. Названия слева подобраны так, чтобы помещаться в
    остаток строки. */
-#s-route .scdate,#s-route .pstep{width:134px;height:46px;box-sizing:border-box}
-#s-route #startDate{font-size:12.5px;padding:0 8px;text-align:center}
-#s-route .scfrom{justify-content:center;padding:0 6px;font-size:12.5px;max-width:none;gap:4px}
+#s-route .scdate,#s-route .pstep{width:150px;height:46px;box-sizing:border-box}
+/* дату клиент попросила крупнее; чтобы поля остались одной ширины, слегка
+   ужаты значок и названия слева */
+#s-route #startDate{font-size:14.5px;padding:0 8px;text-align:center}
+#s-route .scfrom{justify-content:center;padding:0 6px;font-size:13.5px;max-width:none;gap:4px}
+#s-route .scmed{width:38px;height:38px}
+#s-route .startcard{gap:11px}
+#s-route .sclbl{font-size:13.5px}
 /* У счётчика общей рамки нет (правка клиента): рамки только у минуса и плюса,
    и они ростом с поле — тогда строка выглядит ровной. */
 #s-route .pstep{display:flex;align-items:center;justify-content:space-between;gap:0;
