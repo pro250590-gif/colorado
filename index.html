@@ -1430,10 +1430,19 @@ body.stale{padding-top:44px}
 .airbox input{width:100%;box-sizing:border-box;border:1.5px solid rgba(91,63,196,.25);border-radius:13px;
   padding:12px 13px;font:600 14px/1.2 "Inter",sans-serif;color:#1b1e2e;background:#fff;outline:none}
 .airbox input:focus{border-color:#5b3fc4}
+/* окно «когда стартуете и откуда» перед открытием готового маршрута */
+.rsfld{display:flex;align-items:center;gap:10px;justify-content:space-between;margin:2px 4px 8px}
+.rslbl{font:700 13px/1.2 "Inter",sans-serif;color:#1b1e2e}
+.rsfld .scdate{flex:none}
+.rsnote{font:600 11.5px/1.45 "Inter",sans-serif;color:#8b8698;margin:0 6px 12px}
+.rsfrom{margin-bottom:12px}
+.rsgo{width:calc(100% - 8px);margin:0 4px 10px;display:block}
 .airnote{font:600 11.5px/1.45 "Inter",sans-serif;color:#8b8698;margin:0 6px 9px}
 #airlist .airhint{font:600 11.5px/1.45 "Inter",sans-serif;color:#8b8698;margin:4px 6px 8px}
 #airlist{max-height:46vh;overflow:auto;margin:0 2px}
 .airrow{margin-bottom:7px}
+.airall{border-color:rgba(91,63,196,.35);background:#faf8ff}
+.airall .aircode{background:linear-gradient(150deg,#7a5cf0,#5b3fc4);color:#fff}
 .aircode{flex:none;min-width:44px;text-align:center;background:#f2effc;color:#5b3fc4;border-radius:9px;
   padding:7px 6px;font:800 12.5px/1 "Inter",sans-serif;letter-spacing:.03em}
 .dscancel.alt{background:#f6f2ff;color:#5b3fc4!important;margin-bottom:8px}
@@ -2059,7 +2068,22 @@ function mrs(v){return v?String(v).replace(/B(?=(d{3})+(?!d))/g,' ')+' м':'';
 
 
 
+/* ⚠️ КАКИМ ПОИСКОМ ИСКАТЬ БИЛЕТЫ — ЗАВИСИТ ОТ СТРАНЫ ВЫЛЕТА.
+   Клиент спросила: найдёт ли тот сайт билеты из Москвы в Турцию или Таиланд.
+   Честный ответ — нет: Skyscanner, Kayak, Momondo и Google Flights после 2022
+   года не показывают рейсы, связанные с Россией, это их решение, а не сбой.
+   Для вылета из России и соседей ведём на Aviasales — он эти рейсы находит.
+   Для остального мира остаётся Kayak. */
+const RU_MARKET=['Russia','Belarus','Kazakhstan','Armenia','Kyrgyzstan','Uzbekistan','Tajikistan','Azerbaijan','Georgia','Moldova'];
+function ruMarket(){
+  const o=originNow();
+  return !!(o&&o.country&&RU_MARKET.indexOf(o.country)>=0);
+}
+function ddmm(iso){const d=addDays(iso,0);
+  return ('0'+d.getDate()).slice(-2)+('0'+(d.getMonth()+1)).slice(-2);}
+/* один перелёт в одну сторону */
 function skyscanner(from,to,iso){
+  if(ruMarket())return 'https://www.aviasales.ru/search/'+from.toUpperCase()+ddmm(iso)+to.toUpperCase()+PEOPLE;
   const d=addDays(iso,0);const yy=String(d.getFullYear()).slice(2),mm=('0'+(d.getMonth()+1)).slice(-2),dd=('0'+d.getDate()).slice(-2);
   return 'https://www.skyscanner.ru/transport/flights/'+from.toLowerCase()+'/'+to.toLowerCase()+'/'+yy+mm+dd+'/';
 }
@@ -2074,6 +2098,8 @@ function flightSearch(){
   const outIso=out?fmtISO(dayDate(out.day)):startIso;
   const backIso=back?fmtISO(dayDate(back.day)):fmtISO(addDays(startIso,totalNights()));
   const O=originNow();
+  /* из России и соседних стран Kayak рейсов не покажет — там Aviasales */
+  if(ruMarket())return 'https://www.aviasales.ru/search/'+O.code+ddmm(outIso)+outAir+ddmm(backIso)+PEOPLE;
   return 'https://www.kayak.com/flights/'+O.code+'-'+outAir+'/'+outIso+'/'+backAir+'-'+O.code+'/'+backIso+'/'+PEOPLE+'adults?sort=price_a';
 }
 function fmtISO(d){return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);}
@@ -2130,6 +2156,9 @@ function airFind(q,limit){
     const code=a[0].toLowerCase();
     /* четыре поля: город и аэропорт латиницей, они же по-русски */
     const flds=[a[2],a[1],a[9],a[8]];
+    /* у строки «весь город» название аэропорта — служебное «All airports»,
+       по нему искать нечего */
+    if(a[7]===3){flds[1]='';flds[3]='';}
     let sc=0;
     if(code===raw)sc=100;
     else for(let k=0;k<4;k++){
@@ -2148,11 +2177,15 @@ function airRow(a){
   /* Крупно — по-русски, если такое название есть: человек ищет свой город на
      своём языке. Оригинал остаётся строкой ниже вместе с регионом и страной —
      регион и страна обязательны, именно так не перепутаешь Портленд в Орегоне
-     с Портлендом в Мэне и в Австралии (просьба клиента). */
+     с Портлендом в Мэне и в Австралии (просьба клиента).
+     Строка «весь город» (размер 3) идёт первой: код города вместо кода
+     аэропорта, а под ним перечислены сами аэропорты. */
   const nm=a[1]||'',city=a[2]||'',ruA=a[8]||'',ruC=a[9]||'';
+  const all=a[7]===3;
   const head=ruC||ruA||(nm+((city&&nm.toLowerCase().indexOf(city.toLowerCase())<0)?(' · '+city):''));
-  const sub=[nm,a[3],a[4]].filter(Boolean).join(' · ');
-  return '<button class="dsrow airrow" data-airpick="'+a[0]+'">'
+  const sub=all?('все аэропорты · '+(a[10]||'')+' · '+(a[4]||''))
+               :[nm,a[3],a[4]].filter(Boolean).join(' · ');
+  return '<button class="dsrow airrow'+(all?' airall':'')+'" data-airpick="'+a[0]+'">'
     +'<span class="aircode">'+a[0]+'</span>'
     +'<span class="dst"><b>'+esc0(head)+'</b>'
     +'<span>'+esc0(sub)+'</span></span></button>';
@@ -4523,6 +4556,8 @@ document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)r
   if(t.dataset.dsclose){closeDaySheet();}
   /* город вылета: открыть выбор, выбрать аэропорт, вернуть городу маршрута */
   if(t.dataset.homeopen!==undefined){homeSheet();}
+  if(t.dataset.readygo){const d=document.getElementById('rsdate');
+    closeDaySheet();openReady(t.dataset.readygo,(d&&d.value)||'');}
   if(t.dataset.airpick){airPick(t.dataset.airpick);}
   if(t.dataset.airreset){saveHome(null);closeDaySheet();}
   if(t.dataset.rmthis){removeDay(t.dataset.rmbase,tidOf(t.dataset.rmthis));}
@@ -5962,11 +5997,32 @@ function destCat(a){
 }
 /* Открыть готовый маршрут как новую поездку — без анкеты и без вопросов:
    человек нажал на витрине, значит он уже выбрал. Дни, людей и даты поменяет внутри. */
-function openReady(k){
+/* Перед тем как открыть готовый маршрут, спрашиваем ДВА поля — и только их.
+   Клиент: «длина поездки у нас уже посчитана, семь дней или десять, поэтому
+   конец не нужен — нужно начало, от него всё пересчитается, и откуда стартует».
+   Всё остальное человек меняет уже внутри. */
+function readyStartSheet(k){
+  const cat=CATALOG.find(c=>c.k===k);if(!cat)return;
+  const o=originNow();
+  /* по умолчанию — через месяц: ближе брать билеты обычно поздно */
+  const d=new Date();d.setDate(d.getDate()+30);
+  const def=d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
+  sheet('<div class="dsh"><b>'+esc0(cat.nm)+'</b><span>'+cat.days+' '+plural(cat.days,'день','дня','дней')
+      +' · '+esc0(cat.shape||'')+'</span></div>'
+    +'<div class="rsfld"><span class="rslbl">Когда стартуете</span>'
+      +'<input type="date" id="rsdate" class="scdate" value="'+def+'"></div>'
+    +'<div class="rsnote">Конец считать не нужно: длина маршрута уже посчитана, от даты старта пересчитаются все дни, брони и цены.</div>'
+    +'<button class="dsrow rsfrom" data-homeopen="1"><span class="aircode">'+esc0(o.code||'—')+'</span>'
+      +'<span class="dst"><b>'+esc0(o.city||'Откуда летите')+'</b><span>нажмите, чтобы сменить город вылета</span></span></button>'
+    +'<button class="dsgo rsgo" data-readygo="'+k+'">Открыть маршрут</button>'
+    +'<button class="dscancel" data-dsclose="1">Отмена</button>');
+}
+function openReady(k,startDate){
   const cat=CATALOG.find(c=>c.k===k);if(!cat)return;
   const title=cat.nm.split(',')[0];
-  if(cat.file!==window.__dataFile)return newTripFromData(title,cat.file,{__open:1});
+  if(cat.file!==window.__dataFile)return newTripFromData(title,cat.file,{__open:1,start:startDate||''});
   newTripFromCurrent(title);
+  if(startDate){startIso=startDate;DATEACC='exact';savePlan();}
   reinit();hideLand();hideHome();rerenderTrip();window.scrollTo(0,0);
 }
 function buildFromAsk(){
@@ -6017,7 +6073,9 @@ document.addEventListener('click',e=>{
   if(t.dataset.askgo!==undefined){const v=(document.getElementById('askText')||{}).value||'';showLand(parseAsk(v));}
   if(t.dataset.askcar!==undefined&&ASK){ASK.carOk=1;closeDaySheet();buildFromAsk();}
   if(t.dataset.askwhole!==undefined&&ASK){ASK.wholeOk=1;closeDaySheet();buildFromAsk();}
-  if(t.dataset.ready!==undefined)openReady(t.dataset.ready);
+  /* с витрины сперва спрашиваем дату старта и город вылета — и только потом
+     открываем маршрут (просьба клиента) */
+  if(t.dataset.ready!==undefined)readyStartSheet(t.dataset.ready);
   if(t.dataset.asmsheet!==undefined){asmSheet();}
   if(t.dataset.baddg!==undefined){addBudgetSheet(t.dataset.baddg);}
   if(t.dataset.busave!==undefined){saveBudgetRow(t.dataset.busave,t.dataset.buedit||null);}
@@ -6954,7 +7012,10 @@ let openAuth=function(){};
   if(!a)return;
   try{
     /* открыли готовый маршрут с витрины: анкеты нет, применять нечего */
-    if(a.__open){reinit();hideLand();hideHome();rerenderTrip();window.scrollTo(0,0);window.__askApplied=1;return;}
+    if(a.__open){
+      /* дату старта человек выбрал ещё на витрине — ставим её до первой отрисовки */
+      if(a.start){startIso=a.start;DATEACC='exact';savePlan();}
+      reinit();hideLand();hideHome();rerenderTrip();window.scrollTo(0,0);window.__askApplied=1;return;}
     applyAsk(a);reinit();hideLand();hideHome();rerenderTrip();window.scrollTo(0,0);
     asmSheet();                       /* тот же отчёт, что и при сборке без перезагрузки */
     window.__askApplied=1;
