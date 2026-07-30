@@ -1701,10 +1701,12 @@ section h2.big{margin-bottom:4px}
 #s-route .scdate,#s-route .pstep{width:134px;height:46px;box-sizing:border-box}
 #s-route #startDate{font-size:12.5px;padding:0 8px;text-align:center}
 #s-route .scfrom{justify-content:center;padding:0 6px;font-size:12.5px;max-width:none;gap:4px}
+/* У счётчика общей рамки нет (правка клиента): рамки только у минуса и плюса,
+   и они ростом с поле — тогда строка выглядит ровной. */
 #s-route .pstep{display:flex;align-items:center;justify-content:space-between;gap:0;
-  border:1.5px solid rgba(91,63,196,.35);border-radius:12px;
-  background:linear-gradient(180deg,#fff,#f6f3ff);padding:0 5px}
-#s-route .pstep .stepbtn{width:34px;height:34px;box-shadow:none;border:0;background:transparent;font-size:21px}
+  border:0;background:none;padding:0}
+#s-route .pstep .stepbtn{width:46px;height:46px;border:1.5px solid rgba(91,63,196,.35);
+  border-radius:12px;background:linear-gradient(180deg,#fff,#f6f3ff);box-shadow:none;font-size:22px}
 #s-route .pnum{min-width:28px}
 #s-route .pnum b{font-size:19px}
 #s-route .peoplebar{margin:0 0 16px}
