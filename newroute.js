@@ -1,0 +1,69 @@
+/* ==========================================================================
+   ОДНА КОМАНДА, КОТОРАЯ ПРОВЕРЯЕТ МАРШРУТ ЦЕЛИКОМ
+
+   Правило клиента: «наша задача не исправить конкретный маршрут, а сделать
+   так, чтобы каждый новый строился правильно и этих ошибок больше не было».
+   Поэтому все разборы превращены в проверки, а проверки собраны сюда.
+
+   Запуск:
+     node newroute.js trip-milan.js            — всё, что можно проверить без сети
+     node newroute.js trip-milan.js --coords   — плюс сверка координат по справочникам
+     node newroute.js                          — по всем маршрутам сразу
+
+   Что прогоняется:
+     1) check-route.js  — форма данных, аэропорты, переезды, еда, фотографии,
+                          наполнение дней, расхождение с базой проверенных мест;
+     2) day-order.js    — день это маршрут, а не список: считаем длину прохода;
+     3) verify-coords.js (по флагу --coords) — четыре источника на каждую точку.
+
+   Правила целиком — в ROUTE-RULES.md.
+   ========================================================================== */
+const { execFileSync } = require('child_process');
+const fs = require('fs'), path = require('path');
+
+const args = process.argv.slice(2);
+const withCoords = args.indexOf('--coords') >= 0;
+const file = args.filter(a => a.charAt(0) !== '-')[0];
+const files = file ? [file] : fs.readdirSync(__dirname).filter(f => /^trip-[a-z0-9-]+\.js$/.test(f));
+
+function run(script, arg) {
+  try {
+    const out = execFileSync('node', [path.join(__dirname, script)].concat(arg ? [arg] : []),
+      { encoding: 'utf8', maxBuffer: 1e8 });
+    return { ok: true, out };
+  } catch (e) {
+    return { ok: false, out: (e.stdout || '') + (e.stderr || '') };
+  }
+}
+
+let hard = 0, soft = 0;
+files.forEach(f => {
+  console.log('\n████ ' + f);
+  const c = run('check-route.js', f);
+  const errs = (c.out.match(/^\s*ОШИБКА/gm) || []).length;
+  const warns = (c.out.match(/^\s*внимание/gm) || []).length;
+  hard += errs; soft += warns;
+  process.stdout.write(c.out.split('\n').filter(l => /ОШИБКА|внимание|всё в порядке/.test(l)).join('\n') + '\n');
+
+  const o = run('day-order.js', f);
+  const zig = o.out.split('\n').filter(l => /КОРОЧЕ/.test(l));
+  if (zig.length) { soft += zig.length; console.log('  путь по дням:'); console.log(zig.join('\n')); }
+  else console.log('  путь по дням: порядок точек в норме');
+
+  if (withCoords) {
+    const v = run('verify-coords.js', f);
+    const badc = v.out.split('\n').filter(l => /✗/.test(l));
+    if (badc.length) { hard += badc.length; console.log('  координаты:'); console.log(badc.join('\n')); }
+    else console.log('  координаты: расхождений нет');
+  }
+});
+
+console.log('\n══════════════════════════════════════');
+if (!withCoords) console.log('координаты не сверялись — добавьте --coords, когда есть сеть');
+if (hard) {
+  console.log('❌ НЕ ГОТОВО К ВЫКЛАДКЕ: ошибок ' + hard + ', замечаний ' + soft);
+  console.log('   правила и порядок работ — в ROUTE-RULES.md');
+  process.exit(1);
+}
+console.log(soft ? ('⚠️  ошибок нет, но есть ' + soft + ' замечаний — посмотрите их глазами')
+                 : '✅ всё чисто');

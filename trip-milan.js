@@ -57,7 +57,7 @@ const DAYS=[
 
 const P=[
  /* ── день 1: прилёт и юг города — Тичинезе, Дарсена, Навильи ── */
- {id:'mxp',d:1,base:'mil',cat:'transport',lat:45.629627,lng:8.723548,nm:'Aeroporto di Milano–Malpensa (MXP)',q:'Aeroporto di Milano-Malpensa',tag:['прилёт','t-easy'],
+ {id:'mxp',d:1,base:'mil',cat:'transport',lat:45.629627,lng:8.723548,pin:'терминал, а не геометрический центр лётного поля',nm:'Aeroporto di Milano–Malpensa (MXP)',q:'Aeroporto di Milano-Malpensa',tag:['прилёт','t-easy'],
   why:'Сюда прилетаешь. Поезд Malpensa Express уходит из-под зала прилёта и идёт в город каждые полчаса.'},
  {id:'cad',d:1,base:'mil',cat:'transport',lat:45.468405,lng:9.175523,nm:'Stazione di Milano Cadorna',q:'Milano Cadorna railway station',tag:['вокзал','t-easy'],
   hop:'Malpensa Express, 50 минут',
@@ -73,7 +73,7 @@ const P=[
  /* в Милане ДВОЕ ворот с этим именем: наши — неоклассические, на площади
     XXIV Maggio у самой Дарсены; средневековые стоят севернее, в поиске уводят
     не туда, поэтому в q вписан адрес */
- {id:'tic',d:1,base:'mil',cat:'town',lat:45.452138,lng:9.178401,nm:'Porta Ticinese',q:'Porta Ticinese, Piazza XXIV Maggio, Milano',tag:['ворота','t-easy'],
+ {id:'tic',d:1,base:'mil',cat:'town',lat:45.452138,lng:9.178401,pin:'в Милане двое ворот с этим именем: наши — на площади XXIV Maggio',nm:'Porta Ticinese',q:'Porta Ticinese, Piazza XXIV Maggio, Milano',tag:['ворота','t-easy'],
   why:'Ворота на площади XXIV Maggio, за которыми начинается район каналов. Отсюда весь вечер идёшь вдоль воды.'},
  {id:'dar',d:1,base:'mil',cat:'town',lat:45.452911,lng:9.178572,nm:'Darsena di Milano',q:'Darsena di Milano',tag:['порт','t-easy'],star:1,
   why:'Старый городской порт: сюда по каналам везли мрамор на собор. Сейчас — набережная с барами и лодками.'},
@@ -81,7 +81,7 @@ const P=[
   why:'Крошечный переулок с деревянными мостками, где до середины XX века стирали бельё прямо в канале.'},
  /* канал длинный, до Аббьятеграссо; наша точка — оживлённый участок набережной
     у Vicolo dei Lavandai, а не «адрес канала» */
- {id:'nav',d:1,base:'mil',cat:'town',lat:45.451260,lng:9.172320,nm:'Naviglio Grande',q:'Naviglio Grande, Alzaia Naviglio Grande, Milano',tag:['аперитив','t-must'],star:1,
+ {id:'nav',d:1,base:'mil',cat:'town',lat:45.451260,lng:9.172320,pin:'канал длинный: наша точка — оживлённый участок у Vicolo dei Lavandai',nm:'Naviglio Grande',q:'Naviglio Grande, Alzaia Naviglio Grande, Milano',tag:['аперитив','t-must'],star:1,
   why:'Канал, к которому приложил руку Леонардо. Наша точка — оживлённый участок у Vicolo dei Lavandai: вечером вдоль обеих набережных весь миланский аперитив.'},
 
  /* ── день 2: площадь Дуомо и всё вокруг неё, в пределах пятисот метров ── */
