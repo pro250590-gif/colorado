@@ -84,16 +84,16 @@ const P=[
 const FOODCITIES=[
  {city:'Токио',base:'tok',q:'Tokyo, Japan',lat:35.6762,lng:139.6503,
   spots:[
-   {nm:'Ichiran Shibuya',best:'обед',price:'¥¥',veg:'кое-что',tag:'рамен в кабинке, заказ по бумажке'},
-   {nm:'Tsukiji Sushidai',best:'завтрак',price:'¥¥¥',veg:'кое-что',tag:'суши у рынка, очередь с раннего утра'},
-   {nm:'Omoide Yokocho',best:'ужин',price:'¥¥',veg:'кое-что',tag:'переулок якитори у Синдзюку'},
-   {nm:'Konbin 7-Eleven',best:'перекус',price:'¥',veg:'вег ok',tag:'да, в Японии это правда вкусно'}
+   {nm:'Ichiran Shibuya',meal:'обед',price:'¥¥',veg:'кое-что',why:'рамен в кабинке, заказ по бумажке'},
+   {nm:'Tsukiji Sushidai',meal:'завтрак',price:'¥¥¥',veg:'кое-что',why:'суши у рынка, очередь с раннего утра'},
+   {nm:'Omoide Yokocho',meal:'ужин',price:'¥¥',veg:'кое-что',why:'переулок якитори у Синдзюку'},
+   {nm:'Konbin 7-Eleven',meal:'перекус',price:'¥',veg:'вег ok',why:'да, в Японии это правда вкусно'}
   ]},
  {city:'Киото',base:'kyo',q:'Kyoto, Japan',lat:35.0116,lng:135.7681,
   spots:[
-   {nm:'Nishiki Market',best:'обед',price:'¥¥',veg:'вег ok',tag:'рыночная еда на любой вкус'},
-   {nm:'Omen Kodaiji',best:'ужин',price:'¥¥',veg:'вег ok',tag:'удон ручной работы рядом с Гионом'},
-   {nm:'% Arabica Kyoto Higashiyama',best:'кофе',price:'¥¥',veg:'вег ok',tag:'кофе с видом на пагоду, очередь'}
+   {nm:'Nishiki Market',meal:'обед',price:'¥¥',veg:'вег ok',why:'рыночная еда на любой вкус'},
+   {nm:'Omen Kodaiji',meal:'ужин',price:'¥¥',veg:'вег ok',why:'удон ручной работы рядом с Гионом'},
+   {nm:'% Arabica Kyoto Higashiyama',meal:'кофе',price:'¥¥',veg:'вег ok',why:'кофе с видом на пагоду, очередь'}
   ]}
 ];
 

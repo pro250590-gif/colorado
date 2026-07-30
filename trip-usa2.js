@@ -84,16 +84,16 @@ const P=[
 const FOODCITIES=[
  {city:'Нью-Йорк',base:'nyc',q:'New York, NY',lat:40.7580,lng:-73.9855,
   spots:[
-   {nm:"Katz's Delicatessen",best:'обед',price:'$$',veg:'кое-что',tag:'пастрами с 1888 года, очередь идёт быстро'},
-   {nm:'Joe’s Pizza',best:'перекус',price:'$',veg:'вег ok',tag:'кусок пиццы стоя, как принято в городе'},
-   {nm:'Russ & Daughters',best:'завтрак',price:'$$',veg:'вег ok',tag:'бейгл с лососем на Лоуэр-Ист-Сайд'},
-   {nm:'Chelsea Market',best:'обед',price:'$$',veg:'вег ok',tag:'рынок еды у Высокой линии'}
+   {nm:"Katz's Delicatessen",meal:'обед',price:'$$',veg:'кое-что',why:'пастрами с 1888 года, очередь идёт быстро'},
+   {nm:'Joe’s Pizza',meal:'перекус',price:'$',veg:'вег ok',why:'кусок пиццы стоя, как принято в городе'},
+   {nm:'Russ & Daughters',meal:'завтрак',price:'$$',veg:'вег ok',why:'бейгл с лососем на Лоуэр-Ист-Сайд'},
+   {nm:'Chelsea Market',meal:'обед',price:'$$',veg:'вег ok',why:'рынок еды у Высокой линии'}
   ]},
  {city:'Лос-Анджелес',base:'lax',q:'Los Angeles, CA',lat:34.0522,lng:-118.2437,
   spots:[
-   {nm:'Grand Central Market',best:'обед',price:'$$',veg:'вег ok',tag:'рынок в центре: от тако до устриц'},
-   {nm:'In-N-Out Burger',best:'быстро',price:'$',veg:'кое-что',tag:'калифорнийская классика, есть «секретное меню»'},
-   {nm:'Bestia',best:'ужин',price:'$$$',veg:'кое-что',tag:'столик бронировать за месяц'}
+   {nm:'Grand Central Market',meal:'обед',price:'$$',veg:'вег ok',why:'рынок в центре: от тако до устриц'},
+   {nm:'In-N-Out Burger',meal:'быстро',price:'$',veg:'кое-что',why:'калифорнийская классика, есть «секретное меню»'},
+   {nm:'Bestia',meal:'ужин',price:'$$$',veg:'кое-что',why:'столик бронировать за месяц'}
   ]}
 ];
 

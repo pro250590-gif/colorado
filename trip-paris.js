@@ -65,11 +65,11 @@ const P=[
 const FOODCITIES=[
  {city:'Париж',base:'par',q:'Paris, France',lat:48.8566,lng:2.3522,
   spots:[
-   {nm:'Bouillon Chartier',best:'обед',price:'€€',veg:'кое-что',tag:'столовая 1896 года, очередь идёт быстро'},
-   {nm:'Le Comptoir du Relais',best:'ужин',price:'€€€',veg:'кое-что',tag:'классический бистро-ужин, столик занимать заранее'},
-   {nm:"L'As du Fallafel",best:'обед',price:'€',veg:'вег ok',tag:'фалафель в Марэ, есть очередь и это нормально'},
-   {nm:'Breizh Café',best:'обед',price:'€€',veg:'вег ok',tag:'бретонские блинчики и сидр'},
-   {nm:'Café de Flore',best:'завтрак',price:'€€€',veg:'вег ok',tag:'дорого и туристично, но кофе на террасе того стоит'}
+   {nm:'Bouillon Chartier',meal:'обед',price:'€€',veg:'кое-что',why:'столовая 1896 года, очередь идёт быстро'},
+   {nm:'Le Comptoir du Relais',meal:'ужин',price:'€€€',veg:'кое-что',why:'классический бистро-ужин, столик занимать заранее'},
+   {nm:"L'As du Fallafel",meal:'обед',price:'€',veg:'вег ok',why:'фалафель в Марэ, есть очередь и это нормально'},
+   {nm:'Breizh Café',meal:'обед',price:'€€',veg:'вег ok',why:'бретонские блинчики и сидр'},
+   {nm:'Café de Flore',meal:'завтрак',price:'€€€',veg:'вег ok',why:'дорого и туристично, но кофе на террасе того стоит'}
   ]}
 ];
 

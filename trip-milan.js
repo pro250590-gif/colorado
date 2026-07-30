@@ -193,19 +193,19 @@ const FOODCITIES=[
     рядом и оценены выше. Оценки нигде не храним, они нужны были для выбора. */
  {city:'Милан',base:'mil',q:'Milan, Italy',lat:45.4642,lng:9.1900,
   spots:[
-   {nm:'Luini Panzerotti',best:'перекус',price:'€',veg:'вег ok',tag:'жареные пирожки в двух шагах от собора, с 1949 года'},
-   {nm:'Gloria Osteria',best:'ужин',price:'€€',veg:'кое-что',tag:'миланская кухня в Брере — одно из самых любимых мест города'},
-   {nm:'Piz',best:'обед',price:'€€',veg:'вег ok',tag:'пиццерия у Дуомо: три вида пиццы и очередь на улице'},
-   {nm:'Debbie’s',best:'завтрак',price:'€',veg:'вег ok',tag:'кофе и выпечка в Брере, открывается рано'},
-   {nm:'Ristorante Rita',best:'аперитив',price:'€€',veg:'вег ok',tag:'коктейли на Навильи — как раз к первому вечеру'},
-   {nm:'Nottingham Forest',best:'вечер',price:'€€',veg:'вег ok',tag:'коктейльный бар, известный на всю Италию'}
+   {nm:'Luini Panzerotti',meal:'перекус',price:'€',veg:'вег ok',why:'жареные пирожки в двух шагах от собора, с 1949 года'},
+   {nm:'Gloria Osteria',meal:'ужин',price:'€€',veg:'кое-что',why:'миланская кухня в Брере — одно из самых любимых мест города'},
+   {nm:'Piz',meal:'обед',price:'€€',veg:'вег ok',why:'пиццерия у Дуомо: три вида пиццы и очередь на улице'},
+   {nm:'Debbie’s',meal:'завтрак',price:'€',veg:'вег ok',why:'кофе и выпечка в Брере, открывается рано'},
+   {nm:'Ristorante Rita',meal:'аперитив',price:'€€',veg:'вег ok',why:'коктейли на Навильи — как раз к первому вечеру'},
+   {nm:'Nottingham Forest',meal:'вечер',price:'€€',veg:'вег ok',why:'коктейльный бар, известный на всю Италию'}
   ]},
  {city:'Комо и Варенна',base:'mil',q:'Como, Italy',lat:45.8081,lng:9.0852,
   spots:[
-   {nm:'Osteria del Gallo',best:'обед',price:'€€',veg:'кое-что',tag:'семейная остерия в переулке у собора Комо'},
-   {nm:'Gelateria Lariana',best:'после обеда',price:'€',veg:'вег ok',tag:'мороженое на набережной, по дороге к причалу'},
-   {nm:'Passion Como',best:'завтрак',price:'€',veg:'вег ok',tag:'кофе и выпечка у вокзала Комо'},
-   {nm:'Bar La Cambusa',best:'ужин',price:'€€',veg:'кое-что',tag:'у причала Варенны — пока ждёшь поезд домой'}
+   {nm:'Osteria del Gallo',meal:'обед',price:'€€',veg:'кое-что',why:'семейная остерия в переулке у собора Комо'},
+   {nm:'Gelateria Lariana',meal:'после обеда',price:'€',veg:'вег ok',why:'мороженое на набережной, по дороге к причалу'},
+   {nm:'Passion Como',meal:'завтрак',price:'€',veg:'вег ok',why:'кофе и выпечка у вокзала Комо'},
+   {nm:'Bar La Cambusa',meal:'ужин',price:'€€',veg:'кое-что',why:'у причала Варенны — пока ждёшь поезд домой'}
   ]}
 ];
 
