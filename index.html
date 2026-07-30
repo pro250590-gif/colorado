@@ -1703,6 +1703,13 @@ section h2.big{margin-bottom:4px}
    ужаты значок и названия слева */
 #s-route #startDate{font-size:14.5px;padding:0 8px;text-align:center}
 #s-route .scfrom{justify-content:center;padding:0 6px;font-size:13.5px;max-width:none;gap:4px}
+/* длинный город — в две строки: сверху название, под ним код аэропорта */
+#s-route .scfrom.two{font-size:12.5px}
+.fbin{display:flex;flex-direction:column;align-items:center;line-height:1.15;min-width:0}
+.fbin b{font:800 12.5px/1.15 "Inter",sans-serif;max-width:114px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* совсем длинные названия городов — ещё на полшага мельче, лишь бы не резать */
+.fbin.long b{font-size:11px}
+.fbin i{font:700 10px/1.1 "Inter",sans-serif;font-style:normal;color:#7a7f95;letter-spacing:.04em;margin-top:2px}
 #s-route .scmed{width:38px;height:38px}
 #s-route .startcard{gap:11px}
 #s-route .sclbl{font-size:13.5px}
@@ -1811,9 +1818,11 @@ section h2.big{margin-bottom:4px}
 </header>
 
 <section id="s-route"><div class="wrap">
-  <div class="routecard"><div class="routeline" id="routeLine"></div></div>
+  <!-- Заголовок раздела стоит НАД плашкой-маршрутом: он объясняет весь блок,
+       а не только поля под ним (просьба клиента) -->
   <div class="eyebrow">Маршрут</div>
   <h2 class="big">Как добираешься</h2>
+  <div class="routecard"><div class="routeline" id="routeLine"></div></div>
   <div class="startcard"><span class="scmed" id="scMedIcon"></span><span class="scin"><span class="sclbl">Старт поездки</span><span class="scsub" id="scSub"></span></span><input type="date" id="startDate" class="scdate"></div>
   <!-- Город вылета — вторым, сразу после даты: обе вещи задают всю поездку и
        должны выглядеть одинаково (выбор клиента из двух эскизов). -->
@@ -4379,9 +4388,15 @@ function uiRestore(s){
 function syncFromBtn(){
   const b=document.getElementById('fromBtn');if(!b)return;
   const o=originNow();
-  const txt=(o.code?o.code+' · ':'')+(o.city||'выбрать');
-  b.innerHTML='<span>'+esc0(txt)+'</span>'
-    +'<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m9.5 18 6-6-6-6"/></svg>';
+  const city=o.city||'выбрать',code=o.code||'';
+  /* «FLL · Форт-Лодердейл» одной строкой не помещается и обрезалось многоточием.
+     Длинные названия ставим в две строки: город сверху, код под ним. */
+  const long=(code+city).length>13;
+  const chev='<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m9.5 18 6-6-6-6"/></svg>';
+  b.classList.toggle('two',long);
+  b.innerHTML=(long
+      ? '<span class="fbin'+(city.length>12?' long':'')+'"><b>'+esc0(city)+'</b><i>'+esc0(code)+'</i></span>'
+      : '<span>'+esc0(code?(code+' · '+city):city)+'</span>')+chev;
 }
 function rerenderTrip(){
   const snap=uiSnapshot();
