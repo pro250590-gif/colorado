@@ -2111,45 +2111,58 @@ function loadAirports(cb){
   sc.onerror=()=>{const q=_airWait;_airWait=[];q.forEach(f=>f(null));};
   document.head.appendChild(sc);
 }
-/* Поиск по коду, городу и названию аэропорта. Сначала точное совпадение кода,
-   потом города, потом вхождение; внутри — крупные аэропорты выше. */
+/* Поиск по коду, городу и названию — И ПО-РУССКИ ТОЖЕ.
+   Клиент: «у меня язык русский, я пишу Москва и Нью-Йорк, а находилось только
+   по-английски». Русские названия аэропортов и городов лежат в базе рядом с
+   латинскими (взяты из Wikidata). Дефисы, пробелы и «ё» при сравнении убираем:
+   «нью йорк», «Нью-Йорк» и «ньюйорк» должны находиться одинаково. */
+function airNorm(s){
+  return String(s||'').toLowerCase().replace(/ё/g,'е').replace(/[^a-zà-ÿа-я0-9]/g,'');
+}
 function airFind(q,limit){
   const A=window.AIRPORTS;if(!A)return [];
-  const t=String(q||'').trim().toLowerCase();
+  const t=airNorm(q);
   if(t.length<2)return [];
+  const raw=String(q||'').trim().toLowerCase();
   const out=[];
   for(let i=0;i<A.length;i++){
-    const a=A[i],code=a[0].toLowerCase(),city=(a[2]||'').toLowerCase(),nm=(a[1]||'').toLowerCase();
+    const a=A[i];
+    const code=a[0].toLowerCase();
+    /* четыре поля: город и аэропорт латиницей, они же по-русски */
+    const flds=[a[2],a[1],a[9],a[8]];
     let sc=0;
-    if(code===t)sc=100;
-    else if(city===t)sc=90;
-    else if(city.indexOf(t)===0)sc=70;
-    else if(nm.indexOf(t)===0)sc=60;
-    else if(city.indexOf(t)>0)sc=40;
-    else if(nm.indexOf(t)>0)sc=30;
+    if(code===raw)sc=100;
+    else for(let k=0;k<4;k++){
+      const f=airNorm(flds[k]);if(!f)continue;
+      const w=(k===0||k===2)?0:-5;         /* город важнее названия аэропорта */
+      if(f===t){sc=Math.max(sc,90+w);break;}
+      if(f.indexOf(t)===0)sc=Math.max(sc,70+w);
+      else if(f.indexOf(t)>0)sc=Math.max(sc,40+w);
+    }
     if(sc)out.push([sc*10+a[7],a]);
   }
   out.sort((x,y)=>y[0]-x[0]);
   return out.slice(0,limit||14).map(x=>x[1]);
 }
 function airRow(a){
-  /* Регион и страна в строке обязательны: именно так не перепутаешь Ванкувер в
-     Канаде с Ванкувером в штате Вашингтон (просьба клиента).
-     Название аэропорта первым, а населённый пункт добавляем, только если он в
-     названии не назван: у Мальпенсы деревня Ferno, и «Ferno» жирным сбивало. */
-  const nm=a[1]||'',city=a[2]||'';
-  const head=nm+((city&&nm.toLowerCase().indexOf(city.toLowerCase())<0)?(' · '+city):'');
+  /* Крупно — по-русски, если такое название есть: человек ищет свой город на
+     своём языке. Оригинал остаётся строкой ниже вместе с регионом и страной —
+     регион и страна обязательны, именно так не перепутаешь Портленд в Орегоне
+     с Портлендом в Мэне и в Австралии (просьба клиента). */
+  const nm=a[1]||'',city=a[2]||'',ruA=a[8]||'',ruC=a[9]||'';
+  const head=ruC||ruA||(nm+((city&&nm.toLowerCase().indexOf(city.toLowerCase())<0)?(' · '+city):''));
+  const sub=[nm,a[3],a[4]].filter(Boolean).join(' · ');
   return '<button class="dsrow airrow" data-airpick="'+a[0]+'">'
     +'<span class="aircode">'+a[0]+'</span>'
     +'<span class="dst"><b>'+esc0(head)+'</b>'
-    +'<span>'+esc0([a[3],a[4]].filter(Boolean).join(' · '))+'</span></span></button>';
+    +'<span>'+esc0(sub)+'</span></span></button>';
 }
 function homeSheet(){
   const cur=originNow();
   const head='<div class="dsh"><b>Откуда вы летите?</b>'
     +'<span>'+(cur.code?('сейчас '+esc0(cur.city||'')+' · '+esc0(cur.code)):'город не выбран')+'</span></div>'
     +'<div class="airbox"><input id="airq" type="search" placeholder="Город или код аэропорта" autocomplete="off"></div>'
-    +'<div class="airnote">Начните печатать и выберите строку из списка: рядом с городом видно регион и страну, чтобы не перепутать одноимённые.</div>'
+    +'<div class="airnote">Пишите по-русски или латиницей — найдётся и так, и так. Выберите строку из списка: рядом видно регион и страну, чтобы не перепутать одноимённые города.</div>'
     +'<div id="airlist"></div>'
     +(HOME?'<button class="dscancel alt" data-airreset="1">Вернуть город маршрута</button>':'')
     +'<button class="dscancel" data-dsclose="1">Отмена</button>';
@@ -2158,7 +2171,7 @@ function homeSheet(){
   const draw=()=>{
     const list=airFind(inp.value,14);
     box.innerHTML=list.length?list.map(airRow).join('')
-      :(inp.value.trim().length<2?'':'<div class="airhint">Ничего не нашли. Попробуйте код аэропорта — например MIA.</div>');
+      :(inp.value.trim().length<2?'':'<div class="airhint">Ничего не нашли. Попробуйте иначе или введите код аэропорта — например MIA.</div>');
   };
   box.innerHTML='<div class="airhint">Загружаю список аэропортов…</div>';
   loadAirports(ok=>{
@@ -2171,8 +2184,9 @@ function homeSheet(){
 function airPick(code){
   const A=window.AIRPORTS||[];
   const a=A.find(x=>x[0]===code);if(!a)return;
-  /* город показываем короткий: для Мальпенсы это «Milan Malpensa», а не деревня Ferno */
-  const city=(a[2]&&(a[1]||'').toLowerCase().indexOf(a[2].toLowerCase())<0)?a[1]:(a[2]||a[1]);
+  /* город показываем по-русски, если такое название есть: «Милан», а не деревня
+     Ferno, где физически стоит Мальпенса */
+  const city=a[9]||((a[2]&&(a[1]||'').toLowerCase().indexOf(a[2].toLowerCase())<0)?a[1]:(a[2]||a[1]));
   saveHome({city:city,code:a[0],name:a[1],region:a[3],country:a[4],ll:[a[5],a[6]]});
   closeDaySheet();
   toast('<b>Летим из '+esc0(city)+'</b><i>Аэропорт '+esc0(a[0])+' · '+esc0(a[1])
