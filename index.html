@@ -1688,7 +1688,10 @@ section h2.big{margin-bottom:4px}
 #s-route .startcard{margin:0 0 11px}
 #s-route .startcard:first-of-type{margin-top:14px}
 /* последняя карточка блока — отступ до следующего раздела */
-#s-route .startcard:last-of-type{margin-bottom:22px}
+/* воздух перед заголовком со схемой: «а то всё налеплено» (просьба клиента).
+   Через :last-of-type не выйдет — последний div в блоке это сама плашка. */
+#s-route .eyebrow{margin-top:30px}
+#s-route h2.big{margin-bottom:16px}
 /* три карточки одной высоты: названия в одну строку, поля справа выровнены */
 #s-route .startcard{min-height:72px}
 #s-route .sclbl{white-space:nowrap}
@@ -1722,7 +1725,7 @@ section h2.big{margin-bottom:4px}
 #s-route .pnum{min-width:28px}
 #s-route .pnum b{font-size:19px}
 #s-route .peoplebar{margin:0 0 16px}
-#s-route .routecard{margin:0 0 26px}
+#s-route .routecard{margin:14px 0 30px}
 .scmed{flex:none;width:42px;height:42px;border-radius:14px;background:linear-gradient(150deg,#7a5cf0,#5b3fc4);color:#fff;display:grid;place-items:center;box-shadow:0 5px 12px -6px rgba(27,30,46,.5)}
 .scin{flex:1;min-width:0}
 .sclbl{display:block;font:800 15px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:-.03em}
@@ -6388,6 +6391,7 @@ const sd0=document.getElementById('startDate');if(sd0){sd0.value=startIso;sd0.ad
 buildSchedule();
 syncDateAcc();     /* и подпись под датой, и ссылка «Как мы собрали» — она живёт в плане */
 renderUnits();buildRoute();buildElev();buildFilters();buildDays();buildCities();buildFood();buildBases();buildPlanner();wireButtons();wireBudget();buildBudgetStay();
+syncFromBtn();   /* иначе при первой загрузке на кнопке города остаётся прочерк */
 /* линия маршрута считается от ширины экрана и ширины подписей — пересобираем после ресайза и загрузки шрифтов */
 let _rrt;addEventListener('resize',()=>{clearTimeout(_rrt);_rrt=setTimeout(()=>{buildRoute();fitHeroTitle();},160);});
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{buildRoute();fitHeroTitle();});
