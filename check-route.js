@@ -33,6 +33,8 @@ function km(a, b, c, d) {
 const FAR_AIRPORT_KM = 25;
 /* конец линии-переезда должен упираться в базу или аэропорт, а не висеть в поле */
 const LEG_END_KM = 30;
+/* обычный темп дня: десять часов на ногах. Станет настройкой рядом с датой */
+const DAY_MINUTES = 600;
 
 function load(file) {
   const src = fs.readFileSync(file, 'utf8');
@@ -266,6 +268,47 @@ function checkRoute(file) {
       if (miss.length) warn('дороги посчитаны не на все дни (нет для ' + miss.join(', ')
         + ') — там останется оценка. Прогоните node road-times.js ' + path.basename(file));
     }
+  }
+
+  /* ── 7в. СКОЛЬКО ЧАСОВ ЗАНИМАЕТ ДЕНЬ ──
+     «9–10 точек в день» — плохая мерка, правильная мерка ВРЕМЯ. Складываем
+     минуты на местах (META.min) и минуты в дороге (ROADS, посчитано по
+     настоящим дорогам). Варианты не считаем — человек поедет либо туда, либо
+     сюда; переезды по расписанию (hop) тоже: их время написано словами. */
+  if (P && DAYS) {
+    const MET = S.META || {};
+    const RD = S.ROADS || {};
+    const roadMin = (day, a, b) => {
+      const t = RD[day];
+      if (!t || !t.ids) return null;
+      const i = t.ids.indexOf(a), j = t.ids.indexOf(b);
+      return (i >= 0 && j >= 0 && t.min[i] && t.min[i][j] != null) ? t.min[i][j] : null;
+    };
+    DAYS.forEach(d => {
+      const pts = P.filter(p => p.d === d.n && p.cat !== 'food' && !p.opt && typeof p.lat === 'number');
+      if (pts.length < 2) return;
+      const bid = (DAY_BASE || {})[d.n];
+      let place = 0, move = 0, guessed = 0;
+      pts.forEach((p, i) => {
+        const m = (MET[p.id] || {}).min;
+        if (typeof m === 'number') place += m;
+        if (p.hop) return;                       /* поезд, катер — время словами */
+        const prev = i ? pts[i - 1].id : ('@' + bid);
+        const r = roadMin(d.n, prev, p.id);
+        if (r != null) move += r;
+        else {
+          const a = i ? pts[i - 1] : (BASES.find(b => b.id === bid) || {});
+          if (typeof a.lat === 'number') { move += Math.max(5, Math.round(km(a.lat, a.lng, p.lat, p.lng) * 1.25 / 40 * 60)); guessed++; }
+        }
+      });
+      const total = place + move;
+      if (total > DAY_MINUTES)
+        warn('день ' + d.n + ' («' + (d.title || '') + '»): ' + Math.floor(total / 60) + ' ч ' + (total % 60)
+          + ' мин из ' + (DAY_MINUTES / 60) + ' — не влезает. На местах ' + Math.floor(place / 60) + ' ч '
+          + (place % 60) + ' мин, в дороге ' + Math.floor(move / 60) + ' ч ' + (move % 60) + ' мин'
+          + (guessed ? ' (' + guessed + ' перегон посчитан прикидкой)' : '')
+          + '. Уберите лишнее или разнесите на два дня');
+    });
   }
 
   /* ── 8. КООРДИНАТЫ ПРОВЕРЕНЫ? ──

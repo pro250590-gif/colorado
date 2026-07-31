@@ -1477,6 +1477,11 @@ body.stale{padding-top:44px}
 }
 .cdtx{flex:1;min-width:0}
 .cdm{font:500 10.5px/1 "Inter",sans-serif;color:#8b8fa3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.01em}
+/* сколько часов занимает день: главная мерка дня, а не число точек */
+.dbud{display:inline-flex;align-items:center;gap:4px;margin-left:7px;padding:2px 7px;border-radius:999px;
+  background:rgba(91,63,196,.1);color:#5b3fc4;font:800 10px/1.4 "Plus Jakarta Sans",sans-serif;vertical-align:1px}
+.dbud.over{background:rgba(168,99,10,.14);color:#a8630a}
+.dcount .dbud{margin-left:6px}
 .cdm b{color:#5b3fc4}
 .cdtx>b{display:block;font:700 15px/1.25 "Inter",sans-serif;letter-spacing:-.01em;margin-top:6px}
 .cgo{color:#5b3fc4;flex:none;background:rgba(91,63,196,.1);border-radius:50%;width:30px;height:30px;display:grid;place-items:center}
@@ -2974,7 +2979,8 @@ function buildCities(){
       +'<div class="clbl"><b>Маршрут</b><span>'+(days.length?('Дни '+firstDay+'–'+lastDay):'дней нет — в городе не ночуем')+'</span></div>'
       +days.map(e=>{const d=e.tpl,n=dayPts(e.tid),list=P.filter(p=>p.d===e.tid&&p.cat!=='food'),ph=dayPhoto(e.tid),st=dayStart(e.tid);
         return '<details class="cday" data-day="'+e.tid+'"><summary class="cdaysum"><span class="cdph'+(ph?'':' free')+'"'+(ph?' style="background-image:url('+ph+')"':'')+'>'+(ph?'':ic('sun','i-sm'))+'</span>'
-        +'<span class="cdtx"><span class="cdm"><b>День '+e.disp+'</b> · '+dm(e.date)+' · '+n+' '+plural(n,'активность','активности','активностей')+'</span><b>'+dayTitle(e)+'</b></span>'
+        +'<span class="cdtx"><span class="cdm"><b>День '+e.disp+'</b> · '+dm(e.date)+' · '+n+' '+plural(n,'активность','активности','активностей')
+          +dayBudgetHTML(e.tid)+'</span><b>'+dayTitle(e)+'</b></span>'
         +'<span class="cgo">'+ic('chevron','i-sm')+'</span></summary>'
         +'<div class="cdaybody">'
         +(d&&d.leg?'<div class="cleg"><b>'+d.pill+'</b> '+convDist(d.leg)+'</div>':'')
@@ -3462,6 +3468,69 @@ function seqOf(p){
   return P.filter(x=>x.d===p.d&&x.cat!=='food'&&picked.has(x.id)&&optOf(x)===act).indexOf(p)+1;
 }
 function seqLabel(p){const n=seqOf(p),dn=dispOf(p.d);return n?(dn?dn+'.'+n:String(n)):'';}
+
+/* ── СКОЛЬКО ЧАСОВ ЗАНИМАЕТ ДЕНЬ ──────────────────────────────────────────
+   «9–10 точек в день» — плохая мерка, правильная мерка ВРЕМЯ. День складывается
+   из времени НА МЕСТАХ (META.min) и времени В ДОРОГЕ между ними (посчитано по
+   настоящим дорогам, road-times.js). Считаем по той же цепочке, что рисуется
+   на экране: от жилья к первой точке и дальше по порядку, только включённые
+   точки и только та ветка вариантов, что идёт в счёт.
+   ⚠️ Что сюда НЕ входит и почему: переезды по расписанию (поезд, катер) —
+   их время написано руками в hop, числом мы его не знаем; и еда — она станет
+   частью цепочки следующим шагом. Поэтому строка честно говорит «без поезда». */
+const DAY_LIMIT=600;   /* обычный темп: десять часов на ногах. Станет настройкой */
+function stepMin(a,b){
+  if(!a||!b||typeof a.lat!=='number'||typeof b.lat!=='number')return 0;
+  const r=(a.id&&b.id)?roadMap().get(a.id+'>'+b.id):null;
+  if(r)return r[1];
+  /* дороги нет — прикидываем по прямой теми же скоростями, что и в подписях */
+  const d=kmBetween(a.lat,a.lng,b.lat,b.lng)*1.25;
+  const mv=moveOf(b.base),car=(mv==='car_all'||mv==='car_trips');
+  if(d<(car?0.5:WALK_MAX))return Math.max(1,Math.round(d/4.6*60));
+  if(car)return Math.max(5,Math.round(d/(d>40?75:50)*60));
+  return Math.max(5,Math.round(d/(transWord(a,b,mv)?20:25)*60));
+}
+function dayMinutes(tid){
+  const act=activeOpt(tid);
+  const list=P.filter(p=>p.d===tid&&p.cat!=='food'&&picked.has(p.id)
+    &&optOf(p)===act&&typeof p.lat==='number');
+  let place=0,move=0,ride=0;
+  const st=dayStart(tid);
+  list.forEach((p,i)=>{
+    const m=(META[p.id]||p.meta||{}).min;
+    if(typeof m==='number')place+=m;
+    const prev=i?list[i-1]:(st&&st.id?st:null);
+    /* переезд по расписанию: время известно только словами — не считаем, но
+       и не молчим о нём */
+    if(p.hop){ride++;return;}
+    if(prev)move+=stepMin(prev,p);
+  });
+  return {place:place,move:move,total:place+move,ride:ride,n:list.length};
+}
+function fmtHM(n){
+  n=Math.round(n);
+  if(n<60)return n+' мин';
+  const h=Math.floor(n/60),m=n%60;
+  return h+' ч'+(m?' '+m+' мин':'');
+}
+function dayBudgetHTML(tid){
+  const b=dayMinutes(tid);
+  if(!b.n)return '';
+  const over=b.total>DAY_LIMIT;
+  return '<span class="dbud'+(over?' over':'')+'" data-bud="'+tid+'">'+ic('clock','i-sm')
+    +' '+fmtHM(b.total)+' из '+fmtHM(DAY_LIMIT)+'</span>';
+}
+function refreshBudgets(){
+  document.querySelectorAll('[data-bud]').forEach(el=>{
+    const tid=tidOf(el.dataset.bud),b=dayMinutes(tid);
+    if(!b.n){el.style.display='none';return;}
+    el.style.display='';
+    el.classList.toggle('over',b.total>DAY_LIMIT);
+    el.innerHTML=ic('clock','i-sm')+' '+fmtHM(b.total)+' из '+fmtHM(DAY_LIMIT);
+    el.title='на местах '+fmtHM(b.place)+' · в дороге '+fmtHM(b.move)
+      +(b.ride?' · плюс '+b.ride+' переезд'+(b.ride>1?'а':'')+' по расписанию':'');
+  });
+}
 function refreshSeq(){
   document.querySelectorAll('[data-seq]').forEach(el=>{
     const p=P.find(x=>x.id===el.dataset.seq);
@@ -3470,6 +3539,7 @@ function refreshSeq(){
     el.style.display=n?'':'none';
   });
   if(map)P.forEach(p=>{const mk=markers[p.id];if(mk&&mk._seq!==seqLabel(p)){mk._seq=seqLabel(p);mk.setIcon(markerIcon(p));}});
+  refreshBudgets();      /* выключили точку — день стал короче, и это видно сразу */
 }
 function buildDays(){
   const host=document.getElementById('days');let out='';
@@ -3479,7 +3549,7 @@ function buildDays(){
     out+='<details class="day" id="day-'+e.tid+'" data-day="'+e.tid+'"'+(e.disp===1?' open':'')+'>'
       +'<summary class="day-head">'+'<span class="dnum" style="background:linear-gradient(150deg,'+c+','+(BCOL2[e.base]||c)+')"><b>'+e.disp+'</b><i>день</i></span>'
       +'<span class="dhead-txt"><h3>'+d.title+'</h3><span class="dsub"><span class="ddate" data-daydate="'+e.tid+'">'+fmtDate(e.date)+'</span><span class="dalt">'+mrs(ALT[e.tid])+'</span></span></span>'
-      +'<span class="dcount">'+list.length+' '+plural(list.length,'точка','точки','точек')+'</span><span class="chev"><svg class="i i-sm" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9.5 18 6-6-6-6"/></svg></span></summary>'
+      +'<span class="dcount">'+list.length+' '+plural(list.length,'точка','точки','точек')+'</span>'+dayBudgetHTML(e.tid)+'<span class="chev"><svg class="i i-sm" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9.5 18 6-6-6-6"/></svg></span></summary>'
       +'<div class="day-body">'
       +'<div class="leg"><span class="pill">'+d.pill+'</span> <b>'+convDist(d.leg)+'</b><a class="dirlink" href="#" data-dir="'+e.tid+'" target="_blank" rel="noopener">Маршрут в Google Maps →</a></div>'
       +'<div class="daytools"><button class="tiny" data-dayon="'+e.tid+'">Отметить день</button><button class="tiny" data-dayoff="'+e.tid+'">Снять день</button></div>'
