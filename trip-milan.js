@@ -206,15 +206,13 @@ const FOODCITIES=[
    {nm:'Gloria Osteria',lat:45.47179,lng:9.18324,meal:'ужин',price:'€€',veg:'кое-что',why:'миланская кухня в Брере — одно из самых любимых мест города'},
    {nm:'Piz',lat:45.46208,lng:9.18583,meal:'обед',price:'€€',veg:'вег ok',why:'пиццерия у Дуомо: три вида пиццы и очередь на улице'},
    {nm:'Debbie’s',lat:45.47379,lng:9.18363,meal:'завтрак',price:'€',veg:'вег ok',why:'кофе и выпечка в Брере, открывается рано'},
-   {nm:'Ristorante Rita',meal:'аперитив',price:'€€',veg:'вег ok',why:'коктейли на Навильи — как раз к первому вечеру'},
+   {nm:'Ristorante Rita',lat:45.46702,lng:9.18103,meal:'аперитив',price:'€€',veg:'вег ok',why:'коктейли на Навильи — как раз к первому вечеру'},
    {nm:'Nottingham Forest',lat:45.46872,lng:9.20671,meal:'вечер',price:'€€',veg:'вег ok',why:'коктейльный бар, известный на всю Италию'}
   ]},
  {city:'Комо и Варенна',base:'mil',q:'Como, Italy',lat:45.8081,lng:9.0852,
   spots:[
    {nm:'Osteria del Gallo',lat:45.81113,lng:9.08089,meal:'обед',price:'€€',veg:'кое-что',why:'семейная остерия в переулке у собора Комо'},
-   {nm:'Gelateria Lariana',lat:45.81286,lng:9.07974,meal:'после обеда',price:'€',veg:'вег ok',why:'мороженое на набережной, по дороге к причалу'},
-   {nm:'Passion Como',meal:'завтрак',price:'€',veg:'вег ok',why:'кофе и выпечка у вокзала Комо'},
-   {nm:'Bar La Cambusa',meal:'ужин',price:'€€',veg:'кое-что',why:'у причала Варенны — пока ждёшь поезд домой'}
+   {nm:'Gelateria Lariana',lat:45.81286,lng:9.07974,meal:'после обеда',price:'€',veg:'вег ok',why:'мороженое на набережной, по дороге к причалу'}
   ]}
 ];
 

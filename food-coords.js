@@ -120,6 +120,21 @@ async function nominatim(nm, city) {
     lat: +x.lat, lng: +x.lon
   }));
 }
+/* тот же Nominatim, но поиском ТОЛЬКО по названию в рамке вокруг города: так
+   находятся места, чей адрес записан не тем городом, что у нас в подборке
+   (посёлок рядом, другой район) */
+async function nominatimBox(nm, lat, lng) {
+  const d = 0.35;
+  const u = 'https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5&bounded=1'
+    + '&viewbox=' + (lng - d) + ',' + (lat + d) + ',' + (lng + d) + ',' + (lat - d)
+    + '&q=' + encodeURIComponent(nm);
+  const r = await fetch(u, { headers: { 'User-Agent': UA }, signal: AbortSignal.timeout(25000) });
+  const j = await r.json();
+  return (Array.isArray(j) ? j : []).map(x => ({
+    src: 'nominatim-box', nm: (x.name || x.display_name || '').split(',')[0], kind: x.type,
+    lat: +x.lat, lng: +x.lon
+  }));
+}
 
 /* из всех находок выбираем ту, за которую можно поручиться */
 function pick(cands, nm, lat, lng) {
@@ -176,7 +191,36 @@ function writeSpot(file, cityName, spotName, lat, lng) {
   return hit;
 }
 
+/* ⚠️ ПРАВИЛО КЛИЕНТА: заведение без подтверждённой координаты из подборки
+   убираем совсем. «Если мы не нашли — мы про него ничего не знаем: ни где оно,
+   ни работает ли оно вообще. Приблизительную точку не пишем». Полуправда хуже
+   пустоты, поэтому такие записи вычищаются из файла целиком. */
+function prune(file) {
+  const { FOODCITIES } = load(file);
+  const dead = [];
+  (FOODCITIES || []).forEach(c => (c.spots || []).forEach(sp => {
+    if (typeof sp.lat !== 'number') dead.push({ city: c.city, nm: sp.nm });
+  }));
+  if (!dead.length) { console.log('  убирать нечего — у всех заведений есть точка'); return; }
+  let src = fs.readFileSync(file, 'utf8');
+  const nl = src.includes('\r\n') ? '\r\n' : '\n';
+  let lines = src.split(/\r?\n/);
+  dead.forEach(d => {
+    const esc = d.nm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/'/g, "\\\\?'");
+    const re = new RegExp("\\{nm:(['\"])" + esc + "\\1");
+    const i = lines.findIndex(L => re.test(L));
+    if (i >= 0) lines.splice(i, 1);
+    else console.log('   ! не нашёл строку: ' + d.nm);
+  });
+  /* после удаления последней записи в списке остаётся висячая запятая */
+  src = lines.join(nl).replace(/,(\s*\])/g, '$1');
+  fs.writeFileSync(file, src);
+  dead.forEach(d => console.log('   × убрано: ' + d.nm + ' (' + d.city + ')'));
+  console.log('  убрано без подтверждённой точки: ' + dead.length);
+}
+
 async function doFile(file) {
+  if (process.argv.indexOf('--prune') >= 0) return prune(file);
   const { FOODCITIES } = load(file);
   if (!FOODCITIES || !FOODCITIES.length) { console.log('  еды в маршруте нет'); return; }
   let found = 0, kept = 0, miss = 0;
@@ -191,6 +235,8 @@ async function doFile(file) {
       try { cands.push(...await photon(s.nm, c.city, c.lat, c.lng)); } catch (e) { failed.push('Photon'); }
       await sleep(PAUSE_WEB);
       try { cands.push(...await nominatim(s.nm, c.q || c.city)); } catch (e) { failed.push('Nominatim'); }
+      await sleep(PAUSE_WEB);
+      try { cands.push(...await nominatimBox(s.nm, c.lat, c.lng)); } catch (e) { failed.push('Nominatim-box'); }
       await sleep(PAUSE_WEB);
       const got = pick(cands, s.nm, c.lat, c.lng);
       if (!got) { miss++; console.log('   — ' + s.nm + ' (' + c.city + '): не нашли, оставляю без точки'

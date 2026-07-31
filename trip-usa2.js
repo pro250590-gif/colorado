@@ -90,8 +90,7 @@ const FOODCITIES=[
   spots:[
    {nm:"Katz's Delicatessen",lat:40.72234,lng:-73.98735,meal:'обед',price:'$$',veg:'кое-что',why:'пастрами с 1888 года, очередь идёт быстро'},
    {nm:'Joe’s Pizza',lat:40.74394,lng:-73.99973,meal:'перекус',price:'$',veg:'вег ok',why:'кусок пиццы стоя, как принято в городе'},
-   {nm:'Russ & Daughters',lat:40.75449,lng:-73.99952,meal:'завтрак',price:'$$',veg:'вег ok',why:'бейгл с лососем на Лоуэр-Ист-Сайд'},
-   {nm:'Chelsea Market',meal:'обед',price:'$$',veg:'вег ok',why:'рынок еды у Высокой линии'}
+   {nm:'Russ & Daughters',lat:40.75449,lng:-73.99952,meal:'завтрак',price:'$$',veg:'вег ok',why:'бейгл с лососем на Лоуэр-Ист-Сайд'}
   ]},
  {city:'Лос-Анджелес',base:'lax',q:'Los Angeles, CA',lat:34.0522,lng:-118.2437,
   spots:[

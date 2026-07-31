@@ -171,59 +171,39 @@ const P=[
  {id:'geo',d:9,base:'den',cat:'town',lat:39.7061,lng:-105.6972,nm:'Georgetown',q:'Georgetown, CO',tag:['30 мин','t-easy'],
   why:'Викторианский шахтёрский городок у I-70, весь центр — памятник. Последняя остановка перед Денвером.'},
  {id:'den',d:10,base:'den',cat:'transport',lat:39.8561,lng:-104.6737,nm:'Denver International Airport (DEN)',q:'Denver International Airport',tag:['вылет','t-must'],star:1,
-  why:'Сдаёшь машину и улетаешь домой из DEN. Выезжай к аэропорту заранее — заложи время на сдачу машины и досмотр.'},
+  why:'Сдаёшь машину и улетаешь домой из DEN. Выезжай к аэропорту заранее — заложи время на сдачу машины и досмотр.'}
 ];
 
 const FOODCITIES=[
  {city:'Дуранго',base:'dur',lat:37.2753,lng:-107.8801,q:'Durango CO',spots:[
   {nm:'Carver Brewing Co.',lat:37.27485,lng:-107.88006,meal:'завтрак/бранч',price:'$$',veg:'вег ok',why:'30+ лет — одна из старейших пивоварен Колорадо. Знаменитый бранч и своё пиво.'},
-  {nm:'James Ranch Grill',meal:'обед',price:'$$',veg:'кое-что',why:'«Стол на ферме» в 20 км по шоссе 550: бургер из говядины со своего ранчо. Сезонно, пн закрыто.'},
   {nm:'Diamond Belle Saloon',lat:37.27115,lng:-107.88164,meal:'обед/бар',price:'$$',veg:'кое-что',why:'Рэгтайм-салун 1880-х в отеле Strater, официантки в костюмах — ради атмосферы и коктейля.'},
-  {nm:'Steamworks Brewing Company',lat:37.27234,lng:-107.87997,meal:'ужин/бар',price:'$$',veg:'вег ok',why:'С 1996; золото GABF за Steam Engine Lager, фирменный Cajun Boil.'},
-  {nm:'Ska Brewing World HQ',meal:'бар',price:'$$',veg:'кое-что',why:'Первая крафтовая пивоварня Дуранго (1995), IPA Modus Hoperandi.'},
-  {nm:'El Moro Spirits & Tavern',meal:'ужин/коктейли',price:'$$–$$$',veg:'кое-что',why:'Стимпанк-салун: серьёзные коктейли и модерн-вестерн кухня.'}
+  {nm:'Steamworks Brewing Company',lat:37.27234,lng:-107.87997,meal:'ужин/бар',price:'$$',veg:'вег ok',why:'С 1996; золото GABF за Steam Engine Lager, фирменный Cajun Boil.'}
  ]},
  {city:'Силвертон',base:'our',lat:37.8119,lng:-107.6645,q:'Silverton CO',spots:[
-  {nm:'Golden Block Brewery',meal:'ужин/бар',price:'$$',veg:'вег ok',why:'Городская пивоварня, пицца из дровяной печи и своё пиво. Самый надёжный вариант круглый год.'},
-  {nm:'Handlebars Food & Saloon',meal:'обед/ужин',price:'$$',veg:'кое-что',why:'Культовый салун Дикого Запада, ребра/BBQ и яблочный коблер. Сезон май–окт.'},
   {nm:'The Eureka Station',lat:37.81148,lng:-107.66341,meal:'ужин',price:'$$',veg:'кое-что',why:'Корнуэльские пирожки — традиционная еда шахтёров, на Blair St. Сезон ~июнь–окт.'},
-  {nm:'Kendall Mountain Cafe',meal:'завтрак/обед',price:'$',veg:'вег ok',why:'Самый высокий рейтинг в городке, черничные панкейки.'},
   {nm:'Coffee Bear',lat:37.81281,lng:-107.66372,meal:'кофе',price:'$',veg:'вег ok',why:'Местный кофе и выпечка перед поездом или горами.'}
  ]},
  {city:'Урей',base:'our',lat:38.0228,lng:-107.6712,q:'Ouray CO',spots:[
   {nm:'Ouray Brewery',lat:38.02291,lng:-107.67126,meal:'обед/бар',price:'$$',veg:'вег ok',why:'~16 сортов своего пива, крыша-терраса с видом на 360°. Флайт и бургер.'},
-  {nm:"Maggie's Kitchen",lat:38.02428,lng:-107.67123,meal:'обед',price:'$–$$',veg:'кое-что',why:'Любимая бургерная, стены в граффити; бургеры из лося/бизона. Вт закрыто.'},
-  {nm:'Mouse\'s Chocolates & Coffee',meal:'десерт/кофе',price:'$$',veg:'вег ok',why:'Институция с 2001: «Scrap Cookie» и своя обжарка кофе.'},
-  {nm:'Taste of Ouray',meal:'ужин',price:'$$$',veg:'кое-что',why:'Farm-to-table, ужин для особого случая (бронь, сезонно).'},
-  {nm:'Brickhouse 737',meal:'ужин',price:'$$–$$$',veg:'кое-что',why:'Современная американская, топ-рейтинг — ужин поприятнее.'},
-  {nm:'Mr. Grumpy Pants Brewing Co.',meal:'бар',price:'$',veg:'—',why:'Колоритная дайв-пивоварня с террасой и видами — местный характер.'}
+  {nm:"Maggie's Kitchen",lat:38.02428,lng:-107.67123,meal:'обед',price:'$–$$',veg:'кое-что',why:'Любимая бургерная, стены в граффити; бургеры из лося/бизона. Вт закрыто.'}
  ]},
  {city:'Теллурайд',base:'our',lat:37.9375,lng:-107.8123,q:'Telluride CO',spots:[
   {nm:'Brown Dog Pizza',lat:37.93683,lng:-107.81065,meal:'обед/ужин',price:'$$',veg:'вег ok',why:'Владелец — чемпион мира по пицце; детройтская «313» или зелёное чили «The Telluride».'},
   {nm:'La Cocina de Luz',lat:37.93717,lng:-107.81026,meal:'обед/ужин',price:'$$',veg:'веган/GF',why:'Органик-мексиканская с 1998, лепёшки вручную, лучшая маргарита по цене.'},
-  {nm:'Baked in Telluride',lat:37.93692,lng:-107.81226,meal:'завтрак/кофе',price:'$',veg:'вег ok',why:'Классическая пекарня-кафе: выпечка, завтрак-сэндвичи, «chronut».'},
-  {nm:'Telluride Brewing Co. Tap Room',meal:'бар',price:'$$',veg:'кое-что',why:'Культовая местная пивоварня, золото за Face Down Brown.'},
-  {nm:'New Sheridan Chop House',meal:'ужин',price:'$$$',veg:'кое-что',why:'Салун 1895 → стейк-хаус: выдержанное мясо и дичь.'},
-  {nm:'221 South Oak',meal:'ужин',price:'$$$',veg:'веган-сет',why:'Файн-дайнинг в викторианском доме, шеф — финалист Top Chef.'}
+  {nm:'Baked in Telluride',lat:37.93692,lng:-107.81226,meal:'завтрак/кофе',price:'$',veg:'вег ok',why:'Классическая пекарня-кафе: выпечка, завтрак-сэндвичи, «chronut».'}
  ]},
  {city:'Аспен',base:'asp',lat:39.1911,lng:-106.8175,q:'Aspen CO',spots:[
   {nm:'The White House Tavern',lat:39.19037,lng:-106.82043,meal:'обед/ужин',price:'$$–$$$',veg:'кое-что',why:'«Самый знаменитый сэндвич Аспена» — хрустящая курица, в крошечном доме.'},
-  {nm:'J-Bar at Hotel Jerome',meal:'бар',price:'$$',veg:'кое-что',why:'Исторический салун 1889, центр жизни города; бургер и бурбон-шейк «Aspen Crud».'},
   {nm:'Woody Creek Tavern',lat:39.27495,lng:-106.88735,meal:'обед/бар',price:'$$',veg:'кое-что',why:'Культовый дайв в 13 км, притон Хантера Томпсона; маргариты, бургер, энчилады.'},
-  {nm:'Cache Cache',meal:'ужин',price:'$$$',veg:'кое-что',why:'Франко-американская институция с 1987, «самая желанная бронь». Сезонно.'},
   {nm:'Grateful Deli',lat:39.1909,lng:-106.82075,meal:'обед',price:'$',veg:'кое-что',why:'Лучшая сэндвичная (награды с 2010), субы на заказ — дёшево и вкусно.'},
   {nm:'Paradise Bakery & Cafe',lat:39.1882,lng:-106.81862,meal:'завтрак/десерт',price:'$',veg:'вег ok',why:'Классика Аспена с 1976: тёплое печенье, джелато.'}
  ]},
  {city:'Басальт',base:'asp',lat:39.3690,lng:-107.0330,q:'Basalt CO',spots:[
-  {nm:'Tempranillo',lat:39.3689,lng:-107.03325,meal:'ужин',price:'$$',veg:'кое-что',why:'Испанские тапас/паэлья, 300+ испанских вин — без аспенских цен. Arroz negro.'},
-  {nm:'Café Bernard',meal:'завтрак/обед',price:'$$–$$$',veg:'кое-что',why:'Крошечный французский бистро с 1990, ~8 столов; круассаны, эскарго, ягнёнок. Пн закрыто.'},
-  {nm:'The Tipsy Trout',meal:'обед/ужин',price:'$$',veg:'кое-что',why:'Единственное место у реки (терраса над Fryingpan); копчёная форель, трут-бургер.'},
-  {nm:'Westbound & Down Basalt',meal:'бар',price:'$$',veg:'кое-что',why:'Городская пивоварня (бывш. Capitol Creek), флайт и паб-еда.'},
-  {nm:'The Brick Pony Pub',meal:'обед/ужин',price:'$–$$',veg:'кое-что',why:'Простой местный паб: ковбойский бургер, пицца из дровяной печи.'}
+  {nm:'Tempranillo',lat:39.3689,lng:-107.03325,meal:'ужин',price:'$$',veg:'кое-что',why:'Испанские тапас/паэлья, 300+ испанских вин — без аспенских цен. Arroz negro.'}
  ]},
  {city:'Пагоса-Спрингс',base:'dur',lat:37.2695,lng:-107.0098,q:'Pagosa Springs CO',spots:[
   {nm:'Meander Riverside Eatery',lat:37.26988,lng:-106.99766,meal:'ужин',price:'$$$',veg:'вег ok',why:'Жемчужина: farm-to-table, в списке NYT «50 лучших ресторанов США 2024». Только ужин, бронь.'},
-  {nm:'Riff Raff Brewing Company',meal:'бар/ужин',price:'$$',veg:'кое-что',why:'Культовая пивоварня — первая в Колорадо на геотермале, в доме 1896; бургер «Cabrito».'},
   {nm:'Kip\'s Grill & Cantina',lat:37.26878,lng:-107.00335,meal:'обед/ужин',price:'$–$$',veg:'кое-что',why:'Тако-институция региона: рыбные и креветочные тако Baja.'},
   {nm:'Two Chicks and a Hippie',lat:37.25649,lng:-107.07719,meal:'завтрак/кофе',price:'$',veg:'вег ok',why:'Колоритная местная пекарня-кафе: булочки с корицей, sticky buns.'},
   {nm:'Rosie\'s Pizzeria',lat:37.25563,lng:-107.07661,meal:'обед/ужин',price:'$$',veg:'вег ok',why:'Любимая местными пицца NY-style, всё с нуля.'}
@@ -342,12 +322,12 @@ const META={
 const BUDGET=[
  {g:'Перелёт',ic:'plane',c:'#5a4bb5',c2:'#3b3080',items:[
    {k:'a1',nm:'Билеты',sub:'туда-обратно',per:'person',v:625,ok:1},
-   {k:'a2',nm:'Багаж',sub:'2 стороны',per:'person',v:100,ok:1},
+   {k:'a2',nm:'Багаж',sub:'2 стороны',per:'person',v:100,ok:1}
  ]},
  {g:'Машина',ic:'car',c:'#a1663a',c2:'#6f4227',items:[
    {k:'c1',nm:'Аренда машины',per:'day',rate:90,sub:'SUV · цена за день'},
    {k:'c2',nm:'Возврат в другом городе',sub:'Дуранго → Денвер · на всех',v:130,est:1},
-   {k:'c3',nm:'Бензин',sub:'~1 150 км · на всех',v:120,est:1},
+   {k:'c3',nm:'Бензин',sub:'~1 150 км · на всех',v:120,est:1}
  ]},
  {g:'Входы и активности',ic:'ticket',c:'#d96a12',c2:'#b0530c',items:[
    {k:'t1',nm:'Поезд Durango & Silverton',sub:'открытый вагон',per:'person',v:156,est:1},
@@ -357,11 +337,11 @@ const BUDGET=[
    {k:'t5',nm:'Ouray Hot Springs',sub:'бассейн',per:'person',v:26,ok:1},
    {k:'t6',nm:'Box Canyon Falls',sub:'вход',per:'person',v:8,ok:1},
    {k:'t7',nm:'Гондола в Аспене',sub:'подъём',per:'person',v:40,ok:1},
-   {k:'t8',nm:'Джип-тур Yankee Boy',sub:'опция',per:'person',v:125,est:1},
+   {k:'t8',nm:'Джип-тур Yankee Boy',sub:'опция',per:'person',v:125,est:1}
  ]},
  {g:'Еда',ic:'food',c:'#12855e',c2:'#0a6047',items:[
-   {k:'f1',nm:'Еда и кафе',per:'personday',rate:45,sub:'на человека в день'},
- ]},
+   {k:'f1',nm:'Еда и кафе',per:'personday',rate:45,sub:'на человека в день'}
+ ]}
 ];
 
 /* ── ДОРОГИ ПО-НАСТОЯЩЕМУ ── считано road-times.js, руками не править ── */

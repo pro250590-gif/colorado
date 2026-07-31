@@ -2097,17 +2097,15 @@ const ORD=['','первый','второй','третий','четвёртый',
 
 /* ЕДА — умная подборка знаковых мест по городам (проверено 2026; закрытые исключены) */
 
-/* Точки-еду складываем в P. Координата — настоящая, если её нашёл
-   food-coords.js по OpenStreetMap; не нашлась — ставим по кружку вокруг центра
-   города, КАК И РАНЬШЕ, но помечаем approx: такая точка честно подписана
-   «примерная», а не притворяется адресом заведения. */
+/* Точки-еду складываем в P — ТОЛЬКО с настоящей координатой. Правило клиента:
+   «если мы не нашли, мы про место ничего не знаем — ни где оно, ни работает ли
+   оно вообще; приблизительную точку не пишем». Раньше движок раскидывал такие
+   по кружку вокруг центра города; кружка больше нет, а заведение без точки в
+   подборку не попадает вовсе (их вычищает food-coords.js --prune). */
 FOODCITIES.forEach((c,ci)=>{c.spots.forEach((s,si)=>{
-  const has=typeof s.lat==='number'&&typeof s.lng==='number';
-  const ang=si/c.spots.length*Math.PI*2,r=0.006;
+  if(typeof s.lat!=='number'||typeof s.lng!=='number')return;
   P.push({id:'f_'+ci+'_'+si,fid:'f'+ci+'-'+si,d:0,base:c.base,cat:'food',
-    lat:has?s.lat:+(c.lat+r*Math.cos(ang)*0.7).toFixed(5),
-    lng:has?s.lng:+(c.lng+r*Math.sin(ang)).toFixed(5),
-    approx:has?0:1,nm:s.nm,q:s.nm+' '+c.q,why:s.why,meal:s.meal});});});
+    lat:s.lat,lng:s.lng,nm:s.nm,q:s.nm+' '+c.q,why:s.why,meal:s.meal});});});
 
 /* линии маршрута: days = к каким дням относится */
 
@@ -3623,7 +3621,10 @@ function buildFood(){
     +'</div><button class="ftabmore" type="button"></button></div>'
     +'<div class="fnote">Мы изучили отзывы на Google и TripAdvisor, убрали закрытые и туристические ловушки — и собрали места, которые любят <b>местные и путешественники</b>.</div>'
     +FOODCITIES.map((c,ci)=>{
-      const order=c.spots.map((s,si)=>({s,si,l:foodLane(s)})).sort((a,b)=>a.l-b.l);
+      /* без подтверждённой точки заведение не показываем вовсе: мы про него
+         ничего не знаем — ни где оно, ни работает ли оно (правило клиента) */
+      const order=c.spots.map((s,si)=>({s,si,l:foodLane(s)}))
+        .filter(o=>typeof o.s.lat==='number').sort((a,b)=>a.l-b.l);
       const cards=order.map(({s,si},idx)=>{
         const id=foodId(ci,si),fon=foodPicked.has(id),ico=FOOD_ICONS[foodCat(s)]||FOOD_ICONS.plate;
         const mealLbl=(s.meal||'').split('/').map(x=>x.trim()).filter(Boolean).map(x=>x.charAt(0).toUpperCase()+x.slice(1)).join(' · ');
@@ -3635,11 +3636,7 @@ function buildFood(){
           +'<div class="fcbody"><div class="fcnm"><a href="'+gmSearch(s.nm+' '+c.q)+'" target="_blank" rel="noopener">'+s.nm+'</a></div>'
           +'<button class="orig" data-copy="'+esc0(s.nm+', '+c.q)+'" title="нажмите, чтобы скопировать">'+esc0(s.nm+', '+c.q)+'</button>'
           +'<div class="fcwhy">'+s.why+'</div>'
-          /* координата заведения ищется по OpenStreetMap; не нашлась — точка
-             стоит у центра города, и мы говорим об этом, а не делаем вид */
-          +'<div class="fcmeta"><span class="fchip pr">'+s.price+'</span>'
-          +(typeof s.lat==='number'?'':'<span class="fchip apx">'+ic('pin','i-sm')+' точка на карте примерная</span>')
-          +'</div></div></div>';
+          +'<div class="fcmeta"><span class="fchip pr">'+s.price+'</span></div></div></div>';
       }).join('');
       const more=order.length>MAXSHOW
         ? '<button class="fmoreBtn" data-fmore="'+ci+'">'+ic('food','i-sm')+' Все рестораны из нашей подборки — ещё '
