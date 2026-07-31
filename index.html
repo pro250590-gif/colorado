@@ -1494,7 +1494,6 @@ body.stale{padding-top:44px}
 .dbud .i{opacity:.75}
 .dbud.over{color:#a8630a;font-weight:700}
 .dsub .dbud{margin-top:0;margin-left:10px;display:inline-flex}
-.dbx{font-style:normal;margin-left:5px;opacity:.75;font-weight:700}
 /* «если успеете» — точка осталась в цепочке, но день считается без неё.
    Плашка яркая, а не бледная: её просьба — «поярче» */
 .mpill.later{background:linear-gradient(150deg,#f0a92a,#d9800f);color:#fff;border-color:transparent}
@@ -3758,8 +3757,7 @@ function dayBudgetHTML(tid){
   if(!b.n)return '';
   const over=b.total>DAY_LIMIT;
   return '<span class="dbud'+(over?' over':'')+'" data-bud="'+tid+'">'+ic('clock','i-sm')
-    +' ≈'+fmtHM(b.total)+' из '+fmtHM(DAY_LIMIT)
-    +(b.extra?'<i class="dbx">+'+b.extra+' если успеете</i>':'')+'</span>';
+    +' ≈'+fmtHM(b.total)+' из '+fmtHM(DAY_LIMIT)+'</span>';
 }
 /* карточка перерыва прямо в цепочке: во сколько, где и почему именно здесь */
 function mealInner(it){
@@ -3811,8 +3809,7 @@ function refreshBudgets(){
     if(!b.n){el.style.display='none';return;}
     el.style.display='';
     el.classList.toggle('over',b.total>DAY_LIMIT);
-    el.innerHTML=ic('clock','i-sm')+' ≈'+fmtHM(b.total)+' из '+fmtHM(DAY_LIMIT)
-      +(b.extra?'<i class="dbx">+'+b.extra+' если успеете</i>':'');
+    el.innerHTML=ic('clock','i-sm')+' ≈'+fmtHM(b.total)+' из '+fmtHM(DAY_LIMIT);
     el.title='на местах '+fmtHM(b.place)+' · в дороге '+fmtHM(b.move)
       +(b.rides?' · переезды по расписанию '+fmtHM(b.ride):'')
       +(b.meals?' · еда '+fmtHM(b.food):'')
