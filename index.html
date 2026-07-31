@@ -1495,11 +1495,9 @@ body.stale{padding-top:44px}
 .dbud.over{color:#a8630a;font-weight:700}
 .dsub .dbud{margin-top:0;margin-left:10px;display:inline-flex}
 .dbx{font-style:normal;margin-left:5px;opacity:.75;font-weight:700}
-/* «если успеете» — точка осталась в цепочке, но день считается без неё */
-li.later .cpnm::after,li.later .snm::after{content:'если успеете';margin-left:7px;
-  font:800 9px/1.4 "Plus Jakarta Sans",sans-serif;text-transform:uppercase;letter-spacing:.04em;
-  color:#a8630a;background:rgba(168,99,10,.12);padding:2px 6px;border-radius:999px;white-space:nowrap}
-li.later .cpl-main,li.later .sinfo{opacity:.62}
+/* «если успеете» — точка осталась в цепочке, но день считается без неё.
+   Плашка яркая, а не бледная: её просьба — «поярче» */
+.mpill.later{background:linear-gradient(150deg,#f0a92a,#d9800f);color:#fff;border-color:transparent}
 .dcount .dbud{margin-left:6px}
 .cdm b{color:#5b3fc4}
 .cdtx>b{display:block;font:700 15px/1.25 "Inter",sans-serif;letter-spacing:-.01em;margin-top:6px}
@@ -3270,6 +3268,10 @@ function metaStrip(p){
   /* своё место без координат на карту попасть не может — говорим об этом прямо */
   if(p.custom&&typeof p.lat!=='number')out+='<span class="mpill nopt">'+ic('pin','i-sm')+' нет точки на карте</span>';
   else if(p.custom&&p.approx)out+='<span class="mpill apx">'+ic('pin','i-sm')+' точка примерная</span>';
+  /* «если успеете» — такая же плашка, как «обязательно» и «20 мин», и стоит в
+     том же ряду: её просьба. Показывается по расчёту дня, поэтому рисуется
+     всегда, а видимостью управляет пересчёт (refreshBudgets) */
+  out+='<span class="mpill later" data-later="'+p.id+'" style="display:none">'+ic('clock','i-sm')+' если успеете</span>';
   if(pr==='must')out+='<span class="mpill must">'+ic('star','i-sm')+' обязательно</span>';
   if(pr==='spare')out+='<span class="mpill spare">'+ic('clock','i-sm')+' если время</span>';
   if(wh==='fixed')out+='<span class="mpill fixed">'+ic('ticket','i-sm')+' по расписанию</span>';
@@ -3781,11 +3783,9 @@ function refreshBudgets(){
   refreshMeals();
   /* «если успеете»: точка остаётся на своём месте в цепочке, но в счёт дня не
      идёт — так человек видит и её, и то, что день без неё сходится */
-  document.querySelectorAll('li[data-pl],li[data-id]').forEach(li=>{
-    const id=li.dataset.pl||li.dataset.id;
-    if(!id)return;
-    const p=P.find(x=>x.id===id);
-    li.classList.toggle('later',!!(p&&isSqueezed(p)));
+  document.querySelectorAll('[data-later]').forEach(el=>{
+    const p=P.find(x=>x.id===el.dataset.later);
+    el.style.display=(p&&isSqueezed(p))?'':'none';
   });
   document.querySelectorAll('[data-bud]').forEach(el=>{
     const tid=tidOf(el.dataset.bud),b=dayMinutes(tid);
