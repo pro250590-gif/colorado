@@ -38,7 +38,7 @@ function load(file) {
   const src = fs.readFileSync(file, 'utf8');
   const S = {};
   const names = ['BASES','DAYS','DAY_BASE','P','FOODCITIES','LINES','TRIP_NAME','START','PHOTO',
-    'BPHOTO','IMGPREF','ALT','ORIGIN','AIRPORT','AIRPORTNM','AIRPORTWAY','SEGMENT','TRANSFER','BUDGET','HERO','META'];
+    'BPHOTO','IMGPREF','ALT','ORIGIN','AIRPORT','AIRPORTNM','AIRPORTWAY','SEGMENT','TRANSFER','BUDGET','HERO','META','ROADS'];
   const grab = names.map(n => `S.${n}=typeof ${n}!=='undefined'?${n}:undefined;`).join('');
   new Function('S', 'with(S){' + src + ';' + grab + '}')(S);
   return S;
@@ -196,12 +196,52 @@ function checkRoute(file) {
       else if (sights.length < 6) warn('день ' + d.n + ' («' + (d.title || '') + '»): ' + sights.length
         + ' мест — можно добавить, в дне нормально 9–10');
     });
+    /* Время на месте — не украшение, а единица счёта дня: из него складывается
+       «9 ч 40 мин из 10», по нему встаёт обед и по нему же вытесняется лишнее.
+       Словами («полдня», «1–2 ч») это не считается, поэтому METAmin обязателен
+       числом. Диапазон из путеводителя берём ближе к нижней границе. */
+    const MET = S.META || {};
     P.filter(p => p.cat !== 'food').forEach(p => {
       if (!p.why) bad('место «' + (p.nm || p.id) + '»: нет why — на карточке будет пусто');
       if (!p.q) warn('место «' + (p.nm || p.id) + '»: нет q — ссылка на карты будет искать по названию наугад');
       if (typeof p.lat !== 'number' || typeof p.lng !== 'number')
         bad('место «' + (p.nm || p.id) + '»: нет координат');
+      const m = (MET[p.id] || {}).min;
+      if (typeof m !== 'number' || !(m > 0))
+        bad('место «' + (p.nm || p.id) + '»: нет META.' + p.id + '.min — сколько минут человек тут проводит.'
+          + ' Без числа день не посчитать');
+      else if (m < 5)
+        warn('место «' + (p.nm || p.id) + '»: min ' + m + ' мин — если туда правда заходят на пять минут,'
+          + ' это скорее вид по дороге, чем точка дня');
+      else if (m > 480)
+        warn('место «' + (p.nm || p.id) + '»: min ' + m + ' мин (' + (m / 60).toFixed(1)
+          + ' ч) — такая точка занимает весь день целиком, проверьте, что так и задумано');
+      /* время, записанное дважды — числом и словами, — со временем разъедется:
+         поправят текст, забудут число, и счётчик дня начнёт врать. Текст dur
+         оставляем только там, где он говорит БОЛЬШЕ числа: «15 мин внутри». */
+      const d = (MET[p.id] || {}).dur;
+      if (d && /^(~?\d+([–-]\d+)?\s*(мин|ч)|\d+,\d+\s*ч|весь день|полдня)$/.test(d.trim()))
+        warn('место «' + (p.nm || p.id) + '»: время записано дважды — min ' + m + ' и dur «' + d
+          + '». Оставьте число, текст нужен только когда он говорит больше: «15 мин внутри», «1 ч в пути»');
     });
+  }
+
+  /* ── 7б. ДОРОГИ ПОСЧИТАНЫ ПО ДОРОГЕ? ──
+     Прямая с надбавкой давала 59,7 км там, где в шапке дня стоит 85: «дорогу
+     надо считать по дороге». Настоящие километры и минуты кладёт road-times.js
+     в блок ROADS. Без него страница покажет оценку — она честно подписана «≈»,
+     но это всё-таки оценка. */
+  if (P && DAYS) {
+    const RD = S.ROADS;
+    const withPts = [...new Set(P.filter(p => p.cat !== 'food' && typeof p.lat === 'number').map(p => p.d))];
+    if (!RD || typeof RD !== 'object') {
+      warn('дороги не посчитаны — все расстояния будут оценкой по прямой. Прогоните node road-times.js '
+        + path.basename(file));
+    } else {
+      const miss = withPts.filter(d => !RD[d] || !RD[d].ids || !RD[d].ids.length);
+      if (miss.length) warn('дороги посчитаны не на все дни (нет для ' + miss.join(', ')
+        + ') — там останется оценка. Прогоните node road-times.js ' + path.basename(file));
+    }
   }
 
   /* ── 8. КООРДИНАТЫ ПРОВЕРЕНЫ? ──

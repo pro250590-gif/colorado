@@ -1515,6 +1515,15 @@ header.hero h1 em{background:none!important;-webkit-background-clip:border-box!i
 .hopin{display:flex;align-items:center;gap:7px;font:600 11.5px/1.3 "Inter",sans-serif;
   color:#8e93a8;padding:7px 0 7px 3px}
 .hopin::before{content:'';flex:none;width:0;height:15px;border-left:2px dotted #cdd2e2;margin-left:6px}
+/* первая строка дня — «откуда выходим»: та же подпись, но сплошной линией и
+   темнее, чтобы начало цепочки читалось с одного взгляда */
+.chop.cstart .hopin{color:#6a5aa8}
+.chop.cstart .hopin::before{border-left:2px solid #cdc2ee}
+/* номер точки внутри дня — такой же, как на булавке карты: 1, 2, 3 подряд */
+.pseq{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 4px;
+  margin-right:7px;border-radius:999px;background:#efeaff;color:#5b3fc4;flex:none;vertical-align:2px;
+  font:800 11px/1 "Plus Jakarta Sans",sans-serif}
+.cplaces li.off .pseq{background:#f0f1f6;color:#9aa0b5}
 .cplaces li.chop+li{border-top:0}
 .cpl-row{display:flex;align-items:flex-start;gap:12px}
 .cpl-main{flex:1;min-width:0;transition:opacity .2s}
@@ -2541,7 +2550,10 @@ function kindPinHTML(p){const s=(''+p.id).replace(/\W/g,''),dn=dispOf(p.d)||'';
     +(dn?'<span class="kpd">'+dn+'</span>':'')+'</div>';}
 /* иконка точки маршрута: обычная (фото/точка) ИЛИ заметный кружок с днём, когда рестораны в приоритете */
 function markerIcon(p){
-  const dn=dispOf(p.d)||'';        /* на булавке — номер дня как в ленте, а не id шаблона */
+  /* на булавке — номер дня как в ленте (а не id шаблона) и через точку номер
+     точки внутри дня: «5.1», «5.2». Так на карте видно, где день начинается,
+     куда идёт дальше и где заканчивается — раньше все булавки дня были «5» */
+  const dn=seqLabel(p)||String(dispOf(p.d)||'');
   if(p.cat==='food')return L.divIcon({className:'',iconSize:[34,44],iconAnchor:[17,42],popupAnchor:[0,-40],html:foodPinHTML(p.id)});
   if(p.custom&&kindOf(p).k!=='other')
     return L.divIcon({className:'',iconSize:[34,44],iconAnchor:[17,42],popupAnchor:[0,-40],html:kindPinHTML(p)});
@@ -2867,16 +2879,16 @@ function buildCities(){
     /* без ночёвки дней у города нет — «Дни 1–1» было бы враньём */
     const route='<div class="cnode"><span class="cdot"'+(days.length?'':' style="background:#c9ccdb"')+'>'+ic('cal','i-sm')+'</span>'
       +'<div class="clbl"><b>Маршрут</b><span>'+(days.length?('Дни '+firstDay+'–'+lastDay):'дней нет — в городе не ночуем')+'</span></div>'
-      +days.map(e=>{const d=e.tpl,n=dayPts(e.tid),list=P.filter(p=>p.d===e.tid&&p.cat!=='food'),ph=dayPhoto(e.tid);
+      +days.map(e=>{const d=e.tpl,n=dayPts(e.tid),list=P.filter(p=>p.d===e.tid&&p.cat!=='food'),ph=dayPhoto(e.tid),st=dayStart(e.tid);
         return '<details class="cday" data-day="'+e.tid+'"><summary class="cdaysum"><span class="cdph'+(ph?'':' free')+'"'+(ph?' style="background-image:url('+ph+')"':'')+'>'+(ph?'':ic('sun','i-sm'))+'</span>'
         +'<span class="cdtx"><span class="cdm"><b>День '+e.disp+'</b> · '+dm(e.date)+' · '+n+' '+plural(n,'активность','активности','активностей')+'</span><b>'+dayTitle(e)+'</b></span>'
         +'<span class="cgo">'+ic('chevron','i-sm')+'</span></summary>'
         +'<div class="cdaybody">'
         +(d&&d.leg?'<div class="cleg"><b>'+d.pill+'</b> '+convDist(d.leg)+'</div>':'')
         +'<ul class="cplaces">'+list.map((p,pi)=>{const emo=p.star?'<span class="cstar">'+ic('star','i-sm')+'</span>':'';const on=picked.has(p.id);
-          return hopHTML(pi?list[pi-1]:null,p)
+          return hopHTML(pi?list[pi-1]:null,p,pi?null:st)
             +'<li class="'+(on?'':'off')+'" data-pl="'+p.id+'"><div class="cpl-row"><div class="cpl-main">'
-            +'<span class="cpnm">'+emo+'<a href="'+gurl(p.q)+'" target="_blank" rel="noopener">'+p.nm+'</a></span>'+origHTML(p)+'</div>'
+            +'<span class="cpnm"><span class="pseq" data-seq="'+p.id+'"></span>'+emo+'<a href="'+gurl(p.q)+'" target="_blank" rel="noopener">'+p.nm+'</a></span>'+origHTML(p)+'</div>'
             +'<span class="cpact">'
             +'<span class="cpsw'+(on?' on':'')+'" data-pl="'+p.id+'" role="switch" aria-checked="'+on+'" aria-label="показывать на карте" tabindex="0"><i></i></span>'
             +'<button class="cpmv" data-mvopen="'+p.id+'" aria-label="перенести или убрать" title="перенести или убрать">⋯</button>'
@@ -3104,6 +3116,16 @@ function savePicks(){try{localStorage.setItem(KEY,JSON.stringify([...picked]));}
 
 /* Мета-строка по каждому месту: цена · время · лучшее время · по пути/крюк */
 
+/* минуты → человеческая подпись: 45 → «45 мин», 90 → «1,5 ч», 150 → «2,5 ч» */
+function minTxt(n){
+  if(typeof n!=='number'||!(n>0))return '';
+  if(n<60)return n+' мин';
+  const h=Math.floor(n/60),r=n%60;
+  if(!r)return h+' ч';
+  if(r===30)return h+',5 ч';
+  return h+' ч '+r+' мин';
+}
+
 function metaStrip(p){
   const m=META[p.id]||p.meta;if(!m)return '';
   const pr=prioOf(p),wh=whenOf(p);
@@ -3118,7 +3140,10 @@ function metaStrip(p){
   if(pr==='spare')out+='<span class="mpill spare">'+ic('clock','i-sm')+' если время</span>';
   if(wh==='fixed')out+='<span class="mpill fixed">'+ic('ticket','i-sm')+' по расписанию</span>';
   if(m.price)out+='<span class="mpill '+(m.price==='бесплатно'?'free':'')+'">'+ic('money','i-sm')+' '+m.price+'</span>';
-  if(m.dur)out+='<span class="mpill">'+ic('clock','i-sm')+' '+m.dur+'</span>';
+  /* время на месте живёт числом (m.min) — им считается день. Словами пишем
+     только там, где число само по себе врёт: «1 ч в пути», «15 мин внутри». */
+  const dtx=m.dur||minTxt(m.min);
+  if(dtx)out+='<span class="mpill">'+ic('clock','i-sm')+' '+dtx+'</span>';
   if(m.best)out+='<span class="mpill best">'+ic('sun','i-sm')+' '+m.best+'</span>';
   if(m.route)out+='<span class="mpill route">'+ic('route','i-sm')+' '+m.route+'</span>';
   return out+'</span>';
@@ -3146,24 +3171,99 @@ function hopWord(bid){
   if(m==='metro_walk')return 'на метро';
   return 'на транспорте';
 }
+/* ── ДОРОГА ПО ДОРОГЕ, А НЕ ПО ПРЯМОЙ ─────────────────────────────────────
+   Замечание клиента: «дорогу надо считать по дороге, почему мы так не делаем
+   изначально». Считаем — но не здесь: точки маршрута не двигаются, поэтому
+   километры и минуты по настоящим дорогам посчитаны заранее (road-times.js,
+   OpenStreetMap) и лежат числами в файле маршрута. Тут только чтение.
+   Чего в данных нет — считаем по прямой и подписываем «≈», чтобы оценку
+   никто не принял за дорогу. */
+let ROADMAP=null;
+function roadMap(){
+  if(ROADMAP)return ROADMAP;
+  ROADMAP=new Map();
+  try{
+    if(typeof ROADS==='object'&&ROADS)Object.keys(ROADS).forEach(k=>{
+      const d=ROADS[k];if(!d||!d.ids)return;
+      d.ids.forEach((a,i)=>d.ids.forEach((b,j)=>{
+        if(i===j||d.km[i][j]==null)return;
+        ROADMAP.set(a+'>'+b,[d.km[i][j],d.min[i][j]]);
+      }));
+    });
+  }catch(e){}
+  return ROADMAP;
+}
+function durTxt(n){return n>=60?minTxt(n):n+' мин';}
+function walkTxt(n){return n+' '+plural(n,'минута','минуты','минут')+' пешком';}
+/* готовое число из данных: настоящая дорога */
+function roadBody(a,b){
+  const r=(a&&b&&a.id&&b.id)?roadMap().get(a.id+'>'+b.id):null;
+  if(!r)return '';
+  const d=r[0],m=r[1],mv=moveOf(b.base),car=(mv==='car_all'||mv==='car_trips');
+  if(d<0.09)return 'рядом, в двух шагах';
+  if(!car&&d<=1.7)return walkTxt(m);
+  /* в автомобильном городе двести метров всё равно проходят ногами: «1 минута
+     на машине» — это не совет. Время тут наше, поэтому со значком «≈» */
+  if(car&&d<0.5)return '≈'+walkTxt(Math.max(1,Math.round(d/4.6*60)));
+  /* пеший город, а идти далеко: расстояние настоящее, но поедут на метро — а
+     расписаний метро у нас нет, поэтому время помечаем как прикидку */
+  if(mv==='metro_walk')return fmtKm(d)+' · ≈'+durTxt(Math.max(5,Math.round(d/20*60/5)*5))+' на метро';
+  return fmtKm(d)+' · '+durTxt(m)+' '+hopWord(b.base);
+}
+/* запасной ход: дороги в данных нет — считаем по прямой и честно ставим «≈» */
+function guessBody(a,b){
+  const d=kmBetween(a.lat,a.lng,b.lat,b.lng)*1.25;   /* по улицам всегда длиннее прямой */
+  const mv=moveOf(b.base);
+  const car=(mv==='car_all'||mv==='car_trips');
+  if(d<0.09)return 'рядом, в двух шагах';
+  /* где ездят на машине, «двадцать минут пешком» — это не совет, а насмешка:
+     пешком пишем только совсем близкое */
+  if(d<(car?0.5:1.7))return '≈'+walkTxt(Math.max(1,Math.round(d/4.6*60)));
+  /* за сорок километров начинается трасса, а не городская улица */
+  const speed=car?(d>40?75:50):(mv==='metro_walk'?20:25);
+  const n=Math.max(5,Math.round(d/speed*60/5)*5);
+  return '≈'+fmtKm(d)+' · '+durTxt(n)+' '+hopWord(b.base);
+}
 function hopText(a,b){
   if(b&&b.hop)return b.hop;                      /* написано руками — оно и главнее */
   if(!a||!b||typeof a.lat!=='number'||typeof b.lat!=='number')return '';
-  const d=kmBetween(a.lat,a.lng,b.lat,b.lng)*1.25;   /* по улицам всегда длиннее прямой */
-  if(d<0.09)return 'рядом, в двух шагах';
-  const mv=moveOf(b.base);
-  const car=(mv==='car_all'||mv==='car_trips');
-  /* где ездят на машине, «двадцать минут пешком» — это не совет, а насмешка:
-     пешком пишем только совсем близкое */
-  if(d<(car?0.5:1.7)){const n=Math.max(1,Math.round(d/4.6*60));
-    return n+' '+plural(n,'минута','минуты','минут')+' пешком';}
-  const speed=car?50:(mv==='metro_walk'?20:25);
-  const n=Math.max(5,Math.round(d/speed*60/5)*5);
-  return fmtKm(d)+' · '+n+' мин '+hopWord(b.base);
+  return roadBody(a,b)||guessBody(a,b);
 }
-function hopHTML(a,b){
-  const t=hopText(a,b);
-  return t?'<li class="chop"><span class="hopin">'+t+'</span></li>':'';
+/* ── ОТКУДА НАЧИНАЕТСЯ ДЕНЬ ───────────────────────────────────────────────
+   Просьба клиента: «до первой точки надо считать из дома, если адрес вбит;
+   если адреса нет — из центра города». Между точками мы расстояние пишем, а до
+   первой не писали вовсе — и было непонятно, во сколько вообще выходить.
+   В день ПРИЕЗДА в город строки нет: человек тогда начинает не от жилья, и об
+   этом уже сказано строкой переезда над списком. */
+function dayStart(tid){
+  const i=SCHED.findIndex(x=>x.tid===tid);
+  if(i<0)return null;
+  const e=SCHED[i];
+  if(i===0||SCHED[i-1].base!==e.base)return null;
+  const st=P.find(x=>isStay(x)&&x.base===e.base&&typeof x.lat==='number'&&!x.approx);
+  /* у жилья своего адреса в дорогах нет — до него считаем прикидкой; у центра
+     города дорога посчитана заранее, поэтому у него есть id вида «@mil» */
+  if(st)return {lat:st.lat,lng:st.lng,base:e.base,lead:'от жилья'};
+  const b=baseById(e.base);
+  if(b&&typeof b.lat==='number')return {id:'@'+b.id,lat:b.lat,lng:b.lng,base:e.base,lead:'из центра города'};
+  return null;
+}
+function startText(st,b){
+  if(!st||!b||typeof b.lat!=='number')return '';
+  if(b.hop)return '';           /* особый транспорт написан руками — он не от дома */
+  const road=roadBody(st,b);
+  if(road)return st.lead+' · '+road;
+  /* город без машины, а точка за двадцать пять километров — это уже выезд
+     поездом или катером, и врать «час на метро» мы не будем */
+  if(moveOf(st.base)==='metro_walk'&&kmBetween(st.lat,st.lng,b.lat,b.lng)>25)return '';
+  return st.lead+' · '+guessBody(st,b);
+}
+/* строку-промежуток рисуем всегда, даже пустой: когда человек выключит первую
+   точку, подпись нужна следующей — пересчёт ищет готовую строку, а не создаёт */
+function hopHTML(a,b,st){
+  const t=st?startText(st,b):hopText(a,b);
+  return '<li class="chop'+(st?' cstart':'')+'"'+(t?'':' style="display:none"')+'>'
+    +'<span class="hopin">'+t+'</span></li>';
 }
 /* после включения-выключения места подписи пересчитываем: путь идёт по тем
    точкам, что остались на виду, иначе «7 минут» вели бы к выключенной */
@@ -3172,7 +3272,9 @@ function refreshHops(){
 }
 function refreshHops_(){
   document.querySelectorAll('ul.cplaces,ul.stops').forEach(ul=>{
-    let prev=null;
+    const host=ul.closest('[data-day]');
+    const st=host?dayStart(tidOf(host.dataset.day)):null;
+    let prev=null,first=true;
     [...ul.children].forEach(li=>{
       if(li.classList.contains('chop'))return;
       const id=li.dataset.pl||li.dataset.id;if(!id)return;
@@ -3180,10 +3282,32 @@ function refreshHops_(){
       const gap=li.previousElementSibling&&li.previousElementSibling.classList.contains('chop')
         ? li.previousElementSibling.querySelector('.hopin') : null;
       const on=picked.has(id)&&!li.classList.contains('hiddenrow');
-      if(gap){const t=on?hopText(prev,p):'';gap.textContent=t;gap.parentElement.style.display=t?'':'none';}
-      if(on)prev=p;
+      if(gap){const t=on?(first?startText(st,p):hopText(prev,p)):'';
+        gap.textContent=t;gap.parentElement.style.display=t?'':'none';
+        gap.parentElement.classList.toggle('cstart',!!t&&first);}
+      if(on){prev=p;first=false;}
     });
   });
+  refreshSeq();
+}
+/* ── НОМЕР ТОЧКИ В ДНЕ ────────────────────────────────────────────────────
+   Просьба клиента: «чтобы мы понимали, где начинаем и где заканчиваем» — точки
+   дня пронумерованы подряд, и тот же номер стоит на булавке: 5.1, 5.2, 5.3.
+   Считаем только включённые: выключенная выпала из цепочки, и номера должны
+   идти без дыр — иначе на карте «5.2» и «5.4» без «5.3» между ними. */
+function seqOf(p){
+  if(!p||p.cat==='food'||!picked.has(p.id))return 0;
+  return P.filter(x=>x.d===p.d&&x.cat!=='food'&&picked.has(x.id)).indexOf(p)+1;
+}
+function seqLabel(p){const n=seqOf(p),dn=dispOf(p.d);return n?(dn?dn+'.'+n:String(n)):'';}
+function refreshSeq(){
+  document.querySelectorAll('[data-seq]').forEach(el=>{
+    const p=P.find(x=>x.id===el.dataset.seq);
+    const n=p?seqOf(p):0;
+    el.textContent=n?n:'';
+    el.style.display=n?'':'none';
+  });
+  if(map)P.forEach(p=>{const mk=markers[p.id];if(mk&&mk._seq!==seqLabel(p)){mk._seq=seqLabel(p);mk.setIcon(markerIcon(p));}});
 }
 function buildDays(){
   const host=document.getElementById('days');let out='';
@@ -3198,13 +3322,13 @@ function buildDays(){
       +'<div class="leg"><span class="pill">'+d.pill+'</span> <b>'+convDist(d.leg)+'</b><a class="dirlink" href="#" data-dir="'+e.tid+'" target="_blank" rel="noopener">Маршрут в Google Maps →</a></div>'
       +'<div class="daytools"><button class="tiny" data-dayon="'+e.tid+'">Отметить день</button><button class="tiny" data-dayoff="'+e.tid+'">Снять день</button></div>'
       +'<ul class="stops">'+list.map((p,pi)=>{const emo=p.star?'<span class="cemo star">'+ic('star','i-sm')+'</span>':'';
-        return hopHTML(pi?list[pi-1]:null,p)
+        return hopHTML(pi?list[pi-1]:null,p,pi?null:dayStart(e.tid))
         +'<li data-id="'+p.id+'" data-cat="'+p.cat+'" data-day="'+p.d+'" data-base="'+p.base+'">'
         +'<span class="pic">'
         +(PHOTO[p.id]?'<span class="thumb" style="background-image:url('+pimg(p.id,'t')+')"></span>'
                      :'<span class="thumb noimg">'+ic(CATS[p.cat]?CATS[p.cat].e:'pin','i-lg')+'</span>')
         +'<input type="checkbox" class="tick" data-tick="'+p.id+'" aria-label="показать на карте"></span>'
-        +'<span class="sinfo"><span class="snm">'+emo+'<a href="'+gurl(p.q)+'" target="_blank" rel="noopener">'+p.nm+'</a>'+(p.tag?'<span class="tag '+p.tag[1]+'">'+p.tag[0]+'</span>':'')+'</span>'+origHTML(p)
+        +'<span class="sinfo"><span class="snm"><span class="pseq" data-seq="'+p.id+'"></span>'+emo+'<a href="'+gurl(p.q)+'" target="_blank" rel="noopener">'+p.nm+'</a>'+(p.tag?'<span class="tag '+p.tag[1]+'">'+p.tag[0]+'</span>':'')+'</span>'+origHTML(p)
         +metaStrip(p)
         +'<span class="why">'+convDist(p.why)+'</span></span></li>';}).join('')+'</ul>'
       +(d.note?'<div class="dnote">'+convDist(d.note)+'</div>':'')+'</div></details>';
@@ -3887,7 +4011,8 @@ function saveStay(bid,id,val,rate,tot){
     else{
       const nid='h'+Date.now().toString(36)+Math.floor(Math.random()*1e3).toString(36);
       p={id:nid,d:homeTid(bid),base:bid,cat:'town',kind:'stay',nm:nm,q:q||nm,why:'',lat:lat,lng:lng,
-         approx:approx?1:0,rate:rate||0,tot:tot||0,custom:1,meta:{}};
+         /* жильё — это ночёвка, а не точка дня: времени дня оно не занимает */
+         approx:approx?1:0,rate:rate||0,tot:tot||0,custom:1,meta:{min:0}};
       CUSTOM.push(p);P.push(p);picked.add(nid);savePicks();
     }
     if(rate&&i>=0)saveHotelRate(i,rate);          /* цена — в строку жилья этого города */
@@ -3923,7 +4048,9 @@ function addPlace(tid,d){
   const e=dayOf(tid);if(!e||!d||!d.nm)return;
   const id='u'+(Date.now().toString(36))+Math.floor(Math.random()*1e3).toString(36);
   const c={id:id,d:tid,base:e.base,cat:d.cat||'town',kind:d.kind||'other',nm:d.nm,q:d.q||d.nm,why:d.why||'',
-    lat:d.lat,lng:d.lng,approx:(typeof d.lat==='number'&&d.approx)?1:0,custom:1,meta:{}};
+    /* час — время своего места по умолчанию: день считается минутами, и точка
+       без времени тихо весила бы ноль. Человек поправит, когда захочет */
+    lat:d.lat,lng:d.lng,approx:(typeof d.lat==='number'&&d.approx)?1:0,custom:1,meta:{min:60}};
   CUSTOM.push(c);P.push(c);
   if(typeof d.lat==='number'&&typeof d.lng==='number'){picked.add(id);savePicks();if(map&&!markers[id])makeMarker(c);}
   savePlan();rerenderTrip();

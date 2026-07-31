@@ -24,6 +24,8 @@
 !check-route.js
 !day-order.js
 !verify-coords.js
+# считает километры и минуты ПО ДОРОГАМ (OpenStreetMap) и кладёт их в маршрут
+!road-times.js
 !fetch-photos2.js
 !trip-TEMPLATE.js
 !img/

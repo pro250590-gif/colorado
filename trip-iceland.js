@@ -129,12 +129,23 @@ const SEGMENT={rey:'flight',vik:'car',hof:'car'};
 const TRANSFER={vik:{km:190,clean:'2 ч 30',stops:'весь день'},hof:{km:270,clean:'3 ч 30',stops:'весь день'}};
 
 const META={
- blu:{price:'от €70',dur:'2–3 ч',best:'по дороге из аэропорта',route:'20 мин от KEF'},
- gey:{price:'бесплатно',dur:'40 мин',best:'между извержениями',route:'Золотое кольцо'},
- gul:{price:'бесплатно',dur:'1 ч',best:'солнце после полудня',route:'10 мин от Гейсира'},
- sel:{price:'парковка 900 ISK',dur:'40 мин',best:'вторая половина дня',route:'у кольцевой дороги'},
- jok:{price:'бесплатно, лодка от €50',dur:'2 ч',best:'рассвет',route:'у кольцевой дороги'},
- rey2:{price:'бесплатно',dur:'1 ч',best:'отлив',route:'10 мин от Вика'}
+ blu:{min:150,price:'от €70',best:'по дороге из аэропорта',route:'20 мин от KEF'},
+ gey:{min:40,price:'бесплатно',best:'между извержениями',route:'Золотое кольцо'},
+ gul:{min:45,price:'бесплатно',best:'солнце после полудня',route:'10 мин от Гейсира'},
+ sel:{min:40,price:'парковка 900 ISK',best:'вторая половина дня',route:'у кольцевой дороги'},
+ jok:{min:120,price:'бесплатно, лодка от €50',best:'рассвет',route:'у кольцевой дороги'},
+ rey2:{min:60,price:'бесплатно',best:'отлив',route:'10 мин от Вика'},
+ kef:{min:40},
+ hal:{min:40},
+ sun:{min:15},
+ thi:{min:90},
+ sko:{min:40},
+ sol:{min:150},
+ dyr:{min:45},
+ fja:{min:60},
+ dia:{min:40},
+ skf:{min:120},
+ vst:{min:60},
 };
 
 const BUDGET=[
@@ -157,3 +168,14 @@ const BUDGET=[
    {k:'f1',nm:'Еда и кафе',per:'personday',rate:75,sub:'на человека в день'}
  ]}
 ];
+
+/* ── ДОРОГИ ПО-НАСТОЯЩЕМУ ── считано road-times.js, руками не править ── */
+const ROADS={
+ 1:{ids:["@rey","kef","blu","hal","sun"],km:[[null,47.3,49.8,1.6,1.6],[47.7,null,20.1,46.3,47.5],[50,20.4,null,48.6,49.8],[1.3,45.9,48.4,null,0.9],[1.3,48.1,50.6,1.4,null]],min:[[null,47,51,5,4],[47,null,21,46,46],[50,21,null,49,49],[4,46,49,null,3],[3,47,51,4,null]]},
+ 2:{ids:["@rey","thi","gey","gul"],km:[[null,47.7,115.3,123.2],[47.5,null,60.5,70.5],[115.2,60.5,null,10.1],[123.1,70.5,10.1,null]],min:[[null,49,104,112],[49,null,59,68],[104,59,null,9],[112,68,9,null]]},
+ 3:{ids:["@vik","sel","sko","sol"],km:[[null,61.8,34.2,25.8],[61.8,null,30.5,42],[34.2,30.5,null,14.4],[25.8,42,14.4,null]],min:[[null,55,31,38],[55,null,30,53],[31,30,null,29],[38,53,29,null]]},
+ 4:{ids:["@vik","rey2","dyr","fja"],km:[[null,null,null,null],[null,null,null,null],[null,null,null,null],[null,null,null,null]],min:[[null,null,null,null],[null,null,null,null],[null,null,null,null],[null,null,null,null]]},
+ 5:{ids:["@hof","jok","dia","skf"],km:[[null,null,79.8,136.8],[null,null,null,null],[79.9,null,null,57.5],[136.8,null,57.5,null]],min:[[null,null,69,118],[null,null,null,null],[69,null,null,52],[119,null,52,null]]},
+ 6:{ids:["@hof","vst"],km:[[null,281.7],[281.7,null]],min:[[null,245],[245,null]]},
+};
+/* ── конец дорог ── */

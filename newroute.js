@@ -8,13 +8,15 @@
    Запуск:
      node newroute.js trip-milan.js            — всё, что можно проверить без сети
      node newroute.js trip-milan.js --coords   — плюс сверка координат по справочникам
+     node newroute.js trip-milan.js --roads    — плюс расчёт дорог по OpenStreetMap
      node newroute.js                          — по всем маршрутам сразу
 
    Что прогоняется:
      1) check-route.js  — форма данных, аэропорты, переезды, еда, фотографии,
                           наполнение дней, расхождение с базой проверенных мест;
      2) day-order.js    — день это маршрут, а не список: считаем длину прохода;
-     3) verify-coords.js (по флагу --coords) — четыре источника на каждую точку.
+     3) verify-coords.js (по флагу --coords) — четыре источника на каждую точку;
+     4) road-times.js   (по флагу --roads)  — километры и минуты ПО ДОРОГЕ.
 
    Правила целиком — в ROUTE-RULES.md.
    ========================================================================== */
@@ -23,6 +25,7 @@ const fs = require('fs'), path = require('path');
 
 const args = process.argv.slice(2);
 const withCoords = args.indexOf('--coords') >= 0;
+const withRoads = args.indexOf('--roads') >= 0;
 const file = args.filter(a => a.charAt(0) !== '-')[0];
 const files = file ? [file] : fs.readdirSync(__dirname).filter(f => /^trip-[a-z0-9-]+\.js$/.test(f));
 
@@ -39,6 +42,14 @@ function run(script, arg) {
 let hard = 0, soft = 0;
 files.forEach(f => {
   console.log('\n████ ' + f);
+
+  /* дороги считаем ПЕРВЫМИ: check-route ниже смотрит, посчитаны ли они, и
+     ругаться на только что исправленное было бы глупо */
+  if (withRoads) {
+    const r = run('road-times.js', f);
+    console.log(r.out.split('\n').filter(l => /записано|не посчитался|занижала|хуже всего/.test(l)).join('\n'));
+  }
+
   const c = run('check-route.js', f);
   const errs = (c.out.match(/^\s*ОШИБКА/gm) || []).length;
   const warns = (c.out.match(/^\s*внимание/gm) || []).length;

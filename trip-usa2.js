@@ -133,12 +133,23 @@ const SEGMENT={nyc:'flight',lax:'flight'};
 const TRANSFER={};
 
 const META={
- met:{price:'$30',dur:'3 ч',best:'к открытию',route:'метро 4/5/6 до 86 St'},
- sum:{price:'$49',dur:'1,5 ч',best:'за час до заката',route:'над Grand Central'},
- bro:{price:'бесплатно',dur:'1 ч',best:'до 9 утра',route:'метро A/C до High St'},
- gri:{price:'вход бесплатно, парковка $10',dur:'2 ч',best:'закат',route:'на машине, 30–45 мин'},
- mal:{price:'$12 парковка',dur:'2 ч',best:'отлив',route:'шоссе PCH, 1 ч'},
- sam:{price:'бесплатно',dur:'2–3 ч',best:'утро',route:'20–30 мин от LAX'}
+ met:{min:180,price:'$30',best:'к открытию',route:'метро 4/5/6 до 86 St'},
+ sum:{min:90,price:'$49',best:'за час до заката',route:'над Grand Central'},
+ bro:{min:60,price:'бесплатно',best:'до 9 утра',route:'метро A/C до High St'},
+ gri:{min:120,price:'вход бесплатно, парковка $10',best:'закат',route:'на машине, 30–45 мин'},
+ mal:{min:120,price:'$12 парковка',best:'отлив',route:'шоссе PCH, 1 ч'},
+ sam:{min:120,price:'бесплатно',best:'утро',route:'20–30 мин от LAX'},
+ jfk:{min:60},
+ tsq:{min:40},
+ hig:{min:60},
+ cen:{min:90},
+ mom:{min:120},
+ dum:{min:60},
+ wtc:{min:120},
+ gct:{min:30},
+ lgx:{min:60},
+ ven:{min:90},
+ hol:{min:45},
 };
 
 const BUDGET=[
@@ -166,3 +177,16 @@ const BUDGET=[
    {k:'f1',nm:'Еда и кафе',per:'personday',rate:70,sub:'на человека в день'}
  ]}
 ];
+
+/* ── ДОРОГИ ПО-НАСТОЯЩЕМУ ── считано road-times.js, руками не править ── */
+const ROADS={
+ 1:{ids:["@nyc","jfk","tsq","hig"],km:[[null,null,0,2.6],[null,null,null,null],[0,null,null,2.6],[2.6,null,2.6,null]],min:[[null,null,1,35],[null,null,null,null],[1,null,null,35],[35,null,35,null]]},
+ 2:{ids:["@nyc","cen","met","mom"],km:[[null,3.5,3.3,1],[3.5,null,0.6,3],[3.3,0.6,null,2.5],[1,3,2.5,null]],min:[[null,47,44,14],[47,null,8,40],[44,8,null,34],[14,40,34,null]]},
+ 3:{ids:["@nyc","bro","dum","wtc"],km:[[null,6.6,7.6,5.9],[6.6,null,1.2,1.8],[7.6,1.2,null,3],[5.9,1.8,3,null]],min:[[null,88,101,78],[88,null,16,24],[101,16,null,40],[78,24,40,null]]},
+ 4:{ids:["@nyc","sum","gct"],km:[[null,0.4,1.1],[0.4,null,0.8],[1.1,0.8,null]],min:[[null,5,14],[5,null,10],[14,10,null]]},
+ 5:{ids:["@lax","lgx"],km:[[null,30.6],[30.1,null]],min:[[null,27],[27,null]]},
+ 6:{ids:["@lax","sam","ven"],km:[[null,26.2,24.6],[26.2,null,4.6],[24.6,4.1,null]],min:[[null,23,26],[23,null,9],[26,8,null]]},
+ 7:{ids:["@lax","gri","hol"],km:[[null,12.8,10.7],[12.3,null,6.6],[10.4,7,null]],min:[[null,18,11],[17,null,11],[11,12,null]]},
+ 8:{ids:["@lax","mal"],km:[[null,53.7],[53.5,null]],min:[[null,51],[51,null]]},
+};
+/* ── конец дорог ── */

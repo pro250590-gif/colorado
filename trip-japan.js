@@ -132,12 +132,25 @@ const SEGMENT={tok:'flight',kyo:'train'};
 const TRANSFER={kyo:{km:450,clean:'2 ч 15',stops:'поезда каждые 10 минут'}};
 
 const META={
- sen:{price:'бесплатно',dur:'1 ч',best:'до 8 утра',route:'метро Asakusa'},
- mei:{price:'бесплатно',dur:'1 ч',best:'на рассвете',route:'станция Harajuku'},
- fus:{price:'бесплатно',dur:'1–3 ч',best:'до 8 утра',route:'поезд JR Nara Line, 5 мин'},
- ara:{price:'бесплатно',dur:'1 ч',best:'до 8 утра',route:'поезд до Saga-Arashiyama'},
- kiy:{price:'¥400',dur:'1,5 ч',best:'закат',route:'автобус 206'},
- sky:{price:'¥2 100',dur:'1,5 ч',best:'ясный день',route:'метро Oshiage'}
+ sen:{min:60,price:'бесплатно',best:'до 8 утра',route:'метро Asakusa'},
+ mei:{min:60,price:'бесплатно',best:'на рассвете',route:'станция Harajuku'},
+ fus:{min:120,price:'бесплатно',best:'до 8 утра',route:'поезд JR Nara Line, 5 мин'},
+ ara:{min:45,price:'бесплатно',best:'до 8 утра',route:'поезд до Saga-Arashiyama'},
+ kiy:{min:90,price:'¥400',best:'закат',route:'автобус 206'},
+ sky:{min:90,price:'¥2 100',best:'ясный день',route:'метро Oshiage'},
+ hnd:{min:60},
+ shi:{min:120},
+ ued:{min:90},
+ sib:{min:30},
+ har:{min:60},
+ tsu:{min:75},
+ ham:{min:60},
+ tok2:{min:30},
+ shk:{min:20},
+ gio:{min:60},
+ nis:{min:60},
+ ten:{min:60},
+ kix:{min:180},
 };
 
 const BUDGET=[
@@ -160,3 +173,15 @@ const BUDGET=[
    {k:'f1',nm:'Еда и кафе',per:'personday',rate:45,sub:'на человека в день'}
  ]}
 ];
+
+/* ── ДОРОГИ ПО-НАСТОЯЩЕМУ ── считано road-times.js, руками не править ── */
+const ROADS={
+ 1:{ids:["@tok","hnd","shi"],km:[[null,null,6],[null,null,null],[6,null,null]],min:[[null,null,80],[null,null,null],[80,null,null]]},
+ 2:{ids:["@tok","sen","sky","ued"],km:[[null,null,null,null],[null,null,1.8,2.3],[null,1.8,null,3.9],[null,2.3,3.9,null]],min:[[null,null,null,null],[null,null,24,31],[null,24,null,52],[null,31,52,null]]},
+ 3:{ids:["@tok","sib","mei","har"],km:[[null,5.7,5.7,5.5],[5.7,null,2.3,1.4],[5.7,2.3,null,1],[5.5,1.4,1,null]],min:[[null,75,76,73],[75,null,30,19],[76,30,null,14],[73,19,14,null]]},
+ 4:{ids:["@tok","tsu","ham","tok2"],km:[[null,null,null,null],[null,null,1.4,2.3],[null,1.4,null,3],[null,2.3,3,null]],min:[[null,null,null,null],[null,null,18,31],[null,18,null,41],[null,31,41,null]]},
+ 5:{ids:["@kyo","shk","kiy","gio"],km:[[null,2.1,3.3,1.5],[2.1,null,5.4,3.7],[3.3,5.4,null,1.7],[1.5,3.7,1.7,null]],min:[[null,28,44,20],[28,null,72,49],[44,72,null,23],[20,49,23,null]]},
+ 6:{ids:["@kyo","fus","nis"],km:[[null,5.6,1.1],[5.6,null,4.9],[1.1,4.9,null]],min:[[null,75,14],[75,null,65],[14,65,null]]},
+ 7:{ids:["@kyo","ara","ten","kix"],km:[[null,null,null,null],[null,null,0.4,null],[null,0.4,null,null],[null,null,null,null]],min:[[null,null,null,null],[null,null,5,null],[null,5,null,null],[null,null,null,null]]},
+};
+/* ── конец дорог ── */
