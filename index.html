@@ -1489,9 +1489,11 @@ body.stale{padding-top:44px}
   background:rgba(161,102,58,.12);padding:3px 7px;border-radius:6px}
 .cmwhy{display:block;margin-top:4px;font:400 12px/1.45 "Inter",sans-serif;color:#5c5872}
 /* сколько часов занимает день: главная мерка дня, а не число точек */
-.dbud{display:inline-flex;align-items:center;gap:4px;margin-left:7px;padding:2px 7px;border-radius:999px;
-  background:rgba(91,63,196,.1);color:#5b3fc4;font:800 10px/1.4 "Plus Jakarta Sans",sans-serif;vertical-align:1px}
-.dbud.over{background:rgba(168,99,10,.14);color:#a8630a}
+.dbud{display:flex;align-items:center;gap:5px;margin-top:5px;color:#8b8fa3;
+  font:600 11px/1.3 "Inter",sans-serif}
+.dbud .i{opacity:.75}
+.dbud.over{color:#a8630a;font-weight:700}
+.dsub .dbud{margin-top:0;margin-left:10px;display:inline-flex}
 .dbx{font-style:normal;margin-left:5px;opacity:.75;font-weight:700}
 /* «если успеете» — точка осталась в цепочке, но день считается без неё */
 li.later .cpnm::after,li.later .snm::after{content:'если успеете';margin-left:7px;
@@ -2138,6 +2140,18 @@ const WD=['вс','пн','вт','ср','чт','пт','сб'];
 
 /* ================= ХЕЛПЕРЫ ================= */
 const gurl=q=>'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(q);
+/* ⚠️ ССЫЛКА НА КАРТУ — ПО КООРДИНАТЕ, А НЕ ПО НАЗВАНИЮ. Клиент: «твои ссылки
+   не открываются, Google пишет "ничего не найдено"». Так и есть: по строке
+   вроде «Naviglio Grande, Alzaia Naviglio Grande, Milano» или «Passeggiata
+   degli Innamorati» поиск не находит ничего, и человек упирается в окно с
+   ошибкой. А координата у нас сверена по четырём источникам — по ней карта
+   открывается ВСЕГДА и ровно там, где мы обещали. Название человек всё равно
+   видит на странице и может скопировать кнопкой рядом. */
+function mapURL(p){
+  if(p&&typeof p.lat==='number'&&typeof p.lng==='number')
+    return 'https://www.google.com/maps/search/?api=1&query='+p.lat+'%2C'+p.lng;
+  return gurl((p&&(p.q||p.nm))||'');
+}
 function fmtDate(dt){return WD[dt.getDay()]+', '+dt.getDate()+' '+MONTHS[dt.getMonth()];}
 function addDays(iso,n){const d=new Date(iso+'T00:00:00');d.setDate(d.getDate()+n);return d;}
 function dayDate(startIso,dayN){return fmtDate(addDays(startIso,dayN-1));}
@@ -2615,8 +2629,8 @@ function animPlane(marker,a,bb,period){if(!marker)return;let t=0;const step=40/(
   planeTimers.push(setInterval(()=>{if(!marker)return;t+=step;if(t>1)t=0;
     marker.setLatLng([a[0]+(bb[0]-a[0])*t,a[1]+(bb[1]-a[1])*t]);},40));}
 function mapFallback(msg){const el=document.getElementById('map');if(el)el.innerHTML='<div class="mapph">'+ic('map','i-lg')+' <b>'+(msg||'Карта не загрузилась')+'</b><br>Открой страницу по обычной ссылке (Netlify/GitHub) в браузере при интернете. Список и ссылки на Google Maps работают всегда.</div>';}
-function popupHTML(nm,q,why,label,color,photo,foodicon,plate){
-  const gm='<a class="mpop-gm" href="'+gurl(q)+'" target="_blank" rel="noopener">'+ic('pin','i-sm')+' Открыть в Google Maps →</a>';
+function popupHTML(nm,q,why,label,color,photo,foodicon,plate,ll){
+  const gm='<a class="mpop-gm" href="'+(ll?mapURL(ll):gurl(q))+'" target="_blank" rel="noopener">'+ic('pin','i-sm')+' Открыть в Google Maps →</a>';
   /* оригинальное название и на карте: то, что человек показывает на месте,
      должно быть видно везде, где он смотрит на место */
   const or=origHTML({q:q,nm:String(nm||'').replace(/<[^>]*>/g,'')});
@@ -2698,7 +2712,7 @@ function makeMarker(p){
   /* жильё поднимаем над булавками дней: адрес часто геокодится в центр города, и капля
      оказывалась ровно под точками первого дня — клиент её там не нашла */
   markers[p.id]=L.marker([p.lat,p.lng],{icon:markerIcon(p),zIndexOffset:isStay(p)?900:0})
-    .bindPopup(popupHTML(p.nm,p.q,p.why,dn?('День '+dn):(CATS[p.cat]?CATS[p.cat].l:''),c,ph?pimg(p.id,'l'):null,p.cat==='food'?foodCat(p):null,(p.cat==='food'&&p.approx)?'approx':(p.custom?kindOf(p).ic:(CATS[p.cat]?CATS[p.cat].e:'pin'))),
+    .bindPopup(popupHTML(p.nm,p.q,p.why,dn?('День '+dn):(CATS[p.cat]?CATS[p.cat].l:''),c,ph?pimg(p.id,'l'):null,p.cat==='food'?foodCat(p):null,(p.cat==='food'&&p.approx)?'approx':(p.custom?kindOf(p).ic:(CATS[p.cat]?CATS[p.cat].e:'pin'),p)),
       {autoPan:true,keepInView:false,autoPanPaddingTopLeft:L.point(12,66),autoPanPaddingBottomRight:L.point(12,14)});
   return markers[p.id];
 }
@@ -2710,7 +2724,7 @@ function updateMarkerStyles(){
     if(!mk){if(typeof p.lat==='number'&&typeof p.lng==='number')makeMarker(p);return;}
     mk.setIcon(markerIcon(p));
     const dn=dispOf(p.d),c=p.cat==='food'?'#c1462a':'#5b3fc4',ph=PHOTO[p.id];
-    if(mk.setPopupContent)mk.setPopupContent(popupHTML(p.nm,p.q,p.why,dn?('День '+dn):(CATS[p.cat]?CATS[p.cat].l:''),c,ph?pimg(p.id,'l'):null,p.cat==='food'?foodCat(p):null,(p.cat==='food'&&p.approx)?'approx':(p.custom?kindOf(p).ic:(CATS[p.cat]?CATS[p.cat].e:'pin'))));
+    if(mk.setPopupContent)mk.setPopupContent(popupHTML(p.nm,p.q,p.why,dn?('День '+dn):(CATS[p.cat]?CATS[p.cat].l:''),c,ph?pimg(p.id,'l'):null,p.cat==='food'?foodCat(p):null,(p.cat==='food'&&p.approx)?'approx':(p.custom?kindOf(p).ic:(CATS[p.cat]?CATS[p.cat].e:'pin'),p)));
   });
   tripBases().forEach(b=>{const mk=baseMarkers[b.id];if(mk){const cnt=P.filter(x=>x.cat!=='food'&&x.base===b.id).length;mk.setIcon(cityIcon(b,cnt));}});
 }
@@ -2997,14 +3011,14 @@ function buildCities(){
       +days.map(e=>{const d=e.tpl,n=dayPts(e.tid),list=P.filter(p=>p.d===e.tid&&p.cat!=='food'),ph=dayPhoto(e.tid),st=dayStart(e.tid);
         return '<details class="cday" data-day="'+e.tid+'"><summary class="cdaysum"><span class="cdph'+(ph?'':' free')+'"'+(ph?' style="background-image:url('+ph+')"':'')+'>'+(ph?'':ic('sun','i-sm'))+'</span>'
         +'<span class="cdtx"><span class="cdm"><b>День '+e.disp+'</b> · '+dm(e.date)+' · '+n+' '+plural(n,'активность','активности','активностей')
-          +dayBudgetHTML(e.tid)+'</span><b>'+dayTitle(e)+'</b></span>'
+          +'</span><b>'+dayTitle(e)+'</b>'+dayBudgetHTML(e.tid)+'</span>'
         +'<span class="cgo">'+ic('chevron','i-sm')+'</span></summary>'
         +'<div class="cdaybody">'
         +(d&&d.leg?'<div class="cleg"><b>'+d.pill+'</b> '+convDist(d.leg)+'</div>':'')
         +'<ul class="cplaces">'+list.map((p,pi)=>{const emo=p.star?'<span class="cstar">'+ic('star','i-sm')+'</span>':'';const on=picked.has(p.id);
           return hopHTML(pi?list[pi-1]:null,p,pi?null:st)
             +'<li class="'+(on?'':'off')+'" data-pl="'+p.id+'"><div class="cpl-row"><div class="cpl-main">'
-            +'<span class="cpnm"><span class="pseq" data-seq="'+p.id+'"></span>'+emo+'<a href="'+gurl(p.q)+'" target="_blank" rel="noopener">'+p.nm+'</a></span>'+origHTML(p)+'</div>'
+            +'<span class="cpnm"><span class="pseq" data-seq="'+p.id+'"></span>'+emo+'<a href="'+mapURL(p)+'" target="_blank" rel="noopener">'+p.nm+'</a></span>'+origHTML(p)+'</div>'
             +'<span class="cpact">'
             +'<span class="cpsw'+(on?' on':'')+'" data-pl="'+p.id+'" role="switch" aria-checked="'+on+'" aria-label="показывать на карте" tabindex="0"><i></i></span>'
             +'<button class="cpmv" data-mvopen="'+p.id+'" aria-label="перенести или убрать" title="перенести или убрать">⋯</button>'
@@ -3030,7 +3044,7 @@ function buildCities(){
         +'<b class="lclose">Свернуть список</b>'
         +'<span class="cgo">'+ic('chevron','i-sm')+'</span></summary>'
       +'<div class="cmorebody"><ul class="cplaces">'+sp.map(p=>'<li data-pl="'+p.id+'"><div class="cpl-row"><div class="cpl-main">'
-        +'<span class="cpnm"><a href="'+gurl(p.q)+'" target="_blank" rel="noopener">'+p.nm+'</a></span>'+origHTML(p)+'</div>'
+        +'<span class="cpnm"><a href="'+mapURL(p)+'" target="_blank" rel="noopener">'+p.nm+'</a></span>'+origHTML(p)+'</div>'
         +'<button class="cpup" data-mvopen="'+p.id+'">'+ic('plus','i-sm')+' в день</button></div>'
         +metaStrip(p)+(p.why?'<span class="cwhy">'+convDist(p.why)+'</span>':'')+'</li>').join('')
       +'</ul><div class="cmoren">Тап «в день» — место встанет в выбранный день. Вернёшь ночь — вернётся и убранный день.</div></div></details></div>'):'';
@@ -3646,6 +3660,13 @@ function squeezed(tid){
     const cand=list.map((p,i)=>{
       const pr=prioOf(p);
       if(pr==='must')return null;
+      /* ⚠️ ВОКЗАЛ, ПРИЧАЛ И АЭРОПОРТ НЕ ОТКЛАДЫВАЮТСЯ. Клиент увидела «если
+         успеете» на вокзале Комо: «мы едем на озеро, нам НУЖНО туда доехать,
+         это неправильно». Верно: транспортная точка — это не достопримечательность,
+         которую можно посмотреть или не посмотреть, это способ попасть в день.
+         Туда же — всё, к чему добираются расписанием (hop) или что стоит по
+         часам (билет на 11:00): выкинуть такое нельзя, не сломав день. */
+      if(p.cat==='transport'||p.hop||whenOf(p)==='fixed')return null;
       const dur=((META[p.id]||p.meta||{}).min)||0;
       const prev=i?list[i-1]:null,next=list[i+1]||null;
       let saved=dur;
@@ -3716,7 +3737,7 @@ function dayBudgetHTML(tid){
   if(!b.n)return '';
   const over=b.total>DAY_LIMIT;
   return '<span class="dbud'+(over?' over':'')+'" data-bud="'+tid+'">'+ic('clock','i-sm')
-    +' '+(b.est?'≈':'')+fmtHM(b.total)+' из '+fmtHM(DAY_LIMIT)
+    +' ≈'+fmtHM(b.total)+' из '+fmtHM(DAY_LIMIT)
     +(b.extra?'<i class="dbx">+'+b.extra+' если успеете</i>':'')+'</span>';
 }
 /* карточка перерыва прямо в цепочке: во сколько, где и почему именно здесь */
@@ -3725,7 +3746,7 @@ function mealInner(it){
   const why=it.spot?('крюк '+(it.spot.d<0.1?'нет':fmtKm(it.spot.d))):'';
   return '<span class="cmtop">'+ic('food','i-sm')+' Перерыв · '+it.meal+' · '+hhmm(it.at)
       +' · '+fmtHM(it.min)+'</span>'
-    +(s?'<span class="cmnm"><a href="'+gurl(s.nm)+'" target="_blank" rel="noopener">'+s.nm+'</a>'
+    +(s?'<span class="cmnm"><a href="'+mapURL(s)+'" target="_blank" rel="noopener">'+s.nm+'</a>'
         +'<i class="cmpr">'+s.price+'</i>'+(why?'<i class="cmd">'+why+'</i>':'')+'</span>'
         +'<span class="cmwhy">'+s.why+'</span>'
       :'<span class="cmwhy">В нашей подборке рядом ничего нет — время на еду заложено, место выбери на месте.</span>');
@@ -3771,7 +3792,7 @@ function refreshBudgets(){
     if(!b.n){el.style.display='none';return;}
     el.style.display='';
     el.classList.toggle('over',b.total>DAY_LIMIT);
-    el.innerHTML=ic('clock','i-sm')+' '+(b.est?'≈':'')+fmtHM(b.total)+' из '+fmtHM(DAY_LIMIT)
+    el.innerHTML=ic('clock','i-sm')+' ≈'+fmtHM(b.total)+' из '+fmtHM(DAY_LIMIT)
       +(b.extra?'<i class="dbx">+'+b.extra+' если успеете</i>':'');
     el.title='на местах '+fmtHM(b.place)+' · в дороге '+fmtHM(b.move)
       +(b.rides?' · переезды по расписанию '+fmtHM(b.ride):'')
@@ -3796,8 +3817,8 @@ function buildDays(){
     const c=DCOL[e.tid]||baseById(e.base).color;const list=P.filter(p=>p.d===e.tid);
     out+='<details class="day" id="day-'+e.tid+'" data-day="'+e.tid+'"'+(e.disp===1?' open':'')+'>'
       +'<summary class="day-head">'+'<span class="dnum" style="background:linear-gradient(150deg,'+c+','+(BCOL2[e.base]||c)+')"><b>'+e.disp+'</b><i>день</i></span>'
-      +'<span class="dhead-txt"><h3>'+d.title+'</h3><span class="dsub"><span class="ddate" data-daydate="'+e.tid+'">'+fmtDate(e.date)+'</span><span class="dalt">'+mrs(ALT[e.tid])+'</span></span></span>'
-      +'<span class="dcount">'+list.length+' '+plural(list.length,'точка','точки','точек')+'</span>'+dayBudgetHTML(e.tid)+'<span class="chev"><svg class="i i-sm" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9.5 18 6-6-6-6"/></svg></span></summary>'
+      +'<span class="dhead-txt"><h3>'+d.title+'</h3><span class="dsub"><span class="ddate" data-daydate="'+e.tid+'">'+fmtDate(e.date)+'</span><span class="dalt">'+mrs(ALT[e.tid])+'</span>'+dayBudgetHTML(e.tid)+'</span></span>'
+      +'<span class="dcount">'+list.length+' '+plural(list.length,'точка','точки','точек')+'</span>'+'<span class="chev"><svg class="i i-sm" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9.5 18 6-6-6-6"/></svg></span></summary>'
       +'<div class="day-body">'
       +'<div class="leg"><span class="pill">'+d.pill+'</span> <b>'+convDist(d.leg)+'</b><a class="dirlink" href="#" data-dir="'+e.tid+'" target="_blank" rel="noopener">Маршрут в Google Maps →</a></div>'
       +'<div class="daytools"><button class="tiny" data-dayon="'+e.tid+'">Отметить день</button><button class="tiny" data-dayoff="'+e.tid+'">Снять день</button></div>'
@@ -3808,7 +3829,7 @@ function buildDays(){
         +(PHOTO[p.id]?'<span class="thumb" style="background-image:url('+pimg(p.id,'t')+')"></span>'
                      :'<span class="thumb noimg">'+ic(CATS[p.cat]?CATS[p.cat].e:'pin','i-lg')+'</span>')
         +'<input type="checkbox" class="tick" data-tick="'+p.id+'" aria-label="показать на карте"></span>'
-        +'<span class="sinfo"><span class="snm"><span class="pseq" data-seq="'+p.id+'"></span>'+emo+'<a href="'+gurl(p.q)+'" target="_blank" rel="noopener">'+p.nm+'</a>'+(p.tag?'<span class="tag '+p.tag[1]+'">'+p.tag[0]+'</span>':'')+'</span>'+origHTML(p)
+        +'<span class="sinfo"><span class="snm"><span class="pseq" data-seq="'+p.id+'"></span>'+emo+'<a href="'+mapURL(p)+'" target="_blank" rel="noopener">'+p.nm+'</a>'+(p.tag?'<span class="tag '+p.tag[1]+'">'+p.tag[0]+'</span>':'')+'</span>'+origHTML(p)
         +metaStrip(p)
         +'<span class="why">'+convDist(p.why)+'</span></span></li>';}).join('')+'</ul>'
       +(d.note?'<div class="dnote">'+convDist(d.note)+'</div>':'')+'</div></details>';
@@ -3834,9 +3855,10 @@ function dirURL(dayN){
      человека через все варианты сразу — это крюк, которого он не поедет */
   const act=activeOpt(dayN);
   const sel=P.filter(p=>p.d===dayN&&picked.has(p.id)&&optOf(p)===act);if(!sel.length)return null;
-  if(sel.length===1)return gurl(sel[0].q);
-  const o=encodeURIComponent(sel[0].q),dst=encodeURIComponent(sel[sel.length-1].q);
-  const wp=sel.slice(1,-1).slice(0,8).map(p=>encodeURIComponent(p.q)).join('%7C');
+  const ll=p=>p.lat+'%2C'+p.lng;
+  if(sel.length===1)return mapURL(sel[0]);
+  const o=ll(sel[0]),dst=ll(sel[sel.length-1]);
+  const wp=sel.slice(1,-1).slice(0,8).map(ll).join('%7C');
   return 'https://www.google.com/maps/dir/?api=1&origin='+o+'&destination='+dst+(wp?'&waypoints='+wp:'')+'&travelmode=driving';
 }
 function updateDirLinks(){document.querySelectorAll('a[data-dir]').forEach(a=>{const u=dirURL(tidOf(a.dataset.dir));
