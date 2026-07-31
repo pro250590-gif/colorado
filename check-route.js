@@ -352,6 +352,16 @@ function checkRoute(file) {
         if (at <= ml.to) { food += ml.min; ml.done = 1; }
       });
       const total = place + move + food;
+      /* если день не влезает, движок отложит лишнее сам («если успеете»). Но
+         звёздные точки он не трогает — и если день не сходится даже по ним,
+         это разговор для человека: правило клиента «разбираемся руками». */
+      const mustMin = pts.filter(p => p.star || (p.tag && p.tag[1] === 't-must'))
+        .reduce((s, p) => s + (((MET[p.id] || {}).min) || 0), 0);
+      if (total > DAY_MINUTES && mustMin + move + food > DAY_MINUTES)
+        warn('день ' + d.n + ' («' + (d.title || '') + '»): не влезает ДАЖЕ ПО ОБЯЗАТЕЛЬНЫМ точкам — '
+          + Math.floor((mustMin + move + food) / 60) + ' ч ' + ((mustMin + move + food) % 60)
+          + ' мин из ' + (DAY_MINUTES / 60) + '. Откладывать нечего, разбирайтесь руками: '
+          + 'разнесите на два дня или уберите звезду');
       if (total > DAY_MINUTES)
         warn('день ' + d.n + ' («' + (d.title || '') + '»): ' + Math.floor(total / 60) + ' ч ' + (total % 60)
           + ' мин из ' + (DAY_MINUTES / 60) + ' — не влезает. На местах ' + Math.floor(place / 60) + ' ч '
