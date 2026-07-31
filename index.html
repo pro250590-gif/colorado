@@ -3198,20 +3198,60 @@ function roadMap(){
 }
 function durTxt(n){return n>=60?minTxt(n):n+' мин';}
 function walkTxt(n){return n+' '+plural(n,'минута','минуты','минут')+' пешком';}
+/* Метро есть в городе, а не в пятидесяти километрах от него. Способ движения у
+   нас записан на весь город ночёвки, и в Белладжо — деревне на другом берегу
+   озера — выходило «2 км · 5 мин на метро». Там идут ногами вдоль воды. */
+/* Насколько город велик, спрашиваем у самого маршрута: берём серединное
+   расстояние его точек от центра и растягиваем втрое. Токио выходит большим,
+   Милан — маленьким, и дальняя пятнашка точек на озере Комо в него не попадает
+   (их четверть от всех, поэтому серединное значение остаётся городским). */
+function cityRadius(bid){
+  const b=baseById(bid);
+  if(!b||typeof b.lat!=='number')return 12;
+  const ds=P.filter(p=>p.base===bid&&p.cat!=='food'&&typeof p.lat==='number')
+    .map(p=>kmBetween(b.lat,b.lng,p.lat,p.lng)).sort((x,y)=>x-y);
+  if(!ds.length)return 12;
+  return Math.min(25,Math.max(6,ds[Math.floor(ds.length/2)]*3));
+}
+function inMetroCity(p){
+  const b=(p&&p.base)?baseById(p.base):null;
+  return !!(b&&typeof b.lat==='number'&&typeof p.lat==='number'
+    &&kmBetween(b.lat,b.lng,p.lat,p.lng)<=cityRadius(p.base));
+}
+/* два километра по городу проходят ногами — от Сэнсо-дзи до Скайтри это самая
+   известная прогулка Токио, и «5 минут на метро» вместо неё было бы глупостью */
+const WALK_MAX=2;
+function metroMin(d){return Math.max(5,Math.round(d/20*60/5)*5);}
+function otherMin(d){return Math.max(5,Math.round(d/25*60/5)*5);}
+/* чем едут, если не ногами: «метро» пишем только там, где метро правда есть —
+   обе точки в самом городе. До пригорода (Версаль) идёт уже поезд, а между
+   деревнями на озере не ходит ни то, ни другое — там пусто, и мы молчим. */
+function transWord(a,b,mv){
+  if(mv!=='metro_walk')return '';
+  const A=inMetroCity(a),B=inMetroCity(b);
+  if(A&&B)return 'на метро';
+  if(A||B)return 'на метро или поезде';
+  return '';
+}
 /* готовое число из данных: настоящая дорога */
 function roadBody(a,b){
   const r=(a&&b&&a.id&&b.id)?roadMap().get(a.id+'>'+b.id):null;
   if(!r)return '';
   const d=r[0],m=r[1],mv=moveOf(b.base),car=(mv==='car_all'||mv==='car_trips');
   if(d<0.09)return 'рядом, в двух шагах';
-  if(!car&&d<=1.7)return walkTxt(m);
   /* в автомобильном городе двести метров всё равно проходят ногами: «1 минута
      на машине» — это не совет. Время тут наше, поэтому со значком «≈» */
   if(car&&d<0.5)return '≈'+walkTxt(Math.max(1,Math.round(d/4.6*60)));
-  /* пеший город, а идти далеко: расстояние настоящее, но поедут на метро — а
-     расписаний метро у нас нет, поэтому время помечаем как прикидку */
-  if(mv==='metro_walk')return fmtKm(d)+' · ≈'+durTxt(Math.max(5,Math.round(d/20*60/5)*5))+' на метро';
-  return fmtKm(d)+' · '+durTxt(m)+' '+hopWord(b.base);
+  if(car)return fmtKm(d)+' · '+durTxt(m)+' '+hopWord(b.base);
+  /* пеший город, идти далеко: поедут транспортом — а расписаний у нас нет,
+     поэтому время помечаем как прикидку, а способ называем только тот, в
+     котором уверены (см. transWord) */
+  const tw=transWord(a,b,mv);
+  if(d>WALK_MAX&&tw)return fmtKm(d)+' · ≈'+durTxt(metroMin(d))+' '+tw;
+  /* деревня у озера: два километра по набережной — это прогулка, и минуты тут
+     настоящие, посчитанные пешим маршрутизатором */
+  if(d<=3)return walkTxt(m);
+  return fmtKm(d)+' · ≈'+durTxt(otherMin(d))+' на транспорте';
 }
 /* запасной ход: дороги в данных нет — считаем по прямой и честно ставим «≈» */
 function guessBody(a,b){
@@ -3221,11 +3261,13 @@ function guessBody(a,b){
   if(d<0.09)return 'рядом, в двух шагах';
   /* где ездят на машине, «двадцать минут пешком» — это не совет, а насмешка:
      пешком пишем только совсем близкое */
-  if(d<(car?0.5:1.7))return '≈'+walkTxt(Math.max(1,Math.round(d/4.6*60)));
+  if(d<(car?0.5:WALK_MAX))return '≈'+walkTxt(Math.max(1,Math.round(d/4.6*60)));
   /* за сорок километров начинается трасса, а не городская улица */
-  const speed=car?(d>40?75:50):(mv==='metro_walk'?20:25);
-  const n=Math.max(5,Math.round(d/speed*60/5)*5);
-  return '≈'+fmtKm(d)+' · '+durTxt(n)+' '+hopWord(b.base);
+  if(car)return '≈'+fmtKm(d)+' · '+durTxt(Math.max(5,Math.round(d/(d>40?75:50)*60/5)*5))+' на машине';
+  const tw=transWord(a,b,mv);
+  if(tw)return '≈'+fmtKm(d)+' · '+durTxt(metroMin(d))+' '+tw;
+  if(d<=3)return '≈'+walkTxt(Math.max(1,Math.round(d/4.6*60)));
+  return '≈'+fmtKm(d)+' · '+durTxt(otherMin(d))+' на транспорте';
 }
 function hopText(a,b){
   if(b&&b.hop)return b.hop;                      /* написано руками — оно и главнее */
