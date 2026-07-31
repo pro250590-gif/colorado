@@ -70,13 +70,18 @@ const P=[
   why:'Парк ровно между двумя базиликами: газоны, платаны и вид на обе церкви сразу. Мы всё равно идём через него.'},
  {id:'eus',d:1,base:'mil',cat:'town',lat:45.453971,lng:9.181468,nm:'Basilica di Sant’Eustorgio',q:'Basilica di Sant\'Eustorgio, Milano',tag:['по пути','t-easy'],
   why:'Сюда, по преданию, привезли мощи волхвов. В капелле Портинари — фрески раннего Ренессанса и гробница на четырёх ангелах.'},
+ /* ДАРСЕНА ИДЁТ ПЕРЕД ВОРОТАМИ (правка клиента 31.07.2026, глазами по карте).
+    От Сант-Эустороджо до Дарсены 300 м, до ворот 400, а от ворот до Лавандаи
+    400 м против 600 от Дарсены: через порт короче на 300 метров и четыре
+    минуты. По прямой этой разницы не видно — между берегами канала прямая
+    короткая, а идти надо до моста. */
+ {id:'dar',d:1,base:'mil',cat:'town',lat:45.452911,lng:9.178572,nm:'Darsena di Milano',q:'Darsena di Milano',tag:['порт','t-easy'],star:1,
+  why:'Старый городской порт: сюда по каналам везли мрамор на собор. Сейчас — набережная с барами и лодками.'},
  /* в Милане ДВОЕ ворот с этим именем: наши — неоклассические, на площади
     XXIV Maggio у самой Дарсены; средневековые стоят севернее, в поиске уводят
     не туда, поэтому в q вписан адрес */
  {id:'tic',d:1,base:'mil',cat:'town',lat:45.452138,lng:9.178401,pin:'в Милане двое ворот с этим именем: наши — на площади XXIV Maggio',nm:'Porta Ticinese',q:'Porta Ticinese, Piazza XXIV Maggio, Milano',tag:['ворота','t-easy'],
   why:'Ворота на площади XXIV Maggio, за которыми начинается район каналов. Отсюда весь вечер идёшь вдоль воды.'},
- {id:'dar',d:1,base:'mil',cat:'town',lat:45.452911,lng:9.178572,nm:'Darsena di Milano',q:'Darsena di Milano',tag:['порт','t-easy'],star:1,
-  why:'Старый городской порт: сюда по каналам везли мрамор на собор. Сейчас — набережная с барами и лодками.'},
  {id:'lav',d:1,base:'mil',cat:'town',lat:45.452028,lng:9.174712,nm:'Vicolo dei Lavandai',q:'Vicolo dei Lavandai, Milano',tag:['уголок','t-easy'],
   why:'Крошечный переулок с деревянными мостками, где до середины XX века стирали бельё прямо в канале.'},
  /* канал длинный, до Аббьятеграссо; наша точка — оживлённый участок набережной
@@ -350,9 +355,9 @@ const ROADSTEPS={
  "col>lor":"}pmtGgd`w@|ADeAkA",
  "lor>bas":"epmtGmf`w@Nv@bJv@l@eGl@U",
  "bas>eus":"uamtGyk`w@e@VdI{BrB|CFpA",
- "eus>tic":"ytltGmg`w@GqAxBrIpCp@HxHl@V",
- "tic>dar":"}jltGgs_w@m@WKwFkB_@HtF",
- "dar>lav":"yoltGau_w@IuFjB^PbQlBfMm@q@",
+ "eus>dar":"ytltGmg`w@GqA|ApHdAh@B`I",
+ "dar>tic":"yoltGau_w@IuFjB^JvFl@V",
+ "tic>lav":"}jltGgs_w@g@rHlBfMm@q@",
  "lav>nav":"ejltG}|~v@l@p@vArL",
  "@mil>duo":"gvntGs|aw@xAo@?mG",
  "ter>oss":"wxntGocbw@JgNfCIF{BdAQX}B|DuB",
