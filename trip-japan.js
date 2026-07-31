@@ -184,4 +184,19 @@ const ROADS={
  6:{ids:["@kyo","fus","nis"],km:[[null,5.6,1.1],[5.6,null,4.9],[1.1,4.9,null]],min:[[null,75,14],[75,null,65],[14,65,null]]},
  7:{ids:["@kyo","ara","ten","kix"],km:[[null,null,null,null],[null,null,0.4,null],[null,0.4,null,null],[null,null,null,null]],min:[[null,null,null,null],[null,null,5,null],[null,5,null,null],[null,null,null,null]]},
 };
+const ROADSTEPS={
+ "sen>sky":"gp~xE__gtYq@FTsFsA{@LoAwAUjCgTfUeg@nAKDo@rFe@FyGy@wC",
+ "sky>ued":"ur}xEoyitYd@b@GfB~@AG`I|BJz@zg@xChTgF|Mw@hPeRl_BJjB~@nAw@lAwAm@uCfHqEgBwAzDyBnB",
+ "@tok>sib":"c_wxEimjsY?}ApBcBc@gAjDyFr@eFfEmHzJgHeAyF_@T`Ba@_@gEpEmEnA{E|FTjHewDrDoGnIyG|FuAnDcD\\`@zJcJtFuRn@KAiD",
+ "sib>mei":"yvsxEcgtsYIxAJgBaT[{B_BeRcBo@^aNw@Um@qJa@aHiBEh@gBMm@pCwJZsA~DNfGu@B",
+ "mei>har":"e}vxEm`tsYt@COgGrA_EvJ[l@qCfBLDi@`HhBdGXeAmC",
+ "tsu>ham":"a|txEo}atYtAlB}@~@?xAfLfMdAfCHjD}@bGcAjBzAfBpC_DbFhDzD[`B`C",
+ "ham>tok2":"cxsxEck`tY{BaAmFnGuKoJeCm@{L~A_EdEsBwCoBpBgOiN}CtDkDkDuA~@kDaCYp@a\\yQ_Di@}@b@kAtEkD_A",
+ "@kyo>shk":"shutEyet{Xa@`s@yNN?r@uMN[f@iOG?`OwGh@a@fD",
+ "shk>kiy":"ecwtEowq{X`@gDvGi@JiPnMa@Zmx@bX_AV}Ej@u@tJ]NoHv@I?w@pYkAr@sMxNE^iJtO{ApSrAhCkNxGeOB}DrCeGHcD]D",
+ "kiy>gio":"}|qtEkpw{X\\EIbDsCdGC|DyGdOiCjNqSsAuOzA_@nJ",
+ "@kyo>fus":"shutEyet{XFqC`SJzXkAlEp@\\s@jDG~GxBjAiC`O`GnMbBd@eDlGlAbT`A`QMj^cDlLxB|OaAlVjClHmEX_BhEoCtWiAVoJfCaBAm@",
+ "fus>nis":"qoltEkbu{X@l@gC`BWnJuWhAiEnCY~AmHlEmVkC}O`AmLyBk^bDaQLcTaAmGmAw@vFcw@p@DdK",
+ "ara>ten":"wevtEoga{XUqBsA{ApEyBjAsD",
+};
 /* ── конец дорог ── */

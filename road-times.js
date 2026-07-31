@@ -60,7 +60,7 @@ function km(a, b, c, d) {
 function load(file) {
   const src = fs.readFileSync(file, 'utf8');
   const S = {};
-  const names = ['BASES', 'DAYS', 'DAY_BASE', 'P', 'CITYMOVE', 'META'];
+  const names = ['BASES', 'DAYS', 'DAY_BASE', 'P', 'CITYMOVE', 'META', 'LINES', 'SEGMENT'];
   const grab = names.map(n => `S.${n}=typeof ${n}!=='undefined'?${n}:undefined;`).join('');
   new Function('S', 'with(S){' + src + ';' + grab + '}')(S);
   return S;
@@ -76,6 +76,216 @@ async function table(profile, coords) {
   return j;
 }
 
+const FLIGHT_KM = 1200;   /* длиннее — это перелёт, дорогой его не ведут */
+/* тот же список, что в day-order.js: чем именно едут, если написано руками */
+const RIDE = /катер|паром|поезд|фуникул|express|автобус|синкансэн/i;
+
+function lineLen(pts) {
+  let s = 0;
+  for (let i = 1; i < pts.length; i++) s += km(pts[i - 1][0], pts[i - 1][1], pts[i][0], pts[i][1]);
+  return s;
+}
+/* ключ линии — тип, дни и начало: если кто-то перерисует линии руками и забудет
+   пересчитать, ключ не совпадёт и карта честно вернётся к прямой */
+function lineKey(o) {
+  return o.type + '|' + (o.days || []).join(',') + '|'
+    + o.pts[0][0].toFixed(3) + ',' + o.pts[0][1].toFixed(3);
+}
+/* едут ли по этой линии на машине. Сказано в данных: CITYMOVE для города дня;
+   а где CITYMOVE нет вовсе — это автопоездка (Колорадо, Юта) */
+function lineIsCar(o, S) {
+  const day = (o.days || [])[0];
+  /* день, который держится на расписании (поезд Дуранго–Силвертон, катер по
+     озеру), дорогой вести нельзя: рельсы и вода идут не там, где шоссе */
+  const fixed = (S.P || []).some(p => p.d === day && p.cat === 'transport' && p.when === 'fixed');
+  if (fixed) return false;
+  const base = (S.DAY_BASE || {})[day];
+  const mv = (S.CITYMOVE || {})[base];
+  if (mv) return /^car/.test(mv);
+  return true;
+}
+
+/* ── нитка дороги: распаковать, проредить, упаковать ──────────────────────
+   Маршрутизатор отдаёт линию упакованной строкой. Его собственное прореживание
+   (overview=simplified) срезает серпантины Million Dollar Highway — а ради них
+   туда и едут. Поэтому берём полную нитку и прореживаем сами, с допуском в
+   пятнадцать метров: прямые схлопываются, повороты остаются. */
+function decode(s) {
+  const out = []; let i = 0, lat = 0, lng = 0;
+  while (i < s.length) {
+    let b, sh = 0, r = 0;
+    do { b = s.charCodeAt(i++) - 63; r |= (b & 31) << sh; sh += 5; } while (b >= 32);
+    lat += (r & 1) ? ~(r >> 1) : (r >> 1);
+    sh = 0; r = 0;
+    do { b = s.charCodeAt(i++) - 63; r |= (b & 31) << sh; sh += 5; } while (b >= 32);
+    lng += (r & 1) ? ~(r >> 1) : (r >> 1);
+    out.push([lat / 1e5, lng / 1e5]);
+  }
+  return out;
+}
+function encode(pts) {
+  let last = [0, 0], s = '';
+  const one = v => { v = v < 0 ? ~(v << 1) : (v << 1); let o = '';
+    while (v >= 0x20) { o += String.fromCharCode((0x20 | (v & 0x1f)) + 63); v >>= 5; }
+    return o + String.fromCharCode(v + 63); };
+  for (const p of pts) {
+    const a = Math.round(p[0] * 1e5), b = Math.round(p[1] * 1e5);
+    s += one(a - last[0]) + one(b - last[1]);
+    last = [a, b];
+  }
+  return s;
+}
+/* Дуглас–Пекер: убираем точки, которые лежат на прямой между соседями */
+function thin(pts, epsKm) {
+  if (pts.length < 3) return pts;
+  const keep = new Array(pts.length).fill(false);
+  keep[0] = keep[pts.length - 1] = true;
+  const stack = [[0, pts.length - 1]];
+  while (stack.length) {
+    const [a, b] = stack.pop();
+    let far = -1, best = 0;
+    for (let i = a + 1; i < b; i++) {
+      const d = segDist(pts[i], pts[a], pts[b]);
+      if (d > best) { best = d; far = i; }
+    }
+    if (far > 0 && best > epsKm) { keep[far] = true; stack.push([a, far], [far, b]); }
+  }
+  return pts.filter((p, i) => keep[i]);
+}
+function segDist(p, a, b) {
+  const kx = 111.32 * Math.cos(rad(p[0])), ky = 110.57;
+  const px = p[1] * kx, py = p[0] * ky, ax = a[1] * kx, ay = a[0] * ky, bx = b[1] * kx, by = b[0] * ky;
+  const dx = bx - ax, dy = by - ay;
+  const L = dx * dx + dy * dy;
+  let t = L ? ((px - ax) * dx + (py - ay) * dy) / L : 0;
+  t = Math.max(0, Math.min(1, t));
+  const qx = ax + t * dx, qy = ay + t * dy;
+  return Math.sqrt((px - qx) ** 2 + (py - qy) ** 2);
+}
+
+async function route(pts, profile) {
+  const s = pts.map(p => p[1] + ',' + p[0]).join(';');
+  const url = HOST + '/' + (profile || 'routed-car') + '/route/v1/driving/' + s + '?overview=full&geometries=polyline';
+  const r = await fetch(url, { headers: { 'User-Agent': UA }, signal: AbortSignal.timeout(60000) });
+  if (!r.ok) throw new Error('сервер ответил ' + r.status);
+  const j = await r.json();
+  if (j.code !== 'Ok' || !j.routes || !j.routes.length) throw new Error('маршрутизатор сказал ' + j.code);
+  return j.routes[0];
+}
+
+async function doLines(S, file) {
+  const LINES = S.LINES || [];
+  if (!LINES.length) return '';
+  const rows = [];
+  for (const o of LINES) {
+    if (!o.pts || o.pts.length < 2) continue;
+    const len = lineLen(o.pts);
+    const what = o.type + ' ' + (o.days || []).join(',');
+    if (len > FLIGHT_KM) { console.log('  линия ' + what + ': ' + Math.round(len) + ' км — это перелёт, оставляю прямой'); continue; }
+    if (!lineIsCar(o, S)) { console.log('  линия ' + what + ': не на машине (поезд, катер, метро) — оставляю как есть'); continue; }
+    let rt;
+    try { rt = await route(o.pts); }
+    catch (e) { console.log('  линия ' + what + ': не посчиталась (' + e.message + ')'); continue; }
+    await sleep(PAUSE);
+    const road = rt.distance / 1000;
+    /* в горах дорога честно бывает вдвое длиннее наброска: тупиковые долины
+       Аспена, перевал на Теллурайд. Ловим только совсем дикое — вчетверо */
+    if (road > len * 4) { console.log('  линия ' + what + ': дорога вчетверо длиннее наброска (' + Math.round(road)
+      + ' км против ' + Math.round(len) + ') — не верю, оставляю прямой'); continue; }
+    const full = decode(rt.geometry);
+    const enc = encode(thin(full, 0.015));
+    rows.push(' ' + JSON.stringify(lineKey(o)) + ':' + JSON.stringify(enc) + ',');
+    console.log('  линия ' + what + ': ' + Math.round(len) + ' км наброском → ' + Math.round(road)
+      + ' км по дороге, точек ' + full.length + ' → ' + decode(enc).length + ' (' + enc.length + ' знаков)');
+  }
+  if (!rows.length) return '';
+  return 'const ROADLINES={\n' + rows.join('\n') + '\n};\n';
+}
+
+/* ── ЦЕПОЧКА ДНЯ НА КАРТЕ ─────────────────────────────────────────────────
+   «Автомобильные и пешеходные». В пеших городах линий по дням на карте не было
+   вовсе — только перелёт и пины. Считаем нитку между СОСЕДНИМИ точками дня (и
+   от центра города к первой): по ней карта собирает путь дня и пересобирает
+   его, когда человек выключает точку. Каждая пара отдельно — именно поэтому
+   цепочку можно пересобрать, а не только показать целиком. */
+async function doSteps(S, days) {
+  const { BASES, P, DAY_BASE } = S;
+  const CITYMOVE = S.CITYMOVE || {};
+  const rows = []; let n = 0, skip = 0;
+  for (const day of days) {
+    const pts = P.filter(p => p.d === day && p.cat !== 'food'
+      && typeof p.lat === 'number' && typeof p.lng === 'number');
+    if (!pts.length) continue;
+    const bid = (DAY_BASE || {})[day];
+    const base = BASES.find(b => b.id === bid);
+    const mv = CITYMOVE[bid] || '';
+    const car = mv ? /^car/.test(mv) : true;
+    const profile = car ? 'routed-car' : 'routed-foot';
+    const start = (base && typeof base.lat === 'number')
+      ? { id: '@' + base.id, lat: base.lat, lng: base.lng } : null;
+    /* у дня может быть несколько цепочек: основная и ветки-варианты. Каждая
+       начинается от города, и человек ходит по одной из них — значит нитки
+       нужны внутри каждой, а между ними никаких: там развилка, а не переход */
+    const spine = pts.filter(p => !p.opt);
+    const branches = {};
+    pts.filter(p => p.opt).forEach(p => { (branches[p.opt] = branches[p.opt] || []).push(p); });
+    const chains = [spine, ...Object.keys(branches).map(k => branches[k])]
+      .filter(c => c.length).map(c => start ? [start, ...c] : c.slice());
+
+    const seen = {};
+    const pairs = [];
+    chains.forEach(c => { for (let i = 1; i < c.length; i++) {
+      const k = c[i - 1].id + '>' + c[i].id;
+      if (seen[k]) continue; seen[k] = 1; pairs.push([c[i - 1], c[i]]);
+    } });
+
+    for (const [a, b] of pairs) {
+      /* особый транспорт (катер, поезд, фуникулёр) дорогой не ведём — там
+         рельсы и вода. А «10 минут по Cliff Palace Loop» или «вход в лифт с
+         северной стороны» — это подпись про ноги, дорога тут своя нужна */
+      if (b.hop && RIDE.test(b.hop)) { skip++; continue; }
+      const straight = km(a.lat, a.lng, b.lat, b.lng);
+      if (straight < 0.05) { skip++; continue; }
+      if (!car && straight > FOOT_MAX_KM) { skip++; continue; }
+      let rt;
+      try { rt = await route([[a.lat, a.lng], [b.lat, b.lng]], profile); }
+      catch (e) { skip++; continue; }
+      await sleep(PAUSE);
+      if (rt.distance / 1000 > Math.max(1, straight) * 4) { skip++; continue; }
+      const enc = encode(thin(decode(rt.geometry), 0.015));
+      rows.push(' ' + JSON.stringify(a.id + '>' + b.id) + ':' + JSON.stringify(enc) + ',');
+      n++;
+    }
+  }
+  console.log('  нитки между точками: ' + n + ' посчитано, ' + skip + ' пропущено (катер, поезд, слишком далеко)');
+  return rows.length ? 'const ROADSTEPS={\n' + rows.join('\n') + '\n};\n' : '';
+}
+
+function writeBlock(file, body) {
+  let src = fs.readFileSync(file, 'utf8');
+  const nl = src.includes('\r\n') ? '\r\n' : '\n';
+  const b = (MARK_A + '\n' + body + MARK_B).split('\n').join(nl);
+  const from = src.indexOf(MARK_A);
+  if (from >= 0) {
+    const to = src.indexOf(MARK_B, from);
+    src = src.slice(0, from) + b + src.slice(to + MARK_B.length);
+  } else {
+    src = src.replace(/\s*$/, '') + nl + nl + b + nl;
+  }
+  fs.writeFileSync(file, src);
+}
+/* уже посчитанные куски блока — чтобы пересчитывать только то, что просят,
+   и не гонять маршрутизатор по второму разу без нужды */
+function keepBlock(file, upTo) {
+  const src = fs.readFileSync(file, 'utf8');
+  const from = src.indexOf(MARK_A);
+  if (from < 0) return '';
+  const to = src.indexOf(MARK_B, from);
+  const inside = src.slice(from + MARK_A.length, to).replace(/\r\n/g, '\n');
+  const cut = inside.indexOf('const ' + upTo + '=');
+  return (cut >= 0 ? inside.slice(0, cut) : inside).replace(/^\n+/, '');
+}
+
 async function doFile(file) {
   const S = load(file);
   const { BASES, P, DAY_BASE } = S;
@@ -83,6 +293,17 @@ async function doFile(file) {
   if (!P || !BASES) { console.log('  нет данных маршрута — пропускаю'); return; }
 
   const days = [...new Set(P.filter(p => p.cat !== 'food').map(p => p.d))].sort((a, b) => a - b);
+
+  /* --steps: числа и линии между городами уже посчитаны, нужны только нитки
+     цепочки дня. Экономит сотни запросов к общему бесплатному серверу */
+  if (process.argv.indexOf('--steps') >= 0) {
+    const keep = keepBlock(file, 'ROADSTEPS');
+    if (!keep) { console.log('  дороги ещё не считались — прогоните без --steps'); return; }
+    const steps = await doSteps(S, days);
+    writeBlock(file, keep + (steps || ''));
+    console.log('  ✅ нитки цепочки дня записаны');
+    return;
+  }
   const out = [];
   let cells = 0, cmpN = 0, cmpSum = 0, cmpWorst = null, blanks = 0;
 
@@ -140,20 +361,19 @@ async function doFile(file) {
       + ' — посчитано');
   }
 
-  if (!out.length) { console.log('  считать нечего'); return; }
+  /* ── ЛИНИИ НА КАРТЕ ───────────────────────────────────────────────────
+     Её вопрос: «а почему прямые у нас до сих пор, я думала мы настоящий путь
+     рисуем». Линии в LINES нарисованы руками — по девять-одиннадцать опорных
+     точек, карта соединяет их отрезками, и на повороте у Карбондейла видно
+     угол. Просим маршрутизатор провести дорогу ЧЕРЕЗ эти же опорные точки:
+     они остаются подсказкой «каким путём», а нитка получается настоящая.
+     Перелёты и поезда сюда не берём: самолёт по шоссе не летает. */
+  const lines = await doLines(S, file);
+  const steps = await doSteps(S, days);
 
-  const block = MARK_A + '\nconst ROADS={\n' + out.join('\n') + '\n};\n' + MARK_B;
-  let src = fs.readFileSync(file, 'utf8');
-  const nl = src.includes('\r\n') ? '\r\n' : '\n';
-  const b = block.split('\n').join(nl);
-  const from = src.indexOf(MARK_A);
-  if (from >= 0) {
-    const to = src.indexOf(MARK_B, from);
-    src = src.slice(0, from) + b + src.slice(to + MARK_B.length);
-  } else {
-    src = src.replace(/\s*$/, '') + nl + nl + b + nl;
-  }
-  fs.writeFileSync(file, src);
+  if (!out.length && !lines && !steps) { console.log('  считать нечего'); return; }
+
+  writeBlock(file, 'const ROADS={\n' + out.join('\n') + '\n};\n' + (lines || '') + (steps || ''));
 
   console.log('  ✅ записано: ' + cells + ' пар с настоящей дорогой, ' + blanks + ' оставлены оценкой');
   if (cmpN) {

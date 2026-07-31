@@ -2490,6 +2490,81 @@ function buildElev(){
 
 /* ================= КАРТА — настоящая (Leaflet) ================= */
 let map=null,FULL=null,decoLayer=null,carMarker=null,carTimer=null;const markers={},baseMarkers={},lineLayers=[];
+/* ── НАСТОЯЩАЯ НИТКА ДОРОГИ ───────────────────────────────────────────────
+   Её вопрос: «а почему прямые у нас до сих пор, я думала мы настоящий путь
+   рисуем». Линии в LINES нарисованы руками по девяти-одиннадцати опорным
+   точкам — отсюда углы на поворотах. road-times.js проводит дорогу через эти
+   же опорные точки и кладёт её сюда упакованной строкой; перелёты и поезда
+   он не трогает, там прямая честнее. Нет нитки — рисуем как рисовали. */
+function decLine(s){
+  const out=[];let i=0,lat=0,lng=0;
+  while(i<s.length){
+    let b,sh=0,r=0;
+    do{b=s.charCodeAt(i++)-63;r|=(b&31)<<sh;sh+=5;}while(b>=32);
+    lat+=(r&1)?~(r>>1):(r>>1);
+    sh=0;r=0;
+    do{b=s.charCodeAt(i++)-63;r|=(b&31)<<sh;sh+=5;}while(b>=32);
+    lng+=(r&1)?~(r>>1):(r>>1);
+    out.push([lat/1e5,lng/1e5]);
+  }
+  return out;
+}
+function lineKeyOf(o){
+  return o.type+'|'+(o.days||[]).join(',')+'|'+o.pts[0][0].toFixed(3)+','+o.pts[0][1].toFixed(3);
+}
+function linePts(o){
+  try{
+    if(typeof ROADLINES==='object'&&ROADLINES){
+      const e=ROADLINES[lineKeyOf(o)];
+      if(e){const p=decLine(e);if(p.length>1)return p;}
+    }
+  }catch(e){}
+  return o.pts;
+}
+/* ── ПУТЬ ДНЯ НА КАРТЕ ────────────────────────────────────────────────────
+   «Автомобильные и пешеходные». В пеших городах линий по дням не было вовсе:
+   только перелёт и пины. Теперь день рисуется цепочкой — от жилья к первой
+   точке и дальше по порядку, по настоящим дорожкам. Собирается из кусков
+   между соседними точками, поэтому пересобирается сам, когда человек выключает
+   точку: линия к выключенной больше не ведёт. Куска нет (катер, поезд, чужой
+   транспорт) — рисуем прямую, как и раньше. */
+let chainLayer=null;
+function stepPts(a,b){
+  try{
+    if(typeof ROADSTEPS==='object'&&ROADSTEPS&&a.id&&b.id){
+      const e=ROADSTEPS[a.id+'>'+b.id];
+      if(e){const p=decLine(e);if(p.length>1)return p;}
+    }
+  }catch(e){}
+  return [[a.lat,a.lng],[b.lat,b.lng]];
+}
+function dayChain(tid){
+  const act=activeOpt(tid);
+  const list=P.filter(p=>p.d===tid&&p.cat!=='food'&&picked.has(p.id)
+    &&optOf(p)===act&&typeof p.lat==='number');
+  if(!list.length)return [];
+  const out=[];
+  const st=dayStart(tid);
+  if(st&&st.id)out.push(stepPts(st,list[0]));
+  for(let i=1;i<list.length;i++)out.push(stepPts(list[i-1],list[i]));
+  return out;
+}
+function drawChains(){
+  if(!map||typeof L==='undefined')return;
+  if(chainLayer){map.removeLayer(chainLayer);chainLayer=null;}
+  /* в общем виде на карте города, а не дни — цепочки там только мешают */
+  if(filter.mode!=='day'&&filter.mode!=='base')return;
+  chainLayer=L.layerGroup();
+  SCHED.forEach(e=>{
+    if(filter.mode==='day'?filter.v!==e.tid:filter.v!==e.base)return;
+    const col=DCOL[e.tid]||baseById(e.base).color;
+    dayChain(e.tid).forEach(seg=>{
+      L.polyline(seg,{color:'#fff',weight:6.5,opacity:.75,lineCap:'round',lineJoin:'round'}).addTo(chainLayer);
+      L.polyline(seg,{color:col,weight:3,opacity:.95,lineCap:'round',lineJoin:'round'}).addTo(chainLayer);
+    });
+  });
+  chainLayer.addTo(map);
+}
 /* машинка едет по маршруту (плавная интерполяция по точкам) */
 function startCarAnim(path){
   if(carTimer){clearInterval(carTimer);carTimer=null;}
@@ -2637,9 +2712,10 @@ function initMap(){
     const nLeg=legLines.length;const legColorMap=new Map();
     legLines.forEach((o,i)=>{legColorMap.set(o,routeColor(nLeg>1?i/(nLeg-1):0,nLeg));});
     function drawLine(o){const isLeg=o.type==='leg';const col=isLeg?(legColorMap.get(o)||ROUTE_MED):'#c9b4f2';const w=isLeg?4.5:2.6;
-      L.polyline(o.pts,{color:'#fff',weight:w+3,opacity:.85,dashArray:o.dash,lineCap:'round',lineJoin:'round'}).addTo(map);
-      const ln=L.polyline(o.pts,{color:col,weight:w,opacity:1,dashArray:o.dash,lineCap:'round',lineJoin:'round'}).addTo(map).bindTooltip(o.label,{sticky:true});
-      lineLayers.push({days:o.days,layer:ln});}
+      const pts=linePts(o);          /* настоящая нитка дороги, если посчитана */
+      L.polyline(pts,{color:'#fff',weight:w+3,opacity:.85,dashArray:o.dash,lineCap:'round',lineJoin:'round'}).addTo(map);
+      const ln=L.polyline(pts,{color:col,weight:w,opacity:1,dashArray:o.dash,lineCap:'round',lineJoin:'round'}).addTo(map).bindTooltip(o.label,{sticky:true});
+      lineLayers.push({days:o.days,type:o.type,layer:ln});}
     LN.forEach(drawLine);
     decoLayer=L.layerGroup();
     /* ── Оформление карты СТРОИТСЯ ИЗ ДАННЫХ, а не зашито под один маршрут ──
@@ -3105,8 +3181,12 @@ function applyFilter(){
     if(show){if(!map.hasLayer(markers[p.id]))markers[p.id].addTo(map);shownPts++;}
     else{if(map.hasLayer(markers[p.id]))map.removeLayer(markers[p.id]);}});
   // линии
-  if(map)lineLayers.forEach(l=>{const show=(filter.mode==='all')||(filter.mode==='day'&&l.days.indexOf(filter.v)>=0)||(filter.mode==='base'&&l.days.some(dn=>{const e=dayOf(dn);return e&&e.base===filter.v;}));
+  if(map)lineLayers.forEach(l=>{let show=(filter.mode==='all')||(filter.mode==='day'&&l.days.indexOf(filter.v)>=0)||(filter.mode==='base'&&l.days.some(dn=>{const e=dayOf(dn);return e&&e.base===filter.v;}));
+    /* набросок радиалки и выезда больше не нужен, когда у дня есть настоящая
+       цепочка: две линии об одном и том же путали бы больше, чем помогали */
+    if(show&&(l.type==='rad'||l.type==='trip')&&(l.days||[]).some(dn=>dayChain(tidOf(dn)).length))show=false;
     if(show){if(!map.hasLayer(l.layer))l.layer.addTo(map);}else{if(map.hasLayer(l.layer))map.removeLayer(l.layer);}});
+  drawChains();
   const cntEl=document.getElementById('cnt');if(cntEl)cntEl.textContent=map?shownPts:0;
   fitVisible();
   updateDirLinks();

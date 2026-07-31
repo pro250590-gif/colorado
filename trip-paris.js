@@ -149,4 +149,14 @@ const ROADS={
  3:{ids:["@par","ver","tri","eif"],km:[[null,null,null,4.8],[null,null,1.7,null],[null,1.7,null,null],[4.8,null,null,null]],min:[[null,null,null,65],[null,null,23,null],[null,23,null,null],[65,null,null,null]]},
  4:{ids:["@par","mon","pai"],km:[[null,4,2],[4,null,2.6],[2,2.6,null]],min:[[null,53,26],[53,null,35],[26,35,null]]},
 };
+const ROADSTEPS={
+ "sei>lat":"etdiHi_jMu@dDzIrHpE`NQjBnAv@[V",
+ "@par>lou":"okeiH{kjMeTl~@JvF`Bn@}BzJOjE",
+ "lou>sai":"uafiH}pgMNkExBsJzAf@fAcH|@XhGa_@~@]bKrG",
+ "sai>mar":"{_eiHkbiM}EsDjFuWmCaC`BmGa@]P{B}@_@`@mCw@y@OcGzAaLZgKxDkXwGyD^kCd@^",
+ "mar>ors":"maeiHg}lMe@_@_@jCvGxDaDvKeMj`Ah@bGiBxJfApBy@xIZNwDnU_D|`@eGnd@hFjF}CpO",
+ "ver>tri":"ye{hH{b}KsCu@wBd@sBhCqImEwHnEm@vQaKz`@cPtFPtA",
+ "@par>mon":"okeiH{kjM}GrXsJpIuBr@sA{@U|AkGiCo@zAqJvEg_@~LoHuAcKv@aT|Uw_@}JYcCsI|AaJcC@y@wB{AC}AkAS",
+ "mon>pai":"{dkiHeuhM`BOPkBs@gEfB@f@kNtBRdBgKtBDAcA|A[niAyaAfC{DmBuBp@kB",
+};
 /* ── конец дорог ── */
