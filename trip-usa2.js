@@ -47,10 +47,14 @@ const DAYS=[
 const P=[
  {id:'jfk',d:1,base:'nyc',cat:'transport',lat:40.6413,lng:-73.7781,nm:'John F. Kennedy International Airport (JFK)',q:'JFK Airport, New York',tag:['прилёт','t-easy'],
   why:'Сюда прилетаешь. AirTrain до станции Jamaica, дальше метро — около часа до Мидтауна.'},
- {id:'tsq',d:1,base:'nyc',cat:'town',lat:40.7580,lng:-73.9855,nm:'Times Square',q:'Times Square, New York',tag:['первый вечер','t-easy'],
-  why:'Не самое красивое место города, но вечером первого дня оно работает: свет, толпа, ощущение, что приехал.'},
+ /* СНАЧАЛА ХАЙ-ЛАЙН, ПОТОМ ТАЙМС-СКВЕР: из аэропорта человек въезжает с юга, и
+    парк на эстакаде оказывается по дороге. По-старому он сначала поднимался в
+    мидтаун, потом спускался обратно вниз и снова возвращался ночевать — 1,7
+    лишних километра. Таймс-сквер и без того «первый вечер»: ему конец дня */
  {id:'hig',d:1,base:'nyc',cat:'town',lat:40.7480,lng:-74.0048,nm:'The High Line',q:'The High Line, New York',tag:['вечер','t-easy'],star:1,
   why:'Парк на бывшей эстакаде железной дороги: два километра над улицами, вид на Гудзон.'},
+ {id:'tsq',d:1,base:'nyc',cat:'town',lat:40.7580,lng:-73.9855,nm:'Times Square',q:'Times Square, New York',tag:['первый вечер','t-easy'],
+  why:'Не самое красивое место города, но вечером первого дня оно работает: свет, толпа, ощущение, что приехал.'},
  {id:'cen',d:2,base:'nyc',cat:'nature',lat:40.7829,lng:-73.9654,nm:'Central Park',q:'Central Park, New York',tag:['утро','t-must'],star:1,
   why:'Заходи с юго-востока и иди наверх: пруд, Bethesda Terrace, лодки. На велосипеде парк проезжается за час.'},
  {id:'met',d:2,base:'nyc',cat:'town',lat:40.7794,lng:-73.9632,nm:'The Metropolitan Museum of Art',q:'Metropolitan Museum of Art, New York',tag:['нужен билет','t-must'],star:1,
@@ -196,7 +200,7 @@ const ROADLINES={
  "leg|8|34.052,-118.244":"czynEfmupU{BtDvOvNe_@tp@qAz@sCF]rAnZhW~m@xiA~MjKlP`DvBdBpAbGhAfVhEj_@e@fkDfKj{AxHtnEiAlVkNdgAgAlO^jHnBlItd@h_AdCrHnA~ILxIwEpjAkGfZy@jLX~zAjHdcArMj{@Vn^nDfZjVnvAzEvKv^df@~NzWxF|NnA`JcEdF`MjPnEqEbBlCqDnF~BxD}EnF_B}BmCvCg@q@jFuHh@eHsE{Nm@uQsJcUrn@uy@lZwd@l~@w`Cj`@u]~WyQtN{M`ClEtOsJaFiJzMeUlRgMjf@iVdDsFtBwIjCqDd]oWz^o`@bDuHtA_JFaiAfBmHlGiDhFd@rCzBnBtKfAnAtQh@nCnr@hAv@xJwA",
 };
 const ROADSTEPS={
- "tsq>hig":"opwwFlhqbM|j@d`@k@fBlBnAGxAkCnIrEzCO|@lG`EsEdO|AdA?dAk@fBRdGyAzEnJnGUv@|BxAYrB",
+ "hig>tsq":"{quwFbaubMXsB}ByATw@oJoGxA{ESeGj@gB?eA}AeArEeOmGaEN}@sE{CjCoIFyAmBoAj@gB}j@e`@",
  "@nyc>cen":"opwwFlhqbMyO}EaT_LeUeD{@_AwBp@kn@qa@T{@k@y@sIwG{BuEaD}@eFoNgD_EmAMsAmDqByA^wK",
  "cen>met":"{i|wFhlmbMhCmBz@uFfBmCb@iEfBqBzFbD",
  "met>mom":"et{wF~wlbM|rBjsAwCdJ",

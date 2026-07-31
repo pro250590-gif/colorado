@@ -120,7 +120,9 @@ function analyze(S) {
      все, а не два. «с 18:00» у аперитива на Навильи он не понимал — и предлагал
      закончить день не аперитивом, а портом, потому что до дома оттуда ближе. */
   const when = p => {
-    const m = (META[p.id] || {}).best || '';
+    /* время написано то в META.best, то первым словом в tag («до полудня»,
+       «первый вечер») — читаем оба, иначе рыбный рынок Цукидзи уезжал в день */
+    const m = ((META[p.id] || {}).best || '') + ' ' + ((p.tag && p.tag[0]) || '');
     if (/закат|вечер|аперитив|ужин|ночи|с\s*1[789][:.]|с\s*2[0-3][:.]|после\s*1[5-9]/i.test(m)) return 'вечер';
     if (/утр|рассвет|к открытию|до\s*(полудня|обеда|1[01]|[89])/i.test(m)) return 'утро';
     return '';
@@ -148,8 +150,16 @@ function analyze(S) {
        последним: порядок считается для настоящего дня, от порога до порога. */
     const home = homeOf(d);
     const post = (home && !isStop(pts[pts.length - 1])) ? [home] : [];
-    const asDay = arr => arr.concat(post);
-    const strip = arr => arr.filter(p => post.indexOf(p) < 0);
+    /* ⚠️ И НАЧИНАЕТСЯ ДЕНЬ ТОЖЕ НЕ ПЕРВОЙ ТОЧКОЙ — человек выходит из жилья.
+       Пока первая точка была прибита намертво, счётчик не мог предложить
+       очевидное: в Токио день начинался Сибуей, хотя святилище открывается на
+       рассвете, а перекрёсток хорош вечером. Теперь порог дня — это жильё, а
+       порядок точек между порогами считается целиком. В день приезда порог не
+       ставим: человек приходит из аэропорта, и аэропорт стоит первым сам. */
+    const prevHome = homeOf(d - 1) || home;
+    const pre = (prevHome && !isStop(pts[0])) ? [prevHome] : [];
+    const asDay = arr => pre.concat(arr, post);
+    const strip = arr => arr.filter(p => post.indexOf(p) < 0 && pre.indexOf(p) < 0);
     const nowFull = total(asDay(pts));
 
     /* ⚠️ ГЛАВНОЕ ПРАВИЛО, И ОНО ЕЁ: считать надо там, где мы сами за рулём или
@@ -161,13 +171,17 @@ function analyze(S) {
        внутри каждого куска — где человек идёт ногами или едет сам — порядок
        считается и улучшается. У куска закреплены оба конца: с чего он
        начинается (нас туда привезли) и чем кончается (оттуда нас увозят). */
-    const anchor = (p, i) => i > 0 && ((p.hop && RIDE.test(p.hop)) || p.when === 'fixed');
+    /* ЛЮБОЙ написанный руками hop — это анкер: автор объяснил, как попадают в
+       эту точку ИЗ ПРЕДЫДУЩЕЙ («10 минут по Cliff Palace Loop», «пешком от
+       Maroon Lake», «катер 45 минут»). Значит пара задана, и её не двигаем */
+    const anchor = (p, i) => i > 0 && (!!p.hop || p.when === 'fixed');
     const runs = [];
     pts.forEach((p, i) => { if (i === 0 || anchor(p, i)) runs.push([p]); else runs[runs.length - 1].push(p); });
     const hand = pts.filter((p, i) => anchor(p, i)).map(p => p.id);
 
-    const orderRun = (run, pinLast, tailExtra) => {
+    const orderRun = (run0, pinLast, tailExtra, headExtra) => {
       const extra = tailExtra || [];
+      const run = (headExtra || []).concat(run0);
       if (run.length + extra.length < 3) return run.slice();
       const rest = run.slice(1);
       const evening = rest.filter(p => when(p) === 'вечер');
@@ -180,11 +194,17 @@ function analyze(S) {
       /* мягкий: вечернее отпущено — принимаем, только если оно всё равно легло
          в хвост, а утреннее в начало («на закате» ≠ «последней точкой») */
       const B = improve(run.concat(extra), pinLast || extra.length > 0, 1);
-      const bodyB = B.filter(p => extra.indexOf(p) < 0);
+      /* «до полудня», «на рассвете», «первым утренним» — это не «где-то в первой
+         половине», а «туда идём первым делом»; «на закате», «с 18:00» — «этим
+         день заканчиваем». Мягкая проверка на трёх точках ничего не держала:
+         счётчик предлагал начать день садом, а рыбный рынок оставить на потом */
+      const bodyB = B.filter(p => extra.indexOf(p) < 0 && (headExtra || []).indexOf(p) < 0);
+      const nM = bodyB.filter(p => when(p) === 'утро').length;
+      const nE = bodyB.filter(p => when(p) === 'вечер').length;
       const okWhen = bodyB.every((p, i) => {
         const w = when(p);
-        if (w === 'вечер') return i >= Math.floor(bodyB.length * 0.6);
-        if (w === 'утро') return i <= Math.ceil(bodyB.length * 0.5);
+        if (w === 'утро') return i < nM;
+        if (w === 'вечер') return i >= bodyB.length - nE;
         return true;
       });
       return (okWhen && total(B) < total(A) - 1e-9) ? B : A;
@@ -194,10 +214,16 @@ function analyze(S) {
       const last = k === runs.length - 1;
       /* не последний кусок — из его конца нас увозят: там сесть на катер можно
          только с того причала, что стоит в данных, и его двигать нельзя */
-      return orderRun(run, !last || isStop(run[run.length - 1]), last ? post : []);
+      return orderRun(run, !last || isStop(run[run.length - 1]),
+        last ? post : [], k === 0 ? pre : []);
     });
     let best = [].concat.apply([], parts);
-    if (total(best) >= nowFull - 1e-9) best = null;
+    /* мелочь не предлагаем: сто метров на двухстах километрах — это шум счёта,
+       а не «человека гоняют туда-сюда». Порог: 300 метров или пять минут */
+    const gain = nowFull - total(best);
+    const gainMin = (mins(asDay(pts)) != null && mins(best) != null)
+      ? mins(asDay(pts)) - mins(best) : 0;
+    if (gain < 0.3 && gainMin < 5) best = null;
     const bestBody = best ? strip(best) : null;
     return { day: d, title, n: pts.length, now: nowFull, best: bestBody,
              fixed: hand.length ? hand : null,

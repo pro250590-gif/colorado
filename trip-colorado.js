@@ -58,10 +58,14 @@ const DAYS=[
 const P=[
  {id:'dro',d:1,base:'dur',cat:'transport',lat:37.1515,lng:-107.7538,nm:'Durango–La Plata County Airport (DRO)',q:'Durango-La Plata County Airport',tag:['прилёт','t-easy'],
   why:'Прилетаешь в аэропорт DRO. Забираешь машину — и за 25 минут в Дуранго. Прилетай засветло, чтобы спокойно заселиться.'},
- {id:'art',d:1,base:'dur',cat:'town',lat:37.2700,lng:-107.8790,nm:'Animas River Trail + Main Avenue',q:'Animas River Trail Durango',
-  why:'Первый вечер: набережная вдоль реки через весь город и исторический центр Дуранго.'},
+ /* ОЗЕРО РАНЬШЕ НАБЕРЕЖНОЙ: аэропорт юго-восточнее города, озеро юго-западнее,
+    центр севернее. По-старому человек ехал в центр, потом назад мимо города к
+    озеру и снова в центр ночевать — 4,5 лишних километра и два прохода по
+    одному месту. Теперь дорога идёт в одну сторону: аэропорт → озеро → центр */
  {id:'lnh',d:1,base:'dur',cat:'nature',lat:37.2350,lng:-107.9200,nm:'Lake Nighthorse',q:'Lake Nighthorse',tag:['если есть силы','t-easy'],
   why:'Если бодрая — закат на спокойном озере в 15 мин от города. Сап, купание.'},
+ {id:'art',d:1,base:'dur',cat:'town',lat:37.2700,lng:-107.8790,nm:'Animas River Trail + Main Avenue',q:'Animas River Trail Durango',
+  why:'Первый вечер: набережная вдоль реки через весь город и исторический центр Дуранго.'},
  {id:'trn',d:2,base:'dur',cat:'transport',lat:37.2740,lng:-107.8800,nm:'Durango & Silverton Narrow Gauge Railroad',q:'Durango & Silverton Narrow Gauge Railroad',tag:['ради этого едут','t-must'],star:1,when:'fixed',
   why:'Паровоз 1880-х, узкая колея, 72 км вдоль каньона Анимас по полке в скале на высоте 120 м. <b>Формат:</b> поезд туда + автобус обратно освобождает полдня. <b>Класс:</b> бери открытый вагон Rio Grande (~$144) для фото, садись слева по ходу.'},
  {id:'mvp',d:3,base:'dur',cat:'town',lat:37.3086,lng:-108.4187,nm:'Mesa Verde National Park',q:'Mesa Verde National Park',tag:['ЮНЕСКО','t-must'],star:1,
@@ -136,9 +140,9 @@ const P=[
   why:'Посёлок вдоль красной реки Crystal с замком угольного магната 1902 г. Кофе перед броском в Аспен.'},
  {id:'mrb',d:7,base:'asp',cat:'nature',lat:39.0975,lng:-106.9403,nm:'Maroon Bells + Maroon Lake',q:'Maroon Bells',tag:['открытка штата','t-must'],star:1,
   why:'Две бордовые пирамиды-четырнадцатитысячника в отражении озера. С 22 мая по 18 окт частные машины запрещены 08:00–17:00 — шаттл $16 или своя машина до 08:00 с бронью ($10). К рассвету — пустое зеркальное озеро.'},
- {id:'mls',d:7,base:'asp',cat:'nature',lat:39.0985,lng:-106.9370,nm:'Maroon Lake Scenic Trail',q:'Maroon Lake Scenic Trail',tag:['3 км · легко','t-easy'],
+ {id:'mls',d:7,base:'asp',cat:'nature',lat:39.0985,lng:-106.9370,hop:'пешком от Maroon Lake, тропа начинается у воды',nm:'Maroon Lake Scenic Trail',q:'Maroon Lake Scenic Trail',tag:['3 км · легко','t-easy'],
   why:'Петля вокруг озера и по осиновой роще. Подходит всем.'},
- {id:'crl',d:7,base:'asp',cat:'nature',lat:39.0742,lng:-106.9530,nm:'Crater Lake',q:'Crater Lake Trail Aspen',tag:['6 км · средне','t-hike'],
+ {id:'crl',d:7,base:'asp',cat:'nature',lat:39.0742,lng:-106.9530,hop:'та же тропа дальше вверх, 1 ч в одну сторону',nm:'Crater Lake',q:'Crater Lake Trail Aspen',tag:['6 км · средне','t-hike'],
   why:'Продолжение тропы вверх, к озеру под стенами Bells. Набор ~210 м.'},
  {id:'gon',d:7,base:'asp',cat:'town',lat:39.1878,lng:-106.8231,nm:'Silver Queen Gondola / Aspen Mountain',q:'Silver Queen Gondola Aspen',tag:['после обеда','t-easy'],
   why:'Гондола из центра Аспена на вершину 3 417 м, до 7 сентября, от $40. Панорама 360° без усилий.'},
@@ -384,8 +388,8 @@ const ROADLINES={
 };
 const ROADSTEPS={
  "@dur>dro":"siobFrimqSq@QkA`IaAdAdDtDh`@dJjK`@xCqC|EgQrMiGxL_MhEeCzWkBlZPh|Aue@nFuDzk@oo@xs@yk@~DsId@iGs@eIwMqWgDkDqO}G_HeLyKc{@LyTbHid@xAc^_@y`@kK}eA{A_^i@{_DdDyeCzKAbOgDvJvBBzi@tMOr]kLjGkGbAMrk@tDfCxDt@`HtBdAv\\qA@gFp@cBdOsDdl@lFdLkLf@{@BkEpBg@hKnG`CGnB~@`Ds@dB~DxUaIfG}@jOjAbGsBzChCndAAP~@dCx@bGxGxKThIpJ~AWbAqB",
- "dro>art":"g{waF~stpScApB_BViIqJyKUcGyGeCy@Q_AodA@{CiCcGrBkOkAgG|@yU`IeB_EaDr@oB_AaCFiKoGqBf@CjEg@z@eLjLel@mFeOrDq@bBAfFw\\pAuBeAu@aHgCyDsk@uDcALkGjGs]jLuMNC{i@wJwBcOfDmL@sCxeCVz_Dh@fQnMtrA^x`@yAb^cHhd@@`\\fHbj@hClKlH|JzMnFfDjDdMvWr@nFc@nI{DjIaq@`i@{k@lo@gLrHayAdd@if@JoNrB}CaG_H_FHwCk]{H{G~h@wEiA~BlA",
- "art>lnh":"ohnbFrbmqSpAXgFn`@pLxA|B_@dBcBnFeRrMiGxPaP`FqArV_AnNv@vBrB|@KfElMzEtGzA|\\a@zDhE~N~BnEfEjCzGjBhItMrArKpGxQ~CfUNhDgHjwBlBp^rFtWtFnNdKfPrCwE~@sGnAq@tAoErEeBrAcD~HuBbEoD`AkCNuDbBqB",
+ "dro>lnh":"g{waF~stpScApB_BViIqJyKUcGyGeCy@Q_AodA@{CiCcGrBkOkAgG|@yU`IeB_EaDr@oB_AaCFiKoGqBf@CjEg@z@eLjLel@mFeOrDq@bBAfFw\\pAuBeAu@aHgCyDsk@uDcALkGjGs]jLuMNC{i@wJwBcOfDmL@sCxeCVz_Dh@fQnMtrA^x`@yAb^cHhd@@`\\fHbj@`D~LtGjIzMnFfDjDdMvWr@nFMjFs@|D}CpFgu@~l@ug@nk@gFfE_{Ajf@uH~@DzBxARfElMzEtGzA|\\a@zDhE~N~BnEfEjCzGjBhItMrArKpGxQ~CfUNhDgHjwBlBp^rFtWtFnNdKfPrCwE~@sGnAq@tAoErEeBrAcD~HuBbEoD`AkCNuDbBqB",
+ "lnh>art":"wxfbFduvqScBpBOtDaAjCcEnD_ItBsAbDsEdBuAnEoAp@_ArGsCvEeKgPuFoNsFuWmBq^fHkwBOiD_DgUqGyQsAsKiIuM{GkBgEkC_CoEiE_O`@{D{A}\\{EuGgEmMyASE{BgQo@uV`AgFrA}CaG_H_FHwCk]{H{G~h@wEiA~BlA",
  "@dur>trn":"siobFrimqSdDt@ZgChAV",
  "@dur>mvp":"siobFrimqSq@QkA`IaAdAxBrCrg@tLvBzCHrGw@vEkJxM_AzEjE~g@{@ph@z@pXhBzMrDnQ|L|^^~HsBpK{]vo@ge@pXaD|CgCpFaA`Hj@pK`NjZt@tHk@rHkI`QiBjGmA~JHzHjD`NpGtF|y@bO~FdBvElFhCjM~B|SNxbCe@fOoDzJaRnPaHrKoE|NcBlVkB`Hsa@dk@mHd[kQ|RiH`LmjAtvCmh@hv@{o@dt@cW|QuGdIuCpJwEld@}Pxb@mDr^_CtFyQvTaM|ZyBjMoGnu@f@zp@xDze@zEb\\rCf~AhJ~zAbFn[InIkDjX}BpIoFfIgx@zx@iMbVyNt^uA~KKdIpB`ZtFf\\`PzYbC~HBdIcCzMeE|FyHzBiE]wTgHo[r@iHtDkLfNqUnc@}HtUqQjy@uEjo@FpU|BlU`EdJ~Wta@tZx~@|Fh[lB`^rA|_E|AdQpE~M`\\zu@jgBbaEnEnPzBz\\?jNwAdKkBxFyW~h@k`@noAq`@bdB}Gbd@yGbRvK~E`PuBxN`CjP`ZrJjHvBh@tQsGpOhFvE\\`@iAkDwHt@mF~@]b@t@u@hCVbCxI`HGxH^`Ap@]QiDx@cHlEeErA{CdFoDne@nEtIqHnCeEbOuB|EyGdB_ArEIpKtAtGnIzBt@bLcDBbDwAnENtAfCh@bEgCfChBDvBeExKaDbCaN~EgHvLcDjA}JdSeAVcAm@sAuGuAaByLsBq@oDjAoG",
  "mvp>clp":"qpubFxyvtSkAnGVjCpAbA`In@~A|@hAtBj@jEvAhA|Ag@dJuRbDkAfHwLtO_GpDgE`CuHEwBgCiBcEfCgCi@OuAvAoECcDxVi@bIjExYrExHrFnB~Ep@bHFvf@sAjImQ|UmUvc@uK`HyKzCw@pCB|NzAdBzBMnDyInF{CdN~Gf@qAwAsJRmApBoAvExBtCoEtAS`DnDvEjAbBkBx@wJ`E}HvCoAjCvAp@zCiAtK`C~Dx@nGhAp@~KGvA~ACpAmD~H{DvBs@xDb@fD~D~BpKEdArA[nBsGfEw@|AWbDv@|HsCjKeDbDw@tCRlEzGpHw@dJPhClA`BjFjBpRaBtGzF`Na@`ArAm@jBqGzBsBpH}@v@kEr@}E_AeDv@aQpLmDhFl@lFrLtHTvEhAlB~OzBdCnCi@~BmFzAsC~Dd@~B|J\\zA|BW~AqDzDNtKaDjLgDhEq@`EkBtCRrDvJbHvSfTn@zHjBrArYoD~J}D~`@xDrCbAtDlDbBhEMdEyE`G[zC~AlGdFpJlBfAp]bHfMlHjn@|GpG~BhZ`FnFQ|d@iJtMcFvLkO~JiHtGuI|i@ma@rl@gF~ToI`IaBjT{J|L_AnUiIzK?BgBr@}@z]nA|@{KzHqWbIsH`BaDBmPhBcD|DyBjLkAtKh@jNsB`Db@pOnJnD^tCyB",

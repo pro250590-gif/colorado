@@ -291,11 +291,13 @@ function checkRoute(file) {
     const S2 = { P: P, DAYS: DAYS, META: S.META || {} };
     order.analyze(S2).forEach(r => {
       if (!r.best) return;
-      const gain = r.now - r.bestLen;
-      if (gain > 0.3 && gain / r.now > 0.12)
-        warn('день ' + r.day + ' («' + r.title + '»): путь ' + order.fmt(r.now)
-          + ', а можно ' + order.fmt(r.bestLen) + ' — порядок ' + r.bestOrder.join(' → ')
-          + '. Проверьте по карте: для дней на машине прямая не равна дороге');
+      /* порог теперь внутри счётчика (300 м или пять минут), и мерит он по
+         настоящим дорогам — значит подсказка не шум, а «человека гоняют
+         туда-сюда». Такой день не выкладываем, пока не посмотрим глазами */
+      warn('день ' + r.day + ' («' + r.title + '»): путь ' + order.fmt(r.now)
+        + (r.nowMin ? ' · ' + r.nowMin + ' мин' : '') + ', а можно ' + order.fmt(r.bestLen)
+        + (r.bestMin ? ' · ' + r.bestMin + ' мин' : '') + ' — порядок ' + r.bestOrder.join(' → ')
+        + '. Человек не должен возвращаться туда, где уже был');
     });
   } catch (e) { warn('счётчик пути не отработал: ' + e.message); }
 

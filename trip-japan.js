@@ -51,12 +51,16 @@ const P=[
   why:'634 метра, самая высокая башня Японии. В ясный день с верхней площадки видно Фудзи.'},
  {id:'ued',d:2,base:'tok',cat:'nature',lat:35.7156,lng:139.7745,nm:'Ueno Park',q:'Ueno Park, Tokyo',tag:['по пути','t-easy'],
   why:'Парк с музеями и прудом в лотосах. В апреле здесь главная сакура города.'},
- {id:'sib',d:3,base:'tok',cat:'town',lat:35.6595,lng:139.7005,nm:'Shibuya Crossing',q:'Shibuya Crossing, Tokyo',tag:['вечер','t-must'],star:1,
-  why:'Самый людный перекрёсток мира: за одну зелёную волну его переходят до трёх тысяч человек. Смотреть лучше сверху, из окна кафе.'},
+ /* ДЕНЬ ИДЁТ В ОДНУ СТОРОНУ: святилище открывается с рассветом, Такэсита рядом
+    с ним, а перекрёсток хорош вечером — и он же ближе всех к дому. По-старому
+    день начинался перекрёстком, шёл на север к святилищу и возвращался назад
+    мимо него же: 700 лишних метров и восемь минут пешком по кругу */
  {id:'mei',d:3,base:'tok',cat:'town',lat:35.6764,lng:139.6993,nm:'Meiji Jingū',q:'Meiji Shrine, Tokyo',tag:['на рассвете','t-must'],star:1,
   why:'Синтоистское святилище в лесу из ста тысяч деревьев, посаженных вручную. Открывается с рассветом.'},
  {id:'har',d:3,base:'tok',cat:'town',lat:35.6702,lng:139.7027,nm:'Takeshita Street · Harajuku',q:'Takeshita Street, Tokyo',tag:['рядом','t-easy'],
   why:'Улица подростковой моды и сладостей в двух шагах от святилища — контраст, ради которого сюда и идут.'},
+ {id:'sib',d:3,base:'tok',cat:'town',lat:35.6595,lng:139.7005,nm:'Shibuya Crossing',q:'Shibuya Crossing, Tokyo',tag:['вечер','t-must'],star:1,
+  why:'Самый людный перекрёсток мира: за одну зелёную волну его переходят до трёх тысяч человек. Смотреть лучше сверху, из окна кафе.'},
  {id:'tsu',d:4,base:'tok',cat:'town',lat:35.6654,lng:139.7707,nm:'Tsukiji Outer Market',q:'Tsukiji Outer Market, Tokyo',tag:['до полудня','t-must'],star:1,
   why:'Внешний рынок остался на месте после переезда аукциона: тамаго на палочке, гребешки на гриле, ножи ручной ковки.'},
  {id:'ham',d:4,base:'tok',cat:'nature',lat:35.6597,lng:139.7626,nm:'Hamarikyū Gardens',q:'Hamarikyu Gardens, Tokyo',tag:['после рынка','t-easy'],
@@ -187,9 +191,9 @@ const ROADS={
 const ROADSTEPS={
  "sen>sky":"gp~xE__gtYq@FTsFsA{@LoAwAUjCgTfUeg@nAKDo@rFe@FyGy@wC",
  "sky>ued":"ur}xEoyitYd@b@GfB~@AG`I|BJz@zg@xChTgF|Mw@hPeRl_BJjB~@nAw@lAwAm@uCfHqEgBwAzDyBnB",
- "@tok>sib":"c_wxEimjsY?}ApBcBc@gAjDyFr@eFfEmHzJgHeAyF_@T`Ba@_@gEpEmEnA{E|FTjHewDrDoGnIyG|FuAnDcD\\`@zJcJtFuRn@KAiD",
- "sib>mei":"yvsxEcgtsYIxAJgBaT[{B_BeRcBo@^aNw@Um@qJa@aHiBEh@gBMm@pCwJZsA~DNfGu@B",
+ "@tok>mei":"c_wxEimjsY?}ApBcBc@gAjDyFr@eFfEmHzJgHwg@umCaKc[aFwJt@q@cEqHk@kB`@a@cHmO`LkI`SiKG}CzAuHvMKU_Lu@B",
  "mei>har":"e}vxEm`tsYt@COgGrA_EvJ[l@qCfBLDi@`HhBdGXeAmC",
+ "har>sib":"uyuxEmutsY`Cb@dA~C`Nv@n@_@dRbBzB~A`TZKfBHyA",
  "tsu>ham":"a|txEo}atYtAlB}@~@?xAfLfMdAfCHjD}@bGcAjBzAfBpC_DbFhDzD[`B`C",
  "ham>tok2":"cxsxEck`tY{BaAmFnGuKoJeCm@{L~A_EdEsBwCoBpBgOiN}CtDkDkDuA~@kDaCYp@a\\yQ_Di@}@b@kAtEkD_A",
  "@kyo>shk":"shutEyet{Xa@`s@yNN?r@uMN[f@iOG?`OwGh@a@fD",

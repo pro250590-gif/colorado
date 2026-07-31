@@ -42,12 +42,16 @@ const P=[
   why:'Остров, с которого начался город. Собор снова открыт после пожара; вечером у набережной тише всего.'},
  {id:'lat',d:1,base:'par',cat:'town',lat:48.8506,lng:2.3444,nm:'Quartier Latin',q:'Latin Quarter, Paris',tag:['вечер','t-easy'],
   why:'Узкие улицы напротив острова: студенческие кафе, книжные, недорогая еда. Хорошее место для первого ужина.'},
- {id:'lou',d:2,base:'par',cat:'town',lat:48.8606,lng:2.3376,nm:'Musée du Louvre',q:'Louvre Museum, Paris',tag:['нужен билет','t-must'],star:1,
-  why:'Самый большой музей мира. За один заход всё не обойти — выбери два крыла и не пытайся успеть остальное. Билет по времени, вторник закрыт.'},
+ /* ДЕНЬ ИДЁТ С ВОСТОКА НА ЗАПАД, а не туда-обратно. По-старому: Лувр, потом
+    назад на остров в Сент-Шапель, потом ещё дальше на восток в Марэ — и снова
+    через весь центр к Орсэ. Полтора километра и девятнадцать минут пешком на
+    возвраты. Теперь остров → Марэ → Лувр → Орсэ, одной линией вдоль реки */
  {id:'sai',d:2,base:'par',cat:'town',lat:48.8554,lng:2.3450,nm:'Sainte-Chapelle',q:'Sainte-Chapelle, Paris',tag:['витражи','t-must'],star:1,
   why:'Пятнадцать метров витражей XIII века в маленькой часовне. Иди в солнечный час — стены светятся насквозь.'},
  {id:'mar',d:2,base:'par',cat:'town',lat:48.8554,lng:2.3653,nm:'Le Marais · Place des Vosges',q:'Place des Vosges, Paris',tag:['квартал','t-easy'],
   why:'Старейшая площадь города и квартал вокруг: галереи, мастерские, лучшая уличная еда в Париже.'},
+ {id:'lou',d:2,base:'par',cat:'town',lat:48.8606,lng:2.3376,nm:'Musée du Louvre',q:'Louvre Museum, Paris',tag:['нужен билет','t-must'],star:1,
+  why:'Самый большой музей мира. За один заход всё не обойти — выбери два крыла и не пытайся успеть остальное. Билет по времени, вторник закрыт.'},
  {id:'ors',d:2,base:'par',cat:'town',lat:48.8600,lng:2.3266,nm:"Musée d'Orsay",q:'Musee d Orsay, Paris',tag:['если останутся силы','t-easy'],
   why:'Импрессионисты в здании вокзала. Меньше Лувра, и обойти можно за два часа — хороший вариант на вечер.'},
  {id:'ver',d:3,base:'par',cat:'town',lat:48.8049,lng:2.1204,nm:'Château de Versailles',q:'Chateau de Versailles',tag:['на весь день','t-must'],star:1,
@@ -151,10 +155,10 @@ const ROADS={
 };
 const ROADSTEPS={
  "sei>lat":"etdiHi_jMu@dDzIrHpE`NQjBnAv@[V",
- "@par>lou":"okeiH{kjMeTl~@JvF`Bn@}BzJOjE",
- "lou>sai":"uafiH}pgMNkExBsJzAf@fAcH|@XhGa_@~@]bKrG",
+ "@par>sai":"okeiH{kjMg@Uk@rEl@|Fh@RU`BbAl@iAxGNbBzJpI",
  "sai>mar":"{_eiHkbiM}EsDjFuWmCaC`BmGa@]P{B}@_@`@mCw@y@OcGzAaLZgKxDkXwGyD^kCd@^",
- "mar>ors":"maeiHg}lMe@_@_@jCvGxDaDvKeMj`Ah@bGiBxJfApBy@xIZNwDnU_D|`@eGnd@hFjF}CpO",
+ "mar>lou":"maeiHg}lMe@_@_@jCvGxDaDvK_MlaAwQlw@JvF`Bn@}BzJOjE",
+ "lou>ors":"uafiH}pgMIh@|Ad@qDzT|CxB}AlMdGnG}CpO",
  "ver>tri":"ye{hH{b}KsCu@wBd@sBhCqImEwHnEm@vQaKz`@cPtFPtA",
  "@par>mon":"okeiH{kjM}GrXsJpIuBr@sA{@U|AkGiCo@zAqJvEg_@~LoHuAcKv@aT|Uw_@}JYcCsI|AaJcC@y@wB{AC}AkAS",
  "mon>pai":"{dkiHeuhM`BOPkBs@gEfB@f@kNtBRdBgKtBDAcA|A[niAyaAfC{DmBuBp@kB",
