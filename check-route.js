@@ -35,6 +35,19 @@ const FAR_AIRPORT_KM = 25;
 const LEG_END_KM = 30;
 /* обычный темп дня: десять часов на ногах. Станет настройкой рядом с датой */
 const DAY_MINUTES = 600;
+/* «45 мин», «1 час», «1 ч 20 мин», «3,5 часа» — берём ПЕРВОЕ число подписи:
+   в «катер 45 мин быстрый, 2 ч обычный» первым стоит то, чем едут обычно */
+function parseMin(t) {
+  const s = String(t || '').toLowerCase().replace(/,(\d)/g, '.$1');
+  const re = /(\d+(?:\.\d+)?)\s*(ч(?:ас[а-я]*)?|мин[а-я]*)/g;
+  const m = re.exec(s);
+  if (!m) return /\bчас\b/.test(s) ? 60 : 0;
+  if (/^мин/.test(m[2])) return Math.round(parseFloat(m[1]));
+  let total = parseFloat(m[1]) * 60;
+  const m2 = /^\s*(\d+)\s*мин/.exec(s.slice(re.lastIndex));
+  if (m2) total += parseInt(m2[1], 10);
+  return Math.round(total);
+}
 
 function load(file) {
   const src = fs.readFileSync(file, 'utf8');
@@ -274,7 +287,10 @@ function checkRoute(file) {
      «9–10 точек в день» — плохая мерка, правильная мерка ВРЕМЯ. Складываем
      минуты на местах (META.min) и минуты в дороге (ROADS, посчитано по
      настоящим дорогам). Варианты не считаем — человек поедет либо туда, либо
-     сюда; переезды по расписанию (hop) тоже: их время написано словами. */
+     сюда. А вот переезды по расписанию СЧИТАЕМ: минуты берём из подписи автора
+     («катер 45 мин», «поезд с Cadorna, 1 час»), а где числа нет — прикидываем
+     по прямой с надбавкой. Её слова: «мы же знаем примерно, сколько идёт поезд
+     — как мы не учитываем, нам надо учитывать время». */
   if (P && DAYS) {
     const MET = S.META || {};
     const RD = S.ROADS || {};
@@ -292,7 +308,19 @@ function checkRoute(file) {
       pts.forEach((p, i) => {
         const m = (MET[p.id] || {}).min;
         if (typeof m === 'number') place += m;
-        if (p.hop) return;                       /* поезд, катер — время словами */
+        const before = i ? pts[i - 1] : (BASES.find(b => b.id === bid) || {});
+        if (p.hop) {                             /* поезд, катер, фуникулёр */
+          const said = parseMin(p.hop);
+          if (said) { move += said; return; }
+          if (typeof before.lat === 'number') {
+            const d = km(before.lat, before.lng, p.lat, p.lng) * 1.2;
+            const sp = /поезд|express|синкансэн|электрич/i.test(p.hop) ? 80
+              : /катер|паром|лодк/i.test(p.hop) ? 25
+              : /фуникул|канатн|подъёмник/i.test(p.hop) ? 12 : 50;
+            move += Math.max(5, Math.round(d / sp * 60)); guessed++;
+          }
+          return;
+        }
         const prev = i ? pts[i - 1].id : ('@' + bid);
         const r = roadMin(d.n, prev, p.id);
         if (r != null) move += r;

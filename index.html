@@ -3475,9 +3475,13 @@ function seqLabel(p){const n=seqOf(p),dn=dispOf(p.d);return n?(dn?dn+'.'+n:Strin
    настоящим дорогам, road-times.js). Считаем по той же цепочке, что рисуется
    на экране: от жилья к первой точке и дальше по порядку, только включённые
    точки и только та ветка вариантов, что идёт в счёт.
-   ⚠️ Что сюда НЕ входит и почему: переезды по расписанию (поезд, катер) —
-   их время написано руками в hop, числом мы его не знаем; и еда — она станет
-   частью цепочки следующим шагом. Поэтому строка честно говорит «без поезда». */
+   ⚠️ Переезды по расписанию (поезд, катер, фуникулёр) СЧИТАЕМ ТОЖЕ. Её слова:
+   «мы же знаем примерно, сколько идёт поезд — как мы не учитываем, нам надо
+   учитывать время». Минуты берём из подписи, которую написал автор («катер
+   45 мин», «поезд с Cadorna, 1 час»); если числа в подписи нет — прикидываем
+   по прямой с надбавкой и скоростью этого транспорта. Прикинутое помечаем
+   значком «≈» у всего дня, чтобы приблизительное не выдавалось за точное.
+   Еды в счёте пока нет — она станет частью цепочки следующим шагом. */
 const DAY_LIMIT=600;   /* обычный темп: десять часов на ногах. Станет настройкой */
 function stepMin(a,b){
   if(!a||!b||typeof a.lat!=='number'||typeof b.lat!=='number')return 0;
@@ -3490,22 +3494,47 @@ function stepMin(a,b){
   if(car)return Math.max(5,Math.round(d/(d>40?75:50)*60));
   return Math.max(5,Math.round(d/(transWord(a,b,mv)?20:25)*60));
 }
+/* «45 мин», «1 час», «1 ч 20 мин», «3,5 часа» — берём ПЕРВОЕ число подписи:
+   в «катер 45 мин быстрый, 2 ч обычный» первым стоит то, чем едут обычно */
+function parseMin(t){
+  const s=String(t||'').toLowerCase().replace(/,(\d)/g,'.$1');
+  const re=/(\d+(?:\.\d+)?)\s*(ч(?:ас[а-я]*)?|мин[а-я]*)/g;
+  const m=re.exec(s);
+  if(!m)return /\bчас\b/.test(s)?60:0;
+  if(/^мин/.test(m[2]))return Math.round(parseFloat(m[1]));
+  let total=parseFloat(m[1])*60;
+  const m2=/^\s*(\d+)\s*мин/.exec(s.slice(re.lastIndex));   /* «1 ч 20 мин» */
+  if(m2)total+=parseInt(m2[1],10);
+  return Math.round(total);
+}
+function rideMin(p,prev){
+  const t=p.hop||'';
+  const said=parseMin(t);
+  if(said)return {min:said,est:false};
+  if(prev&&typeof prev.lat==='number'&&typeof p.lat==='number'){
+    const d=kmBetween(prev.lat,prev.lng,p.lat,p.lng)*1.2;   /* прямая плюс двадцать процентов */
+    const sp=/поезд|express|синкансэн|электрич/i.test(t)?80
+            :/катер|паром|лодк/i.test(t)?25
+            :/фуникул|канатн|подъёмник/i.test(t)?12:50;
+    return {min:Math.max(5,Math.round(d/sp*60)),est:true};
+  }
+  return {min:0,est:true};
+}
 function dayMinutes(tid){
   const act=activeOpt(tid);
   const list=P.filter(p=>p.d===tid&&p.cat!=='food'&&picked.has(p.id)
     &&optOf(p)===act&&typeof p.lat==='number');
-  let place=0,move=0,ride=0;
+  let place=0,move=0,ride=0,rides=0,est=false;
   const st=dayStart(tid);
   list.forEach((p,i)=>{
     const m=(META[p.id]||p.meta||{}).min;
     if(typeof m==='number')place+=m;
     const prev=i?list[i-1]:(st&&st.id?st:null);
-    /* переезд по расписанию: время известно только словами — не считаем, но
-       и не молчим о нём */
-    if(p.hop){ride++;return;}
+    if(p.hop){const r=rideMin(p,prev);ride+=r.min;rides++;if(r.est)est=true;return;}
     if(prev)move+=stepMin(prev,p);
   });
-  return {place:place,move:move,total:place+move,ride:ride,n:list.length};
+  return {place:place,move:move,ride:ride,rides:rides,est:est,
+          total:place+move+ride,n:list.length};
 }
 function fmtHM(n){
   n=Math.round(n);
@@ -3518,7 +3547,7 @@ function dayBudgetHTML(tid){
   if(!b.n)return '';
   const over=b.total>DAY_LIMIT;
   return '<span class="dbud'+(over?' over':'')+'" data-bud="'+tid+'">'+ic('clock','i-sm')
-    +' '+fmtHM(b.total)+' из '+fmtHM(DAY_LIMIT)+'</span>';
+    +' '+(b.est?'≈':'')+fmtHM(b.total)+' из '+fmtHM(DAY_LIMIT)+'</span>';
 }
 function refreshBudgets(){
   document.querySelectorAll('[data-bud]').forEach(el=>{
@@ -3526,9 +3555,10 @@ function refreshBudgets(){
     if(!b.n){el.style.display='none';return;}
     el.style.display='';
     el.classList.toggle('over',b.total>DAY_LIMIT);
-    el.innerHTML=ic('clock','i-sm')+' '+fmtHM(b.total)+' из '+fmtHM(DAY_LIMIT);
+    el.innerHTML=ic('clock','i-sm')+' '+(b.est?'≈':'')+fmtHM(b.total)+' из '+fmtHM(DAY_LIMIT);
     el.title='на местах '+fmtHM(b.place)+' · в дороге '+fmtHM(b.move)
-      +(b.ride?' · плюс '+b.ride+' переезд'+(b.ride>1?'а':'')+' по расписанию':'');
+      +(b.rides?' · переезды по расписанию '+fmtHM(b.ride):'')
+      +(b.est?' (часть времени прикинута)':'');
   });
 }
 function refreshSeq(){
