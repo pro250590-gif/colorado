@@ -1771,6 +1771,12 @@ section h2.big{margin-bottom:4px}
 /* дата, которую придумали мы, — видно сразу и без чтения мелкого шрифта */
 .scsub.warn{color:#b0530c;font-weight:700}
 .startcard.guess{border-color:rgba(216,140,20,.5);background:#fffaf2}
+/* выбор темпа: три кнопки в одну строку, как степпер числа людей */
+.pacepick{display:flex;gap:6px;flex:none}
+.pbtn{border:1.5px solid #e0e2ee;background:#fff;color:#5c5872;border-radius:11px;padding:8px 11px;
+  font:800 12.5px/1 "Plus Jakarta Sans",sans-serif;cursor:pointer;transition:all .15s}
+.pbtn:hover{border-color:#c9c6e4}
+.pbtn.on{background:linear-gradient(150deg,#6b4fd8,#4b2fa8);border-color:transparent;color:#fff}
 .scdate{flex:none;border:1.5px solid rgba(91,63,196,.35);border-radius:12px;padding:10px 11px;font:700 13px/1 "Inter",sans-serif;background:linear-gradient(180deg,#fff,#f6f3ff);color:#1b1e2e}
 .scdate:focus{outline:2px solid rgba(91,63,196,.28);border-color:#5b3fc4}
 /* город вылета: та же «коробочка», что и у даты, чтобы читалось как поле */
@@ -1865,6 +1871,10 @@ section h2.big{margin-bottom:4px}
   <!-- Все три строки блока — одной формы и одной высоты: значок, название и
        поле справа. Просьба клиента: «чтобы визуально было красиво и равномерно». -->
   <div class="startcard"><span class="scmed"><svg class="i i-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg></span><span class="scin"><span class="sclbl">Сколько людей</span></span><span class="pstep"><button class="stepbtn" id="pMinus" aria-label="меньше человек">−</button><span class="pnum"><b id="pNum">2</b></span><button class="stepbtn" id="pPlus" aria-label="больше человек">+</button></span></div>
+  <!-- Темп поездки. Раньше «десять часов на ногах» было зашито в код, а темп у
+       всех разный: кто-то хочет успеть всё, кто-то не хочет вставать в семь.
+       Отсюда считается, что в день влезает и что помечается «если успеете». -->
+  <div class="startcard"><span class="scmed"><svg class="i i-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/></svg></span><span class="scin"><span class="sclbl">Темп поездки</span><span class="scsub" id="paceSub"></span></span><span class="pacepick" id="pacePick"></span></div>
   <!-- Порядок раздела (правка клиента): сразу после фотографии идут поля,
        которые человек заполняет, а заголовок со схемой маршрута — под ними -->
   <div class="eyebrow">Маршрут</div>
@@ -3537,7 +3547,17 @@ function seqLabel(p){const n=seqOf(p),dn=dispOf(p.d);return n?(dn?dn+'.'+n:Strin
    по прямой с надбавкой и скоростью этого транспорта. Прикинутое помечаем
    значком «≈» у всего дня, чтобы приблизительное не выдавалось за точное.
    Еды в счёте пока нет — она станет частью цепочки следующим шагом. */
-const DAY_LIMIT=600;   /* обычный темп: десять часов на ногах. Станет настройкой */
+/* ТЕМП ПОЕЗДКИ — сколько часов человек готов быть на ногах. Раньше десять
+   часов были зашиты в код; темп у всех разный, и от него зависит, что влезает
+   в день и что помечается «если успеете». Хранится вместе с датой и числом
+   людей, поэтому переживает перезагрузку. */
+/* ⚠️ имя PACES уже занято в анкете (спокойно/средне/насыщенно) — тут своё */
+const DAYPACES=[{k:'calm',h:8,nm:'спокойный',sub:'8 часов на ногах, без спешки'},
+                {k:'norm',h:10,nm:'обычный',sub:'10 часов — как ходит большинство'},
+                {k:'fast',h:12,nm:'плотный',sub:'12 часов, успеть максимум'}];
+let DAYPACE='norm';
+function paceH(){const p=DAYPACES.find(x=>x.k===DAYPACE)||DAYPACES[1];return p.h;}
+Object.defineProperty(window,'DAY_LIMIT',{get:function(){return paceH()*60;}});
 function stepMin(a,b){
   if(!a||!b||typeof a.lat!=='number'||typeof b.lat!=='number')return 0;
   const r=(a.id&&b.id)?roadMap().get(a.id+'>'+b.id):null;
@@ -5069,7 +5089,7 @@ function rerenderTrip(){
      к числам. Догружаем недостающее; если всё уже есть, функция сразу выходит. */
   loadWeather();
 }
-function loadPlan(){try{const s=JSON.parse(localStorage.getItem(PKEY));if(s){if(s.start)startIso=s.start;DATEACC=s.acc||'exact';if(typeof s.people==='number'&&s.people>=1)PEOPLE=s.people;/* >=0, а не >=1: ноль ночей — законное состояние, и с прежней проверкой
+function loadPlan(){try{const s=JSON.parse(localStorage.getItem(PKEY));if(s){if(s.start)startIso=s.start;if(s.pace&&DAYPACES.some(x=>x.k===s.pace))DAYPACE=s.pace;DATEACC=s.acc||'exact';if(typeof s.people==='number'&&s.people>=1)PEOPLE=s.people;/* >=0, а не >=1: ноль ночей — законное состояние, и с прежней проверкой
    сохранённый ноль отбрасывался, а город возвращал себе дни из данных */
   if(Array.isArray(s.nights))BASES.forEach((b,i)=>{if(typeof s.nights[i]==='number'&&s.nights[i]>=0)b.nights=s.nights[i];});if(s.hidden&&typeof s.hidden==='object')HIDDEN=s.hidden;
   if(s.moved&&typeof s.moved==='object')MOVED=s.moved;
@@ -5088,7 +5108,7 @@ function loadPlan(){try{const s=JSON.parse(localStorage.getItem(PKEY));if(s){if(
   applyCurDefaults();mergeCustom();applyMoves();}
 function savePlan(){try{localStorage.setItem(PKEY,JSON.stringify({start:startIso,people:PEOPLE,acc:DATEACC,
   nights:BASES.map(b=>b.nights),hidden:HIDDEN,moved:MOVED,custom:CUSTOM,cur:CUR,crate:CRATE,
-  temp:TEMP,dist:DIST,lang:LANG,asm:ASM,off:offIds(),car:CARMODE,custb:CUSTB}));}catch(e){}}
+  temp:TEMP,dist:DIST,lang:LANG,asm:ASM,off:offIds(),car:CARMODE,custb:CUSTB,pace:DAYPACE}));}catch(e){}}
 /* Если дату придумали мы — говорим это на самой странице, а не только всплывашкой
    при сборке: по такой дате человек может купить билет. Назвал свою — надпись
    исчезает сама. */
@@ -5145,6 +5165,21 @@ function buildFooter(){
   if(ct)ct.innerHTML='Нашли ошибку или есть вопрос — '+(SITE.email?'<a href="mailto:'+SITE.email+'">напишите нам</a>':'напишите нам')+'.';
   const cp=document.getElementById('footCopy');
   if(cp){const y=(new Date()).getFullYear();cp.innerHTML='© '+y+' · <b>'+SITE.brand+'</b>. Все права защищены.';}
+}
+/* три кнопки темпа рядом с датой и числом людей */
+function buildPace(){
+  const host=document.getElementById('pacePick');
+  if(!host)return;
+  host.innerHTML=DAYPACES.map(p=>'<button class="pbtn'+(p.k===DAYPACE?' on':'')+'" data-pace="'+p.k+'">'
+    +p.h+' ч</button>').join('');
+  const sub=document.getElementById('paceSub');
+  const cur=DAYPACES.find(x=>x.k===DAYPACE)||DAYPACES[1];
+  if(sub)sub.textContent=cur.nm+' · '+cur.sub;
+  host.querySelectorAll('[data-pace]').forEach(b=>b.addEventListener('click',()=>{
+    DAYPACE=b.dataset.pace;savePlan();buildPace();
+    /* день пересчитывается сразу: и часы, и то, что откладывается */
+    if(typeof refreshBudgets==='function')refreshBudgets();
+  }));
 }
 function buildPlanner(){
   const host=document.getElementById('planner');
@@ -7046,7 +7081,7 @@ const scMed=document.getElementById('scMedIcon');if(scMed)scMed.innerHTML=ic('ca
 const sd0=document.getElementById('startDate');if(sd0){sd0.value=startIso;sd0.addEventListener('change',e=>{startIso=e.target.value||START;DATEACC='exact';savePlan();syncDateAcc();rerenderTrip();});}
 buildSchedule();
 syncDateAcc();     /* и подпись под датой, и ссылка «Как мы собрали» — она живёт в плане */
-renderUnits();buildRoute();buildElev();buildFilters();buildDays();buildCities();buildFood();buildBases();buildPlanner();wireButtons();wireBudget();buildBudgetStay();
+renderUnits();buildRoute();buildElev();buildFilters();buildDays();buildCities();buildFood();buildBases();buildPlanner();buildPace();wireButtons();wireBudget();buildBudgetStay();
 syncFromBtn();   /* иначе при первой загрузке на кнопке города остаётся прочерк */
 /* линия маршрута считается от ширины экрана и ширины подписей — пересобираем после ресайза и загрузки шрифтов */
 let _rrt;addEventListener('resize',()=>{clearTimeout(_rrt);_rrt=setTimeout(()=>{buildRoute();fitHeroTitle();},160);});
