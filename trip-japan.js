@@ -95,8 +95,8 @@ const FOODCITIES=[
   ]},
  {city:'Киото',base:'kyo',q:'Kyoto, Japan',lat:35.0116,lng:135.7681,
   spots:[
-   {nm:'Nishiki Market',meal:'обед',price:'¥¥',veg:'вег ok',why:'рыночная еда на любой вкус'},
-   {nm:'Omen Kodaiji',meal:'ужин',price:'¥¥',veg:'вег ok',why:'удон ручной работы рядом с Гионом'},
+   {nm:'Nishiki Market',lat:35.00615,lng:135.76703,meal:'обед',price:'¥¥',veg:'вег ok',why:'рыночная еда на любой вкус'},
+   {nm:'Omen Kodaiji',lat:35.00176,lng:135.77986,meal:'ужин',price:'¥¥',veg:'вег ok',why:'удон ручной работы рядом с Гионом'},
    {nm:'% Arabica Kyoto Higashiyama',meal:'кофе',price:'¥¥',veg:'вег ok',why:'кофе с видом на пагоду, очередь'}
   ]}
 ];

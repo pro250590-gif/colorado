@@ -82,6 +82,19 @@ function checkRoute(file) {
         ['best', 'tag'].forEach(k2 => { if (sp[k2]) bad(where + ': поле «' + k2 + '» движок не читает — нужно ' + (k2 === 'best' ? 'meal' : 'why')); });
       });
       if (c.base && !BASES.some(b => b.id === c.base)) bad('FOODCITIES[' + i + ']: base «' + c.base + '» — нет такого города в BASES');
+      /* Координаты заведений. Раньше их не было вовсе, и движок раскидывал еду
+         по кружку вокруг центра города — на карте это выглядело правдоподобно
+         и было выдумкой. Теперь координату ищет food-coords.js; чего он не
+         нашёл, то помечено примерным. Ругаемся, если не искали совсем. */
+      const spots = Array.isArray(c.spots) ? c.spots : [];
+      const noPt = spots.filter(sp => typeof sp.lat !== 'number');
+      if (spots.length && noPt.length === spots.length)
+        warn('FOODCITIES[' + i + '] («' + (c.city || '?') + '»): ни у одного заведения нет координат — '
+          + 'прогоните node food-coords.js ' + path.basename(file));
+      else if (noPt.length)
+        warn('FOODCITIES[' + i + '] («' + (c.city || '?') + '»): без координат ' + noPt.length + ' из '
+          + spots.length + ' (' + noPt.slice(0, 3).map(sp => sp.nm).join(', ')
+          + (noPt.length > 3 ? '…' : '') + ') — на карте они стоят у центра города и подписаны примерными');
     });
   }
 

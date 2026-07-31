@@ -87,14 +87,14 @@ const P=[
 const FOODCITIES=[
  {city:'Рейкьявик',base:'rey',q:'Reykjavik, Iceland',lat:64.1466,lng:-21.9426,
   spots:[
-   {nm:'Bæjarins Beztu Pylsur',meal:'перекус',price:'€',veg:'кое-что',why:'хот-дог-будка 1937 года, очередь всегда'},
-   {nm:'Messinn',meal:'ужин',price:'€€€',veg:'кое-что',why:'рыба на сковороде, брать столик заранее'},
-   {nm:'Brauð & Co',meal:'завтрак',price:'€€',veg:'вег ok',why:'пекарня с корицей на всю улицу'}
+   {nm:'Bæjarins Beztu Pylsur',lat:64.14759,lng:-21.93778,meal:'перекус',price:'€',veg:'кое-что',why:'хот-дог-будка 1937 года, очередь всегда'},
+   {nm:'Messinn',lat:64.14656,lng:-21.93783,meal:'ужин',price:'€€€',veg:'кое-что',why:'рыба на сковороде, брать столик заранее'},
+   {nm:'Brauð & Co',lat:64.14754,lng:-21.93765,meal:'завтрак',price:'€€',veg:'вег ok',why:'пекарня с корицей на всю улицу'}
   ]},
  {city:'Вик',base:'vik',q:'Vik i Myrdal, Iceland',lat:63.4187,lng:-19.0060,
   spots:[
-   {nm:'Suður-Vík',meal:'ужин',price:'€€€',veg:'вег ok',why:'единственный полноценный ресторан в посёлке'},
-   {nm:'Skool Beans',meal:'кофе',price:'€',veg:'вег ok',why:'кофейня в школьном автобусе'}
+   {nm:'Suður-Vík',lat:63.42229,lng:-19.00814,meal:'ужин',price:'€€€',veg:'вег ok',why:'единственный полноценный ресторан в посёлке'},
+   {nm:'Skool Beans',lat:63.42037,lng:-18.98066,meal:'кофе',price:'€',veg:'вег ok',why:'кофейня в школьном автобусе'}
   ]}
 ];
 

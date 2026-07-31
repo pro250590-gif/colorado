@@ -509,6 +509,8 @@ h2.big{font-size:clamp(26px,6.4vw,38px);margin:12px 4px 0}
 .mpop-eye{font:800 10px/1 'Plus Jakarta Sans','Inter',Segoe UI,sans-serif;letter-spacing:.14em;text-transform:uppercase}
 .mpop-nm{font-family:Fraunces,Georgia,serif;font-weight:600;font-size:17px;line-height:1.2;color:#1b1533;margin:6px 0 8px}
 .mpop-why{font-size:13px;line-height:1.5;color:#5c5872}
+/* координату заведения не нашли: точка у центра города, и мы это говорим */
+.mpop-apx{display:flex;align-items:center;gap:5px;margin-top:7px;font:700 11px/1.3 "Inter",sans-serif;color:#a8630a}
 .mpop-gm{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:13px;padding:12px;
   background:linear-gradient(150deg,#7c5cff,#5b3fc4);color:#fff!important;font-weight:800;font-size:13px;
   border-radius:12px;text-decoration:none;box-shadow:0 8px 18px -6px rgba(124,92,255,.6)}
@@ -1566,7 +1568,7 @@ header.hero h1 em{background:none!important;-webkit-background-clip:border-box!i
 .ftile .fimg{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 5px 8px rgba(90,60,180,.3))}
 .ftile .femoji{display:none;font-size:44px;line-height:1;filter:drop-shadow(0 5px 8px rgba(90,60,180,.32))}
 .ftile .ficon.noimg .femoji{display:block}
-.fmoreBtn{width:100%;border:1.5px solid rgba(91,63,196,.4);background:#fff;color:#5b3fc4;border-radius:13px;padding:12px;font:800 12.5px/1 "Plus Jakarta Sans",sans-serif;cursor:pointer;margin-bottom:11px;transition:background .2s}
+.fmoreBtn{width:100%;border:1.5px solid rgba(91,63,196,.4);background:#fff;color:#5b3fc4;border-radius:13px;padding:12px;display:flex;align-items:center;justify-content:center;gap:7px;font:800 12.5px/1 "Plus Jakarta Sans",sans-serif;cursor:pointer;margin-bottom:11px;transition:background .2s}
 .fmoreBtn:hover{background:#f6f3ff}
 @media(min-width:760px){.fgrid{grid-template-columns:repeat(3,1fr)}}
 .fcat{position:absolute;left:10px;top:10px;z-index:2;max-width:calc(100% - 66px);background:#fff;color:#5b3fc4;font:800 10px/1 "Plus Jakarta Sans",sans-serif;padding:5px 9px;border-radius:8px;letter-spacing:.02em;box-shadow:0 2px 6px rgba(90,60,180,.18);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -1580,6 +1582,8 @@ header.hero h1 em{background:none!important;-webkit-background-clip:border-box!i
 .fchip{font:700 10px/1 "Inter",sans-serif;padding:4px 8px;border-radius:7px}
 .fchip.pr{background:#efeafc;color:#5b3fc4}
 .fchip.vg{background:#eaf6ee;color:#2f7a4d}
+/* координату заведения не нашли — точка у центра города, и это видно */
+.fchip.apx{background:rgba(168,99,10,.12);color:#a8630a;display:inline-flex;align-items:center;gap:4px}
 .fgm{display:flex;align-items:center;justify-content:center;gap:8px;background:#fff;border:1.5px solid rgba(91,63,196,.4);border-radius:13px;padding:13px;font:800 12.5px/1 "Plus Jakarta Sans",sans-serif;color:#5b3fc4;text-decoration:none;margin-top:8px;box-shadow:0 4px 11px -6px rgba(90,60,180,.3)}
 .fgm svg{width:16px;height:16px;flex:none}
 .fgm:hover{background:#f6f3ff}
@@ -2093,9 +2097,17 @@ const ORD=['','первый','второй','третий','четвёртый',
 
 /* ЕДА — умная подборка знаковых мест по городам (проверено 2026; закрытые исключены) */
 
-/* генерируем точки-еду в P (координаты — кластер вокруг центра города) */
-FOODCITIES.forEach((c,ci)=>{c.spots.forEach((s,si)=>{const ang=si/c.spots.length*Math.PI*2,r=0.006;
-  P.push({id:'f_'+ci+'_'+si,fid:'f'+ci+'-'+si,d:0,base:c.base,cat:'food',lat:+(c.lat+r*Math.cos(ang)*0.7).toFixed(5),lng:+(c.lng+r*Math.sin(ang)).toFixed(5),nm:s.nm,q:s.nm+' '+c.q,why:s.why,meal:s.meal});});});
+/* Точки-еду складываем в P. Координата — настоящая, если её нашёл
+   food-coords.js по OpenStreetMap; не нашлась — ставим по кружку вокруг центра
+   города, КАК И РАНЬШЕ, но помечаем approx: такая точка честно подписана
+   «примерная», а не притворяется адресом заведения. */
+FOODCITIES.forEach((c,ci)=>{c.spots.forEach((s,si)=>{
+  const has=typeof s.lat==='number'&&typeof s.lng==='number';
+  const ang=si/c.spots.length*Math.PI*2,r=0.006;
+  P.push({id:'f_'+ci+'_'+si,fid:'f'+ci+'-'+si,d:0,base:c.base,cat:'food',
+    lat:has?s.lat:+(c.lat+r*Math.cos(ang)*0.7).toFixed(5),
+    lng:has?s.lng:+(c.lng+r*Math.sin(ang)).toFixed(5),
+    approx:has?0:1,nm:s.nm,q:s.nm+' '+c.q,why:s.why,meal:s.meal});});});
 
 /* линии маршрута: days = к каким дням относится */
 
@@ -2597,7 +2609,11 @@ function popupHTML(nm,q,why,label,color,photo,foodicon,plate){
           +'<div class="mpop-eye" style="color:#5b3fc4">Еда</div>'
           +'<div class="mpop-nm">'+nm+'</div>'
         +'</div></div>'
-      +'<div class="mpop-bd mpopB-bd">'+or+'<div class="mpop-why">'+why+'</div>'+gm+'</div></div>';
+      +'<div class="mpop-bd mpopB-bd">'+or+'<div class="mpop-why">'+why+'</div>'
+      /* точку заведения не нашли — она стоит у центра города, и на карте это
+         надо сказать прямо: иначе человек поедет по ней как по адресу */
+      +(plate==='approx'?'<div class="mpop-apx">'+ic('pin','i-sm')+' точка примерная — ищи по названию</div>':'')
+      +gm+'</div></div>';
   }
   /* нет фото — в плашке показываем иконку типа места, а не пустой фиолетовый прямоугольник */
   return '<div class="mpop">'
@@ -2662,7 +2678,7 @@ function makeMarker(p){
   /* жильё поднимаем над булавками дней: адрес часто геокодится в центр города, и капля
      оказывалась ровно под точками первого дня — клиент её там не нашла */
   markers[p.id]=L.marker([p.lat,p.lng],{icon:markerIcon(p),zIndexOffset:isStay(p)?900:0})
-    .bindPopup(popupHTML(p.nm,p.q,p.why,dn?('День '+dn):(CATS[p.cat]?CATS[p.cat].l:''),c,ph?pimg(p.id,'l'):null,p.cat==='food'?foodCat(p):null,p.custom?kindOf(p).ic:(CATS[p.cat]?CATS[p.cat].e:'pin')),
+    .bindPopup(popupHTML(p.nm,p.q,p.why,dn?('День '+dn):(CATS[p.cat]?CATS[p.cat].l:''),c,ph?pimg(p.id,'l'):null,p.cat==='food'?foodCat(p):null,(p.cat==='food'&&p.approx)?'approx':(p.custom?kindOf(p).ic:(CATS[p.cat]?CATS[p.cat].e:'pin'))),
       {autoPan:true,keepInView:false,autoPanPaddingTopLeft:L.point(12,66),autoPanPaddingBottomRight:L.point(12,14)});
   return markers[p.id];
 }
@@ -2674,7 +2690,7 @@ function updateMarkerStyles(){
     if(!mk){if(typeof p.lat==='number'&&typeof p.lng==='number')makeMarker(p);return;}
     mk.setIcon(markerIcon(p));
     const dn=dispOf(p.d),c=p.cat==='food'?'#c1462a':'#5b3fc4',ph=PHOTO[p.id];
-    if(mk.setPopupContent)mk.setPopupContent(popupHTML(p.nm,p.q,p.why,dn?('День '+dn):(CATS[p.cat]?CATS[p.cat].l:''),c,ph?pimg(p.id,'l'):null,p.cat==='food'?foodCat(p):null,p.custom?kindOf(p).ic:(CATS[p.cat]?CATS[p.cat].e:'pin')));
+    if(mk.setPopupContent)mk.setPopupContent(popupHTML(p.nm,p.q,p.why,dn?('День '+dn):(CATS[p.cat]?CATS[p.cat].l:''),c,ph?pimg(p.id,'l'):null,p.cat==='food'?foodCat(p):null,(p.cat==='food'&&p.approx)?'approx':(p.custom?kindOf(p).ic:(CATS[p.cat]?CATS[p.cat].e:'pin'))));
   });
   tripBases().forEach(b=>{const mk=baseMarkers[b.id];if(mk){const cnt=P.filter(x=>x.cat!=='food'&&x.base===b.id).length;mk.setIcon(cityIcon(b,cnt));}});
 }
@@ -3594,7 +3610,11 @@ function foodPriority(c){
 let foodTabsOpen=false;
 function buildFood(){
   const host=document.getElementById('foodGrid');
-  const MAXSHOW=9;
+  /* На экране — шесть лучших, остальные под кнопкой. Её слова: «шесть на
+     главной — это просто наши лучшие рекомендации, но в подборке их должно
+     быть больше». Кнопка раскрывает НАШУ подборку целиком и никуда не уводит;
+     ссылка на Google под ней — отдельная и про другое. */
+  const MAXSHOW=6;
   const cities=FOODCITIES.map((c,ci)=>({c,ci})).sort((a,b)=>foodPriority(b.c)-foodPriority(a.c));
   const activeCi=cities.length?cities[0].ci:0;
   host.innerHTML=
@@ -3615,10 +3635,15 @@ function buildFood(){
           +'<div class="fcbody"><div class="fcnm"><a href="'+gmSearch(s.nm+' '+c.q)+'" target="_blank" rel="noopener">'+s.nm+'</a></div>'
           +'<button class="orig" data-copy="'+esc0(s.nm+', '+c.q)+'" title="нажмите, чтобы скопировать">'+esc0(s.nm+', '+c.q)+'</button>'
           +'<div class="fcwhy">'+s.why+'</div>'
-          +'<div class="fcmeta"><span class="fchip pr">'+s.price+'</span></div></div></div>';
+          /* координата заведения ищется по OpenStreetMap; не нашлась — точка
+             стоит у центра города, и мы говорим об этом, а не делаем вид */
+          +'<div class="fcmeta"><span class="fchip pr">'+s.price+'</span>'
+          +(typeof s.lat==='number'?'':'<span class="fchip apx">'+ic('pin','i-sm')+' точка на карте примерная</span>')
+          +'</div></div></div>';
       }).join('');
       const more=order.length>MAXSHOW
-        ? '<button class="fmoreBtn" data-fmore="'+ci+'">Показать ещё '+(order.length-MAXSHOW)+'</button>' : '';
+        ? '<button class="fmoreBtn" data-fmore="'+ci+'">'+ic('food','i-sm')+' Все рестораны из нашей подборки — ещё '
+          +(order.length-MAXSHOW)+'</button>' : '';
       return '<div class="fcity'+(ci===activeCi?'':' hide')+'" data-fcity="'+ci+'"><div class="fgrid">'+cards+'</div>'+more
         +'<a class="fgm" href="'+gmSearch('restaurants '+c.q)+'" target="_blank" rel="noopener">'+ic('pin','i-sm')+'<span>Все рестораны — '+c.city+' на Google Maps</span></a></div>';
     }).join('');
