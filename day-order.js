@@ -85,7 +85,9 @@ function analyze(S) {
   const isStop = p => p.cat === 'transport';
   const days = [...new Set(P.filter(p => p.cat !== 'food').map(p => p.d))].sort((a, b) => a - b);
   return days.map(d => {
-    const pts = P.filter(p => p.d === d && p.cat !== 'food' && typeof p.lat === 'number');
+    /* места с opt — это ВАРИАНТЫ вместо дня, а не его продолжение. Считать по
+       ним длину прохода бессмысленно: человек поедет либо туда, либо сюда */
+    const pts = P.filter(p => p.d === d && p.cat !== 'food' && !p.opt && typeof p.lat === 'number');
     const title = (DAYS.find(x => x.n === d) || {}).title || '';
     if (pts.length < 3) return { day: d, title, n: pts.length, now: total(pts), best: null };
     const hand = pts.filter(p => p.hop && RIDE.test(p.hop)).map(p => p.id);

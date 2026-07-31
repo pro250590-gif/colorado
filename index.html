@@ -1519,6 +1519,9 @@ header.hero h1 em{background:none!important;-webkit-background-clip:border-box!i
    темнее, чтобы начало цепочки читалось с одного взгляда */
 .chop.cstart .hopin{color:#6a5aa8}
 .chop.cstart .hopin::before{border-left:2px solid #cdc2ee}
+/* развилка: дальше не продолжение дня, а другой день вместо этого */
+.chop.calt .hopin{color:#a1663a;font-weight:800;text-transform:uppercase;letter-spacing:.04em;font-size:10.5px}
+.chop.calt .hopin::before{border-left:2px dashed #e0c3a4;height:13px}
 /* номер точки внутри дня — такой же, как на булавке карты: 1, 2, 3 подряд */
 .pseq{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 4px;
   margin-right:7px;border-radius:999px;background:#efeaff;color:#5b3fc4;flex:none;vertical-align:2px;
@@ -3260,9 +3263,12 @@ function startText(st,b){
 }
 /* строку-промежуток рисуем всегда, даже пустой: когда человек выключит первую
    точку, подпись нужна следующей — пересчёт ищет готовую строку, а не создаёт */
+/* между веткой и веткой расстояния нет — там развилка */
+const OR_TEXT='или вместо этого';
 function hopHTML(a,b,st){
-  const t=st?startText(st,b):hopText(a,b);
-  return '<li class="chop'+(st?' cstart':'')+'"'+(t?'':' style="display:none"')+'>'
+  const alt=(a&&b&&optOf(a)!==optOf(b));
+  const t=alt?OR_TEXT:(st?startText(st,b):hopText(a,b));
+  return '<li class="chop'+(alt?' calt':(st?' cstart':''))+'"'+(t?'':' style="display:none"')+'>'
     +'<span class="hopin">'+t+'</span></li>';
 }
 /* после включения-выключения места подписи пересчитываем: путь идёт по тем
@@ -3282,9 +3288,12 @@ function refreshHops_(){
       const gap=li.previousElementSibling&&li.previousElementSibling.classList.contains('chop')
         ? li.previousElementSibling.querySelector('.hopin') : null;
       const on=picked.has(id)&&!li.classList.contains('hiddenrow');
-      if(gap){const t=on?(first?startText(st,p):hopText(prev,p)):'';
+      if(gap){
+        const alt=!first&&prev&&optOf(prev)!==optOf(p);
+        const t=!on?'':(alt?OR_TEXT:(first?startText(st,p):hopText(prev,p)));
         gap.textContent=t;gap.parentElement.style.display=t?'':'none';
-        gap.parentElement.classList.toggle('cstart',!!t&&first);}
+        gap.parentElement.classList.toggle('cstart',!!t&&first&&!alt);
+        gap.parentElement.classList.toggle('calt',!!t&&!!alt);}
       if(on){prev=p;first=false;}
     });
   });
@@ -3295,9 +3304,26 @@ function refreshHops_(){
    дня пронумерованы подряд, и тот же номер стоит на булавке: 5.1, 5.2, 5.3.
    Считаем только включённые: выключенная выпала из цепочки, и номера должны
    идти без дыр — иначе на карте «5.2» и «5.4» без «5.3» между ними. */
+/* ── ВАРИАНТЫ, А НЕ ПРОДОЛЖЕНИЕ ЦЕПОЧКИ ───────────────────────────────────
+   В дне Меса-Верде лежат «или озеро, или Пагоса, или Чимни-Рок». Они день не
+   продолжают, а ЗАМЕНЯЮТ: складывать их время нельзя, и расстояние между ними
+   рисовать нельзя — человек туда следом не поедет. Раньше это было сказано
+   только словами в описаниях, и счётчик дня насчитывал 31 час.
+   Поле opt у места = «это ветка вместо основной»; места без opt — основная
+   цепочка. В счёт идёт основная, а если человек выключил её целиком — первый
+   включённый вариант. */
+function optOf(p){return (p&&p.opt)||'';}
+function activeOpt(tid){
+  const list=P.filter(p=>p.d===tid&&p.cat!=='food');
+  if(list.some(p=>!optOf(p)&&picked.has(p.id)))return '';
+  const alt=list.find(p=>optOf(p)&&picked.has(p.id));
+  return alt?optOf(alt):'';
+}
 function seqOf(p){
   if(!p||p.cat==='food'||!picked.has(p.id))return 0;
-  return P.filter(x=>x.d===p.d&&x.cat!=='food'&&picked.has(x.id)).indexOf(p)+1;
+  const act=activeOpt(p.d);
+  if(optOf(p)!==act)return 0;              /* вариант в стороне — он не звено цепи */
+  return P.filter(x=>x.d===p.d&&x.cat!=='food'&&picked.has(x.id)&&optOf(x)===act).indexOf(p)+1;
 }
 function seqLabel(p){const n=seqOf(p),dn=dispOf(p.d);return n?(dn?dn+'.'+n:String(n)):'';}
 function refreshSeq(){
@@ -3350,7 +3376,10 @@ function buildBases(){
   }).join('');
 }
 function dirURL(dayN){
-  const sel=P.filter(p=>p.d===dayN&&picked.has(p.id));if(!sel.length)return null;
+  /* маршрут в Google Maps ведём только по той ветке, что идёт в счёт: вести
+     человека через все варианты сразу — это крюк, которого он не поедет */
+  const act=activeOpt(dayN);
+  const sel=P.filter(p=>p.d===dayN&&picked.has(p.id)&&optOf(p)===act);if(!sel.length)return null;
   if(sel.length===1)return gurl(sel[0].q);
   const o=encodeURIComponent(sel[0].q),dst=encodeURIComponent(sel[sel.length-1].q);
   const wp=sel.slice(1,-1).slice(0,8).map(p=>encodeURIComponent(p.q)).join('%7C');

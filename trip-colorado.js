@@ -73,12 +73,19 @@ const P=[
   why:'Самая азартная экскурсия парка: час, лестница 10 м, лаз в скале 45 см шириной, обратно подъём по стене. Боишься высоты или тесноты — не бери. Мест 35, билет $8.'},
  {id:'mtl',d:3,base:'dur',cat:'town',lat:37.1830,lng:-108.4640,nm:'Mesa Top Loop Road',q:'Mesa Top Loop Road',tag:['без билетов','t-easy'],
   why:'Если билетов нет — кольцевая дорога с площадками, откуда жилища видно с другого края каньона.'},
- {id:'vlc',d:3,base:'dur',cat:'nature',lat:37.3800,lng:-107.5600,nm:'Vallecito Lake',q:'Vallecito Lake',tag:['спокойный вариант','t-easy'],
-  why:'Если скальные города не хочется — большое тихое горное озеро в 40 мин. Сап, пикник.'},
- {id:'chr',d:3,base:'dur',cat:'town',lat:37.1900,lng:-107.3000,nm:'Chimney Rock National Monument',q:'Chimney Rock National Monument',tag:['вариант дня','t-easy'],
+ /* ВАРИАНТЫ ДНЯ, А НЕ ПРОДОЛЖЕНИЕ ЦЕПОЧКИ. Меса-Верде — на запад, эти — на
+    восток и на север, в один день с ней они не складываются. Раньше это было
+    сказано только словами в описаниях, и счётчик дня складывал всё подряд:
+    выходил день на 31 час. Поле opt — «это ветка вместо основной».
+    Чимни-Рок и Пагоса лежат на одной дороге на восток и как раз собираются в
+    один день вдвоём (2,5 ч + 3 ч + дорога), поэтому они одна ветка. Озеро —
+    другое направление, поэтому своя. */
+ {id:'chr',d:3,base:'dur',cat:'town',lat:37.1900,lng:-107.3000,opt:'east',nm:'Chimney Rock National Monument',q:'Chimney Rock National Monument',tag:['вариант дня','t-easy'],
   why:'Храм анасази на высокой меса с ориентацией на луну — тише и атмосфернее Меса-Верде.'},
- {id:'pag',d:3,base:'dur',cat:'springs',lat:37.2695,lng:-107.0098,nm:'The Springs Resort, Pagosa Springs',q:'The Springs Resort Pagosa Springs',tag:['вариант дня','t-easy'],
+ {id:'pag',d:3,base:'dur',cat:'springs',lat:37.2695,lng:-107.0098,opt:'east',nm:'The Springs Resort, Pagosa Springs',q:'The Springs Resort Pagosa Springs',tag:['вариант дня','t-easy'],
   why:'40+ горячих ванн террасами к реке, глубочайший геотермальный источник в мире. 1 ч на восток.'},
+ {id:'vlc',d:3,base:'dur',cat:'nature',lat:37.3800,lng:-107.5600,opt:'lake',nm:'Vallecito Lake',q:'Vallecito Lake',tag:['спокойный вариант','t-easy'],
+  why:'Если скальные города не хочется — большое тихое горное озеро в 40 мин. Сап, пикник.'},
  {id:'hav',d:4,base:'our',cat:'nature',lat:37.4680,lng:-107.7960,nm:'Haviland Lake',q:'Haviland Lake Colorado',
   why:'Первая остановка за Дуранго: тихое лесное озеро у трассы. Кофе перед подъёмом.'},
  {id:'cbp',d:4,base:'our',cat:'nature',lat:37.6390,lng:-107.7770,nm:'Coal Bank Pass',q:'Coal Bank Pass',
