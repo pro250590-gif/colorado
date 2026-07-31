@@ -141,65 +141,66 @@ function analyze(S) {
     const same = extra => Object.assign({ day: d, title, n: pts.length, best: null, byRoad,
       nowMin: mins(pts), bestMin: null, order: pts.map(p => p.id), bestOrder: null }, extra);
     if (pts.length < 3) return same({ now: total(pts) });
-    const now = total(pts);
-    /* ⚠️ РАНЬШЕ ВЕСЬ ДЕНЬ С ПОЕЗДОМ ИЛИ КАТЕРОМ ПРОПУСКАЛСЯ ЦЕЛИКОМ — и первый
-       день Милана не проверялся никогда, потому что в его начале поезд из
-       аэропорта. Ошибку в порядке точек нашла клиент, глазами, на карте.
-       Теперь замораживаем только НАЧАЛО до последнего расписанного переезда:
-       поезд и катер остаются на своих местах, а хвост дня, который человек
-       проходит ногами, считается как обычно. */
-    /* и то же самое про when:'fixed' — экскурсия по билету на 11:00 стоит там,
-       где стоит, даже если по карте её удобнее переставить */
-    const rideIdx = pts.map((p, i) => ((p.hop && RIDE.test(p.hop)) || p.when === 'fixed') ? i : -1)
-      .filter(i => i >= 0);
-    const hand = rideIdx.map(i => pts[i].id);
-    const fixLen = Math.max(1, rideIdx.length ? rideIdx[rideIdx.length - 1] + 1 : 1);
-    if (pts.length - fixLen < 3)
-      return same({ now, fixed: hand.length ? hand : null });
     /* ⚠️ ДЕНЬ НЕ ЗАКАНЧИВАЕТСЯ ПОСЛЕДНЕЙ ТОЧКОЙ: человек возвращается ночевать,
        а в день переезда доезжает до нового города. Пока этого не было в счёте,
        он предлагал закончить день в Марбле — тупиковой долине, из которой ещё
        двадцать километров назад до трассы. Поэтому подставляем город ночёвки
-       последним (и первым, если день начинается не с аэропорта): порядок
-       считается для настоящего дня, от порога до порога. */
+       последним: порядок считается для настоящего дня, от порога до порога. */
     const home = homeOf(d);
     const post = (home && !isStop(pts[pts.length - 1])) ? [home] : [];
-    const asDay = arr => arr.concat(post);          /* путь целиком, с возвращением */
+    const asDay = arr => arr.concat(post);
     const strip = arr => arr.filter(p => post.indexOf(p) < 0);
     const nowFull = total(asDay(pts));
 
-    const rest = pts.slice(fixLen);
-    const evening = rest.filter(p => when(p) === 'вечер');
-    const morning = rest.filter(p => when(p) === 'утро');
-    const free = rest.filter(p => evening.indexOf(p) < 0 && morning.indexOf(p) < 0);
-    const head = pts.slice(0, fixLen).concat(morning);
-    /* строгий вариант: вечернее держим в самом конце, как держали раньше */
-    const seqA = asDay(improve(head.concat(free),
-      isStop(free[free.length - 1] || pts[0]), head.length).concat(evening));
+    /* ⚠️ ГЛАВНОЕ ПРАВИЛО, И ОНО ЕЁ: считать надо там, где мы сами за рулём или
+       на ногах, и не считать там, где нас везут по расписанию. Раньше стояла
+       грубая заглушка «в дне есть поезд или катер — день не трогаем», и первый
+       день Милана не проверялся вообще из-за поезда из аэропорта.
+       Теперь день режется на КУСКИ по расписанным переездам: поезд, катер,
+       фуникулёр, экскурсия по билету на 11:00 остаются на своих местах, а
+       внутри каждого куска — где человек идёт ногами или едет сам — порядок
+       считается и улучшается. У куска закреплены оба конца: с чего он
+       начинается (нас туда привезли) и чем кончается (оттуда нас увозят). */
+    const anchor = (p, i) => i > 0 && ((p.hop && RIDE.test(p.hop)) || p.when === 'fixed');
+    const runs = [];
+    pts.forEach((p, i) => { if (i === 0 || anchor(p, i)) runs.push([p]); else runs[runs.length - 1].push(p); });
+    const hand = pts.filter((p, i) => anchor(p, i)).map(p => p.id);
 
-    /* ⚠️ ВТОРАЯ ПОЛОВИНА ТОЙ ЖЕ ОШИБКИ. «Закат» прибивал место к САМОМУ КОНЦУ
-       дня: Дарсену уносило за Навильи, любой перебор выходил длиннее — и
-       счётчик молчал, хотя в середине дня лежал лишний крюк. Но «на закате» —
-       это не «последней точкой», это «во второй половине». Поэтому считаем
-       ещё раз, отпустив вечерние места, и принимаем такой порядок, только если
-       они всё равно оказались в хвосте дня, а утренние — в начале. */
-    const seqB = improve(asDay(pts.slice(0, fixLen).concat(rest)),
-      post.length > 0 || isStop(rest[rest.length - 1] || pts[0]), fixLen);
-    const bodyB = strip(seqB);
-    const okWhen = bodyB.every((p, i) => {
-      const w = when(p);
-      if (w === 'вечер') return i >= Math.floor(bodyB.length * 0.6);
-      if (w === 'утро') return i <= Math.ceil(bodyB.length * 0.5);
-      return true;
+    const orderRun = (run, pinLast, tailExtra) => {
+      const extra = tailExtra || [];
+      if (run.length + extra.length < 3) return run.slice();
+      const rest = run.slice(1);
+      const evening = rest.filter(p => when(p) === 'вечер');
+      const morning = rest.filter(p => when(p) === 'утро');
+      const free = rest.filter(p => evening.indexOf(p) < 0 && morning.indexOf(p) < 0);
+      const head = [run[0]].concat(morning);
+      /* строгий: вечернее в самом конце куска, как держали раньше */
+      const A = improve(head.concat(free), pinLast && !evening.length && !extra.length,
+        head.length).concat(evening).concat(extra);
+      /* мягкий: вечернее отпущено — принимаем, только если оно всё равно легло
+         в хвост, а утреннее в начало («на закате» ≠ «последней точкой») */
+      const B = improve(run.concat(extra), pinLast || extra.length > 0, 1);
+      const bodyB = B.filter(p => extra.indexOf(p) < 0);
+      const okWhen = bodyB.every((p, i) => {
+        const w = when(p);
+        if (w === 'вечер') return i >= Math.floor(bodyB.length * 0.6);
+        if (w === 'утро') return i <= Math.ceil(bodyB.length * 0.5);
+        return true;
+      });
+      return (okWhen && total(B) < total(A) - 1e-9) ? B : A;
+    };
+
+    const parts = runs.map((run, k) => {
+      const last = k === runs.length - 1;
+      /* не последний кусок — из его конца нас увозят: там сесть на катер можно
+         только с того причала, что стоит в данных, и его двигать нельзя */
+      return orderRun(run, !last || isStop(run[run.length - 1]), last ? post : []);
     });
-
-    let best = seqA;
-    if (okWhen && total(seqB) < total(best) - 1e-9) best = seqB;
-    /* закат в конце дня может оказаться на другом краю города — тогда
-       «улучшение» выходит длиннее, и мы ничего не предлагаем */
+    let best = [].concat.apply([], parts);
     if (total(best) >= nowFull - 1e-9) best = null;
     const bestBody = best ? strip(best) : null;
     return { day: d, title, n: pts.length, now: nowFull, best: bestBody,
+             fixed: hand.length ? hand : null,
              bestLen: best ? total(best) : nowFull, roundTrip: post.length > 0,
              byRoad, nowMin: mins(asDay(pts)), bestMin: best ? mins(best) : null,
              order: pts.map(p => p.id), bestOrder: bestBody ? bestBody.map(p => p.id) : null };
@@ -227,9 +228,8 @@ if (require.main === module) {
     analyze(S).forEach(r => {
       sumNow += r.now; sumBest += (r.best ? r.bestLen : r.now);
       if (r.n < 3) return;
-      if (r.fixed) { console.log('  день ' + r.day + ' · ' + r.title + ': ' + fmt(r.now)
-        + '  (порядок задаёт расписание: ' + r.fixed.join(', ') + ')'); return; }
-      console.log('  день ' + r.day + ' · ' + r.title + (r.byRoad ? '  (по дорогам)' : '  (по прямой — дороги не посчитаны)'));
+      console.log('  день ' + r.day + ' · ' + r.title + (r.byRoad ? '  (по дорогам)' : '  (по прямой — дороги не посчитаны)')
+        + (r.fixed ? '  · по расписанию, с места не двигаем: ' + r.fixed.join(', ') : ''));
       console.log('     сейчас ' + fmt(r.now) + (r.nowMin ? ' · ' + r.nowMin + ' мин' : '') + '   ' + r.order.join(' → '));
       if (!r.best) console.log('     короче не выходит — порядок уже лучший');
       else console.log('     КОРОЧЕ ' + fmt(r.bestLen) + (r.bestMin ? ' · ' + r.bestMin + ' мин' : '')
