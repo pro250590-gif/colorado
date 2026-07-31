@@ -53,7 +53,7 @@ function load(file) {
   const src = fs.readFileSync(file, 'utf8');
   const S = {};
   const names = ['BASES','DAYS','DAY_BASE','P','FOODCITIES','LINES','TRIP_NAME','START','PHOTO',
-    'BPHOTO','IMGPREF','ALT','ORIGIN','AIRPORT','AIRPORTNM','AIRPORTWAY','SEGMENT','TRANSFER','BUDGET','HERO','META','ROADS'];
+    'BPHOTO','IMGPREF','ALT','ORIGIN','AIRPORT','AIRPORTNM','AIRPORTWAY','SEGMENT','TRANSFER','BUDGET','HERO','META','ROADS','CITYMOVE'];
   const grab = names.map(n => `S.${n}=typeof ${n}!=='undefined'?${n}:undefined;`).join('');
   new Function('S', 'with(S){' + src + ';' + grab + '}')(S);
   return S;
@@ -277,6 +277,40 @@ function checkRoute(file) {
       warn('дороги не посчитаны — все расстояния будут оценкой по прямой. Прогоните node road-times.js '
         + path.basename(file));
     } else {
+      /* ⚠️ ТОЧКА, ВЫПАВШАЯ ИЗ ДОРОЖНОЙ ТАБЛИЦЫ. Если у места в дне нет НИ ОДНОЙ
+         посчитанной дороги, а у соседей они есть — значит маршрутизатор не смог
+         посадить его на дорогу. Почти всегда это кривая координата: так нашлись
+         Grottos Trail и Devil's Punchbowl в четырёх километрах от шоссе (клиент
+         увидела на карте булавку в стороне от линии пути). */
+      const CM = S.CITYMOVE || {};
+      Object.keys(RD || {}).forEach(day => {
+        const t = RD[day];
+        if (!t || !t.ids || t.ids.length < 3) return;
+        /* если ВЕСЬ день без дорог — это не про координаты, а про то, что дороги
+           для дня не посчитались; про это скажет другая проверка */
+        const anyInDay = t.km.some((row, i) => row.some((v, j) => i !== j && v != null));
+        if (!anyInDay) return;
+        const foot = CM[(DAY_BASE || {})[day]] === 'metro_walk';
+        t.ids.forEach((id, i) => {
+          if (String(id).charAt(0) === '@') return;
+          if (t.km[i].some((v, j) => j !== i && v != null)) return;
+          const p = P.find(x => x.id === id);
+          /* автор сам объяснил, как сюда попадают (тропа, катер) — это не дырка */
+          if (!p || p.hop) return;
+          /* в пешем городе дальняя точка честно остаётся без пешей дороги */
+          if (foot) {
+            const near = t.ids.some((oid, j) => {
+              if (j === i || String(oid).charAt(0) === '@') return false;
+              const o = P.find(x => x.id === oid);
+              return o && typeof o.lat === 'number' && km(p.lat, p.lng, o.lat, o.lng) < 8;
+            });
+            if (!near) return;
+          }
+          warn('день ' + day + ': место «' + (p.nm || id) + '» выпало из дорожной таблицы — '
+            + 'маршрутизатор не нашёл к нему дороги, хотя к соседям нашёл. Проверьте координату: '
+            + 'скорее всего, точка стоит в стороне от проезжей части');
+        });
+      });
       const miss = withPts.filter(d => !RD[d] || !RD[d].ids || !RD[d].ids.length);
       if (miss.length) warn('дороги посчитаны не на все дни (нет для ' + miss.join(', ')
         + ') — там останется оценка. Прогоните node road-times.js ' + path.basename(file));
