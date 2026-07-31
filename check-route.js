@@ -304,36 +304,58 @@ function checkRoute(file) {
       const pts = P.filter(p => p.d === d.n && p.cat !== 'food' && !p.opt && typeof p.lat === 'number');
       if (pts.length < 2) return;
       const bid = (DAY_BASE || {})[d.n];
+      /* сколько занимает каждый перегон — считаем сразу, чтобы потом пройти день
+         с часами в руках и понять, куда попадает обед */
+      const bs = BASES.find(b => b.id === bid) || {};
+      /* день начинается в девять от жилья — но не в день прилёта: тогда первая
+         точка это аэропорт, и дорога от жилья к нему человеку не нужна */
+      const fromHome = pts[0].cat !== 'transport';
       let place = 0, move = 0, guessed = 0;
-      pts.forEach((p, i) => {
-        const m = (MET[p.id] || {}).min;
-        if (typeof m === 'number') place += m;
-        const before = i ? pts[i - 1] : (BASES.find(b => b.id === bid) || {});
+      const legs = pts.map((p, i) => {
+        const before = i ? pts[i - 1] : bs;
+        if (!i && !fromHome) return 0;
         if (p.hop) {                             /* поезд, катер, фуникулёр */
           const said = parseMin(p.hop);
-          if (said) { move += said; return; }
-          if (typeof before.lat === 'number') {
-            const d = km(before.lat, before.lng, p.lat, p.lng) * 1.2;
-            const sp = /поезд|express|синкансэн|электрич/i.test(p.hop) ? 80
-              : /катер|паром|лодк/i.test(p.hop) ? 25
-              : /фуникул|канатн|подъёмник/i.test(p.hop) ? 12 : 50;
-            move += Math.max(5, Math.round(d / sp * 60)); guessed++;
-          }
-          return;
+          if (said) return said;
+          if (typeof before.lat !== 'number') return 0;
+          const dd = km(before.lat, before.lng, p.lat, p.lng) * 1.2;
+          const sp = /поезд|express|синкансэн|электрич/i.test(p.hop) ? 80
+            : /катер|паром|лодк/i.test(p.hop) ? 25
+            : /фуникул|канатн|подъёмник/i.test(p.hop) ? 12 : 50;
+          guessed++;
+          return Math.max(5, Math.round(dd / sp * 60));
         }
-        const prev = i ? pts[i - 1].id : ('@' + bid);
-        const r = roadMin(d.n, prev, p.id);
-        if (r != null) move += r;
-        else {
-          const a = i ? pts[i - 1] : (BASES.find(b => b.id === bid) || {});
-          if (typeof a.lat === 'number') { move += Math.max(5, Math.round(km(a.lat, a.lng, p.lat, p.lng) * 1.25 / 40 * 60)); guessed++; }
-        }
+        const r = roadMin(d.n, i ? pts[i - 1].id : ('@' + bid), p.id);
+        if (r != null) return r;
+        if (typeof before.lat !== 'number') return 0;
+        guessed++;
+        return Math.max(5, Math.round(km(before.lat, before.lng, p.lat, p.lng) * 1.25 / 40 * 60));
       });
-      const total = place + move;
+      /* еда — часть дня. Идём по дню с часами в руках, как это делает страница:
+         обед случается, когда стрелка попадает в окно 12:00–15:00, ужин — в
+         19:00–21:00. Место выбирает движок, здесь важно только время. */
+      let clock = 9 * 60, food = 0;
+      const need = [{ from: 12 * 60, to: 15 * 60, min: 60 }, { from: 19 * 60, to: 21 * 60, min: 90 }];
+      pts.forEach((p, i) => {
+        need.forEach(ml => {
+          if (ml.done || clock < ml.from || clock > ml.to) return;
+          ml.done = 1; food += ml.min; clock += ml.min;
+        });
+        const dur = ((MET[p.id] || {}).min) || 0;
+        place += dur; move += legs[i];
+        clock += legs[i] + dur;
+      });
+      /* день кончился, а ужинное время только настало — ужин всё равно будет */
+      need.forEach(ml => {
+        if (ml.done) return;
+        const at = Math.max(clock, ml.from);
+        if (at <= ml.to) { food += ml.min; ml.done = 1; }
+      });
+      const total = place + move + food;
       if (total > DAY_MINUTES)
         warn('день ' + d.n + ' («' + (d.title || '') + '»): ' + Math.floor(total / 60) + ' ч ' + (total % 60)
           + ' мин из ' + (DAY_MINUTES / 60) + ' — не влезает. На местах ' + Math.floor(place / 60) + ' ч '
-          + (place % 60) + ' мин, в дороге ' + Math.floor(move / 60) + ' ч ' + (move % 60) + ' мин'
+          + (place % 60) + ' мин, в дороге ' + Math.floor(move / 60) + ' ч ' + (move % 60) + ' мин, еда ' + food + ' мин'
           + (guessed ? ' (' + guessed + ' перегон посчитан прикидкой)' : '')
           + '. Уберите лишнее или разнесите на два дня');
     });

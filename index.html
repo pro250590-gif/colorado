@@ -1477,6 +1477,17 @@ body.stale{padding-top:44px}
 }
 .cdtx{flex:1;min-width:0}
 .cdm{font:500 10.5px/1 "Inter",sans-serif;color:#8b8fa3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.01em}
+/* перерыв на еду — часть цепочки дня, а не отдельный список */
+.cmeal{display:block;padding:10px 12px!important;margin:2px 0 4px;border-radius:12px;
+  background:rgba(161,102,58,.07);border:1px dashed rgba(161,102,58,.35)!important}
+.cmtop{display:flex;align-items:center;gap:6px;font:800 10.5px/1.3 "Plus Jakarta Sans",sans-serif;
+  color:#a1663a;text-transform:uppercase;letter-spacing:.03em}
+.cmnm{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin-top:5px;
+  font:800 13.5px/1.3 "Plus Jakarta Sans",sans-serif;color:#1b1533}
+.cmnm a{color:inherit}
+.cmpr,.cmd{font:700 10.5px/1 "Inter",sans-serif;color:#8b7355;font-style:normal;
+  background:rgba(161,102,58,.12);padding:3px 7px;border-radius:6px}
+.cmwhy{display:block;margin-top:4px;font:400 12px/1.45 "Inter",sans-serif;color:#5c5872}
 /* сколько часов занимает день: главная мерка дня, а не число точек */
 .dbud{display:inline-flex;align-items:center;gap:4px;margin-left:7px;padding:2px 7px;border-radius:999px;
   background:rgba(91,63,196,.1);color:#5b3fc4;font:800 10px/1.4 "Plus Jakarta Sans",sans-serif;vertical-align:1px}
@@ -3533,14 +3544,99 @@ function dayMinutes(tid){
     if(p.hop){const r=rideMin(p,prev);ride+=r.min;rides++;if(r.est)est=true;return;}
     if(prev)move+=stepMin(prev,p);
   });
-  return {place:place,move:move,ride:ride,rides:rides,est:est,
-          total:place+move+ride,n:list.length};
+  /* еда — часть дня, а не довесок к нему: перерывы считаются наравне с местами */
+  let food=0,meals=0;
+  dayPlan(tid).forEach(it=>{if(it.kind==='meal'){food+=it.min;meals++;}});
+  return {place:place,move:move,ride:ride,rides:rides,food:food,meals:meals,est:est,
+          total:place+move+ride+food,n:list.length};
 }
 function fmtHM(n){
   n=Math.round(n);
   if(n<60)return n+' мин';
   const h=Math.floor(n/60),m=n%60;
   return h+' ч'+(m?' '+m+' мин':'');
+}
+/* ── ЕДА ВНУТРИ ДНЯ ───────────────────────────────────────────────────────
+   Её правило: еда должна стоять В ЦЕПОЧКЕ, а не отдельным списком, и не реже
+   двух раз в день. Значит день надо разложить по часам — старт в девять утра,
+   дальше время на местах и время в дороге, — и посмотреть, где стрелка
+   попадает в обеденное или ужинное окно. Туда и ставим перерыв.
+   🔑 Если следующая точка длинная, а окно к концу — кормим ДО неё: иначе
+   человек уходит на два часа в музей голодным. */
+const DAY_START=9*60;                       /* выходим в девять утра */
+const MEALS=[
+  {key:'обед', from:12*60, to:15*60, min:60},
+  {key:'ужин', from:19*60, to:21*60, min:90}
+];
+const LONG_PLACE=90;                        /* «длинная точка», ради которой едят заранее */
+function hhmm(m){const h=Math.floor(m/60)%24,x=Math.round(m)%60;return h+':'+(x<10?'0':'')+x;}
+/* заведение к перерыву: из нашей подборки, ближайшее к тому месту, где человек
+   в этот момент стоит. Дальше разумного крюка не тянем — лучше без названия */
+function pickSpot(at,meal,base,used){
+  if(typeof FOODCITIES==='undefined'||!at)return null;
+  const mv=moveOf(base),car=(mv==='car_all'||mv==='car_trips');
+  const lim=car?15:1.5;
+  let best=null;
+  FOODCITIES.forEach((c,ci)=>{(c.spots||[]).forEach((s,si)=>{
+    if(typeof s.lat!=='number')return;
+    if(used&&used[ci+'_'+si])return;   /* дважды в один день в одно место не ходят */
+    const d=kmBetween(at.lat,at.lng,s.lat,s.lng);
+    if(d>lim)return;
+    const fit=new RegExp(meal,'i').test(s.meal||'')?0:1;   /* обед к обеду */
+    const score=fit*10+d;
+    if(!best||score<best.score)best={score:score,d:d,s:s,ci:ci,si:si};
+  });});
+  return best;
+}
+/* день по часам: точки, переезды и перерывы на еду — одной лентой */
+function dayPlan(tid){
+  const act=activeOpt(tid);
+  const list=P.filter(p=>p.d===tid&&p.cat!=='food'&&picked.has(p.id)
+    &&optOf(p)===act&&typeof p.lat==='number');
+  const out=[];
+  if(!list.length)return out;
+  const st=dayStart(tid);
+  let clock=DAY_START,prev=(st&&st.id)?st:null,est=false;
+  const eaten={},used={};
+  list.forEach((p,i)=>{
+    /* дорога до точки */
+    let move=0;
+    if(p.hop){const r=rideMin(p,prev);move=r.min;if(r.est)est=true;}
+    else if(prev)move=stepMin(prev,p);
+    /* не пора ли поесть — решаем ДО того, как уйти в следующую точку */
+    const dur=((META[p.id]||p.meta||{}).min)||0;
+    MEALS.forEach(ml=>{
+      if(eaten[ml.key])return;
+      if(clock<ml.from||clock>ml.to)return;
+      /* выбираем промежуток, который ближе к середине окна: не «первый после
+         половины первого», а тот, где обед приходится вовремя. И кормим
+         заранее, если следующая точка длинная и окно за неё не дотянется */
+      const mid=(ml.from+ml.to)/2,after=clock+move+dur;
+      const mustNow=after>ml.to||(dur>=LONG_PLACE&&after>mid+ml.min);
+      if(!mustNow&&Math.abs(clock-mid)>Math.abs(after-mid))return;
+      const spot=pickSpot(prev||p,ml.key,p.base,used);
+      if(spot)used[spot.ci+'_'+spot.si]=1;
+      out.push({kind:'meal',meal:ml.key,at:clock,min:ml.min,spot:spot,near:prev||p});
+      eaten[ml.key]=1;clock+=ml.min;
+    });
+    clock+=move;
+    out.push({kind:'place',p:p,from:clock,to:clock+dur,move:move});
+    clock+=dur;
+    prev=p;                 /* следующий шаг считается от ЭТОЙ точки, а не от дома */
+  });
+  /* день кончился, а ужин так и не случился — ставим его в конце, если время
+     ещё ужинное */
+  MEALS.forEach(ml=>{
+    if(eaten[ml.key]||clock>ml.to+90)return;
+    const at=Math.max(clock,ml.from);
+    if(at>ml.to)return;
+    const last=list[list.length-1];
+    out.push({kind:'meal',meal:ml.key,at:at,min:ml.min,
+      spot:pickSpot(last,ml.key,last.base,used),near:last});
+    clock=at+ml.min;
+  });
+  out.est=est;out.end=clock;
+  return out;
 }
 function dayBudgetHTML(tid){
   const b=dayMinutes(tid);
@@ -3549,7 +3645,44 @@ function dayBudgetHTML(tid){
   return '<span class="dbud'+(over?' over':'')+'" data-bud="'+tid+'">'+ic('clock','i-sm')
     +' '+(b.est?'≈':'')+fmtHM(b.total)+' из '+fmtHM(DAY_LIMIT)+'</span>';
 }
+/* карточка перерыва прямо в цепочке: во сколько, где и почему именно здесь */
+function mealInner(it){
+  const s=it.spot&&it.spot.s;
+  const why=it.spot?('крюк '+(it.spot.d<0.1?'нет':fmtKm(it.spot.d))):'';
+  return '<span class="cmtop">'+ic('food','i-sm')+' Перерыв · '+it.meal+' · '+hhmm(it.at)
+      +' · '+fmtHM(it.min)+'</span>'
+    +(s?'<span class="cmnm"><a href="'+gurl(s.nm)+'" target="_blank" rel="noopener">'+s.nm+'</a>'
+        +'<i class="cmpr">'+s.price+'</i>'+(why?'<i class="cmd">'+why+'</i>':'')+'</span>'
+        +'<span class="cmwhy">'+s.why+'</span>'
+      :'<span class="cmwhy">В нашей подборке рядом ничего нет — время на еду заложено, место выбери на месте.</span>');
+}
+function refreshMeals(){
+  document.querySelectorAll('ul.cplaces,ul.stops').forEach(ul=>{
+    ul.querySelectorAll('li.cmeal').forEach(x=>x.remove());
+    const host=ul.closest('[data-day]');
+    if(!host)return;
+    const tid=tidOf(host.dataset.day);
+    const plan=dayPlan(tid);
+    plan.forEach((it,i)=>{
+      if(it.kind!=='meal')return;
+      const next=plan.slice(i+1).filter(x=>x.kind==='place')[0];
+      const row=document.createElement('li');
+      row.className='cmeal';
+      row.innerHTML=mealInner(it);
+      let anchor=next?ul.querySelector('li[data-pl="'+next.p.id+'"], li[data-id="'+next.p.id+'"]'):null;
+      /* перерыв случается ПОСЛЕ предыдущей точки, поэтому встаёт перед строкой
+         перехода к следующей, а не между переходом и точкой */
+      if(anchor&&anchor.previousElementSibling&&anchor.previousElementSibling.classList.contains('chop'))
+        anchor=anchor.previousElementSibling;
+      /* ужин в конце дня ставим в конец АКТИВНОЙ цепочки, а не под варианты:
+         иначе он оказывается ниже развилки «или вместо этого» */
+      if(!anchor)anchor=ul.querySelector('li.chop.calt');
+      if(anchor)ul.insertBefore(row,anchor);else ul.appendChild(row);
+    });
+  });
+}
 function refreshBudgets(){
+  refreshMeals();
   document.querySelectorAll('[data-bud]').forEach(el=>{
     const tid=tidOf(el.dataset.bud),b=dayMinutes(tid);
     if(!b.n){el.style.display='none';return;}
@@ -3558,6 +3691,7 @@ function refreshBudgets(){
     el.innerHTML=ic('clock','i-sm')+' '+(b.est?'≈':'')+fmtHM(b.total)+' из '+fmtHM(DAY_LIMIT);
     el.title='на местах '+fmtHM(b.place)+' · в дороге '+fmtHM(b.move)
       +(b.rides?' · переезды по расписанию '+fmtHM(b.ride):'')
+      +(b.meals?' · еда '+fmtHM(b.food):'')
       +(b.est?' (часть времени прикинута)':'');
   });
 }
