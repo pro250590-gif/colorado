@@ -1479,6 +1479,19 @@ body.stale{padding-top:44px}
 }
 .cdtx{flex:1;min-width:0}
 .cdm{font:500 10.5px/1 "Inter",sans-serif;color:#8b8fa3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.01em}
+/* планы дня: выбор одним нажатием вместо «или вместо этого» в ленте */
+.plans{display:flex;flex-wrap:wrap;gap:7px;margin:0 0 8px}
+.planbtn{display:flex;flex-direction:column;align-items:flex-start;gap:3px;border:1.5px solid #e0e2ee;
+  background:#fff;border-radius:12px;padding:8px 11px;cursor:pointer;text-align:left;transition:all .15s}
+.planbtn b{font:800 12.5px/1.2 "Plus Jakarta Sans",sans-serif;color:#1b1533}
+.planbtn i{font:600 10.5px/1 "Inter",sans-serif;color:#8b8fa3;font-style:normal}
+.planbtn:hover{border-color:#c9c6e4}
+.planbtn.on{background:linear-gradient(150deg,#6b4fd8,#4b2fa8);border-color:transparent}
+.planbtn.on b,.planbtn.on i{color:#fff}
+.plansub{margin:-2px 0 10px;font:400 12px/1.45 "Inter",sans-serif;color:#8b8fa3}
+.plansub:empty{display:none}
+/* точка чужого плана: её сейчас нет в дне */
+li.offplan{display:none!important}
 /* перерыв на еду — часть цепочки дня, а не отдельный список */
 .cmeal{display:block;padding:10px 12px!important;margin:2px 0 4px;border-radius:12px;
   background:rgba(161,102,58,.07);border:1px dashed rgba(161,102,58,.35)!important}
@@ -2650,15 +2663,7 @@ function drawChains(){
       L.polyline(seg,{color:'#fff',weight:6.5,opacity:.75,lineCap:'round',lineJoin:'round'}).addTo(chainLayer);
       L.polyline(seg,{color:col,weight:3,opacity:.95,lineCap:'round',lineJoin:'round'}).addTo(chainLayer);
     });
-    /* путь варианта — пунктиром и тёплым цветом: «или вместо этого» должно быть
-       видно и на карте, а не только в списке (её вопрос: почему у этих точек
-       нет дороги) */
-    altGroups(e.tid).forEach(g=>{
-      chainFor(e.tid,g).forEach(seg=>{
-        L.polyline(seg,{color:'#fff',weight:5.5,opacity:.6,lineCap:'round',lineJoin:'round'}).addTo(chainLayer);
-        L.polyline(seg,{color:'#c07a12',weight:2.6,opacity:.9,dashArray:'7,7',lineCap:'round',lineJoin:'round'}).addTo(chainLayer);
-      });
-    });
+    /* путь рисуем только выбранного плана: человек видит один день, а не три */
   });
   chainLayer.addTo(map);
 }
@@ -2932,6 +2937,10 @@ function customFoodVisible(p){
   return true;
 }
 function pinVisible(p){if(p.cat==='food')return foodVisible(p);
+  /* точка чужого плана дня на карте не нужна: выбран один план — одна линия.
+     Сравниваем без «optOf(p)&&»: иначе при выборе варианта основная цепочка
+     осталась бы на карте вместе с ним */
+  if(p.d&&optOf(p)!==activeOpt(p.d))return customFoodVisible(p);
   return (picked.has(p.id)&&matchesPrimary(p))||customFoodVisible(p);}
 let fopen=null;                       /* какой список сейчас раскрыт над картой */
 /* фото для карточки: берём первый снимок из точек дня */
@@ -3066,6 +3075,7 @@ function buildCities(){
         +'<span class="cgo">'+ic('chevron','i-sm')+'</span></summary>'
         +'<div class="cdaybody">'
         +(d&&d.leg?'<div class="cleg"><b>'+d.pill+'</b> '+convDist(d.leg)+'</div>':'')
+        +plansHTML(e.tid)
         +'<ul class="cplaces">'+list.map((p,pi)=>{const emo=p.star?'<span class="cstar">'+ic('star','i-sm')+'</span>':'';const on=picked.has(p.id);
           return hopHTML(pi?list[pi-1]:null,p,pi?null:st)
             +'<li class="'+(on?'':'off')+'" data-pl="'+p.id+'"><div class="cpl-row"><div class="cpl-main">'
@@ -3294,6 +3304,18 @@ function applyFilter(){
   updateDirLinks();
 }
 
+/* выбор плана дня: запоминаем и пересобираем день на месте */
+document.addEventListener('click',e=>{
+  const b=e.target.closest&&e.target.closest('[data-plan]');
+  if(!b)return;
+  e.preventDefault();
+  const [tid,key]=b.dataset.plan.split('|');
+  PLANPICK[tidOf(tid)]=key;
+  try{savePlan();}catch(x){}
+  refreshHops();      /* внутри: номера, часы, планы, скрытие чужих точек */
+  applyFilter();      /* карта: булавки и линия выбранного плана */
+});
+
 /* ================= СПИСОК ДНЕЙ ================= */
 const KEY='co-trip-2026-picks';let picked;
 picked=loadPicks();
@@ -3515,7 +3537,9 @@ function refreshHops_(){
       const p=P.find(x=>x.id===id);if(!p)return;
       const gap=li.previousElementSibling&&li.previousElementSibling.classList.contains('chop')
         ? li.previousElementSibling.querySelector('.hopin') : null;
-      const on=picked.has(id)&&!li.classList.contains('hiddenrow');
+      /* точка чужого плана в цепочке не участвует вовсе: её нет на экране */
+      const offplan=optOf(p)!==activeOpt(p.d);
+      const on=picked.has(id)&&!li.classList.contains('hiddenrow')&&!offplan;
       if(gap){
         const alt=!first&&prev&&optOf(prev)!==optOf(p);
         const t=!on?'':(alt?OR_TEXT:(first?startText(st,p):hopText(prev,p)));
@@ -3564,8 +3588,31 @@ function roleOf(p){
   if(p.cat==='transport'||p.hop||whenOf(p)==='fixed')return 'дорога';
   return 'смотрим';
 }
+/* ── ПЛАНЫ ДНЯ ────────────────────────────────────────────────────────────
+   Её правка: «варианты ещё и ещё — непонятно, мы путаем клиента». Верно: три
+   куска, склеенные через «или вместо этого», человек читает как продолжение.
+   Это не хвост дня, а НЕСКОЛЬКО РАЗНЫХ ДНЕЙ, из которых выбирают один.
+   Теперь выбор — действие: кнопки под заголовком дня. Выбранный план и есть
+   день: его цепочка, его номера, его линия на карте, его часы. */
+let PLANPICK={};
+function dayPlans(tid){
+  const list=P.filter(p=>p.d===tid&&p.cat!=='food');
+  const keys=[];
+  list.forEach(p=>{const k=optOf(p);if(keys.indexOf(k)<0)keys.push(k);});
+  const meta=(typeof OPTS!=='undefined'&&OPTS)?OPTS:{};
+  const e=SCHED_BY[tid];
+  return keys.map(k=>({
+    key:k,
+    nm:k?((meta[k]&&meta[k].nm)||(list.find(p=>optOf(p)===k)||{}).nm||'вариант'):(e?dayTitle(e):'основной план'),
+    sub:k?((meta[k]&&meta[k].sub)||''):'',
+    rank:k?((meta[k]&&meta[k].rank)||9):0
+  })).sort((a,b)=>a.rank-b.rank);
+}
 function activeOpt(tid){
   const list=P.filter(p=>p.d===tid&&p.cat!=='food');
+  /* выбор человека главнее всего — если в выбранном плане ещё есть точки */
+  const want=PLANPICK[tid];
+  if(want!==undefined&&list.some(p=>optOf(p)===want&&picked.has(p.id)))return want;
   if(list.some(p=>!optOf(p)&&picked.has(p.id)))return '';
   const alt=list.find(p=>optOf(p)&&picked.has(p.id));
   return alt?optOf(alt):'';
@@ -3578,10 +3625,9 @@ function isAlt(p){return !!(p&&optOf(p)&&optOf(p)!==activeOpt(p.d));}
    не было вовсе, и на карте они выглядели сломанными точками. */
 function seqOf(p){
   if(!p||p.cat==='food'||!picked.has(p.id))return 0;
-  /* номер сквозной по всему дню, включая варианты: два разных места с номером
-     «3.1» на одной карте путали бы сильнее, чем отсутствие номера. Что это
-     вариант, а не продолжение, видно по цвету булавки и пунктиру пути */
-  return P.filter(x=>x.d===p.d&&x.cat!=='food'&&picked.has(x.id)).indexOf(p)+1;
+  const act=activeOpt(p.d);
+  if(optOf(p)!==act)return 0;      /* другой план — его сейчас нет на экране */
+  return P.filter(x=>x.d===p.d&&x.cat!=='food'&&picked.has(x.id)&&optOf(x)===act).indexOf(p)+1;
 }
 function seqLabel(p){const n=seqOf(p),dn=dispOf(p.d);return n?(dn?dn+'.'+n:String(n)):'';}
 
@@ -3768,6 +3814,12 @@ function chainMinutes(tid,skip){
     if(at<=ml.to){eaten[ml.key]=1;clock+=ml.min;}});
   return clock-DAY_START;
 }
+function planMinutes(tid,key){
+  const save=PLANPICK[tid];PLANPICK[tid]=key;
+  const m=chainMinutes(tid,{});
+  if(save===undefined)delete PLANPICK[tid];else PLANPICK[tid]=save;
+  return m;
+}
 function squeezed(tid){
   if(SQZ[tid])return SQZ[tid];
   const skip={};
@@ -3790,8 +3842,15 @@ function squeezed(tid){
       return {p:p,rank:pr==='spare'?0:1,saved:saved};
     }).filter(Boolean);
     if(!cand.length)break;
-    cand.sort((a,b)=>(a.rank-b.rank)||(b.saved-a.saved));
-    skip[cand[0].p.id]=1;
+    /* среди одинаково неважных берём ту, после которой день ВПЕРВЫЕ влезает,
+       и с наименьшей потерей: выкидывать три часа ради двадцати минут перебора
+       — плохой размен. Если не влезает ни с одной, убираем самую дорогую */
+    const now=chainMinutes(tid,skip);
+    const minRank=Math.min.apply(null,cand.map(c=>c.rank));
+    const same=cand.filter(c=>c.rank===minRank);
+    const fits=same.filter(c=>now-c.saved<=DAY_LIMIT).sort((a,b)=>a.saved-b.saved);
+    const pick=fits.length?fits[0]:same.sort((a,b)=>b.saved-a.saved)[0];
+    skip[pick.p.id]=1;
   }
   SQZ[tid]=skip;
   return skip;
@@ -3905,9 +3964,40 @@ function refreshMeals(){
     });
   });
 }
+/* кнопки планов дня: имя, часы, подпись «зачем». Нажатие пересобирает день */
+function plansHTML(tid){
+  const pl=dayPlans(tid);
+  if(pl.length<2)return '';
+  return '<div class="plans" data-plans="'+tid+'">'
+    +pl.map(p=>'<button class="planbtn" data-plan="'+tid+'|'+p.key+'" title="'+esc0(p.sub||'')+'">'
+      +'<b>'+p.nm+'</b><i></i></button>').join('')
+    +'</div><div class="plansub" data-plansub="'+tid+'"></div>';
+}
+function refreshPlans(){
+  document.querySelectorAll('[data-plans]').forEach(box=>{
+    const tid=tidOf(box.dataset.plans),act=activeOpt(tid);
+    box.querySelectorAll('[data-plan]').forEach(b=>{
+      const key=b.dataset.plan.split('|')[1];
+      b.classList.toggle('on',key===act);
+      const i=b.querySelector('i');
+      if(i)i.textContent=fmtHM(planMinutes(tid,key));
+    });
+    const sub=document.querySelector('[data-plansub="'+box.dataset.plans+'"]');
+    if(sub){const cur=dayPlans(tid).find(p=>p.key===act);
+      sub.textContent=(cur&&cur.sub)||'';}
+  });
+}
 function refreshBudgets(){
   for(const k in SQZ)delete SQZ[k];   /* набор точек изменился — считаем заново */
   refreshMeals();
+  refreshPlans();
+  /* точки чужого плана прячем совсем: выбран один план — один день на экране */
+  document.querySelectorAll('li[data-pl],li[data-id]').forEach(li=>{
+    const id=li.dataset.pl||li.dataset.id;
+    if(!id)return;
+    const p=P.find(x=>x.id===id);
+    li.classList.toggle('offplan',!!(p&&p.cat!=='food'&&optOf(p)!==activeOpt(p.d)));
+  });
   /* «если успеете»: точка остаётся на своём месте в цепочке, но в счёт дня не
      идёт — так человек видит и её, и то, что день без неё сходится */
   document.querySelectorAll('[data-later]').forEach(el=>{
@@ -3947,6 +4037,7 @@ function buildDays(){
       +'<span class="dcount">'+list.length+' '+plural(list.length,'точка','точки','точек')+'</span>'+'<span class="chev"><svg class="i i-sm" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9.5 18 6-6-6-6"/></svg></span></summary>'
       +'<div class="day-body">'
       +'<div class="leg"><span class="pill">'+d.pill+'</span> <b>'+convDist(d.leg)+'</b><a class="dirlink" href="#" data-dir="'+e.tid+'" target="_blank" rel="noopener">Маршрут в Google Maps →</a></div>'
+      +plansHTML(e.tid)
       +'<div class="daytools"><button class="tiny" data-dayon="'+e.tid+'">Отметить день</button><button class="tiny" data-dayoff="'+e.tid+'">Снять день</button></div>'
       +'<ul class="stops">'+list.map((p,pi)=>{const emo=p.star?'<span class="cemo star">'+ic('star','i-sm')+'</span>':'';
         return hopHTML(pi?list[pi-1]:null,p,pi?null:dayStart(e.tid))
@@ -4498,7 +4589,11 @@ window.__tripCheck=tripCheck;window.__parts=()=>PARTS;
 function prioOf(p){
   if(p.prio)return p.prio;
   if(p.star||(p.tag&&p.tag[1]==='t-must'))return 'must';
-  if(p.tag&&/если|по желанию|вариант|спокойн/i.test(p.tag[0]))return 'spare';
+  /* «вариант дня» и «спокойный вариант» в теге раньше делали точку
+     необязательной. Но это про ПЛАН («или вместо этого»), а не про важность:
+     человек выбрал этот план — значит точки в нём нужны. Важность теперь
+     только из явного «если …» */
+  if(p.tag&&/если|по желанию/i.test(p.tag[0]))return 'spare';
   return 'nice';
 }
 function whenOf(p){
@@ -5179,7 +5274,7 @@ function rerenderTrip(){
      к числам. Догружаем недостающее; если всё уже есть, функция сразу выходит. */
   loadWeather();
 }
-function loadPlan(){try{const s=JSON.parse(localStorage.getItem(PKEY));if(s){if(s.start)startIso=s.start;if(s.pace&&DAYPACES.some(x=>x.k===s.pace))DAYPACE=s.pace;DATEACC=s.acc||'exact';if(typeof s.people==='number'&&s.people>=1)PEOPLE=s.people;/* >=0, а не >=1: ноль ночей — законное состояние, и с прежней проверкой
+function loadPlan(){try{const s=JSON.parse(localStorage.getItem(PKEY));if(s){if(s.start)startIso=s.start;if(s.pace&&DAYPACES.some(x=>x.k===s.pace))DAYPACE=s.pace;if(s.plans&&typeof s.plans==='object')PLANPICK=s.plans;DATEACC=s.acc||'exact';if(typeof s.people==='number'&&s.people>=1)PEOPLE=s.people;/* >=0, а не >=1: ноль ночей — законное состояние, и с прежней проверкой
    сохранённый ноль отбрасывался, а город возвращал себе дни из данных */
   if(Array.isArray(s.nights))BASES.forEach((b,i)=>{if(typeof s.nights[i]==='number'&&s.nights[i]>=0)b.nights=s.nights[i];});if(s.hidden&&typeof s.hidden==='object')HIDDEN=s.hidden;
   if(s.moved&&typeof s.moved==='object')MOVED=s.moved;
@@ -5198,7 +5293,7 @@ function loadPlan(){try{const s=JSON.parse(localStorage.getItem(PKEY));if(s){if(
   applyCurDefaults();mergeCustom();applyMoves();}
 function savePlan(){try{localStorage.setItem(PKEY,JSON.stringify({start:startIso,people:PEOPLE,acc:DATEACC,
   nights:BASES.map(b=>b.nights),hidden:HIDDEN,moved:MOVED,custom:CUSTOM,cur:CUR,crate:CRATE,
-  temp:TEMP,dist:DIST,lang:LANG,asm:ASM,off:offIds(),car:CARMODE,custb:CUSTB,pace:DAYPACE}));}catch(e){}}
+  temp:TEMP,dist:DIST,lang:LANG,asm:ASM,off:offIds(),car:CARMODE,custb:CUSTB,pace:DAYPACE,plans:PLANPICK}));}catch(e){}}
 /* Если дату придумали мы — говорим это на самой странице, а не только всплывашкой
    при сборке: по такой дате человек может купить билет. Назвал свою — надпись
    исчезает сама. */
