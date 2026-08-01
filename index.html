@@ -1480,6 +1480,8 @@ body.stale{padding-top:44px}
 .cdtx{flex:1;min-width:0}
 .cdm{font:500 10.5px/1 "Inter",sans-serif;color:#8b8fa3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.01em}
 /* планы дня: выбор одним нажатием вместо «или вместо этого» в ленте */
+.planhint{margin:0 0 6px;font:800 10px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:.06em;
+  text-transform:uppercase;color:#8b8fa3}
 .plans{display:flex;gap:6px;margin:0 0 7px}
 .planbtn{flex:1;min-width:0;border:1.5px solid #e0e2ee;background:#fff;border-radius:11px;padding:9px 6px;
   cursor:pointer;text-align:center;white-space:nowrap;transition:all .15s;
@@ -3967,7 +3969,11 @@ function refreshMeals(){
 function plansHTML(tid){
   const pl=dayPlans(tid);
   if(pl.length<2)return '';
-  return '<div class="plans" data-plans="'+tid+'">'
+  /* подпись над вкладками — её слова: «я бы подписала: выбери свой вариант
+     активности». Без неё ряд «Вариант 1 · 2 · 3» читается как нумерация чего-то
+     уже решённого, а это выбор человека */
+  return '<div class="planhint">Выбери свой вариант активности</div>'
+    +'<div class="plans" data-plans="'+tid+'">'
     +pl.map((p,i)=>'<button class="planbtn" data-plan="'+tid+'|'+p.key+'" title="'+esc0(p.nm+(p.sub?' — '+p.sub:''))+'">'
       +'Вариант '+(i+1)+'</button>').join('')
     +'</div><div class="plansub" data-plansub="'+tid+'"></div>';
