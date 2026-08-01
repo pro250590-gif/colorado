@@ -2620,16 +2620,22 @@ function stepPts(a,b){
   }
   return [[a.lat,a.lng],[b.lat,b.lng]];
 }
-function dayChain(tid){
-  const act=activeOpt(tid);
+function chainFor(tid,grp){
   const list=P.filter(p=>p.d===tid&&p.cat!=='food'&&picked.has(p.id)
-    &&optOf(p)===act&&typeof p.lat==='number');
+    &&optOf(p)===grp&&typeof p.lat==='number');
   if(!list.length)return [];
   const out=[];
   const st=dayStart(tid);
   if(st&&st.id)out.push(stepPts(st,list[0]));
   for(let i=1;i<list.length;i++)out.push(stepPts(list[i-1],list[i]));
   return out;
+}
+function dayChain(tid){return chainFor(tid,activeOpt(tid));}
+/* какие ветки-варианты есть в дне, кроме той, что идёт в счёт */
+function altGroups(tid){
+  const act=activeOpt(tid),g={};
+  P.forEach(p=>{if(p.d===tid&&p.cat!=='food'&&picked.has(p.id)&&optOf(p)&&optOf(p)!==act)g[optOf(p)]=1;});
+  return Object.keys(g);
 }
 function drawChains(){
   if(!map||typeof L==='undefined')return;
@@ -2643,6 +2649,15 @@ function drawChains(){
     dayChain(e.tid).forEach(seg=>{
       L.polyline(seg,{color:'#fff',weight:6.5,opacity:.75,lineCap:'round',lineJoin:'round'}).addTo(chainLayer);
       L.polyline(seg,{color:col,weight:3,opacity:.95,lineCap:'round',lineJoin:'round'}).addTo(chainLayer);
+    });
+    /* путь варианта — пунктиром и тёплым цветом: «или вместо этого» должно быть
+       видно и на карте, а не только в списке (её вопрос: почему у этих точек
+       нет дороги) */
+    altGroups(e.tid).forEach(g=>{
+      chainFor(e.tid,g).forEach(seg=>{
+        L.polyline(seg,{color:'#fff',weight:5.5,opacity:.6,lineCap:'round',lineJoin:'round'}).addTo(chainLayer);
+        L.polyline(seg,{color:'#c07a12',weight:2.6,opacity:.9,dashArray:'7,7',lineCap:'round',lineJoin:'round'}).addTo(chainLayer);
+      });
     });
   });
   chainLayer.addTo(map);
@@ -2728,7 +2743,7 @@ function markerIcon(p){
   const inner=ph?'<div class="ph" style="background-image:url('+pimg(p.id,'p')+')"></div>'
                 :'<div class="ph noph">'+ic(p.custom?kindOf(p).ic:(CATS[p.cat]?CATS[p.cat].e:'pin'),'i-sm')+'</div>';
   return L.divIcon({className:'',iconSize:[42,48],iconAnchor:[21,48],popupAnchor:[0,-46],
-    html:'<div class="photopin">'+inner+'<div class="badge" style="background:#5b3fc4">'+dn+'</div><div class="tip"></div></div>'});
+    html:'<div class="photopin">'+inner+'<div class="badge" style="background:'+(isAlt(p)?'#c07a12':'#5b3fc4')+'">'+dn+'</div><div class="tip"></div></div>'});
 }
 /* маркер-города: обычная капля ИЛИ мелкий нейтральный кружок, когда рестораны в приоритете */
 function cityIcon(b,cnt){
@@ -3555,11 +3570,18 @@ function activeOpt(tid){
   const alt=list.find(p=>optOf(p)&&picked.has(p.id));
   return alt?optOf(alt):'';
 }
+/* вариант, который сейчас НЕ идёт в счёт: он остаётся на карте и в списке, но
+   выглядит иначе — это другой день вместо этого, а не продолжение */
+function isAlt(p){return !!(p&&optOf(p)&&optOf(p)!==activeOpt(p.d));}
+/* Нумеруем и основную цепочку, и каждую ветку-вариант — внутри себя. Клиент:
+   «почему не показано 3.1, 3.2, 3.3 — нет нумерации». Раньше у вариантов номера
+   не было вовсе, и на карте они выглядели сломанными точками. */
 function seqOf(p){
   if(!p||p.cat==='food'||!picked.has(p.id))return 0;
-  const act=activeOpt(p.d);
-  if(optOf(p)!==act)return 0;              /* вариант в стороне — он не звено цепи */
-  return P.filter(x=>x.d===p.d&&x.cat!=='food'&&picked.has(x.id)&&optOf(x)===act).indexOf(p)+1;
+  /* номер сквозной по всему дню, включая варианты: два разных места с номером
+     «3.1» на одной карте путали бы сильнее, чем отсутствие номера. Что это
+     вариант, а не продолжение, видно по цвету булавки и пунктиру пути */
+  return P.filter(x=>x.d===p.d&&x.cat!=='food'&&picked.has(x.id)).indexOf(p)+1;
 }
 function seqLabel(p){const n=seqOf(p),dn=dispOf(p.d);return n?(dn?dn+'.'+n:String(n)):'';}
 
