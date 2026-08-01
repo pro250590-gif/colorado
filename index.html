@@ -1607,6 +1607,11 @@ header.hero h1 em{background:none!important;-webkit-background-clip:border-box!i
 .fchip.vg{background:#eaf6ee;color:#2f7a4d}
 /* координату заведения не нашли — точка у центра города, и это видно */
 .fchip.apx{background:rgba(168,99,10,.12);color:#a8630a;display:inline-flex;align-items:center;gap:4px}
+/* «Ещё рядом с маршрутом» — соседи по маршруту с карты, отдельно от нашей подборки */
+.fnear{margin-top:16px;padding-top:14px;border-top:1px dashed #d8dae8}
+.fneartop{display:flex;align-items:center;gap:6px;font:800 12px/1 "Plus Jakarta Sans",sans-serif;color:#5b3fc4;text-transform:uppercase;letter-spacing:.03em}
+.fnearsub{margin:6px 0 12px;font:400 12px/1.45 "Inter",sans-serif;color:#8b8fa3}
+.fcard.nearcard .fcat{color:#8b8fa3}
 .fgm{display:flex;align-items:center;justify-content:center;gap:8px;background:#fff;border:1.5px solid rgba(91,63,196,.4);border-radius:13px;padding:13px;font:800 12.5px/1 "Plus Jakarta Sans",sans-serif;color:#5b3fc4;text-decoration:none;margin-top:8px;box-shadow:0 4px 11px -6px rgba(90,60,180,.3)}
 .fgm svg{width:16px;height:16px;flex:none}
 .fgm:hover{background:#f6f3ff}
@@ -2143,6 +2148,25 @@ FOODCITIES.forEach((c,ci)=>{c.spots.forEach((s,si)=>{
   if(typeof s.lat!=='number'||typeof s.lng!=='number')return;
   P.push({id:'f_'+ci+'_'+si,fid:'f'+ci+'-'+si,d:0,base:c.base,cat:'food',
     lat:s.lat,lng:s.lng,nm:s.nm,q:s.nm+' '+c.q,why:s.why,meal:s.meal});});});
+
+/* ЕДА С КАРТЫ — то, что food-nearby.js собрал вокруг точек дня. Её решение:
+   показать их в разделе «Еда» ОТДЕЛЬНОЙ группой, чтобы наша подборка осталась
+   подборкой, а список перестал выглядеть пустым. На карте по умолчанию
+   выключены: иначе четыре сотни булавок закроют маршрут. */
+const NEARSPOTS=[];
+try{
+  if(typeof FOODNEAR==='object'&&FOODNEAR)Object.keys(FOODNEAR).forEach(day=>{
+    (FOODNEAR[day]||[]).forEach((f,i)=>{
+      const home=P.find(x=>x.id===f.near);
+      NEARSPOTS.push(Object.assign({},f,{day:+day,fid:'fn'+day+'-'+i,
+        base:home?home.base:null,q:f.nm}));
+    });
+  });
+}catch(e){}
+NEARSPOTS.forEach(f=>{
+  P.push({id:'p_'+f.fid,fid:f.fid,d:0,base:f.base,cat:'food',lat:f.lat,lng:f.lng,
+    nm:f.nm,q:f.nm,why:'',meal:'',fromMap:1});
+});
 
 /* линии маршрута: days = к каким дням относится */
 
@@ -4085,7 +4109,38 @@ function buildFood(){
       const more=order.length>MAXSHOW
         ? '<button class="fmoreBtn" data-fmore="'+ci+'">'+ic('food','i-sm')+' Все рестораны из нашей подборки — ещё '
           +(order.length-MAXSHOW)+'</button>' : '';
+      /* ЕЩЁ РЯДОМ С МАРШРУТОМ — места с карты вокруг точек дня. Отдельной
+         группой, чтобы наша подборка осталась подборкой: сверху то, что мы
+         выбрали и проверили, ниже — соседи по маршруту, как есть. */
+      const own={};c.spots.forEach(sp=>{own[String(sp.nm||'').toLowerCase()]=1;});
+      const near=NEARSPOTS.filter(f=>{
+        if(own[String(f.nm).toLowerCase()])return false;
+        let bestCi=-1,bestD=1e9;
+        FOODCITIES.forEach((cc,k)=>{const d=kmBetween(cc.lat,cc.lng,f.lat,f.lng);
+          if(d<bestD){bestD=d;bestCi=k;}});
+        return bestCi===ci&&bestD<=30;      /* дальше тридцати это уже не этот город */
+      }).sort((a,b)=>a.d-b.d);
+      const nearCards=near.map((f,idx)=>{
+        const fon=foodPicked.has(f.fid),ico=FOOD_ICONS[foodCat({meal:f.kind==='bakery'?'десерт':''})]||FOOD_ICONS.plate;
+        const meta=(KINDNM[f.kind]||'место')+(f.cuisine?' · '+f.cuisine:'');
+        return '<div class="fcard nearcard'+(fon?'':' off')+(idx>=6?' fhidden':'')+'" data-food="'+f.fid+'">'
+          +'<div class="ftile">'
+          +'<span class="fcat">'+meta+'</span>'
+          +'<span class="cpsw'+(fon?' on':'')+'" data-food-sw="'+f.fid+'" role="switch" aria-checked="'+fon+'" aria-label="показывать на карте" tabindex="0"><i></i></span>'
+          +'<span class="ficon noimg"><span class="femoji">'+ico.e+'</span></span></div>'
+          +'<div class="fcbody"><div class="fcnm"><a href="'+mapURL(f)+'" target="_blank" rel="noopener">'+f.nm+'</a></div>'
+          +'<button class="orig" data-copy="'+esc0(f.nm)+'" title="нажмите, чтобы скопировать">'+esc0(f.nm)+'</button>'
+          +'<div class="fcwhy">'+(f.hours?'Часы работы: '+f.hours:'Место с карты рядом с точками маршрута.')+'</div>'
+          +'<div class="fcmeta"><span class="fchip pr">в '+(f.d<1000?f.d+' м':(f.d/1000).toFixed(1)+' км')+' от точки маршрута</span></div></div></div>';
+      }).join('');
+      const nearBlock=near.length
+        ? '<div class="fnear"><div class="fneartop">'+ic('pin','i-sm')+' Ещё рядом с маршрутом · '+near.length
+          +'</div><div class="fnearsub">Это не наш выбор, а соседи по маршруту: взяты с карты вокруг точек дня. Цены и описания у них нет — только тип, кухня и часы.</div>'
+          +'<div class="fgrid">'+nearCards+'</div>'
+          +(near.length>6?'<button class="fmoreBtn" data-fmore="n'+ci+'">'+ic('food','i-sm')+' Показать все — ещё '+(near.length-6)+'</button>':'')
+          +'</div>' : '';
       return '<div class="fcity'+(ci===activeCi?'':' hide')+'" data-fcity="'+ci+'"><div class="fgrid">'+cards+'</div>'+more
+        +nearBlock
         +'<a class="fgm" href="'+gmSearch('restaurants '+c.q)+'" target="_blank" rel="noopener">'+ic('pin','i-sm')+'<span>Все рестораны — '+c.city+' на Google Maps</span></a></div>';
     }).join('');
   /* тумблеры еды: вкл/выкл заведение на карте (тот же переключатель, что у активностей) */
@@ -4109,7 +4164,9 @@ function buildFood(){
   /* показать ещё карточки (свыше 9) */
   host.querySelectorAll('.fmoreBtn').forEach(btn=>{
     btn.addEventListener('click',()=>{const ci=btn.dataset.fmore;
-      host.querySelectorAll('.fcity[data-fcity="'+ci+'"] .fcard.fhidden').forEach(c=>c.classList.remove('fhidden'));
+      const near=String(ci).charAt(0)==='n';
+      const sel='.fcity[data-fcity="'+String(ci).replace(/^n/,'')+'"] '+(near?'.fnear ':'')+'.fcard.fhidden';
+      host.querySelectorAll(sel).forEach(c=>c.classList.remove('fhidden'));
       btn.remove();});
   });
   /* кнопка «показать все города» / «свернуть» (на компьютере, где не помещаются) */
