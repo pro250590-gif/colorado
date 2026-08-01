@@ -3846,9 +3846,15 @@ function mealInner(it){
       +'<i class="cmpr">'+meta+'</i>'+(why?'<i class="cmd">'+why+'</i>':'')+'</span>'
     +'<span class="cmwhy">'+(s.why||(s.hours?'Часы работы: '+s.hours:'Место с карты рядом с этой точкой маршрута.'))+'</span>';
 }
+/* Её правка 01.08: «давай ресторан уберём из маршрута пока, пусть они будут
+   только на карте». Карточки перерыва в цепочке не показываем — но день
+   по-прежнему СЧИТАЕТСЯ с едой (час на обед, полтора на ужин), иначе все часы
+   в шапках дней разъедутся. Вернуть — поменять false на true. */
+const SHOW_MEALS=false;
 function refreshMeals(){
   document.querySelectorAll('ul.cplaces,ul.stops').forEach(ul=>{
     ul.querySelectorAll('li.cmeal').forEach(x=>x.remove());
+    if(!SHOW_MEALS)return;
     const host=ul.closest('[data-day]');
     if(!host)return;
     const tid=tidOf(host.dataset.day);
