@@ -2582,13 +2582,36 @@ function linePts(o){
    точку: линия к выключенной больше не ведёт. Куска нет (катер, поезд, чужой
    транспорт) — рисуем прямую, как и раньше. */
 let chainLayer=null;
-function stepPts(a,b){
+function roadPiece(a,b){
   try{
-    if(typeof ROADSTEPS==='object'&&ROADSTEPS&&a.id&&b.id){
+    if(typeof ROADSTEPS==='object'&&ROADSTEPS&&a&&b&&a.id&&b.id){
       const e=ROADSTEPS[a.id+'>'+b.id];
       if(e){const p=decLine(e);if(p.length>1)return p;}
     }
   }catch(e){}
+  return null;
+}
+/* Готовые нитки посчитаны для СОСЕДНИХ точек дня. Человек выключает точку —
+   и появляется пара, которой в данных нет: раньше между ними рисовалась прямая
+   через горы (клиент это и увидела на Million Dollar Highway).
+   Теперь склеиваем путь из известных кусков через выключенную точку: по дороге
+   человек всё равно проезжает мимо неё, просто не останавливается. */
+function stepPts(a,b){
+  const direct=roadPiece(a,b);
+  if(direct)return direct;
+  const all=(b&&b.d!=null)?P.filter(x=>x.d===b.d&&x.cat!=='food'&&typeof x.lat==='number'):[];
+  const ib=all.findIndex(x=>x.id===(b&&b.id));
+  const ia=(a&&a.id&&String(a.id).charAt(0)==='@')?-1:all.findIndex(x=>x.id===(a&&a.id));
+  if(ib>0&&(ia<0||ib>ia)){
+    let out=[],ok=true,prev=(ia>=0)?all[ia]:a;
+    for(let i=(ia>=0?ia+1:0);i<=ib;i++){
+      const piece=roadPiece(prev,all[i]);
+      if(!piece){ok=false;break;}
+      out=out.length?out.concat(piece.slice(1)):piece.slice();
+      prev=all[i];
+    }
+    if(ok&&out.length>1)return out;
+  }
   return [[a.lat,a.lng],[b.lat,b.lng]];
 }
 function dayChain(tid){
@@ -3634,21 +3657,45 @@ const MEALS=[
 ];
 const LONG_PLACE=90;                        /* «длинная точка», ради которой едят заранее */
 function hhmm(m){const h=Math.floor(m/60)%24,x=Math.round(m)%60;return h+':'+(x<10?'0':'')+x;}
-/* заведение к перерыву: из нашей подборки, ближайшее к тому месту, где человек
-   в этот момент стоит. Дальше разумного крюка не тянем — лучше без названия */
-function pickSpot(at,meal,base,used){
-  if(typeof FOODCITIES==='undefined'||!at)return null;
+/* ЕДА НА МАРШРУТЕ — то, что собрано из карты вокруг точек этого дня
+   (food-nearby.js). Её разделение: подборка города и еда на маршруте — разные
+   списки, и в перерыв идёт сначала то, что РЯДОМ. */
+function nearFood(tid){
+  try{if(typeof FOODNEAR==='object'&&FOODNEAR&&FOODNEAR[tid])return FOODNEAR[tid];}catch(e){}
+  return [];
+}
+/* заведение к перерыву: ближайшее к тому месту, где человек в этот момент
+   стоит. Сначала смотрим еду на маршруте, потом подборку города. Дальше
+   разумного крюка не тянем — лучше без названия, чем крюк через полгорода */
+function pickSpot(at,meal,base,used,tid){
+  const it={meal:meal};
+  if(!at)return null;
   const mv=moveOf(base),car=(mv==='car_all'||mv==='car_trips');
   const lim=car?15:1.5;
   let best=null;
+  /* у еды с карты нет «когда идти», зато есть тип: на обед и ужин ведём в
+     ресторан или кафе, а не в мороженицу, даже если она ближе. Полкилометра
+     крюка стоят того, чтобы поесть там, где едят */
+  const RANK=(it.meal==='ужин')
+    ? {restaurant:0,pub:1,bar:1.5,biergarten:1.5,cafe:2.5,fast_food:3,bakery:5,ice_cream:6}
+    : {restaurant:0,cafe:0.5,fast_food:1,pub:1.5,bakery:2.5,biergarten:3,bar:3.5,ice_cream:5};
+  nearFood(tid).forEach((s,ni)=>{
+    if(used&&used['n'+ni])return;
+    const d=kmBetween(at.lat,at.lng,s.lat,s.lng);
+    if(d>lim)return;
+    const sc=(RANK[s.kind]!==undefined?RANK[s.kind]:3)*0.5+d;
+    if(!best||sc<best.score)best={score:sc,d:d,s:s,key:'n'+ni,near:1};
+  });
+  if(best)return best;
+  if(typeof FOODCITIES==='undefined')return null;
   FOODCITIES.forEach((c,ci)=>{(c.spots||[]).forEach((s,si)=>{
     if(typeof s.lat!=='number')return;
-    if(used&&used[ci+'_'+si])return;   /* дважды в один день в одно место не ходят */
+    if(used&&used['c'+ci+'_'+si])return;   /* дважды в один день в одно место не ходят */
     const d=kmBetween(at.lat,at.lng,s.lat,s.lng);
     if(d>lim)return;
     const fit=new RegExp(meal,'i').test(s.meal||'')?0:1;   /* обед к обеду */
     const score=fit*10+d;
-    if(!best||score<best.score)best={score:score,d:d,s:s,ci:ci,si:si};
+    if(!best||score<best.score)best={score:score,d:d,s:s,key:'c'+ci+'_'+si};
   });});
   return best;
 }
@@ -3748,8 +3795,8 @@ function dayPlan(tid){
       const mid=(ml.from+ml.to)/2,after=clock+move+dur;
       const mustNow=after>ml.to||(dur>=LONG_PLACE&&after>mid+ml.min);
       if(!mustNow&&Math.abs(clock-mid)>Math.abs(after-mid))return;
-      const spot=pickSpot(prev||p,ml.key,p.base,used);
-      if(spot)used[spot.ci+'_'+spot.si]=1;
+      const spot=pickSpot(prev||p,ml.key,p.base,used,tid);
+      if(spot)used[spot.key]=1;
       out.push({kind:'meal',meal:ml.key,at:clock,min:ml.min,spot:spot,near:prev||p});
       eaten[ml.key]=1;clock+=ml.min;
     });
@@ -3766,7 +3813,7 @@ function dayPlan(tid){
     if(at>ml.to)return;
     const last=list[list.length-1];
     out.push({kind:'meal',meal:ml.key,at:at,min:ml.min,
-      spot:pickSpot(last,ml.key,last.base,used),near:last});
+      spot:pickSpot(last,ml.key,last.base,used,tid),near:last});
     clock=at+ml.min;
   });
   out.est=est;out.end=clock;
@@ -3780,15 +3827,24 @@ function dayBudgetHTML(tid){
     +' ≈'+fmtHM(b.total)+' из '+fmtHM(DAY_LIMIT)+'</span>';
 }
 /* карточка перерыва прямо в цепочке: во сколько, где и почему именно здесь */
+const KINDNM={restaurant:'ресторан',cafe:'кафе',fast_food:'быстро перекусить',
+  pub:'паб',bar:'бар',bakery:'пекарня',ice_cream:'мороженое',biergarten:'пивной сад'};
 function mealInner(it){
   const s=it.spot&&it.spot.s;
   const why=it.spot?('крюк '+(it.spot.d<0.1?'нет':fmtKm(it.spot.d))):'';
+  if(!s)return '<span class="cmtop">'+ic('food','i-sm')+' Перерыв · '+it.meal+' · '+hhmm(it.at)
+      +' · '+fmtHM(it.min)+'</span>'
+    +'<span class="cmwhy">Рядом с этой точкой мы ничего не нашли — время на еду заложено, место выбери на месте.</span>';
+  /* у места с карты нет ни чека, ни нашего описания — но есть кухня и часы.
+     Показываем то, что есть, и не выдумываем остального */
+  const meta=it.spot.near
+    ? (KINDNM[s.kind]||'место')+(s.cuisine?' · '+s.cuisine:'')
+    : s.price;
   return '<span class="cmtop">'+ic('food','i-sm')+' Перерыв · '+it.meal+' · '+hhmm(it.at)
       +' · '+fmtHM(it.min)+'</span>'
-    +(s?'<span class="cmnm"><a href="'+mapURL(s)+'" target="_blank" rel="noopener">'+s.nm+'</a>'
-        +'<i class="cmpr">'+s.price+'</i>'+(why?'<i class="cmd">'+why+'</i>':'')+'</span>'
-        +'<span class="cmwhy">'+s.why+'</span>'
-      :'<span class="cmwhy">В нашей подборке рядом ничего нет — время на еду заложено, место выбери на месте.</span>');
+    +'<span class="cmnm"><a href="'+mapURL(s)+'" target="_blank" rel="noopener">'+s.nm+'</a>'
+      +'<i class="cmpr">'+meta+'</i>'+(why?'<i class="cmd">'+why+'</i>':'')+'</span>'
+    +'<span class="cmwhy">'+(s.why||(s.hours?'Часы работы: '+s.hours:'Место с карты рядом с этой точкой маршрута.'))+'</span>';
 }
 function refreshMeals(){
   document.querySelectorAll('ul.cplaces,ul.stops').forEach(ul=>{

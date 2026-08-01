@@ -28,6 +28,8 @@
 !road-times.js
 # ищет настоящие координаты заведений вместо кружка вокруг центра города
 !food-coords.js
+# набирает еду НА МАРШРУТЕ из карты вокруг точек дня
+!food-nearby.js
 !fetch-photos2.js
 !trip-TEMPLATE.js
 !img/
