@@ -1480,15 +1480,14 @@ body.stale{padding-top:44px}
 .cdtx{flex:1;min-width:0}
 .cdm{font:500 10.5px/1 "Inter",sans-serif;color:#8b8fa3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.01em}
 /* планы дня: выбор одним нажатием вместо «или вместо этого» в ленте */
-.plans{display:flex;flex-wrap:wrap;gap:7px;margin:0 0 8px}
-.planbtn{display:flex;flex-direction:column;align-items:flex-start;gap:3px;border:1.5px solid #e0e2ee;
-  background:#fff;border-radius:12px;padding:8px 11px;cursor:pointer;text-align:left;transition:all .15s}
-.planbtn b{font:800 12.5px/1.2 "Plus Jakarta Sans",sans-serif;color:#1b1533}
-.planbtn i{font:600 10.5px/1 "Inter",sans-serif;color:#8b8fa3;font-style:normal}
+.plans{display:flex;gap:6px;margin:0 0 7px}
+.planbtn{flex:1;min-width:0;border:1.5px solid #e0e2ee;background:#fff;border-radius:11px;padding:9px 6px;
+  cursor:pointer;text-align:center;white-space:nowrap;transition:all .15s;
+  font:800 11.5px/1 "Plus Jakarta Sans",sans-serif;color:#5c5872}
 .planbtn:hover{border-color:#c9c6e4}
-.planbtn.on{background:linear-gradient(150deg,#6b4fd8,#4b2fa8);border-color:transparent}
-.planbtn.on b,.planbtn.on i{color:#fff}
-.plansub{margin:-2px 0 10px;font:400 12px/1.45 "Inter",sans-serif;color:#8b8fa3}
+.planbtn.on{background:linear-gradient(150deg,#6b4fd8,#4b2fa8);border-color:transparent;color:#fff}
+.plansub{margin:0 0 11px;font:400 12px/1.45 "Inter",sans-serif;color:#8b8fa3}
+.plansub b{color:#1b1533;font:800 13px/1.3 "Plus Jakarta Sans",sans-serif}
 .plansub:empty{display:none}
 /* точка чужого плана: её сейчас нет в дне */
 li.offplan{display:none!important}
@@ -3969,8 +3968,8 @@ function plansHTML(tid){
   const pl=dayPlans(tid);
   if(pl.length<2)return '';
   return '<div class="plans" data-plans="'+tid+'">'
-    +pl.map(p=>'<button class="planbtn" data-plan="'+tid+'|'+p.key+'" title="'+esc0(p.sub||'')+'">'
-      +'<b>'+p.nm+'</b><i></i></button>').join('')
+    +pl.map((p,i)=>'<button class="planbtn" data-plan="'+tid+'|'+p.key+'" title="'+esc0(p.nm+(p.sub?' — '+p.sub:''))+'">'
+      +'Вариант '+(i+1)+'</button>').join('')
     +'</div><div class="plansub" data-plansub="'+tid+'"></div>';
 }
 function refreshPlans(){
@@ -3979,12 +3978,13 @@ function refreshPlans(){
     box.querySelectorAll('[data-plan]').forEach(b=>{
       const key=b.dataset.plan.split('|')[1];
       b.classList.toggle('on',key===act);
-      const i=b.querySelector('i');
-      if(i)i.textContent=fmtHM(planMinutes(tid,key));
+
     });
+    /* под рядом вкладок — что это за вариант и сколько занимает */
     const sub=document.querySelector('[data-plansub="'+box.dataset.plans+'"]');
     if(sub){const cur=dayPlans(tid).find(p=>p.key===act);
-      sub.textContent=(cur&&cur.sub)||'';}
+      sub.innerHTML=cur?('<b>'+cur.nm+'</b> · '+fmtHM(planMinutes(tid,cur.key))
+        +(cur.sub?' · '+cur.sub:'')):'';}
   });
 }
 function refreshBudgets(){
