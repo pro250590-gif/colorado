@@ -3840,16 +3840,21 @@ function squeezed(tid){
       let saved=dur;
       if(prev&&next)saved+=stepMin(prev,p)+stepMin(p,next)-stepMin(prev,next);
       else if(prev)saved+=stepMin(prev,p);
-      return {p:p,rank:pr==='spare'?0:1,saved:saved};
+      return {p:p,i:i,rank:pr==='spare'?0:1,saved:saved};
     }).filter(Boolean);
     if(!cand.length)break;
     /* среди одинаково неважных берём ту, после которой день ВПЕРВЫЕ влезает,
        и с наименьшей потерей: выкидывать три часа ради двадцати минут перебора
        — плохой размен. Если не влезает ни с одной, убираем самую дорогую */
+    /* ⚠️ «ЕСЛИ УСПЕЕТЕ» — ЭТО ПРО ХВОСТ ДНЯ, А НЕ ПРО ЕГО НАЧАЛО. Клиент
+       выбрала вариант, а первая же его точка оказалась помечена: день идёт по
+       порядку, и не успеть можно то, до чего не дошёл. Поэтому среди одинаково
+       неважных берём ту, что ПОЗЖЕ в цепочке и после которой день влезает; если
+       не влезает ни с одной — самую дорогую по времени. */
     const now=chainMinutes(tid,skip);
     const minRank=Math.min.apply(null,cand.map(c=>c.rank));
     const same=cand.filter(c=>c.rank===minRank);
-    const fits=same.filter(c=>now-c.saved<=DAY_LIMIT).sort((a,b)=>a.saved-b.saved);
+    const fits=same.filter(c=>now-c.saved<=DAY_LIMIT).sort((a,b)=>b.i-a.i);
     const pick=fits.length?fits[0]:same.sort((a,b)=>b.saved-a.saved)[0];
     skip[pick.p.id]=1;
   }
