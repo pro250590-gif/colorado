@@ -22,6 +22,10 @@
 !ROUTE-RULES.md
 # счёт дня: одна арифметика на страницу и на проверку (иначе они расходятся)
 !day-math.js
+# разбор часов работы из карты — тоже общий для страницы и проверки
+!open-hours.js
+# собирает часы работы точек из OpenStreetMap (запускается руками, как road-times)
+!hours.js
 !newroute.js
 !check-route.js
 !day-order.js

@@ -21,6 +21,8 @@ const path = require('path');
 const order = require('./day-order.js');
 /* счёт дня — общий со страницей (index.html грузит этот же файл скриптом) */
 const DAYMATH = require('./day-math.js');
+/* разбор часов работы — тот же файл, что читает страница */
+const OPEN = require('./open-hours.js');
 
 const R = 6371;
 const rad = x => x * Math.PI / 180;
@@ -35,8 +37,14 @@ function km(a, b, c, d) {
 const FAR_AIRPORT_KM = 25;
 /* конец линии-переезда должен упираться в базу или аэропорт, а не висеть в поле */
 const LEG_END_KM = 30;
-/* обычный темп дня: десять часов на ногах. Станет настройкой рядом с датой */
+/* обычный темп дня: десять часов на ногах (на странице это настройка «темп
+   поездки», 8/10/12) */
 const DAY_MINUTES = 600;
+/* САМЫЙ ПЛОТНЫЙ ТЕМП — потолок, за которым день невозможен ни для кого.
+   Её решение 02.08: «у нас есть маршрут, дни определены и количество их тоже.
+   Не влезает в 12 часов — значит убираем». Поэтому день длиннее 12 часов — не
+   замечание, а ОШИБКА: лишнее убираем из данных, а не оставляем человеку */
+const DAY_MAX = 720;
 /* «45 мин», «1 час», «1 ч 20 мин», «3,5 часа» — берём ПЕРВОЕ число подписи:
    в «катер 45 мин быстрый, 2 ч обычный» первым стоит то, чем едут обычно */
 function parseMin(t) {
@@ -357,12 +365,19 @@ function checkRoute(file) {
       /* сколько занимает каждый перегон — считаем сразу, чтобы потом пройти день
          с часами в руках и понять, куда попадает обед */
       const bs = BASES.find(b => b.id === bid) || {};
+      /* ДЕНЬ ПЕРЕЕЗДА НАЧИНАЕТСЯ В ПРОШЛОМ ГОРОДЕ: человек спал там. Считать
+         первый перегон от города ночёвки — значит везти его на 262 км назад,
+         как было в дне «Урей → Аспен» (13 ч 13 вместо настоящих) */
+      const prevDay = DAYS[DAYS.indexOf(d) - 1];
+      const pbid = prevDay ? (DAY_BASE || {})[prevDay.n] : null;
+      const startId = (pbid && pbid !== bid) ? pbid : bid;
+      const start = BASES.find(b => b.id === startId) || bs;
       /* день начинается в девять от жилья — но не в день прилёта: тогда первая
          точка это аэропорт, и дорога от жилья к нему человеку не нужна */
       const fromHome = pts[0].cat !== 'transport';
       let place = 0, move = 0, guessed = 0;
       const legs = pts.map((p, i) => {
-        const before = i ? pts[i - 1] : bs;
+        const before = i ? pts[i - 1] : start;
         if (!i && !fromHome) return 0;
         if (p.hop) {                             /* поезд, катер, фуникулёр */
           const said = parseMin(p.hop);
@@ -375,7 +390,7 @@ function checkRoute(file) {
           guessed++;
           return Math.max(5, Math.round(dd / sp * 60));
         }
-        const r = roadMin(d.n, i ? pts[i - 1].id : ('@' + bid), p.id);
+        const r = roadMin(d.n, i ? pts[i - 1].id : ('@' + startId), p.id);
         if (r != null) return r;
         if (typeof before.lat !== 'number') return 0;
         guessed++;
@@ -399,9 +414,39 @@ function checkRoute(file) {
       const mustMin = pts.filter(p => p.star || (p.tag && p.tag[1] === 't-must')
           || p.cat === 'transport' || p.hop || p.when === 'fixed')
         .reduce((s, p) => s + (((MET[p.id] || {}).min) || 0), 0);
+      const hm = m => Math.floor(m / 60) + ' ч ' + (m % 60) + ' мин';
+      /* ЧАСЫ РАБОТЫ: приезжаем ли мы в открытое. Дата дня считается от START
+         маршрута — человек может сдвинуть старт, и тогда «закрыто» переедет на
+         другой день, но собранный нами маршрут должен сходиться хотя бы со
+         своей датой. Строку из карты разбирает общий open-hours.js */
+      if (S.START) {
+        const d0 = new Date(String(S.START) + 'T12:00:00');
+        const date = new Date(d0.getTime() + (d.n - 1) * 86400000);
+        let clock = DAYMATH.DAY_START;
+        pts.forEach((p, i) => {
+          clock += legs[i];
+          const dur = ((MET[p.id] || {}).min) || 0;
+          const h = (MET[p.id] || {}).hours;
+          if (h) {
+            const f = OPEN.fits(h, date, clock, clock + dur);
+            if (f && !f.ok)
+              warn('день ' + d.n + ': «' + (p.nm || p.id) + '» — ' + f.why
+                + (f.open ? ' (работает ' + f.open + ')' : '')
+                + ', а мы там в ' + Math.floor(clock / 60) + ':' + String(clock % 60).padStart(2, '0')
+                + '. Часы из карты: ' + h + '. Переставьте точку внутри дня или перенесите день');
+          }
+          clock += dur;
+        });
+      }
+      /* потолок: день, который не влезает даже в самый плотный темп, невозможен
+         ни для кого. Лишнее убираем из данных — это ошибка, а не замечание */
+      if (total > DAY_MAX)
+        bad('день ' + d.n + ' («' + (d.title || '') + '»): ' + hm(total) + ' — не влезает даже в 12 часов, '
+          + 'самый плотный темп. На местах ' + hm(place) + ', в дороге ' + hm(move)
+          + '. Уберите лишние точки: столько человек не выдержит ни при каких настройках');
       if (total > DAY_MINUTES && mustMin + move + food > DAY_MINUTES)
         warn('день ' + d.n + ' («' + (d.title || '') + '»): не влезает ДАЖЕ ПО ОБЯЗАТЕЛЬНЫМ точкам — '
-          + Math.floor((mustMin + move + food) / 60) + ' ч ' + ((mustMin + move + food) % 60)
+          + hm(mustMin + move + food)
           + ' мин из ' + (DAY_MINUTES / 60) + '. Откладывать нечего, разбирайтесь руками: '
           + 'разнесите на два дня или уберите звезду');
       if (total > DAY_MINUTES)

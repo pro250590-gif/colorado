@@ -43,6 +43,14 @@
   var LATE = 90;                     /* насколько позже окна ужин ещё имеет смысл */
   var EARLY = 60;                    /* насколько раньше окна согласны поесть, чтобы не остаться без обеда */
 
+  /* 🔑 ЕДА В СЧЁТЕ ДНЯ — ОДИН ВЫКЛЮЧАТЕЛЬ НА ВСЁ. Её решение 02.08: «еду мы на
+     маршруте сейчас не пишем — значит учитывать её не будем». Показ и счёт
+     связаны нарочно: пока карточек перерыва в цепочке нет, час обеда в счёте
+     был невидимой гирей — человек видел «10 ч 7 из 10» и не понимал, откуда.
+     Вернём карточки — поставим true, и день снова начнёт считаться с едой.
+     Страница берёт этот же выключатель (SHOW_MEALS в index.html). */
+  var EAT_IN_DAY = false;
+
   /* ── ДЕНЬ ПО ЧАСАМ ────────────────────────────────────────────────────────
      items — цепочка дня по порядку: [{min: минут на месте, move: минут дороги
      до него}]. Всё остальное (какие точки, чем добираются, что выключено)
@@ -57,7 +65,7 @@
        end   — во сколько человек освободился (с ужином в конце). */
   function dayCost(items, opt) {
     opt = opt || {};
-    var meals = opt.meals || MEALS;
+    var meals = opt.meals || (EAT_IN_DAY ? MEALS : []);
     var start = (opt.start == null) ? DAY_START : opt.start;
     var longPlace = (opt.longPlace == null) ? LONG_PLACE : opt.longPlace;
     var list = items || [];
@@ -150,8 +158,11 @@
   function selftest(log) {
     log = log || function (s) { console.log(s); };
     var bad = 0;
+    /* правила расстановки еды проверяем ЯВНО включённой едой: выключатель
+       EAT_IN_DAY — решение клиента на сегодня, а правила должны пережить его
+       переключение в обе стороны */
     CASES.forEach(function (c) {
-      var r = dayCost(c.items);
+      var r = dayCost(c.items, { meals: MEALS });
       var tail = r.meals.filter(function (x) { return x.tail; }).length;
       var errs = [];
       if (r.total !== c.total) errs.push('всего ' + r.total + ', ждали ' + c.total);
@@ -164,12 +175,17 @@
       if (errs.length) { bad++; log('  ✗ ' + c.nm + ' — ' + errs.join('; ')); }
       else log('  ✓ ' + c.nm);
     });
+    /* и отдельно — сам выключатель: выключена еда, значит её нет и в счёте */
+    var off = dayCost([{ move: 30, min: 180 }, { move: 60, min: 180 }, { move: 60, min: 120 }, { move: 30, min: 60 }]);
+    var want = EAT_IN_DAY ? 150 : 0;
+    if (off.food !== want) { bad++; log('  ✗ выключатель еды: в счёте ' + off.food + ' мин, ждали ' + want); }
+    else log('  ✓ выключатель еды: ' + (EAT_IN_DAY ? 'еда в счёте дня' : 'еды в счёте дня нет'));
     return bad;
   }
 
   return {
     DAY_START: DAY_START, MEALS: MEALS, LONG_PLACE: LONG_PLACE,
-    dayCost: dayCost, selftest: selftest
+    EAT_IN_DAY: EAT_IN_DAY, dayCost: dayCost, selftest: selftest
   };
 }));
 

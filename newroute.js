@@ -46,7 +46,9 @@ let hard = 0, soft = 0;
    Случаи внутри day-math.js — живые ошибки, за которые нам уже прилетело. */
 console.log('\n████ математика дня (day-math.js)');
 {
-  const bad = require('./day-math.js').selftest(s => console.log(s));
+  let bad = require('./day-math.js').selftest(s => console.log(s));
+  console.log('\n████ часы работы (open-hours.js)');
+  bad += require('./open-hours.js').selftest(s => console.log(s));
   if (bad) {
     hard += bad;
     console.log('  ❌ счёт дня сломан — остальные проверки считать нет смысла');

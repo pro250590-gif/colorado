@@ -320,10 +320,17 @@ async function doFile(file) {
     const car = mv ? /^car/.test(mv) : true;
     const profile = car ? 'routed-car' : 'routed-foot';
 
-    /* нулевая точка — центр города ночёвки: от неё человек выходит утром */
-    const nodes = (base && typeof base.lat === 'number')
-      ? [{ id: '@' + base.id, lat: base.lat, lng: base.lng }, ...pts]
-      : pts.slice();
+    /* нулевая точка — центр города ночёвки: от неё человек выходит утром.
+       ⚠️ А в ДЕНЬ ПЕРЕЕЗДА он выходит из ПРОШЛОГО города: спал он там. Без этой
+       строки в таблице первый перегон дня «Урей → Аспен» считался от Аспена — то
+       есть 262 км назад, и день выходил 13 ч 13 вместо настоящих. */
+    const prev = days[days.indexOf(day) - 1];
+    const pbid = (prev != null) ? (DAY_BASE || {})[prev] : null;
+    const pbase = (pbid && pbid !== bid) ? BASES.find(b => b.id === pbid) : null;
+    const nodes = [];
+    if (base && typeof base.lat === 'number') nodes.push({ id: '@' + base.id, lat: base.lat, lng: base.lng });
+    if (pbase && typeof pbase.lat === 'number') nodes.push({ id: '@' + pbase.id, lat: pbase.lat, lng: pbase.lng });
+    nodes.push(...pts);
 
     let j;
     try { j = await table(profile, nodes); }
