@@ -134,7 +134,7 @@ const SEGMENT={rey:'flight',vik:'car',hof:'car'};
 const TRANSFER={vik:{km:190,clean:'2 ч 30',stops:'весь день'},hof:{km:270,clean:'3 ч 30',stops:'весь день'}};
 
 const META={
- blu:{min:150,price:'от €70',best:'по дороге из аэропорта',route:'20 мин от KEF',hours:'Jan 01-May 25: Mo-Su 08:00-22:00; May 26-Jun 29: Mo-Su 07:00-23:00; Jun 30-Aug 20: Mo-Su 07:00-24:00; Aug 21-Oct 01: Mo-Su 08:00-22:00; Oct 02-Dec 31: Mo-Su 08:00-21:00'},
+ blu:{min:150,price:'от €70',best:'по дороге из аэропорта',route:'20 мин от KEF',hours:'Jan 1-May 25 08:00-22:00; May 26-Jun 29 07:00-23:00; Jun 30-Aug 20 07:00-00:00; Aug 21-Oct 1 08:00-22:00; Oct 2-Dec 31 08:00-20:00'},
  gey:{min:40,price:'бесплатно',best:'между извержениями',route:'Золотое кольцо'},
  gul:{min:45,price:'бесплатно',best:'солнце после полудня',route:'10 мин от Гейсира'},
  sel:{min:40,price:'парковка 900 ISK',best:'вторая половина дня',route:'у кольцевой дороги'},
@@ -143,7 +143,7 @@ const META={
  kef:{min:40},
  hal:{min:40,hours:'Mo-Sa 11:00-15:00; Su 10:00-15:00'},
  sun:{min:15},
- thi:{min:90},
+ thi:{min:90,hours:'Mo-Su 09:00-18:00'},
  sko:{min:40},
  sol:{min:150},
  dyr:{min:45},

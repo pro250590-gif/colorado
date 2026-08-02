@@ -277,7 +277,7 @@ const META={
  ter:{min:60,price:'€15 лифт, €13 лестница',best:'ясный день',route:'вход с северной стороны'},
  rea:{min:90,price:'€14 выставка',best:'если дождь',route:'метро Duomo',hours:'Tu-We, Fr-Su 10:00-19:30; Th 10:00-22:30; Mo off'},
  amb:{min:60,price:'€17',route:'метро Cordusio',hours:'Tu-Fr 10:00-18:00; Sa-Su 10:00-18:00, Mo, Jan 01, easter, May 01, Dec 25 off'},
- sca:{min:40,price:'€12 музей',route:'метро Montenapoleone'},
+ sca:{min:40,price:'€12 музей',route:'метро Montenapoleone',hours:'Mo-Su 12:00-18:00'},
  rin:{min:30,price:'бесплатно',best:'на закате',route:'верхний этаж'},
  sfo:{min:90,price:'двор бесплатно, музеи €5',route:'метро Cairoli'},
  bra:{min:30,price:'€6 подъём',best:'ясный день',route:'внутри парка',hours:'We 10:30-12:30,16:00-18:30; Sa 10:30-13:00,15:00-18:30,20:30-24:00; Su 10:30-14:00,14:30-19:00; May 15-Sep 15 Tu,Th,Fr 15:00-19:00,20:30-24:00; May 15-Sep 15 We 10:30-12:30,15:00-19:00,20:30-24:00; May 15-Sep 15 Sa,Su 10:30-14:00,14:30-19:30,20:30-24:00'},

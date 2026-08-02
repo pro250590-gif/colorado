@@ -135,7 +135,9 @@ async function doFile(file, dry) {
   /* вокзалы, причалы и аэропорты пропускаем: «часы работы» у них в карте — это
      часы галереи или магазина внутри, а поезд уходит по расписанию. У Tokyo
      Station так подхватились часы «Tu-Th 10:00-18:00» */
+  const STATION = /вокзал|станц|station|stazione|estación|gare|аэропорт|airport|причал|imbarcadero|порт|ferry/i;
   const pts = P.filter(p => p.cat !== 'food' && p.cat !== 'transport'
+    && !STATION.test(p.nm || '') && !STATION.test(p.q || '')
     && typeof p.lat === 'number' && typeof p.lng === 'number');
   if (!pts.length) { console.log('  нет точек — пропускаю'); return; }
   const got = {};

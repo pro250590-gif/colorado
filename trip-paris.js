@@ -110,18 +110,18 @@ const SEGMENT={par:'flight'};
 const TRANSFER={};
 
 const META={
- lou:{min:210,price:'€22 онлайн',best:'после 15:00 тише',route:'метро Palais Royal'},
- sai:{min:45,price:'€13',best:'солнечный час',route:'рядом с Notre-Dame'},
- ver:{min:180,price:'€21 дворец, парк бесплатно',best:'к открытию',route:'RER C, 45 мин'},
- eif:{min:120,price:'€14–29 подъём',best:'закат',route:'метро Bir-Hakeim'},
- mon:{min:120,price:'бесплатно',best:'до 10:00',route:'метро Anvers + фуникулёр'},
- ors:{min:120,price:'€16',best:'вечер четверга до 21:45',route:'метро Solférino'},
+ lou:{min:210,price:'€22 онлайн',best:'после 15:00 тише',route:'метро Palais Royal',hours:'Mo,Th,Sa-Su 09:00-18:00; Tu off; We,Fr 09:00-21:00; Jan 01,May 01,Dec 25 off'},
+ sai:{min:45,price:'€13',best:'солнечный час',route:'рядом с Notre-Dame',hours:'Jan-Mar 09:00-17:00; Apr-Sep 09:00-19:00; Oct-Dec 09:00-17:00'},
+ ver:{min:180,price:'€21 дворец, парк бесплатно',best:'к открытию',route:'RER C, 45 мин',hours:'Tu-Su 09:00-18:30'},
+ eif:{min:120,price:'€14–29 подъём',best:'закат',route:'метро Bir-Hakeim',hours:'09:30-23:45; Jun 21-Sep 2: 09:00-00:45; Jul 14,Jul 15 off'},
+ mon:{min:120,price:'бесплатно',best:'до 10:00',route:'метро Anvers + фуникулёр',hours:'06:00-22:30'},
+ ors:{min:120,price:'€16',best:'вечер четверга до 21:45',route:'метро Solférino',hours:'Tu-Su 09:30-18:00; Th 09:30-21:45'},
  cdg:{min:60},
- sei:{min:60},
+ sei:{min:60,hours:'Mo,Tu,We,Fr 07:50-19:00; Th 07:50-22:00; Sa,Su 08:15-19:30'},
  lat:{min:90},
  mar:{min:90},
  tri:{min:120},
- pai:{min:20},
+ pai:{min:20,hours:'Mo-Fr 06:45-20:00; Jul 14 off; Jul 22-Aug 22 off'},
 };
 
 const BUDGET=[
