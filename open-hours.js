@@ -143,6 +143,32 @@
              open: d.open.map(function (t) { return fmt(t[0]) + '–' + fmt(t[1]); }).join(', ') };
   }
 
+  /* ── ВЫХОДНЫЕ ДНИ НЕДЕЛИ ──────────────────────────────────────────────────
+     Её просьба: «может, в плашку добавить — выходной понедельник, выходной
+     суббота-воскресенье». Считаем по неделе ВОКРУГ этой даты: у половины мест
+     часы зависят от сезона, и «закрыт по вторникам» зимой и летом — разные
+     вещи. Возвращает [0..6] (0 — воскресенье) или null, если не разобрали. */
+  function weekOff(str, date) {
+    if (!parse(str)) return null;
+    var out = [], known = 0;
+    for (var i = 0; i < 7; i++) {
+      var d = new Date(date.getTime() + i * 86400000);
+      var r = day(str, d);
+      if (!r) continue;
+      known++;
+      if (!r.open.length) out.push(d.getDay());
+    }
+    if (known < 7) return null;             /* хоть один день не поняли — молчим */
+    if (out.length >= 6) return null;       /* закрыто почти всегда — это не «выходной» */
+    return out.sort(function (a, b) { return ((a + 6) % 7) - ((b + 6) % 7); });
+  }
+  /* «выходной: пн» · «выходные: сб, вс» — короткой строкой для плашки */
+  function offText(str, date) {
+    var w = weekOff(str, date);
+    if (!w || !w.length) return '';
+    return (w.length === 1 ? 'выходной: ' : 'выходные: ') + w.map(function (x) { return RU[x]; }).join(', ');
+  }
+
   function selftest(log) {
     log = log || function (s) { console.log(s); };
     var D = function (y, m, d) { return new Date(y, m - 1, d); };
@@ -166,10 +192,21 @@
     var f = fits('Tu-Su 09:00-18:30', D(2026, 8, 5), 19 * 60, 20 * 60);
     if (!f || f.ok || f.why !== 'уже закрыто') { bad++; log('  ✗ приезд в семь вечера должен быть «уже закрыто»'); }
     else log('  ✓ приезд после закрытия виден');
+    /* выходные дни недели — то, что человек видит плашкой */
+    [['Tu-Su 09:00-18:30', 'выходной: пн'],
+     ['Mo-Fr 06:45-20:00', 'выходные: сб, вс'],
+     ['24/7', ''],
+     ['Mo,Th,Sa-Su 09:00-18:00; Tu off; We,Fr 09:00-21:00', 'выходной: вт']
+    ].forEach(function (c) {
+      var got = offText(c[0], D(2026, 8, 3));
+      if (got !== c[1]) { bad++; log('  ✗ выходные «' + c[0] + '» — вышло «' + got + '», ждали «' + c[1] + '»'); }
+      else log('  ✓ выходные: ' + (c[1] || 'их нет и мы молчим'));
+    });
     return bad;
   }
 
-  return { parse: parse, day: day, text: text, fits: fits, selftest: selftest, RU: RU };
+  return { parse: parse, day: day, text: text, fits: fits, weekOff: weekOff, offText: offText,
+           selftest: selftest, RU: RU };
 }));
 
 if (typeof require !== 'undefined' && typeof module !== 'undefined' && require.main === module) {
