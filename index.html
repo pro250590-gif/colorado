@@ -2199,10 +2199,34 @@ const gurl=q=>'https://www.google.com/maps/search/?api=1&query='+encodeURICompon
    ошибкой. А координата у нас сверена по четырём источникам — по ней карта
    открывается ВСЕГДА и ровно там, где мы обещали. Название человек всё равно
    видит на странице и может скопировать кнопкой рядом. */
+/* ССЫЛКА НА КАРТЫ ВЕДЁТ НА КАРТОЧКУ МЕСТА, А НЕ НА ТОЧКУ.
+   Её слова 02.08: «раньше я открывала место и могла почитать про него, отзывы,
+   фотографии — а просто точка неинтересна». Точка в ссылке появилась, когда
+   поиск по названию не находил заведения, но лечили мы не то: правильный ответ —
+   искать по названию ВМЕСТЕ С ГОРОДОМ, а где у нас есть номер места у Google
+   (places-db.json, поле pid) — открывать прямо его карточку.
+   Координаты остаются последним запасом: у своего места без названия. */
+function cityQ(p){
+  if(!p)return '';
+  if(p.city)return p.city;                         /* у еды город написан прямо */
+  const b=p.base&&(typeof baseById==='function')&&baseById(p.base);
+  return b?(b.q||b.name||''):'';
+}
 function mapURL(p){
-  if(p&&typeof p.lat==='number'&&typeof p.lng==='number')
+  if(!p)return gurl('');
+  const nm=String((p.q||p.nm||'')).trim();
+  if(nm){
+    const city=String(cityQ(p)||'').trim();
+    /* город дописываем, только если его там ещё нет и автор сам не дал уточнения
+       («The Springs Resort, Pagosa Springs» уточнять не надо) */
+    const has=nm.indexOf(',')>=0||(city&&nm.toLowerCase().indexOf(city.split(',')[0].toLowerCase())>=0);
+    const both=(city&&!has)?(nm+', '+city):nm;
+    const pid=(typeof META!=='undefined'&&META&&p.id&&META[p.id]&&META[p.id].pid)||p.pid||'';
+    return gurl(both)+(pid?('&query_place_id='+encodeURIComponent(pid)):'');
+  }
+  if(typeof p.lat==='number'&&typeof p.lng==='number')
     return 'https://www.google.com/maps/search/?api=1&query='+p.lat+'%2C'+p.lng;
-  return gurl((p&&(p.q||p.nm))||'');
+  return gurl('');
 }
 function fmtDate(dt){return WD[dt.getDay()]+', '+dt.getDate()+' '+MONTHS[dt.getMonth()];}
 function addDays(iso,n){const d=new Date(iso+'T00:00:00');d.setDate(d.getDate()+n);return d;}
@@ -2712,7 +2736,9 @@ function animPlane(marker,a,bb,period){if(!marker)return;let t=0;const step=40/(
     marker.setLatLng([a[0]+(bb[0]-a[0])*t,a[1]+(bb[1]-a[1])*t]);},40));}
 function mapFallback(msg){const el=document.getElementById('map');if(el)el.innerHTML='<div class="mapph">'+ic('map','i-lg')+' <b>'+(msg||'Карта не загрузилась')+'</b><br>Открой страницу по обычной ссылке (Netlify/GitHub) в браузере при интернете. Список и ссылки на Google Maps работают всегда.</div>';}
 function popupHTML(nm,q,why,label,color,photo,foodicon,plate,ll){
-  const gm='<a class="mpop-gm" href="'+(ll?mapURL(ll):gurl(q))+'" target="_blank" rel="noopener">'+ic('pin','i-sm')+' Открыть в Google Maps →</a>';
+  /* ссылка ведёт на карточку места: точка приходит восьмым доводом (plate) */
+  const pt=(ll&&typeof ll==='object')?ll:((plate&&typeof plate==='object')?plate:null);
+  const gm='<a class="mpop-gm" href="'+(pt?mapURL(pt):gurl(q))+'" target="_blank" rel="noopener">'+ic('pin','i-sm')+' Открыть в Google Maps →</a>';
   /* оригинальное название и на карте: то, что человек показывает на месте,
      должно быть видно везде, где он смотрит на место */
   const or=origHTML({q:q,nm:String(nm||'').replace(/<[^>]*>/g,'')});
@@ -3111,7 +3137,6 @@ function buildCities(){
             +'<button class="cpmv" data-mvopen="'+p.id+'" aria-label="перенести или убрать" title="перенести или убрать">⋯</button>'
             +'</span></div>'+metaStrip(p)+(p.why?'<span class="cwhy">'+convDist(p.why)+'</span>':'')+'</li>';}).join('')
           +(list.length?'':'<li class="cfree">Свободный день — планы пока не заданы.</li>')+'</ul>'
-        +'<div class="padd fix" data-fix="'+e.tid+'" style="display:none"></div>'
         +'<button class="cadd" data-addto="'+e.tid+'">'+ic('plus','i-sm')+' Добавить место в этот день</button>'
         +noteHTML(e.tid,'cnote')
         +(e.pin?'':'<button class="crm" data-rmthis="'+e.tid+'" data-rmbase="'+b.id+'">'+ic('close','i-sm')+' Убрать этот день</button>')
@@ -3341,15 +3366,6 @@ document.addEventListener('click',e=>{
   try{savePlan();}catch(x){}
   refreshHops();      /* внутри: номера, часы, планы, скрытие чужих точек */
   applyFilter();      /* карта: булавки и линия выбранного плана */
-});
-
-/* ⇄ обмен днями города: и кнопкой в инструментах дня, и по подсказке о закрытом */
-document.addEventListener('click',e=>{
-  const b=e.target.closest&&e.target.closest('[data-swap]');
-  if(!b)return;
-  e.preventDefault();
-  const [a,c]=b.dataset.swap.split('|');
-  swapDays(tidOf(a),tidOf(c));
 });
 
 /* вариант вдобавок к плану: взять в день или вернуть обратно в выбор.
@@ -3874,7 +3890,7 @@ function pickSpot(at,meal,base,used,tid){
     const d=kmBetween(at.lat,at.lng,s.lat,s.lng);
     if(d>lim)return;
     const sc=(RANK[s.kind]!==undefined?RANK[s.kind]:3)*0.5+d;
-    if(!best||sc<best.score)best={score:sc,d:d,s:s,key:'n'+ni,near:1};
+    if(!best||sc<best.score)best={score:sc,d:d,s:s,key:'n'+ni,near:1,city:((typeof baseById==='function'&&baseById(base))||{}).q||''};
   });
   if(best)return best;
   if(typeof FOODCITIES==='undefined')return null;
@@ -3885,7 +3901,7 @@ function pickSpot(at,meal,base,used,tid){
     if(d>lim)return;
     const fit=new RegExp(meal,'i').test(s.meal||'')?0:1;   /* обед к обеду */
     const score=fit*10+d;
-    if(!best||score<best.score)best={score:score,d:d,s:s,key:'c'+ci+'_'+si};
+    if(!best||score<best.score)best={score:score,d:d,s:s,key:'c'+ci+'_'+si,city:c.q||''};
   });});
   return best;
 }
@@ -4039,7 +4055,7 @@ function mealInner(it){
     : s.price;
   return '<span class="cmtop">'+ic('food','i-sm')+' Перерыв · '+it.meal+' · '+hhmm(it.at)
       +' · '+fmtHM(it.min)+'</span>'
-    +'<span class="cmnm"><a href="'+mapURL(s)+'" target="_blank" rel="noopener">'+s.nm+'</a>'
+    +'<span class="cmnm"><a href="'+mapURL({q:s.nm,nm:s.nm,city:it.spot.city})+'" target="_blank" rel="noopener">'+s.nm+'</a>'
       +'<i class="cmpr">'+meta+'</i>'+(why?'<i class="cmd">'+why+'</i>':'')+'</span>'
     +'<span class="cmwhy">'+(s.why||(s.hours?'Часы работы: '+s.hours:'Место с карты рядом с этой точкой маршрута.'))+'</span>';
 }
@@ -4171,18 +4187,6 @@ function refreshHours(){
     el.style.display=t?'':'none';
     if(t)el.innerHTML=ic('cal','i-sm')+' '+t;
   });
-  /* предложение обмена: чинится ли закрытое перестановкой дней города */
-  document.querySelectorAll('[data-fix]').forEach(el=>{
-    const tid=tidOf(el.dataset.fix),sh=shutOf(tid).list;
-    if(!sh.length){el.innerHTML='';el.style.display='none';return;}
-    const fix=swapFix(tid);
-    el.style.display='';
-    el.innerHTML='<span>'+ic('info','i-sm')+' '
-      +(sh.length===1?('«'+esc0(sh[0].nm)+'» в этот день не работает')
-                     :('в этот день не работают '+sh.length+' '+plural(sh.length,'место','места','мест')))
-      +(fix?(' — в дне '+fix.disp+' '+(sh.length===1?'открыто':'открыты')):'')+'</span>'
-      +(fix?('<button class="pbtn2" data-swap="'+tid+'|'+fix.tid+'">Поменять с днём '+fix.disp+'</button>'):'');
-  });
   /* сколько мест закрыто в этот день — строкой в шапке дня */
   document.querySelectorAll('[data-shut]').forEach(el=>{
     const tid=tidOf(el.dataset.shut),sh=shutOf(tid);
@@ -4206,21 +4210,6 @@ function shutOn(tid,d){
   return list;
 }
 function shutOf(tid){return {list:shutOn(tid,dayDateFor(tid))};}
-/* ⇄ есть ли день того же города, обмен с которым спасает: считаем закрытые
-   места ДО и ПОСЛЕ обмена — вместе по обоим дням, чтобы не чинить один день
-   ценой другого */
-function swapFix(tid){
-  const now=shutOn(tid,dayDateFor(tid)).length;
-  if(!now)return null;
-  let best=null;
-  swapMates(tid).forEach(m=>{
-    const da=dayDateFor(tid),db=dayDateFor(m.tid);
-    const was=now+shutOn(m.tid,db).length;
-    const will=shutOn(tid,db).length+shutOn(m.tid,da).length;
-    if(will<was&&(!best||will<best.will))best={tid:m.tid,disp:m.disp,will:will};
-  });
-  return best;
-}
 function refreshBudgets(){
   for(const k in SQZ)delete SQZ[k];   /* набор точек изменился — считаем заново */
   refreshMeals();
@@ -4278,8 +4267,7 @@ function buildDays(){
       +'<div class="day-body">'
       +'<div class="leg"><span class="pill">'+d.pill+'</span> <b>'+convDist(d.leg)+'</b><a class="dirlink" href="#" data-dir="'+e.tid+'" target="_blank" rel="noopener">Маршрут в Google Maps →</a></div>'
       +plansHTML(e.tid)
-      +'<div class="padd fix" data-fix="'+e.tid+'" style="display:none"></div>'
-      +'<div class="daytools"><button class="tiny" data-dayon="'+e.tid+'">Отметить день</button><button class="tiny" data-dayoff="'+e.tid+'">Снять день</button>'+swapBtn(e.tid)+'</div>'
+      +'<div class="daytools"><button class="tiny" data-dayon="'+e.tid+'">Отметить день</button><button class="tiny" data-dayoff="'+e.tid+'">Снять день</button></div>'
       +'<ul class="stops">'+list.map((p,pi)=>{const emo=p.star?'<span class="cemo star">'+ic('star','i-sm')+'</span>':'';
         return hopHTML(pi?list[pi-1]:null,p,pi?null:dayStart(e.tid))
         +'<li data-id="'+p.id+'" data-cat="'+p.cat+'" data-day="'+p.d+'" data-base="'+p.base+'">'
@@ -4512,11 +4500,6 @@ const DATEACCTXT={approx:'даты примерные — вы называли 
    Шаблонов больше слотов — лишние уходят в «Ещё в городе» (STASH, ничего не теряется);
    слотов больше — появляются свободные дни, которые наполняет пользователь. */
 let SCHED=[],STASH={},SCHED_BY={},HIDDEN={};
-/* ⇄ ПОРЯДОК ДНЕЙ ВНУТРИ ГОРОДА. Её просьба после разбора закрытых мест: «либо мы
-   можем передвинуть маршрут, чтобы день начинался с этого». Меняем местами два
-   дня ОДНОГО города — это самый безопасный ход: ночуешь там же, переезды и жильё
-   не двигаются, меняется только дата занятий. Хранится в плане. */
-let DORD={};
 /* Ночи, как их задумал автор маршрута. Снимаем СРАЗУ при загрузке: дальше
    BASES.nights меняет и пользователь, и сборка из анкеты, и «замысел» теряется. */
 const NIGHTS0=BASES.map(b=>b.nights);
@@ -4587,17 +4570,7 @@ function buildSchedule(){
   tripBases().forEach(b=>{
     const tpls=dayTpls(b.id),pin=pinsOf(b.id),hid=hiddenOf(b.id);
     const list=tpls.filter(t=>t!==pin.last&&(t===pin.first||hid.indexOf(t.n)<0));
-    const slots=Math.max(0,b.nights), use0=list.slice(0,slots);
-    /* человек мог поменять дни города местами (кнопка «поменять с днём N»):
-       содержимое дня едет вместе с его названием, меняется только дата.
-       День приезда остаётся первым — к нему привязан переезд из прошлого города */
-    const use=use0.slice().sort((x,y)=>{
-      if(x===pin.first)return -1;
-      if(y===pin.first)return 1;
-      const dx=(DORD[x.n]!=null)?DORD[x.n]:use0.indexOf(x);
-      const dy=(DORD[y.n]!=null)?DORD[y.n]:use0.indexOf(y);
-      return dx-dy;
-    });
+    const slots=Math.max(0,b.nights), use=list.slice(0,slots);
     STASH[b.id]=tpls.filter(t=>t!==pin.last&&use.indexOf(t)<0);   /* скрытые + не влезшие */
     use.forEach(t=>SCHED.push({tid:t.n,base:b.id,tpl:t,pin:t===pin.first?1:0}));
     for(let k=use.length;k<slots;k++)SCHED.push({tid:'f-'+b.id+'-'+k,base:b.id,tpl:null});
@@ -4904,35 +4877,6 @@ function dayTitle(e){
     if(meta[k]&&meta[k].nm)return meta[k].nm;
   }
   return 'Свободный день · '+shortName(baseById(e.base).name);
-}
-/* ⇄ с какими днями можно поменяться: тот же город, не день приезда (к нему
-   привязан переезд) и не день вылета */
-function swapMates(tid){
-  const e=SCHED_BY[tid];
-  if(!e||e.fin||e.pin)return [];
-  return SCHED.filter(x=>x.base===e.base&&!x.fin&&!x.pin&&x.tpl&&x.tid!==tid);
-}
-/* кнопка «⇄ поменять с днём N» — рядом с «Отметить день». Без часов работы она
-   тоже нужна: иногда просто хочется начать с другого */
-function swapBtn(tid){
-  const m=swapMates(tid);
-  if(!m.length)return '';
-  const e=SCHED_BY[tid];
-  const next=m.find(x=>x.disp>e.disp)||m[0];
-  return '<button class="tiny" data-swap="'+tid+'|'+next.tid+'" title="'
-    +esc0('Содержимое дней поменяется местами: жильё и переезды останутся как есть')
-    +'">⇄ Поменять с днём '+next.disp+'</button>';
-}
-function swapDays(ta,tb){
-  const A=SCHED_BY[ta],B=SCHED_BY[tb];
-  if(!A||!B||A.base!==B.base)return;
-  const ids=SCHED.filter(e=>e.base===A.base&&!e.fin).map(e=>e.tid);
-  const i=ids.indexOf(ta),j=ids.indexOf(tb);
-  if(i<0||j<0)return;
-  ids[i]=tb;ids[j]=ta;
-  ids.forEach((id,k)=>{DORD[id]=k;});
-  try{savePlan();}catch(x){}
-  rerenderTrip();
 }
 /* места отложенных дней + убранные руками — лежат в городе и ждут свободного дня */
 function stashPlaces(bid){const t=(STASH[bid]||[]).map(x=>x.n);
@@ -5607,7 +5551,7 @@ function rerenderTrip(){
      к числам. Догружаем недостающее; если всё уже есть, функция сразу выходит. */
   loadWeather();
 }
-function loadPlan(){try{const s=JSON.parse(localStorage.getItem(PKEY));if(s){if(s.start)startIso=s.start;if(s.pace&&DAYPACES.some(x=>x.k===s.pace))DAYPACE=s.pace;if(s.plans&&typeof s.plans==='object')PLANPICK=s.plans;if(s.merge&&typeof s.merge==='object')MERGE=s.merge;if(s.dord&&typeof s.dord==='object')DORD=s.dord;DATEACC=s.acc||'exact';if(typeof s.people==='number'&&s.people>=1)PEOPLE=s.people;/* >=0, а не >=1: ноль ночей — законное состояние, и с прежней проверкой
+function loadPlan(){try{const s=JSON.parse(localStorage.getItem(PKEY));if(s){if(s.start)startIso=s.start;if(s.pace&&DAYPACES.some(x=>x.k===s.pace))DAYPACE=s.pace;if(s.plans&&typeof s.plans==='object')PLANPICK=s.plans;if(s.merge&&typeof s.merge==='object')MERGE=s.merge;DATEACC=s.acc||'exact';if(typeof s.people==='number'&&s.people>=1)PEOPLE=s.people;/* >=0, а не >=1: ноль ночей — законное состояние, и с прежней проверкой
    сохранённый ноль отбрасывался, а город возвращал себе дни из данных */
   if(Array.isArray(s.nights))BASES.forEach((b,i)=>{if(typeof s.nights[i]==='number'&&s.nights[i]>=0)b.nights=s.nights[i];});if(s.hidden&&typeof s.hidden==='object')HIDDEN=s.hidden;
   if(s.moved&&typeof s.moved==='object')MOVED=s.moved;
@@ -5626,7 +5570,7 @@ function loadPlan(){try{const s=JSON.parse(localStorage.getItem(PKEY));if(s){if(
   applyCurDefaults();mergeCustom();applyMoves();}
 function savePlan(){try{localStorage.setItem(PKEY,JSON.stringify({start:startIso,people:PEOPLE,acc:DATEACC,
   nights:BASES.map(b=>b.nights),hidden:HIDDEN,moved:MOVED,custom:CUSTOM,cur:CUR,crate:CRATE,
-  temp:TEMP,dist:DIST,lang:LANG,asm:ASM,off:offIds(),car:CARMODE,custb:CUSTB,pace:DAYPACE,plans:PLANPICK,merge:MERGE,dord:DORD}));}catch(e){}}
+  temp:TEMP,dist:DIST,lang:LANG,asm:ASM,off:offIds(),car:CARMODE,custb:CUSTB,pace:DAYPACE,plans:PLANPICK,merge:MERGE}));}catch(e){}}
 /* Если дату придумали мы — говорим это на самой странице, а не только всплывашкой
    при сборке: по такой дате человек может купить билет. Назвал свою — надпись
    исчезает сама. */

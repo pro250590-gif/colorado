@@ -36,6 +36,9 @@
 !food-coords.js
 # набирает еду НА МАРШРУТЕ из карты вокруг точек дня
 !food-nearby.js
+# переносит номера мест Google (place_id) из базы в файл маршрута:
+# ссылка ведёт на карточку места, а не на голую точку
+!place-ids.js
 !fetch-photos2.js
 !trip-TEMPLATE.js
 !img/
