@@ -2078,6 +2078,10 @@ section h2.big{margin-bottom:4px}
   document.write('<scr'+'ipt src="'+f+'"></scr'+'ipt>');
 })();
 </script>
+<!-- Счёт дня — общий со страницей проверки в терминале (check-route.js). Написан
+     один раз нарочно: пока эта арифметика жила в двух местах, она дважды
+     разъезжалась. Наружу отдаёт одно имя — DAYMATH. -->
+<script src="day-math.js"></script>
 <!-- Правила конструктора (те же, что в терминале): движок проверяет ими собранную
      поездку. Файл ничего не рисует и наружу отдаёт одно имя — CONSTRUCTOR. -->
 <script src="constructor.js"></script>
@@ -3796,12 +3800,13 @@ function fmtHM(n){
    попадает в обеденное или ужинное окно. Туда и ставим перерыв.
    🔑 Если следующая точка длинная, а окно к концу — кормим ДО неё: иначе
    человек уходит на два часа в музей голодным. */
-const DAY_START=9*60;                       /* выходим в девять утра */
-const MEALS=[
-  {key:'обед', from:12*60, to:15*60, min:60},
-  {key:'ужин', from:19*60, to:21*60, min:90}
-];
-const LONG_PLACE=90;                        /* «длинная точка», ради которой едят заранее */
+const DAY_START=DAYMATH.DAY_START;          /* выходим в девять утра */
+/* 🔑 СЧЁТ ДНЯ ЖИВЁТ В ОДНОМ МЕСТЕ — day-math.js. Он же у проверки в терминале
+   (check-route.js). Раньше эта арифметика была написана дважды, и дважды
+   расходилась: правило чинили на странице, а проверка считала по-старому.
+   Здесь остаётся только «кто где стоит», а «сколько это стоит» — там. */
+const MEALS=DAYMATH.MEALS;
+const LONG_PLACE=DAYMATH.LONG_PLACE;        /* «длинная точка», ради которой едят заранее */
 function hhmm(m){const h=Math.floor(m/60)%24,x=Math.round(m)%60;return h+':'+(x<10?'0':'')+x;}
 /* ЕДА НА МАРШРУТЕ — то, что собрано из карты вокруг точек этого дня
    (food-nearby.js). Её разделение: подборка города и еда на маршруте — разные
@@ -3861,31 +3866,29 @@ function chainOf(tid,skip){
   return P.filter(p=>p.d===tid&&p.cat!=='food'&&picked.has(p.id)
     &&optOf(p)===act&&typeof p.lat==='number'&&!(skip&&skip[p.id]));
 }
-/* сколько стоит день с таким набором точек — только минуты, без карточек */
-function chainMinutes(tid,skip){
+/* цепочка дня числами: [{min, move}] — то, что понимает общий счёт day-math.js.
+   Тут решается только «кто за кем и сколько до него ехать» */
+function chainItems(tid,skip){
   const list=chainOf(tid,skip);
-  if(!list.length)return 0;
   const st=dayStart(tid);
-  let clock=DAY_START,prev=(st&&st.id)?st:null;
-  const eaten={};
-  list.forEach(p=>{
-    const move=p.hop?rideMin(p,prev).min:(prev?stepMin(prev,p):0);
-    const dur=((META[p.id]||p.meta||{}).min)||0;
-    MEALS.forEach(ml=>{
-      if(eaten[ml.key]||clock<ml.from||clock>ml.to)return;
-      const mid=(ml.from+ml.to)/2,after=clock+move+dur;
-      if(!(after>ml.to||(dur>=LONG_PLACE&&after>mid+ml.min))&&Math.abs(clock-mid)>Math.abs(after-mid))return;
-      eaten[ml.key]=1;clock+=ml.min;
-    });
-    clock+=move+dur;prev=p;
+  let prev=(st&&st.id)?st:null,est=false;
+  const items=list.map(p=>{
+    let move=0;
+    if(p.hop){const r=rideMin(p,prev);move=r.min;if(r.est)est=true;}
+    else if(prev)move=stepMin(prev,p);
+    prev=p;                 /* следующий шаг считается от ЭТОЙ точки, а не от дома */
+    return {p:p,min:((META[p.id]||p.meta||{}).min)||0,move:move};
   });
-  /* ⚠️ ЕДА ПОСЛЕ ПОСЛЕДНЕЙ ТОЧКИ В СЧЁТ ДНЯ НЕ ИДЁТ. Ужин в конце — это уже
-     вечер: он ни с чем не соперничает и ничего не мешает успеть. Пока он
-     считался, день Чимни-Рок + Пагоса выходил 10 ч 28 (7 ч 58 дороги и мест
-     плюс два часа еды) — и разгрузка отправляла в «если успеете» трёхчасовые
-     купальни, ради которых туда и едут, а в шапке при этом стояло «6 ч 31 из
-     10». В счёт идут только перерывы МЕЖДУ точками: они и правда отнимают день. */
-  return clock-DAY_START;
+  items.est=est;items.list=list;
+  return items;
+}
+/* сколько стоит день с таким набором точек — только минуты, без карточек.
+   ⚠️ Сама арифметика (что считается, а что нет) живёт в day-math.js — одна на
+   страницу и на проверку в терминале. Здесь её нет намеренно. */
+function chainMinutes(tid,skip){
+  const items=chainItems(tid,skip);
+  if(!items.length)return 0;
+  return DAYMATH.dayCost(items).total;
 }
 function planMinutes(tid,key){
   const save=PLANPICK[tid];PLANPICK[tid]=key;
@@ -3935,53 +3938,34 @@ function squeezed(tid){
 }
 function isSqueezed(p){return !!(p&&squeezed(p.d)[p.id]);}
 
-/* день по часам: точки, переезды и перерывы на еду — одной лентой */
+/* день по часам: точки, переезды и перерывы на еду — одной лентой.
+   ⚠️ КОГДА человек ест, решает day-math.js (общий счёт), здесь только ГДЕ —
+   какое заведение рядом с той точкой, у которой его застал перерыв. */
 function dayPlan(tid){
   const skip=squeezed(tid);
-  const list=chainOf(tid,skip);
+  const items=chainItems(tid,skip);
   const out=[];
-  if(!list.length)return out;
-  const st=dayStart(tid);
-  let clock=DAY_START,prev=(st&&st.id)?st:null,est=false;
-  const eaten={},used={};
-  list.forEach((p,i)=>{
-    /* дорога до точки */
-    let move=0;
-    if(p.hop){const r=rideMin(p,prev);move=r.min;if(r.est)est=true;}
-    else if(prev)move=stepMin(prev,p);
-    /* не пора ли поесть — решаем ДО того, как уйти в следующую точку */
-    const dur=((META[p.id]||p.meta||{}).min)||0;
-    MEALS.forEach(ml=>{
-      if(eaten[ml.key])return;
-      if(clock<ml.from||clock>ml.to)return;
-      /* выбираем промежуток, который ближе к середине окна: не «первый после
-         половины первого», а тот, где обед приходится вовремя. И кормим
-         заранее, если следующая точка длинная и окно за неё не дотянется */
-      const mid=(ml.from+ml.to)/2,after=clock+move+dur;
-      const mustNow=after>ml.to||(dur>=LONG_PLACE&&after>mid+ml.min);
-      if(!mustNow&&Math.abs(clock-mid)>Math.abs(after-mid))return;
-      const spot=pickSpot(prev||p,ml.key,p.base,used,tid);
-      if(spot)used[spot.key]=1;
-      out.push({kind:'meal',meal:ml.key,at:clock,min:ml.min,spot:spot,near:prev||p});
-      eaten[ml.key]=1;clock+=ml.min;
-    });
-    clock+=move;
-    out.push({kind:'place',p:p,from:clock,to:clock+dur,move:move});
-    clock+=dur;
-    prev=p;                 /* следующий шаг считается от ЭТОЙ точки, а не от дома */
+  if(!items.length)return out;
+  const list=items.list;
+  const cost=DAYMATH.dayCost(items);
+  const used={};
+  let clock=DAY_START;
+  const meal=(m,near,base)=>{
+    const spot=pickSpot(near,m.meal,base,used,tid);
+    if(spot)used[spot.key]=1;
+    out.push({kind:'meal',meal:m.meal,at:m.at,min:m.min,tail:!!m.tail,spot:spot,near:near});
+  };
+  items.forEach((it,i)=>{
+    cost.meals.forEach(m=>{if(!m.tail&&m.before===i){meal(m,list[i-1]||list[i],list[i].base);clock+=m.min;}});
+    clock+=it.move;
+    out.push({kind:'place',p:it.p,from:clock,to:clock+it.min,move:it.move});
+    clock+=it.min;
   });
-  /* день кончился, а ужин так и не случился — ставим его в конце, если время
-     ещё ужинное */
-  MEALS.forEach(ml=>{
-    if(eaten[ml.key]||clock>ml.to+90)return;
-    const at=Math.max(clock,ml.from);
-    if(at>ml.to)return;
-    const last=list[list.length-1];
-    out.push({kind:'meal',meal:ml.key,at:at,min:ml.min,tail:true,
-      spot:pickSpot(last,ml.key,last.base,used,tid),near:last});
-    clock=at+ml.min;
-  });
-  out.est=est;out.end=clock;
+  /* еда, которая случилась уже после последней точки: показываем её, но в счёт
+     дня она не идёт (правило 16б) */
+  const last=list[list.length-1];
+  cost.meals.forEach(m=>{if(m.tail)meal(m,last,last.base);});
+  out.est=!!items.est;out.end=cost.end;
   return out;
 }
 /* подсказка рисуется всегда, а текстом и видимостью управляет пересчёт: на

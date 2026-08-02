@@ -19,6 +19,8 @@
 const fs = require('fs');
 const path = require('path');
 const order = require('./day-order.js');
+/* счёт дня — общий со страницей (index.html грузит этот же файл скриптом) */
+const DAYMATH = require('./day-math.js');
 
 const R = 6371;
 const rad = x => x * Math.PI / 180;
@@ -379,24 +381,16 @@ function checkRoute(file) {
         guessed++;
         return Math.max(5, Math.round(km(before.lat, before.lng, p.lat, p.lng) * 1.25 / 40 * 60));
       });
-      /* еда — часть дня. Идём по дню с часами в руках, как это делает страница:
-         обед случается, когда стрелка попадает в окно 12:00–15:00, ужин — в
-         19:00–21:00. Место выбирает движок, здесь важно только время. */
-      let clock = 9 * 60, food = 0;
-      const need = [{ from: 12 * 60, to: 15 * 60, min: 60 }, { from: 19 * 60, to: 21 * 60, min: 90 }];
-      pts.forEach((p, i) => {
-        need.forEach(ml => {
-          if (ml.done || clock < ml.from || clock > ml.to) return;
-          ml.done = 1; food += ml.min; clock += ml.min;
-        });
-        const dur = ((MET[p.id] || {}).min) || 0;
-        place += dur; move += legs[i];
-        clock += legs[i] + dur;
-      });
-      /* ⚠️ ужин ПОСЛЕ последней точки в счёт дня не идёт — это уже вечер, он
-         ничего не мешает успеть. Считаем только перерывы между точками, ровно
-         как страница (см. chainMinutes в index.html и правило 16б). */
-      const total = place + move + food;
+      /* 🔑 СЧЁТ ДНЯ ОДИН НА ВСЕХ — day-math.js. Здесь мы только выкладываем день
+         числами: сколько на каждом месте и сколько до него ехать. Когда человек
+         ест, что идёт в счёт, а что нет (ожидание, ужин после последней точки) —
+         решает та же функция, что и на странице. Раньше эта арифметика была
+         написана тут второй раз и жила своей жизнью: страница уже кормила
+         заранее перед длинной точкой, а проверка — ещё нет. */
+      const items = pts.map((p, i) => ({ min: ((MET[p.id] || {}).min) || 0, move: legs[i] }));
+      items.forEach(it => { place += it.min; move += it.move; });
+      const cost = DAYMATH.dayCost(items);
+      const food = cost.food, total = cost.total;
       /* если день не влезает, движок отложит лишнее сам («если успеете»). Но
          звёздные точки он не трогает — и если день не сходится даже по ним,
          это разговор для человека: правило клиента «разбираемся руками». */

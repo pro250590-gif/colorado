@@ -40,6 +40,21 @@ function run(script, arg) {
 }
 
 let hard = 0, soft = 0;
+
+/* СНАЧАЛА — САМ СЧЁТ ДНЯ. Если сломана арифметика (что идёт в день, а что нет),
+   врать будут все проверки разом, и разбираться в их выводе бессмысленно.
+   Случаи внутри day-math.js — живые ошибки, за которые нам уже прилетело. */
+console.log('\n████ математика дня (day-math.js)');
+{
+  const bad = require('./day-math.js').selftest(s => console.log(s));
+  if (bad) {
+    hard += bad;
+    console.log('  ❌ счёт дня сломан — остальные проверки считать нет смысла');
+    console.log('     правило 16б в ROUTE-RULES.md объясняет, как он должен работать');
+    process.exit(1);
+  }
+}
+
 files.forEach(f => {
   console.log('\n████ ' + f);
 
