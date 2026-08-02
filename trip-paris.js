@@ -149,7 +149,7 @@ const BUDGET=[
 /* ── ДОРОГИ ПО-НАСТОЯЩЕМУ ── считано road-times.js, руками не править ── */
 const ROADS={
  1:{ids:["@par","cdg","sei","lat"],km:[[null,null,0.6,1.2],[null,null,null,null],[0.6,null,null,0.7],[1.2,null,0.7,null]],min:[[null,null,9,15],[null,null,null,null],[9,null,null,9],[15,null,9,null]]},
- 2:{ids:["@par","lou","sai","mar","ors"],km:[[null,1.3,0.7,1.2,2.1],[1.3,null,1.2,2.4,1.1],[0.7,1.2,null,1.9,1.7],[1.2,2.4,1.9,null,3.3],[2.1,1.1,1.7,3.3,null]],min:[[null,17,10,16,29],[17,null,15,33,14],[10,15,null,25,23],[16,33,25,null,44],[29,14,23,44,null]]},
+ 2:{ids:["@par","sai","mar","lou","ors"],km:[[null,0.7,1.2,1.3,2.1],[0.7,null,1.9,1.2,1.7],[1.2,1.9,null,2.4,3.3],[1.3,1.2,2.4,null,1.1],[2.1,1.7,3.3,1.1,null]],min:[[null,10,16,17,29],[10,null,25,15,23],[16,25,null,33,44],[17,15,33,null,14],[29,23,44,14,null]]},
  3:{ids:["@par","ver","tri","eif"],km:[[null,null,null,4.8],[null,null,1.7,null],[null,1.7,null,null],[4.8,null,null,null]],min:[[null,null,null,65],[null,null,23,null],[null,23,null,null],[65,null,null,null]]},
  4:{ids:["@par","mon","pai"],km:[[null,4,2],[4,null,2.6],[2,2.6,null]],min:[[null,53,26],[53,null,35],[26,35,null]]},
 };

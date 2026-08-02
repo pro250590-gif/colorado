@@ -10,10 +10,9 @@
 
    Берём из OpenStreetMap поле opening_hours у самого объекта точки. Ищем вокруг
    координаты в 200 метрах и берём только УВЕРЕННОЕ совпадение:
-     · имя объекта похоже на наше (без регистра, без пунктуации, без диакритики),
-       либо наше название содержит имя объекта, либо наоборот;
-     · либо объект — это ровно то, чем является точка (музей, замок, парк,
-       достопримечательность) и он один такой в радиусе.
+     имя объекта в карте похоже на наше — по любому из его имён (name, name:en,
+     int_name, alt_name), без регистра, пунктуации и диакритики, и близкое по
+     длине. Ничего кроме имени подтверждением не считаем.
    Не сошлось — НЕ ПИШЕМ НИЧЕГО. Правило клиента про еду (9а) действует и здесь:
    «если не нашли и не подтвердили — оно нам не нужно», лучше пусто, чем наугад.
 
@@ -53,18 +52,28 @@ function load(file) {
   return S;
 }
 
+/* зеркала: главный сервер после плотной работы (road-times, food-nearby) начинает
+   отвечать «слишком много запросов». Зеркала те же данные, просто другие машины */
+const MIRRORS = [
+  'https://overpass-api.de/api/interpreter',
+  'https://overpass.kumi.systems/api/interpreter',
+  'https://overpass.private.coffee/api/interpreter'
+];
 async function overpass(q) {
-  for (let a = 0; a < 3; a++) {
-    const res = await fetch('https://overpass-api.de/api/interpreter', {
-      method: 'POST', body: 'data=' + encodeURIComponent(q),
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': UA, 'Accept': 'application/json' },
-      signal: AbortSignal.timeout(90000)
-    });
-    const t = await res.text();
-    if (/^\s*\{/.test(t) && !/"remark"/.test(t)) return JSON.parse(t);
-    await sleep(30000);
+  for (let a = 0; a < MIRRORS.length * 2; a++) {
+    const url = MIRRORS[a % MIRRORS.length];
+    try {
+      const res = await fetch(url, {
+        method: 'POST', body: 'data=' + encodeURIComponent(q),
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': UA, 'Accept': 'application/json' },
+        signal: AbortSignal.timeout(90000)
+      });
+      const t = await res.text();
+      if (/^\s*\{/.test(t) && !/"remark"/.test(t)) return JSON.parse(t);
+    } catch (e) { /* зеркало не ответило — идём к следующему */ }
+    await sleep(a < MIRRORS.length ? 3000 : 20000);
   }
-  throw new Error('Overpass молчит');
+  throw new Error('все зеркала Overpass молчат');
 }
 
 /* один запрос на пачку точек: круги вокруг каждой */
@@ -74,6 +83,10 @@ async function around(pts) {
   return (j.elements || []).map(e => ({
     tags: e.tags || {},
     nm: (e.tags || {}).name || '',
+    /* в Японии и Исландии имя в карте написано по-своему, а наше — латиницей:
+       сравнивать надо и с английским именем объекта */
+    alt: [(e.tags || {})['name:en'], (e.tags || {})['int_name'], (e.tags || {})['alt_name'],
+          (e.tags || {})['name:ru']].filter(Boolean),
     hours: (e.tags || {})['opening_hours'] || '',
     lat: e.lat != null ? e.lat : (e.center || {}).lat,
     lng: e.lon != null ? e.lon : (e.center || {}).lon
@@ -85,27 +98,45 @@ function pick(p, found) {
   const near = found.map(f => Object.assign({}, f, { d: Math.round(km(p.lat, p.lng, f.lat, f.lng) * 1000) }))
     .filter(f => f.d <= R_M).sort((a, b) => a.d - b.d);
   /* 1) имя сошлось — самый надёжный признак */
-  const byName = near.filter(f => {
-    const n = norm(f.nm);
+  const byName = near.filter(f => [f.nm].concat(f.alt || []).some(name => {
+    const n = norm(name);
     if (!n || n.length < 4) return false;
-    return mine === n || mine.indexOf(n) >= 0 || n.indexOf(mine) >= 0
-      || (q && (q.indexOf(n) >= 0 || n.indexOf(q) >= 0));
-  });
+    /* ⚠️ «содержит» без меры длины ловит чужаков: у городка Springdale нашлась
+       лавка «Springdale Candy Company», и её часы поехали бы целому городу.
+       Считаем совпадением только близкие по длине названия */
+    const near2 = mine === n || (q && q === n)
+      || ((mine.indexOf(n) >= 0 || n.indexOf(mine) >= 0)
+          && Math.min(mine.length, n.length) / Math.max(mine.length, n.length) >= 0.6)
+      || (q && (q.indexOf(n) >= 0 || n.indexOf(q) >= 0)
+          && Math.min(q.length, n.length) / Math.max(q.length, n.length) >= 0.6);
+    if (!near2) return false;
+    /* визит-центр — это не сам парк: у центра часы 8–17, а в парк въезжают и в
+       шесть утра. Берём его только если наша точка и есть визит-центр */
+    const info = f.tags.tourism === 'information' || /visitor/i.test(f.nm);
+    if (info && !/visitor|центр|center|centre/i.test(p.nm)) return false;
+    return true;
+  }));
   /* ⚠️ одного имени мало: в Латинском квартале нашёлся магазин «Quartier Latin»
      в 129 метрах, и его часы поехали бы кварталу. Имя принимаем, если это
      крупный объект (музей, замок, храм) или он совсем рядом — до 60 метров */
   const sure = byName.filter(f => BIG(f.tags) || f.d <= 60);
   if (sure.length) return { f: sure[0], why: BIG(sure[0].tags) ? 'имя' : 'имя, рядом' };
-  /* 2) в радиусе ровно один «крупный» объект — музей, замок, парк, вокзал */
-  const big = near.filter(f => BIG(f.tags));
-  if (big.length === 1 && big[0].d <= 120) return { f: big[0], why: 'единственный объект рядом' };
+  /* ⚠️ ВТОРОЙ ПРИЗНАК УБРАН НАРОЧНО. Была ветка «в радиусе один крупный объект —
+     берём его часы». На ней район Синдзюку получил часы какого-то заведения
+     («10:50-12:30, 14:00-15:40»), перекрёсток Сибуя — часы магазина, а парк —
+     часы своей конторы. Подтверждением считаем ТОЛЬКО совпадение имени: её
+     правило про еду (9а) — не подтверждено, значит не пишем. */
   return null;
 }
 
 async function doFile(file, dry) {
   const S = load(file);
   const P = S.P || [], MET = S.META || {};
-  const pts = P.filter(p => p.cat !== 'food' && typeof p.lat === 'number' && typeof p.lng === 'number');
+  /* вокзалы, причалы и аэропорты пропускаем: «часы работы» у них в карте — это
+     часы галереи или магазина внутри, а поезд уходит по расписанию. У Tokyo
+     Station так подхватились часы «Tu-Th 10:00-18:00» */
+  const pts = P.filter(p => p.cat !== 'food' && p.cat !== 'transport'
+    && typeof p.lat === 'number' && typeof p.lng === 'number');
   if (!pts.length) { console.log('  нет точек — пропускаю'); return; }
   const got = {};
   let asked = 0;
@@ -125,10 +156,17 @@ async function doFile(file, dry) {
   }
   const n = Object.keys(got).length;
   console.log('  нашли часы у ' + n + ' из ' + pts.length + ' точек');
-  if (dry || !n) return;
+  if (dry) return;
 
   /* пишем прямо в META: hours стоит рядом с min, там же, где всё про место */
   let src = fs.readFileSync(file, 'utf8');
+  /* ⚠️ СНАЧАЛА СТИРАЕМ СТАРЫЕ. Правила отбора со временем строже (район Синдзюку
+     когда-то получил часы соседнего заведения), и написанное прошлым прогоном
+     должно уйти само. Источник правды — этот прогон, а не осадок от прошлых */
+  const wiped = (src.match(/,hours:'[^']*'/g) || []).length;
+  src = src.replace(/,hours:'[^']*'/g, '');
+  if (wiped) console.log('  стёрла старых записей: ' + wiped);
+  if (!n) { fs.writeFileSync(file, src); return; }
   let done = 0, missing = [];
   Object.keys(got).forEach(id => {
     const val = got[id].replace(/'/g, '’');

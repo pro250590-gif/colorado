@@ -183,11 +183,11 @@ const BUDGET=[
 
 /* ── ДОРОГИ ПО-НАСТОЯЩЕМУ ── считано road-times.js, руками не править ── */
 const ROADS={
- 1:{ids:["@nyc","jfk","tsq","hig"],km:[[null,null,0,2.6],[null,null,null,null],[0,null,null,2.6],[2.6,null,2.6,null]],min:[[null,null,1,35],[null,null,null,null],[1,null,null,35],[35,null,35,null]]},
+ 1:{ids:["@nyc","jfk","hig","tsq"],km:[[null,null,2.6,0],[null,null,null,null],[2.6,null,null,2.6],[0,null,2.6,null]],min:[[null,null,35,1],[null,null,null,null],[35,null,null,35],[1,null,35,null]]},
  2:{ids:["@nyc","cen","met","mom"],km:[[null,3.5,3.3,1],[3.5,null,0.6,3],[3.3,0.6,null,2.5],[1,3,2.5,null]],min:[[null,47,44,14],[47,null,8,40],[44,8,null,34],[14,40,34,null]]},
  3:{ids:["@nyc","bro","dum","wtc"],km:[[null,6.6,7.6,5.9],[6.6,null,1.2,1.8],[7.6,1.2,null,3],[5.9,1.8,3,null]],min:[[null,88,101,78],[88,null,16,24],[101,16,null,40],[78,24,40,null]]},
  4:{ids:["@nyc","sum","gct"],km:[[null,0.4,1.1],[0.4,null,0.8],[1.1,0.8,null]],min:[[null,5,14],[5,null,10],[14,10,null]]},
- 5:{ids:["@lax","lgx"],km:[[null,30.6],[30.1,null]],min:[[null,27],[27,null]]},
+ 5:{ids:["@lax","@nyc","lgx"],km:[[null,4499.8,30.6],[4498.5,null,4525.5],[30.1,4526.6,null]],min:[[null,2990,27],[2981,null,3004],[27,3011,null]]},
  6:{ids:["@lax","sam","ven"],km:[[null,26.2,24.6],[26.2,null,4.6],[24.6,4.1,null]],min:[[null,23,26],[23,null,9],[26,8,null]]},
  7:{ids:["@lax","gri","hol"],km:[[null,12.8,10.7],[12.3,null,6.6],[10.4,7,null]],min:[[null,18,11],[17,null,11],[11,12,null]]},
  8:{ids:["@lax","mal"],km:[[null,53.7],[53.5,null]],min:[[null,51],[51,null]]},

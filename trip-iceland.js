@@ -134,14 +134,14 @@ const SEGMENT={rey:'flight',vik:'car',hof:'car'};
 const TRANSFER={vik:{km:190,clean:'2 ч 30',stops:'весь день'},hof:{km:270,clean:'3 ч 30',stops:'весь день'}};
 
 const META={
- blu:{min:150,price:'от €70',best:'по дороге из аэропорта',route:'20 мин от KEF'},
+ blu:{min:150,price:'от €70',best:'по дороге из аэропорта',route:'20 мин от KEF',hours:'Jan 01-May 25: Mo-Su 08:00-22:00; May 26-Jun 29: Mo-Su 07:00-23:00; Jun 30-Aug 20: Mo-Su 07:00-24:00; Aug 21-Oct 01: Mo-Su 08:00-22:00; Oct 02-Dec 31: Mo-Su 08:00-21:00'},
  gey:{min:40,price:'бесплатно',best:'между извержениями',route:'Золотое кольцо'},
  gul:{min:45,price:'бесплатно',best:'солнце после полудня',route:'10 мин от Гейсира'},
  sel:{min:40,price:'парковка 900 ISK',best:'вторая половина дня',route:'у кольцевой дороги'},
- jok:{min:120,price:'бесплатно, лодка от €50',best:'рассвет',route:'у кольцевой дороги'},
+ jok:{min:120,price:'бесплатно, лодка от €50',best:'рассвет',route:'у кольцевой дороги',hours:'Mar-May 09:00-18:00; Jun-Sep 09:00-19:00; Oct-Feb 09:00-17:00; PH off'},
  rey2:{min:60,price:'бесплатно',best:'отлив',route:'10 мин от Вика'},
  kef:{min:40},
- hal:{min:40},
+ hal:{min:40,hours:'Mo-Sa 11:00-15:00; Su 10:00-15:00'},
  sun:{min:15},
  thi:{min:90},
  sko:{min:40},
@@ -178,9 +178,9 @@ const BUDGET=[
 const ROADS={
  1:{ids:["@rey","kef","blu","hal","sun"],km:[[null,47.3,49.8,1.6,1.6],[47.7,null,20.1,46.3,47.5],[50,20.4,null,48.6,49.8],[1.3,45.9,48.4,null,0.9],[1.3,48.1,50.6,1.4,null]],min:[[null,47,51,5,4],[47,null,21,46,46],[50,21,null,49,49],[4,46,49,null,3],[3,47,51,4,null]]},
  2:{ids:["@rey","thi","gey","gul"],km:[[null,47.7,115.3,123.2],[47.5,null,60.5,70.5],[115.2,60.5,null,10.1],[123.1,70.5,10.1,null]],min:[[null,49,104,112],[49,null,59,68],[104,59,null,9],[112,68,9,null]]},
- 3:{ids:["@vik","sel","sko","sol"],km:[[null,61.8,34.2,25.8],[61.8,null,30.5,42],[34.2,30.5,null,14.4],[25.8,42,14.4,null]],min:[[null,55,31,38],[55,null,30,53],[31,30,null,29],[38,53,29,null]]},
+ 3:{ids:["@vik","@rey","sel","sko","sol"],km:[[null,187.5,61.8,34.2,25.8],[187.5,null,128.4,156.2,167.7],[61.8,128.4,null,30.5,42],[34.2,156.2,30.5,null,14.4],[25.8,167.7,42,14.4,null]],min:[[null,169,55,31,38],[168,null,118,143,166],[55,119,null,30,53],[31,143,30,null,29],[38,166,53,29,null]]},
  4:{ids:["@vik","rey2","dyr","fja"],km:[[null,null,null,null],[null,null,null,null],[null,null,null,null],[null,null,null,null]],min:[[null,null,null,null],[null,null,null,null],[null,null,null,null],[null,null,null,null]]},
- 5:{ids:["@hof","jok","dia","skf"],km:[[null,79.4,79.8,136.8],[79.4,null,1.1,58],[79.9,1.1,null,57.5],[136.8,58,57.5,null]],min:[[null,69,69,118],[69,null,4,53],[69,4,null,52],[119,53,52,null]]},
+ 5:{ids:["@hof","@vik","jok","dia","skf"],km:[[null,271.9,79.4,79.8,136.8],[271.9,null,193.1,192.6,141.2],[79.4,193.1,null,1.1,58],[79.9,192.6,1.1,null,57.5],[136.8,141.3,58,57.5,null]],min:[[null,230,69,69,118],[230,null,164,163,121],[69,165,null,4,53],[69,163,4,null,52],[119,121,53,52,null]]},
  6:{ids:["@hof","vst"],km:[[null,281.7],[281.7,null]],min:[[null,245],[245,null]]},
 };
 const ROADLINES={

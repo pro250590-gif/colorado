@@ -3536,9 +3536,14 @@ function dayStart(tid){
   /* ДЕНЬ ПЕРЕЕЗДА НАЧИНАЕТСЯ В ПРОШЛОМ ГОРОДЕ — там человек спал. Раньше мы не
      считали это утро вовсе, и день «Урей → Аспен» выходил короче, чем он есть */
   if(SCHED[i-1].base!==e.base){
+    /* ⚠️ но только если переезжали САМИ ЗА РУЛЁМ. Токио → Киото едут поездом за
+       2 ч 15, а по дорогам это шесть часов — с ними день выходил 25 часов.
+       Способ переезда записан в SEGMENT города, куда приехали */
+    const sg=(typeof SEGMENT!=='undefined'&&SEGMENT)?SEGMENT[e.base]:null;
+    if(sg&&!/car|drive|машин/i.test(sg))return null;
     const pb=baseById(SCHED[i-1].base);
     if(pb&&typeof pb.lat==='number')
-      return {id:'@'+pb.id,lat:pb.lat,lng:pb.lng,base:pb.id,lead:'из '+shortName(pb.name)};
+      return {id:'@'+pb.id,lat:pb.lat,lng:pb.lng,base:pb.id,lead:'из города '+shortName(pb.name)};
     return null;
   }
   const st=P.find(x=>isStay(x)&&x.base===e.base&&typeof x.lat==='number'&&!x.approx);

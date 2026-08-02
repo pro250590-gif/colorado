@@ -370,7 +370,11 @@ function checkRoute(file) {
          как было в дне «Урей → Аспен» (13 ч 13 вместо настоящих) */
       const prevDay = DAYS[DAYS.indexOf(d) - 1];
       const pbid = prevDay ? (DAY_BASE || {})[prevDay.n] : null;
-      const startId = (pbid && pbid !== bid) ? pbid : bid;
+      /* но только если переезжали САМИ ЗА РУЛЁМ: Токио → Киото это поезд, а по
+         дорогам шесть часов — с ними день выходил 25 часов */
+      const segMode = (S.SEGMENT || {})[bid] || '';
+      const drove = !segMode || /car|drive|машин/i.test(segMode);
+      const startId = (pbid && pbid !== bid && drove) ? pbid : bid;
       const start = BASES.find(b => b.id === startId) || bs;
       /* день начинается в девять от жилья — но не в день прилёта: тогда первая
          точка это аэропорт, и дорога от жилья к нему человеку не нужна */
