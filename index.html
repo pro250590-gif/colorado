@@ -4363,6 +4363,7 @@ function buildSchedule(){
       SCHED.push({tid:'fin-'+b.id,base:b.id,tpl:null,fin:1,pin:1});
   });
   SCHED.forEach((e,i)=>{e.disp=i+1;e.date=addDays(startIso,i);SCHED_BY[e.tid]=e;});
+  autoPlans();applyMoves();           /* свободный день наполняем старшим вариантом */
   buildParts();                       /* дни поменялись — детали маршрута тоже */
 }
 /* ================= ДЕТАЛИ КОНСТРУКТОРА =================
@@ -4647,6 +4648,14 @@ function baseById(id){return BASES.find(b=>b.id===id)||BASES[0];}
 function dayTitle(e){
   if(e.tpl)return legTitle(e);
   if(e.fin)return shortName(baseById(e.base).name)+' → вылет домой';
+  /* день, наполненный вариантом, называется его именем — «Свободный день» тут
+     было бы неправдой: планы как раз заданы */
+  const pts=P.filter(p=>p.d===e.tid&&p.cat!=='food');
+  const k=pts.length&&pts[0].opt;
+  if(k&&pts.every(p=>p.opt===k)){
+    const meta=(typeof OPTS!=='undefined'&&OPTS)?OPTS:{};
+    if(meta[k]&&meta[k].nm)return meta[k].nm;
+  }
   return 'Свободный день · '+shortName(baseById(e.base).name);
 }
 /* места отложенных дней + убранные руками — лежат в городе и ждут свободного дня */
@@ -4677,8 +4686,37 @@ function stashTid(bid){return 's-'+bid;}
 function homeTid(bid){return 'h-'+bid;}
 function stayPlaces(bid){return P.filter(p=>p.custom&&p.kind==='stay'&&p.d===homeTid(bid));}
 function isStay(p){return !!(p&&p.custom&&p.kind==='stay'&&p.d===homeTid(p.base));}
+/* ── ВАРИАНТЫ — ЭТО ОЧЕРЕДЬ ПО ПРИОРИТЕТУ ─────────────────────────────────
+   Её мысль: «добавляем Дуранго ещё день — и то, что было "или/или", переходит в
+   следующий день; в приоритете тот, что лучше посмотреть, а второй уходит в или».
+   Так и сделано: сколько у города свободных дней — столько старших вариантов
+   становятся полноценными днями. Что не поместилось, остаётся вкладкой в своём
+   дне. Убрал ночь — вариант возвращается во вкладки сам.
+   Приоритет берётся из OPTS в файле маршрута (rank), а не из порядка в данных. */
+let AUTOD={};
+function autoPlans(){
+  AUTOD={};
+  const meta=(typeof OPTS!=='undefined'&&OPTS)?OPTS:{};
+  tripBases().forEach(b=>{
+    const free=SCHED.filter(e=>e.base===b.id&&!e.tpl&&!e.fin).map(e=>e.tid);
+    if(!free.length)return;
+    const groups={};
+    P.forEach(p=>{
+      const k=p.opt;
+      if(!k||p.base!==b.id||p.cat==='food')return;
+      if(MOVED[p.id]!==undefined)return;          /* человек уже переносил — не трогаем */
+      (groups[k]=groups[k]||[]).push(p);
+    });
+    Object.keys(groups)
+      .sort((x,y)=>((meta[x]&&meta[x].rank)||9)-((meta[y]&&meta[y].rank)||9))
+      .slice(0,free.length)
+      .forEach((k,i)=>{groups[k].forEach(p=>{AUTOD[p.id]=free[i];});});
+  });
+}
 function applyMoves(){
-  P.forEach(p=>{if(p._d0===undefined)p._d0=p.d;p.d=(MOVED[p.id]!==undefined)?MOVED[p.id]:p._d0;});
+  P.forEach(p=>{if(p._d0===undefined)p._d0=p.d;
+    p.d=(MOVED[p.id]!==undefined)?MOVED[p.id]
+      :(AUTOD[p.id]!==undefined?AUTOD[p.id]:p._d0);});
 }
 /* Свои места синхронизируем в ОБЕ стороны. Раньше мы только добавляли, поэтому место,
    удалённое на телефоне, на компьютере оставалось в ленте — просто с выключенным
