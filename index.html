@@ -1491,6 +1491,18 @@ body.stale{padding-top:44px}
 .plansub{margin:0 0 11px;font:400 12px/1.45 "Inter",sans-serif;color:#8b8fa3}
 .plansub b{color:#1b1533;font:800 13px/1.3 "Plus Jakarta Sans",sans-serif}
 .plansub:empty{display:none}
+/* вариант вдобавок к плану: влезает при этом темпе или нет */
+.planadd:empty{display:none}
+.padd{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:0 0 8px;padding:9px 11px;
+  border-radius:12px;background:#f4f1ff;border:1px solid #e4defb;
+  font:500 12px/1.4 "Inter",sans-serif;color:#4a3a7a}
+.padd span{flex:1;min-width:150px}
+.padd.off{background:#f7f7fa;border-color:#e9e9ef;color:#8b8fa3}
+.padd.on{background:rgba(45,168,110,.09);border-color:rgba(45,168,110,.3);color:#1f6b46}
+.pbtn2{border:1.5px solid #cfc7f2;background:#fff;border-radius:10px;padding:7px 11px;cursor:pointer;
+  white-space:nowrap;font:800 11.5px/1 "Plus Jakarta Sans",sans-serif;color:#5b3fd0}
+.pbtn2:hover{border-color:#8b6ff0;background:#faf8ff}
+.padd.on .pbtn2{border-color:rgba(45,168,110,.35);color:#1f6b46}
 /* точка чужого плана: её сейчас нет в дне */
 li.offplan{display:none!important}
 /* перерыв на еду — часть цепочки дня, а не отдельный список */
@@ -3317,6 +3329,21 @@ document.addEventListener('click',e=>{
   applyFilter();      /* карта: булавки и линия выбранного плана */
 });
 
+/* вариант вдобавок к плану: взять в день или вернуть обратно в выбор.
+   Набор точек цепочки меняется, поэтому день пересобираем целиком */
+document.addEventListener('click',e=>{
+  const b=e.target.closest&&e.target.closest('[data-merge],[data-unmerge]');
+  if(!b)return;
+  e.preventDefault();
+  const take=!!b.dataset.merge;
+  const [t,key]=(b.dataset.merge||b.dataset.unmerge).split('|');
+  const tid=tidOf(t);
+  MERGE[tid]=MERGE[tid]||{};
+  if(take)MERGE[tid][key]=1;else delete MERGE[tid][key];
+  try{savePlan();}catch(x){}
+  rerenderTrip();
+});
+
 /* ================= СПИСОК ДНЕЙ ================= */
 const KEY='co-trip-2026-picks';let picked;
 picked=loadPicks();
@@ -3565,7 +3592,34 @@ function refreshHops_(){
    Поле opt у места = «это ветка вместо основной»; места без opt — основная
    цепочка. В счёт идёт основная, а если человек выключил её целиком — первый
    включённый вариант. */
-function optOf(p){return (p&&p.opt)||'';}
+/* ⏱ ВАРИАНТ, ВЗЯТЫЙ В ДЕНЬ (её замечание 02.08: «поменяла темп на 12 часов, а
+   варианты остались прежними — они же должны были пересчитаться»).
+   При плотном темпе в дне остаётся запас, и вариант перестаёт быть «или вместо»:
+   его можно взять ВДОБАВОК к основному плану. Тогда он идёт обычным
+   продолжением цепочки — с номером, расстоянием и своим временем.
+   MERGE[день][ключ]=1 — вариант взят в день. Решает человек кнопкой: ехать
+   вечером ещё сорок минут на озеро — это его выбор, а не наш. */
+let MERGE={};
+function rawOpt(p){return (p&&p.opt)||'';}
+function isMerged(p){const m=MERGE[p&&p.d];return !!(m&&p.opt&&m[p.opt]);}
+function optOf(p){return isMerged(p)?activeOpt(p.d):rawOpt(p);}
+/* какие ветки вообще лежат в дне — до всякого слияния */
+function dayBranches(tid){
+  const out=[];
+  P.forEach(p=>{if(p.d===tid&&p.cat!=='food'&&p.opt&&out.indexOf(p.opt)<0)out.push(p.opt);});
+  const meta=(typeof OPTS!=='undefined'&&OPTS)?OPTS:{};
+  return out.sort((x,y)=>((meta[x]&&meta[x].rank)||9)-((meta[y]&&meta[y].rank)||9));
+}
+/* сколько выйдет день, если взять эту ветку вдобавок к нынешнему плану */
+function mergeMinutes(tid,key){
+  const had=MERGE[tid]&&MERGE[tid][key];
+  MERGE[tid]=MERGE[tid]||{};MERGE[tid][key]=1;
+  for(const k in SQZ)delete SQZ[k];
+  const m=chainMinutes(tid,{});
+  if(!had)delete MERGE[tid][key];
+  for(const k in SQZ)delete SQZ[k];
+  return m;
+}
 
 /* ── РОЛЬ ТОЧКИ В ДНЕ ─────────────────────────────────────────────────────
    Одна общая функция для ВСЕХ автоматических действий: разгрузки, порядка,
@@ -3612,11 +3666,13 @@ function dayPlans(tid){
 function activeOpt(tid){
   const list=P.filter(p=>p.d===tid&&p.cat!=='food');
   /* выбор человека главнее всего — если в выбранном плане ещё есть точки */
+  /* считаем по СЫРОМУ opt: взятая в день ветка сама по себе планом уже не
+     является, и выбирать активный план по ней нельзя */
   const want=PLANPICK[tid];
-  if(want!==undefined&&list.some(p=>optOf(p)===want&&picked.has(p.id)))return want;
-  if(list.some(p=>!optOf(p)&&picked.has(p.id)))return '';
-  const alt=list.find(p=>optOf(p)&&picked.has(p.id));
-  return alt?optOf(alt):'';
+  if(want!==undefined&&list.some(p=>rawOpt(p)===want&&!isMerged(p)&&picked.has(p.id)))return want;
+  if(list.some(p=>!rawOpt(p)&&picked.has(p.id)))return '';
+  const alt=list.find(p=>rawOpt(p)&&!isMerged(p)&&picked.has(p.id));
+  return alt?rawOpt(alt):'';
 }
 /* ПОДСКАЗКА ДНЯ ПРИНАДЛЕЖИТ ПЛАНУ, А НЕ ДНЮ. Её слова 02.08: «если я убираю
    второй вариант, он мне пишет про билеты вовнутрь — но это подсказка для
@@ -3996,7 +4052,10 @@ function refreshMeals(){
 /* кнопки планов дня: имя, часы, подпись «зачем». Нажатие пересобирает день */
 function plansHTML(tid){
   const pl=dayPlans(tid);
-  if(pl.length<2)return '';
+  /* строка «влезает / не влезает вдобавок» нужна и там, где вкладка осталась
+     одна: вариант, взятый в день, надо уметь вернуть обратно */
+  const add=dayBranches(tid).length?'<div class="planadd" data-planadd="'+tid+'"></div>':'';
+  if(pl.length<2)return add;
   /* подпись над вкладками — её слова: «я бы подписала: выбери свой вариант
      активности». Без неё ряд «Вариант 1 · 2 · 3» читается как нумерация чего-то
      уже решённого, а это выбор человека */
@@ -4004,7 +4063,29 @@ function plansHTML(tid){
     +'<div class="plans" data-plans="'+tid+'">'
     +pl.map((p,i)=>'<button class="planbtn" data-plan="'+tid+'|'+p.key+'" title="'+esc0(p.nm+(p.sub?' — '+p.sub:''))+'">'
       +'Вариант '+(i+1)+'</button>').join('')
-    +'</div><div class="plansub" data-plansub="'+tid+'"></div>';
+    +'</div><div class="plansub" data-plansub="'+tid+'"></div>'+add;
+}
+/* ⏱ ВАРИАНТ ВДОБАВОК К ПЛАНУ — ответ на её вопрос «поменяла темп, а варианты
+   те же». Темп меняет предел дня, значит меняется и то, что в день помещается:
+   при плотном темпе вариант может поехать НЕ вместо, а вместе. Считаем честно и
+   говорим прямо — и когда влезает, и когда нет (иначе непонятно, почему ничего
+   не изменилось). Решает человек: ехать вечером ещё сорок минут — его выбор. */
+function planAddHTML(tid){
+  const act=activeOpt(tid),meta=(typeof OPTS!=='undefined'&&OPTS)?OPTS:{};
+  return dayBranches(tid).map(k=>{
+    const nm=(meta[k]&&meta[k].nm)||'вариант';
+    if(MERGE[tid]&&MERGE[tid][k])
+      return '<div class="padd on"><span>«'+esc0(nm)+'» взят в этот день — идёт продолжением маршрута</span>'
+        +'<button class="pbtn2" data-unmerge="'+tid+'|'+k+'">Убрать из дня</button></div>';
+    if(k===act)return '';
+    const all=mergeMinutes(tid,k);
+    if(all<=DAY_LIMIT)
+      return '<div class="padd"><span>«'+esc0(nm)+'» влезает в этот день вдобавок к выбранному: выйдет '
+        +fmtHM(all)+' из '+fmtHM(DAY_LIMIT)+'</span>'
+        +'<button class="pbtn2" data-merge="'+tid+'|'+k+'">Взять в этот день</button></div>';
+    return '<div class="padd off"><span>«'+esc0(nm)+'» в один день с выбранным не влезает: вышло бы '
+      +fmtHM(all)+' из '+fmtHM(DAY_LIMIT)+' — это выбор вместо, а не вдобавок</span></div>';
+  }).join('');
 }
 function refreshPlans(){
   document.querySelectorAll('[data-plans]').forEach(box=>{
@@ -4019,6 +4100,11 @@ function refreshPlans(){
     if(sub){const cur=dayPlans(tid).find(p=>p.key===act);
       sub.innerHTML=cur?('<b>'+cur.nm+'</b> · '+fmtHM(planMinutes(tid,cur.key))
         +(cur.sub?' · '+cur.sub:'')):'';}
+  });
+  /* пересчитывается вместе с темпом: сменила 10 ч на 12 — строка сама говорит,
+     что теперь влезает */
+  document.querySelectorAll('[data-planadd]').forEach(box=>{
+    box.innerHTML=planAddHTML(tidOf(box.dataset.planadd));
   });
 }
 function refreshBudgets(){
@@ -4735,6 +4821,8 @@ function autoPlans(){
       const k=p.opt;
       if(!k||p.base!==b.id||p.cat==='food')return;
       if(MOVED[p.id]!==undefined)return;          /* человек уже переносил — не трогаем */
+      const home=(p._d0!==undefined?p._d0:p.d);   /* где ветка живёт по данным */
+      if(MERGE[home]&&MERGE[home][k])return;      /* взята в свой день — не увозим */
       (groups[k]=groups[k]||[]).push(p);
     });
     /* 🔑 её правка 02.08: «в последний день переходят ВСЕ варианты». Раньше в
@@ -5359,7 +5447,7 @@ function rerenderTrip(){
      к числам. Догружаем недостающее; если всё уже есть, функция сразу выходит. */
   loadWeather();
 }
-function loadPlan(){try{const s=JSON.parse(localStorage.getItem(PKEY));if(s){if(s.start)startIso=s.start;if(s.pace&&DAYPACES.some(x=>x.k===s.pace))DAYPACE=s.pace;if(s.plans&&typeof s.plans==='object')PLANPICK=s.plans;DATEACC=s.acc||'exact';if(typeof s.people==='number'&&s.people>=1)PEOPLE=s.people;/* >=0, а не >=1: ноль ночей — законное состояние, и с прежней проверкой
+function loadPlan(){try{const s=JSON.parse(localStorage.getItem(PKEY));if(s){if(s.start)startIso=s.start;if(s.pace&&DAYPACES.some(x=>x.k===s.pace))DAYPACE=s.pace;if(s.plans&&typeof s.plans==='object')PLANPICK=s.plans;if(s.merge&&typeof s.merge==='object')MERGE=s.merge;DATEACC=s.acc||'exact';if(typeof s.people==='number'&&s.people>=1)PEOPLE=s.people;/* >=0, а не >=1: ноль ночей — законное состояние, и с прежней проверкой
    сохранённый ноль отбрасывался, а город возвращал себе дни из данных */
   if(Array.isArray(s.nights))BASES.forEach((b,i)=>{if(typeof s.nights[i]==='number'&&s.nights[i]>=0)b.nights=s.nights[i];});if(s.hidden&&typeof s.hidden==='object')HIDDEN=s.hidden;
   if(s.moved&&typeof s.moved==='object')MOVED=s.moved;
@@ -5378,7 +5466,7 @@ function loadPlan(){try{const s=JSON.parse(localStorage.getItem(PKEY));if(s){if(
   applyCurDefaults();mergeCustom();applyMoves();}
 function savePlan(){try{localStorage.setItem(PKEY,JSON.stringify({start:startIso,people:PEOPLE,acc:DATEACC,
   nights:BASES.map(b=>b.nights),hidden:HIDDEN,moved:MOVED,custom:CUSTOM,cur:CUR,crate:CRATE,
-  temp:TEMP,dist:DIST,lang:LANG,asm:ASM,off:offIds(),car:CARMODE,custb:CUSTB,pace:DAYPACE,plans:PLANPICK}));}catch(e){}}
+  temp:TEMP,dist:DIST,lang:LANG,asm:ASM,off:offIds(),car:CARMODE,custb:CUSTB,pace:DAYPACE,plans:PLANPICK,merge:MERGE}));}catch(e){}}
 /* Если дату придумали мы — говорим это на самой странице, а не только всплывашкой
    при сборке: по такой дате человек может купить билет. Назвал свою — надпись
    исчезает сама. */
