@@ -73,12 +73,12 @@ const P=[
  /* ДАРСЕНА ИДЁТ ПЕРЕД ВОРОТАМИ (правка клиента 31.07.2026, глазами по карте).
     От Сант-Эустороджо до Дарсены 300 м, до ворот 400, а от ворот до Лавандаи
     400 м против 600 от Дарсены: через порт короче на 300 метров и четыре
-    минуты. По прямой этой разницы не видно — между берегами канала прямая
+    минуты. По прямой этой разницы не видно — между берегами канала прямая,
     короткая, а идти надо до моста. */
  {id:'dar',d:1,base:'mil',cat:'town',lat:45.452911,lng:9.178572,nm:'Darsena di Milano',q:'Darsena di Milano',tag:['порт','t-easy'],star:1,
   why:'Старый городской порт: сюда по каналам везли мрамор на собор. Сейчас — набережная с барами и лодками.'},
  /* в Милане ДВОЕ ворот с этим именем: наши — неоклассические, на площади
-    XXIV Maggio у самой Дарсены; средневековые стоят севернее, в поиске уводят
+    XXIV Maggio у самой Дарсены; средневековые стоят севернее, в поиске уводят,
     не туда, поэтому в q вписан адрес */
  {id:'tic',d:1,base:'mil',cat:'town',lat:45.452138,lng:9.178401,pin:'в Милане двое ворот с этим именем: наши — на площади XXIV Maggio',nm:'Porta Ticinese',q:'Porta Ticinese, Piazza XXIV Maggio, Milano',tag:['ворота','t-easy'],
   why:'Ворота на площади XXIV Maggio, за которыми начинается район каналов. Отсюда весь вечер идёшь вдоль воды.'},
@@ -95,6 +95,14 @@ const P=[
  {id:'ter',d:2,base:'mil',cat:'town',lat:45.464229,lng:9.191195,nm:'Terrazze del Duomo',q:'Duomo Terraces, Milano',tag:['вид','t-must'],star:1,
   hop:'вход в лифт — с северной стороны собора',
   why:'Крыша собора: между шпилями ходишь по мрамору, в ясный день видно Альпы. Пешком по лестнице дешевле, лифтом быстрее.'},
+ {id:'bag',d:2,base:'mil',cat:'town',lat:45.469481,lng:9.194979,nm:'Museo Bagatti Valsecchi',q:'Museo Bagatti Valsecchi, Milano',tag:['дом-музей','t-easy'],
+  why:'Дом двух братьев-собирателей XIX века, обставленный под ренессанс: резные потолки, доспехи и посуда, которой пользовались хозяева.'},
+ {id:'sca',d:2,base:'mil',cat:'town',lat:45.467604,lng:9.189114,nm:'Teatro alla Scala',q:'Teatro alla Scala, Milano',tag:['театр','t-easy'],
+  why:'Снаружи — обычный дом, внутри — главная оперная сцена мира. В музей пускают днём, и из него видно зал.'},
+ {id:'pol',d:2,base:'mil',cat:'town',lat:45.468475,lng:9.191780,nm:'Museo Poldi Pezzoli',q:'Museo Poldi Pezzoli, Milano',tag:['дом-музей','t-easy'],
+  why:'Квартира коллекционера XIX века, оставленная как была: оружие, часы, ковры и «Портрет молодой женщины» Полайоло.'},
+ {id:'nec',d:2,base:'mil',cat:'town',lat:45.468371,lng:9.201793,nm:'Villa Necchi Campiglio',q:'Villa Necchi Campiglio, Milano',tag:['дом-музей','t-must'],star:1,
+  why:'Дом миланских промышленников 1930-х с бассейном во дворе — тот самый, где снимали «Я — это любовь». Всё оставлено как было, вплоть до посуды.'},
  {id:'oss',d:2,base:'mil',cat:'town',lat:45.462417,lng:9.195541,nm:'Santuario di San Bernardino alle Ossa',q:'Santuario di San Bernardino alle Ossa, Milano',tag:['необычное','t-must'],star:1,
   why:'Часовня, стены которой выложены человеческими костями из старого кладбища. Пять минут внутри — и запоминается на всю поездку. Вход свободный.'},
  {id:'rea',d:2,base:'mil',cat:'town',lat:45.462903,lng:9.190870,nm:'Palazzo Reale',q:'Palazzo Reale, Milano',tag:['выставки','t-easy'],
@@ -103,14 +111,10 @@ const P=[
   why:'Итальянский XX век — футуристы, Моранди, Фонтана. Из окна верхнего зала собор виден так, как его не увидишь с площади.'},
  {id:'sat',d:2,base:'mil',cat:'town',lat:45.462877,lng:9.187689,nm:'Santa Maria presso San Satiro',q:'Chiesa di Santa Maria presso San Satiro, Milano',tag:['обман зрения','t-easy'],
   why:'Места на алтарную часть не хватило, и Браманте нарисовал её: кажется, что за колоннами глубина в несколько метров, а там сантиметры.'},
- {id:'amb',d:2,base:'mil',cat:'town',lat:45.463640,lng:9.186007,nm:'Pinacoteca Ambrosiana',q:'Pinacoteca Ambrosiana, Milano',tag:['музей','t-easy'],
-  why:'Здесь лежит «Атлантический кодекс» Леонардо и висит «Корзина с фруктами» Караваджо. Народу заметно меньше, чем в Брере.'},
  {id:'mer',d:2,base:'mil',cat:'town',lat:45.464630,lng:9.187691,nm:'Piazza dei Mercanti',q:'Piazza dei Mercanti, Milano',tag:['старый город','t-easy'],
   why:'Средневековая торговая площадь: лоджия XIII века, колодец и тишина в двух шагах от толпы у собора.'},
  {id:'gal',d:2,base:'mil',cat:'town',lat:45.465642,lng:9.190006,nm:'Galleria Vittorio Emanuele II',q:'Galleria Vittorio Emanuele II, Milano',tag:['рядом','t-easy'],star:1,
   why:'Стеклянная галерея 1877 года: мозаики на полу, кафе под куполом и самый дорогой шопинг Италии.'},
- {id:'sca',d:2,base:'mil',cat:'town',lat:45.467604,lng:9.189114,nm:'Teatro alla Scala',q:'Teatro alla Scala, Milano',tag:['театр','t-easy'],
-  why:'Снаружи — обычный дом, внутри — главная оперная сцена мира. В музей пускают днём, и из него видно зал.'},
  {id:'rin',d:2,base:'mil',cat:'town',lat:45.464963,lng:9.191912,nm:'La Rinascente',q:'La Rinascente, Piazza Duomo, Milano',tag:['закат','t-easy'],
   why:'Универмаг у собора, а на верхнем этаже — терраса с кафе, откуда шпили Дуомо на расстоянии вытянутой руки. Вход свободный.'},
 
@@ -123,10 +127,6 @@ const P=[
   why:'Триумфальная арка на дальнем конце парка, начатая для Наполеона и достроенная уже без него.'},
  {id:'bra',d:3,base:'mil',cat:'town',lat:45.473285,lng:9.172885,nm:'Torre Branca',q:'Torre Branca, Milano',tag:['вид','t-easy'],
   why:'Стальная башня 1933 года посреди парка: лифт поднимает на 108 метров, и оттуда виден весь город и Альпы.'},
- {id:'tri',d:3,base:'mil',cat:'town',lat:45.471593,lng:9.173092,nm:'Triennale Milano',q:'Triennale Milano',tag:['дизайн','t-easy'],
-  why:'Музей итальянского дизайна — то, ради чего в Милан едут дизайнеры со всего мира. Кафе с террасой в парк.'},
- {id:'cen',d:3,base:'mil',cat:'town',lat:45.465976,lng:9.171132,nm:'Santa Maria delle Grazie · Il Cenacolo',q:'Santa Maria delle Grazie, Milano',tag:['по билету','t-must'],star:1,
-  why:'«Тайная вечеря» Леонардо на стене трапезной. Пускают по 30 человек на 15 минут, билет берут за месяц.'},
  {id:'leo',d:3,base:'mil',cat:'town',lat:45.462887,lng:9.170652,nm:'Museo Nazionale Scienza e Tecnologia Leonardo da Vinci',q:'Museo Nazionale Scienza e Tecnologia Leonardo da Vinci, Milano',tag:['музей','t-easy'],
   why:'Самый большой технический музей Италии: модели машин Леонардо, настоящая подводная лодка и паровозы. С детьми — на полдня.'},
  {id:'amr',d:3,base:'mil',cat:'town',lat:45.462375,lng:9.175845,nm:'Basilica di Sant’Ambrogio',q:'Basilica di Sant\'Ambrogio, Milano',tag:['IV век','t-easy'],
@@ -135,12 +135,16 @@ const P=[
   why:'Снаружи глухая стена, внутри все стены расписаны фресками XVI века. Вход бесплатный, и это самая недооценённая церковь Милана.'},
 
  /* ── день 4: озеро Комо выездом на день ── */
+ {id:'cen',d:3,base:'mil',cat:'town',lat:45.465976,lng:9.171132,nm:'Santa Maria delle Grazie · Il Cenacolo',q:'Santa Maria delle Grazie, Milano',tag:['по билету','t-must'],star:1,
+  why:'«Тайная вечеря» Леонардо на стене трапезной. Пускают по 30 человек на 15 минут, билет берут за месяц.'},
+ {id:'tri',d:3,base:'mil',cat:'town',lat:45.471593,lng:9.173092,nm:'Triennale Milano',q:'Triennale Milano',tag:['дизайн','t-easy'],
+  why:'Музей итальянского дизайна — то, ради чего в Милан едут дизайнеры со всего мира. Кафе с террасой в парк.'},
  {id:'clg',d:4,base:'mil',cat:'transport',lat:45.814116,lng:9.084090,nm:'Stazione di Como Lago',q:'Como Lago railway station, Como',tag:['приезд','t-easy'],
   hop:'поезд с Cadorna, 1 час',
   why:'Вокзал, куда приходит поезд с Cadorna. Стоит прямо на набережной: до причалов триста метров пешком, никуда ехать не надо.'},
  /* ФУНИКУЛЁР СРАЗУ С ПОЕЗДА: он в трёхстах метрах севернее вокзала, а собор,
     Сан-Феделе и набережная — южнее. По-старому человек шёл на юг к собору,
-    возвращался на север к фуникулёру и снова спускался на юг к причалу. Плюс
+    возвращался на север к фуникулёру и снова спускался на юг к причалу. Плюс,
     у подъёма в данных стоит «ясное утро» — наверх и надо первым делом */
  {id:'fun',d:4,base:'mil',cat:'nature',lat:45.817644,lng:9.082854,nm:'Funicolare Como–Brunate',q:'Funicolare Como-Brunate, Piazza Alcide De Gasperi, Como',tag:['наверх','t-must'],star:1,
   why:'Фуникулёр 1894 года поднимает за семь минут на 500 метров в деревню Брунате: сверху видно всё озеро и Альпы, вдоль дороги — смотровые площадки и кафе.'},
@@ -180,18 +184,14 @@ const P=[
   why:'Главная картинная галерея Милана: Рафаэль, Мантенья, Караваджо. Вокруг — квартал академии художеств с мастерскими и барами.'},
  {id:'ort',d:5,base:'mil',cat:'nature',lat:45.471035,lng:9.189699,nm:'Orto Botanico di Brera',q:'Orto Botanico di Brera, Milano',tag:['тишина','t-easy'],
   why:'Ботанический сад во дворе академии, заложенный в 1774 году. О нём не знают даже миланцы, вход свободный.'},
- {id:'pol',d:5,base:'mil',cat:'town',lat:45.468475,lng:9.191780,nm:'Museo Poldi Pezzoli',q:'Museo Poldi Pezzoli, Milano',tag:['дом-музей','t-easy'],
-  why:'Квартира коллекционера XIX века, оставленная как была: оружие, часы, ковры и «Портрет молодой женщины» Полайоло.'},
+ {id:'amb',d:5,base:'mil',cat:'town',lat:45.463640,lng:9.186007,nm:'Pinacoteca Ambrosiana',q:'Pinacoteca Ambrosiana, Milano',tag:['музей','t-easy'],
+  why:'Здесь лежит «Атлантический кодекс» Леонардо и висит «Корзина с фруктами» Караваджо. Народу заметно меньше, чем в Брере.'},
  {id:'mon',d:5,base:'mil',cat:'town',lat:45.470089,lng:9.192767,nm:'Via Montenapoleone',q:'Via Montenapoleone, Milano',tag:['витрины','t-easy'],
   why:'Улица, ради которой в Милан едут за покупками. Даже если ничего не покупаешь, витрины здесь как выставка.'},
- {id:'bag',d:5,base:'mil',cat:'town',lat:45.469481,lng:9.194979,nm:'Museo Bagatti Valsecchi',q:'Museo Bagatti Valsecchi, Milano',tag:['дом-музей','t-easy'],
-  why:'Дом двух братьев-собирателей XIX века, обставленный под ренессанс: резные потолки, доспехи и посуда, которой пользовались хозяева.'},
  {id:'spi',d:5,base:'mil',cat:'town',lat:45.469506,lng:9.197665,nm:'Via della Spiga',q:'Via della Spiga, Milano',tag:['пешеходная','t-easy'],
   why:'Пешеходная улица золотого квадрата: без машин, с витринами и кофейнями во дворах.'},
- {id:'nec',d:5,base:'mil',cat:'town',lat:45.468371,lng:9.201793,nm:'Villa Necchi Campiglio',q:'Villa Necchi Campiglio, Milano',tag:['дом-музей','t-must'],star:1,
-  why:'Дом миланских промышленников 1930-х с бассейном во дворе — тот самый, где снимали «Я — это любовь». Всё оставлено как было, вплоть до посуды.'},
  {id:'bab',d:5,base:'mil',cat:'town',lat:45.466374,lng:9.197707,nm:'Piazza San Babila',q:'Piazza San Babila, Milano',tag:['конец','t-easy'],
-  why:'Отсюда метро М1 идёт до Cadorna, а с Cadorna — поезд в аэропорт. Удобная точка, чтобы закончить прогулку.'}
+  why:'Отсюда метро М1 идёт до Cadorna, а с Cadorna — поезд в аэропорт. Удобная точка, чтобы закончить прогулку.'},
 ];
 
 const FOODCITIES=[
@@ -344,10 +344,10 @@ const BUDGET=[
 /* ── ДОРОГИ ПО-НАСТОЯЩЕМУ ── считано road-times.js, руками не править ── */
 const ROADS={
  1:{ids:["@mil","mxp","cad","col","lor","bas","eus","dar","tic","lav","nav"],km:[[null,null,1.4,1.2,1.2,1.4,1.6,1.8,2,2.3,2.4],[null,null,null,null,null,null,null,null,null,null,null],[1.4,null,null,1.6,1.5,1.9,2.2,2.1,2.3,2.5,2.4],[1.2,null,1.6,null,0.1,0.4,0.7,0.7,0.8,1.1,1.3],[1.2,null,1.5,0.1,null,0.4,0.7,0.7,0.8,1.2,1.3],[1.4,null,1.9,0.4,0.4,null,0.4,0.6,0.7,1,1.2],[1.6,null,2.2,0.7,0.7,0.4,null,0.3,0.4,0.8,0.9],[1.8,null,2.1,0.7,0.7,0.6,0.3,null,0.3,0.6,0.8],[2,null,2.3,0.8,0.8,0.7,0.4,0.3,null,0.4,0.5],[2.3,null,2.5,1.1,1.2,1,0.8,0.6,0.4,null,0.2],[2.4,null,2.4,1.3,1.3,1.2,0.9,0.8,0.5,0.2,null]],min:[[null,null,18,17,15,19,21,25,26,31,32],[null,null,null,null,null,null,null,null,null,null,null],[18,null,null,22,20,25,29,28,31,33,32],[17,null,22,null,2,5,9,9,11,15,17],[15,null,20,2,null,5,9,10,11,16,17],[19,null,25,5,5,null,5,8,10,14,16],[21,null,29,9,9,5,null,5,6,10,12],[25,null,28,9,10,8,5,null,4,8,10],[26,null,31,11,11,10,6,4,null,5,7],[31,null,33,15,16,14,10,8,5,null,3],[32,null,32,17,17,16,12,10,7,3,null]]},
- 2:{ids:["@mil","duo","ter","oss","rea","nov","sat","amb","mer","gal","sca","rin"],km:[[null,0.2,0.1,0.6,0.2,0.1,0.3,0.6,0.3,0.2,0.4,0.2],[0.2,null,0.3,0.6,0.3,0.2,0.4,0.6,0.4,0.3,0.6,0.2],[0.1,0.3,null,0.6,0.3,0.2,0.5,0.6,0.3,0.2,0.5,0.1],[0.6,0.6,0.6,null,0.5,0.6,0.8,1,0.8,0.7,0.9,0.5],[0.2,0.3,0.3,0.5,null,0.1,0.4,0.6,0.4,0.4,0.7,0.4],[0.1,0.2,0.2,0.6,0.1,null,0.3,0.5,0.3,0.3,0.6,0.3],[0.3,0.4,0.5,0.8,0.4,0.3,null,0.3,0.3,0.5,0.7,0.5],[0.6,0.6,0.6,1,0.6,0.5,0.3,null,0.3,0.6,0.7,0.7],[0.3,0.4,0.3,0.8,0.4,0.3,0.3,0.3,null,0.3,0.5,0.4],[0.2,0.3,0.2,0.7,0.4,0.3,0.5,0.6,0.3,null,0.3,0.2],[0.4,0.6,0.5,0.9,0.7,0.6,0.7,0.7,0.5,0.3,null,0.5],[0.2,0.2,0.1,0.5,0.4,0.3,0.5,0.7,0.4,0.2,0.5,null]],min:[[null,2,2,8,3,2,5,7,4,2,6,3],[2,null,4,8,3,2,5,8,5,5,8,3],[2,4,null,8,4,3,6,9,4,3,6,1],[8,8,8,null,6,8,11,13,11,10,12,7],[3,3,4,6,null,2,5,8,5,5,9,5],[2,2,3,8,2,null,4,7,4,4,8,5],[5,5,6,11,5,4,null,4,4,6,9,7],[7,8,9,13,8,7,4,null,5,8,10,9],[4,5,4,11,5,4,4,5,null,4,6,5],[2,5,3,10,5,4,6,8,4,null,4,3],[6,8,6,12,9,8,9,10,6,4,null,6],[3,3,1,7,5,5,7,9,5,3,6,null]]},
- 3:{ids:["@mil","sfo","sem","arc","bra","tri","cen","leo","amr","mau"],km:[[null,1.4,1.6,2.3,2.1,1.8,1.6,1.9,1.6,1],[1.4,null,0.4,0.9,1,0.6,0.9,1.3,1.3,0.8],[1.6,0.4,null,0.6,0.7,0.5,1.2,1.6,1.7,1.2],[2.3,0.9,0.6,null,0.4,0.6,1.5,1.9,2.1,1.6],[2.1,1,0.7,0.4,null,0.4,1.3,1.7,1.9,1.5],[1.8,0.6,0.5,0.6,0.4,null,1,1.4,1.5,1.1],[1.6,0.9,1.2,1.5,1.3,1,null,0.5,1,0.7],[1.9,1.3,1.6,1.9,1.7,1.4,0.5,null,0.6,1],[1.6,1.3,1.7,2.1,1.9,1.5,1,0.6,null,0.7],[1,0.8,1.2,1.6,1.5,1.1,0.7,1,0.7,null]],min:[[null,19,21,31,29,23,22,25,21,13],[19,null,6,12,13,8,12,17,17,11],[21,6,null,8,9,7,16,22,22,16],[31,12,8,null,5,8,20,26,27,21],[29,13,9,5,null,6,17,23,25,19],[23,8,7,8,6,null,13,19,20,14],[22,12,16,20,17,13,null,6,13,9],[25,17,22,26,23,19,6,null,8,13],[21,17,22,27,25,20,13,8,null,9],[13,11,16,21,19,14,9,13,9,null]]},
+ 2:{ids:["@mil","duo","ter","bag","sca","pol","nec","oss","rea","nov","sat","mer","gal","rin"],km:[[null,0.2,0.1,0.9,0.4,0.6,1.3,0.6,0.2,0.1,0.3,0.3,0.2,0.2],[0.2,null,0.3,0.9,0.6,0.8,1.2,0.6,0.3,0.2,0.4,0.4,0.3,0.2],[0.1,0.3,null,0.8,0.5,0.6,1.2,0.6,0.3,0.2,0.5,0.3,0.2,0.1],[0.9,0.9,0.8,null,0.7,0.5,0.8,1,1.1,1,1.2,1,0.8,0.8],[0.4,0.6,0.5,0.7,null,0.3,1.3,0.9,0.7,0.6,0.7,0.5,0.3,0.5],[0.6,0.8,0.6,0.5,0.3,null,1.2,1,0.8,0.7,0.8,0.6,0.4,0.6],[1.3,1.2,1.2,0.8,1.3,1.2,null,1.2,1.4,1.4,1.7,1.5,1.3,1.1],[0.6,0.6,0.6,1,0.9,1,1.2,null,0.5,0.6,0.8,0.8,0.7,0.5],[0.2,0.3,0.3,1.1,0.7,0.8,1.4,0.5,null,0.1,0.4,0.4,0.4,0.4],[0.1,0.2,0.2,1,0.6,0.7,1.4,0.6,0.1,null,0.3,0.3,0.3,0.3],[0.3,0.4,0.5,1.2,0.7,0.8,1.7,0.8,0.4,0.3,null,0.3,0.5,0.5],[0.3,0.4,0.3,1,0.5,0.6,1.5,0.8,0.4,0.3,0.3,null,0.3,0.4],[0.2,0.3,0.2,0.8,0.3,0.4,1.3,0.7,0.4,0.3,0.5,0.3,null,0.2],[0.2,0.2,0.1,0.8,0.5,0.6,1.1,0.5,0.4,0.3,0.5,0.4,0.2,null]],min:[[null,2,2,12,6,8,18,8,3,2,5,4,2,3],[2,null,4,13,8,10,17,8,3,2,5,5,5,3],[2,4,null,11,6,8,16,8,4,3,6,4,3,1],[12,13,11,null,9,6,11,13,14,14,16,14,10,10],[6,8,6,9,null,4,18,12,9,8,9,6,4,6],[8,10,8,6,4,null,17,13,11,10,11,8,6,8],[18,17,16,11,18,17,null,16,19,19,22,20,17,15],[8,8,8,13,12,13,16,null,6,8,11,11,10,7],[3,3,4,14,9,11,19,6,null,2,5,5,5,5],[2,2,3,14,8,10,19,8,2,null,4,4,4,5],[5,5,6,16,9,11,22,11,5,4,null,4,6,7],[4,5,4,14,6,8,20,11,5,4,4,null,4,5],[2,5,3,10,4,6,17,10,5,4,6,4,null,3],[3,3,1,10,6,8,15,7,5,5,7,5,3,null]]},
+ 3:{ids:["@mil","sfo","sem","arc","bra","leo","amr","mau","cen","tri"],km:[[null,1.4,1.6,2.3,2.1,1.9,1.6,1,1.6,1.8],[1.4,null,0.4,0.9,1,1.3,1.3,0.8,0.9,0.6],[1.6,0.4,null,0.6,0.7,1.6,1.7,1.2,1.2,0.5],[2.3,0.9,0.6,null,0.4,1.9,2.1,1.6,1.5,0.6],[2.1,1,0.7,0.4,null,1.7,1.9,1.5,1.3,0.4],[1.9,1.3,1.6,1.9,1.7,null,0.6,1,0.5,1.4],[1.6,1.3,1.7,2.1,1.9,0.6,null,0.7,1,1.5],[1,0.8,1.2,1.6,1.5,1,0.7,null,0.7,1.1],[1.6,0.9,1.2,1.5,1.3,0.5,1,0.7,null,1],[1.8,0.6,0.5,0.6,0.4,1.4,1.5,1.1,1,null]],min:[[null,19,21,31,29,25,21,13,22,23],[19,null,6,12,13,17,17,11,12,8],[21,6,null,8,9,22,22,16,16,7],[31,12,8,null,5,26,27,21,20,8],[29,13,9,5,null,23,25,19,17,6],[25,17,22,26,23,null,8,13,6,19],[21,17,22,27,25,8,null,9,13,20],[13,11,16,21,19,13,9,null,9,14],[22,12,16,20,17,6,13,9,null,13],[23,8,7,8,6,19,20,14,13,null]]},
  4:{ids:["@mil","clg","fun","cdu","fed","vol","lif","pie","bpr","spa","mel","vpr","inn","mos","vst"],km:[[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],[null,null,0.5,0.7,0.9,0.9,1.1,0.4,null,null,null,null,null,null,null],[null,0.5,null,0.9,1.1,1.1,1.3,0.6,null,null,null,null,null,null,null],[null,0.7,0.9,null,0.3,0.9,1.1,0.5,null,null,null,null,null,null,null],[null,0.9,1.1,0.3,null,1.1,1.3,0.7,null,null,null,null,null,null,null],[null,0.9,1.1,0.9,1.1,null,0.5,0.7,null,null,null,null,null,null,null],[null,1.1,1.3,1.1,1.3,0.5,null,0.9,null,null,null,null,null,null,null],[null,0.4,0.6,0.5,0.7,0.7,0.9,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,0.7,1.3,3.6,3.9,4.6,4],[null,null,null,null,null,null,null,null,0.7,null,2,4.3,4.6,5.3,4.7],[null,null,null,null,null,null,null,null,1.3,2,null,5,5.2,5.9,5.3],[null,null,null,null,null,null,null,null,3.6,4.3,5,null,0.3,1,0.4],[null,null,null,null,null,null,null,null,3.9,4.6,5.2,0.3,null,0.7,0.6],[null,null,null,null,null,null,null,null,4.6,5.3,5.9,1,0.7,null,1.2],[null,null,null,null,null,null,null,null,4,4.7,5.3,0.4,0.6,1.2,null]],min:[[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],[null,null,7,9,12,12,15,5,null,null,null,null,null,null,null],[null,7,null,11,14,15,17,7,null,null,null,null,null,null,null],[null,9,11,null,4,12,15,6,null,null,null,null,null,null,null],[null,12,14,4,null,15,18,9,null,null,null,null,null,null,null],[null,12,15,12,15,null,7,9,null,null,null,null,null,null,null],[null,15,17,15,18,7,null,12,null,null,null,null,null,null,null],[null,5,7,6,9,9,12,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,10,18,48,52,61,53],[null,null,null,null,null,null,null,null,10,null,27,58,61,71,63],[null,null,null,null,null,null,null,null,18,27,null,66,33,43,71],[null,null,null,null,null,null,null,null,48,58,66,null,4,14,5],[null,null,null,null,null,null,null,null,52,61,33,4,null,10,8],[null,null,null,null,null,null,null,null,61,71,43,14,10,null,17],[null,null,null,null,null,null,null,null,53,63,71,5,8,17,null]]},
- 5:{ids:["@mil","car","sim","bre","ort","pol","mon","bag","spi","nec","bab"],km:[[null,1,1.4,1,1.2,0.6,0.8,0.9,1,1.3,0.7],[1,null,0.6,0.4,0.6,0.7,0.8,1,1.3,1.8,1.3],[1.4,0.6,null,0.6,0.7,1.2,1,1.2,1.4,1.8,1.6],[1,0.4,0.6,null,0.2,0.8,0.6,0.8,1,1.5,1.2],[1.2,0.6,0.7,0.2,null,0.8,0.6,0.9,1.1,1.6,1.2],[0.6,0.7,1.2,0.8,0.8,null,0.2,0.5,0.7,1.2,0.7],[0.8,0.8,1,0.6,0.6,0.2,null,0.2,0.5,1,0.6],[0.9,1,1.2,0.8,0.9,0.5,0.2,null,0.3,0.8,0.5],[1,1.3,1.4,1,1.1,0.7,0.5,0.3,null,0.5,0.4],[1.3,1.8,1.8,1.5,1.6,1.2,1,0.8,0.5,null,0.6],[0.7,1.3,1.6,1.2,1.2,0.7,0.6,0.5,0.4,0.6,null]],min:[[null,13,18,14,16,8,10,12,13,18,10],[13,null,7,6,8,10,10,13,17,24,17],[18,7,null,8,10,16,13,16,19,25,21],[14,6,8,null,3,10,7,11,14,20,15],[16,8,10,3,null,11,9,12,15,21,17],[8,10,16,10,11,null,3,6,10,17,10],[10,10,13,7,9,3,null,3,7,14,8],[12,13,16,11,12,6,3,null,4,11,7],[13,17,19,14,15,10,7,4,null,7,6],[18,24,25,20,21,17,14,11,7,null,8],[10,17,21,15,17,10,8,7,6,8,null]]},
+ 5:{ids:["@mil","car","sim","bre","ort","amb","mon","spi","bab"],km:[[null,1,1.4,1,1.2,0.6,0.8,1,0.7],[1,null,0.6,0.4,0.6,1,0.8,1.3,1.3],[1.4,0.6,null,0.6,0.7,1.5,1,1.4,1.6],[1,0.4,0.6,null,0.2,1.3,0.6,1,1.2],[1.2,0.6,0.7,0.2,null,1.5,0.6,1.1,1.2],[0.6,1,1.5,1.3,1.5,null,1.1,1.4,1.2],[0.8,0.8,1,0.6,0.6,1.1,null,0.5,0.6],[1,1.3,1.4,1,1.1,1.4,0.5,null,0.4],[0.7,1.3,1.6,1.2,1.2,1.2,0.6,0.4,null]],min:[[null,13,18,14,16,7,10,13,10],[13,null,7,6,8,14,10,17,17],[18,7,null,8,10,19,13,19,21],[14,6,8,null,3,18,7,14,15],[16,8,10,3,null,20,9,15,17],[7,14,19,18,20,null,14,19,16],[10,10,13,7,9,14,null,7,8],[13,17,19,14,15,19,7,null,6],[10,17,21,15,17,16,8,6,null]]},
 };
 const ROADSTEPS={
  "cad>col":"upotGgb_w@bEmKpDbCbAk@tA_L~Oa@rHgCbD|@`CmIjMfA}AF",
@@ -359,24 +359,26 @@ const ROADSTEPS={
  "tic>lav":"}jltGgs_w@g@rHlBfMm@q@",
  "lav>nav":"ejltG}|~v@l@p@vArL",
  "@mil>duo":"gvntGs|aw@xAo@?mG",
- "ter>oss":"wxntGocbw@JgNfCIF{BdAQX}B|DuB",
+ "ter>bag":"wxntGocbw@a@^IwAiEZcCeDZs@oCcCc@iCcEaIaDxDmAcC",
+ "bag>sca":"}votG_|bw@lAbCcEdHjNbQq@zB",
+ "sca>pol":"ylotGuxaw@|@yAmFsH\\cA",
+ "pol>nec":"kqotGggbw@]bAqEqFtBaEe@y@fFuH}HmQ|HyHyBuJvA^",
+ "nec>oss":"epotGeedw@wA_@jCtKnEgC|GP|HjD`H`H`@l@w@jBtApAYfG",
  "oss>rea":"}jntGc_cw@UbGb@xA}@b@UzGj@hBaCjBZdA",
  "rea>nov":"}nntGiabw@e@|@gAG?fA`@?",
  "nov>sat":"iqntGk}aw@a@?CbKzBtCRo@",
- "sat>amb":"_nntGanaw@Sn@jAzAyBjEw@eAa@v@",
- "amb>mer":"{rntGwcaw@`@w@v@dA_AqAc@t@mAmAcCiDZaA",
+ "sat>mer":"_nntGanaw@Sn@mEeCyBvA",
  "mer>gal":"{xntG_naw@w@r@eCuCMsJ",
- "gal>sca":"g_otGu|aw@oGOaDnC",
- "sca>rin":"ylotGuxaw@`A_BvDk@jCqFnE]?{A",
+ "gal>rin":"g_otGu|aw@DcG|CW?{A",
  "@mil>sfo":"gvntGs|aw@_BBEpHgGvTcJpMDxCqDjCz@dHeAxFcAnBuARWeB}AnB",
  "sfo>sem":"_{otG_p_w@qAhB_B}As@d@sAcCsC|@uBvD",
  "sem>arc":"cmptG{j_w@o@nAsAc@oB|IuF~DB~BcBfDTp@",
  "arc>bra":"w~ptGwm~v@`@b@b@m@dApBd@aBhDlAlCmD",
- "bra>tri":"moptGqp~v@mClDnJqBtBmC",
- "tri>cen":"udptGcs~v@w@pAh@^Tm@jD`G~EuEpBpC`E{FdMtGDxB",
- "cen>leo":"a`otGmf~v@PhCxKjC|AaEt@F",
+ "bra>leo":"moptGqp~v@mClDbCA~G{Cp@ZVy@jD`GbAgBdAHbAsAlFlJXUtBpDp@GbAxBxEuFnNpC|AaEt@F",
  "leo>amr":"anntGqc~v@m@k@`DeQvF{IqBgA}AN",
  "amr>mau":"eintGwc_w@|AO{@mBm@TcAoCsAhAaEqIyCh@[_EyBF",
+ "mau>cen":"{}ntGex_w@q@DHrEgA|E`A`QW|P",
+ "cen>tri":"a`otGmf~v@EyBeMuGaEzFqBqC_FtEkDaGUl@i@_@v@qA",
  "clg>fun":"gasvGqfmv@oB`CGlBw@oBuFhCyFd@]k@",
  "fun>cdu":"ewsvGm~lv@\\j@xFe@bFiBbH|LlMwMe@{A",
  "cdu>fed":"}prvGgemv@d@zA`F}E|@zBr@gA",
@@ -392,12 +394,10 @@ const ROADSTEPS={
  "car>sim":"k|otG}`aw@s@T`@hBgJeCu@VBjBqG~B",
  "sim>bre":"irptG_y`w@pG_CCkBzAW{@_KrCk@kALm@_D",
  "bre>ort":"ahptGasaw@dBYSgDfCs@",
- "ort>pol":"gaptGwzaw@qFnBs@BKgAlM{Mp@wCnGzF\\cA",
- "pol>mon":"kqotGggbw@]bAuGyG",
- "mon>bag":"_{otG}mbw@nE}HmAcC",
- "bag>spi":"}votG_|bw@yDqHhD{E",
- "spi>nec":"mwotGmlcw@s@gC|HyHyBuJvA^",
- "nec>bab":"epotGeedw@wA_@jCtKqB`BnFfExE~A",
+ "ort>amb":"gaptGwzaw@gCr@RfDoARVdDdEFpK{BxBaAlD}FlVnVb@u@~@pAw@eAa@v@",
+ "amb>mon":"{rntGwcaw@`@w@v@dA_AqAc@t@eEmFgMgKkRaU",
+ "mon>spi":"_{otG}mbw@|IaNkFmN",
+ "spi>bab":"mwotGmlcw@pEaFrGtEn@q@|Ad@",
 };
 /* ── конец дорог ── */
 

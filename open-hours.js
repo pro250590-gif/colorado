@@ -143,6 +143,28 @@
              open: d.open.map(function (t) { return fmt(t[0]) + '–' + fmt(t[1]); }).join(', ') };
   }
 
+  /* ── ПОДОЖДАТЬ ОТКРЫТИЯ — ЭТО НОРМАЛЬНО ──────────────────────────────────
+     Если мы пришли раньше, чем открылось, человек не разворачивается и уходит —
+     он подождёт, если ждать недолго. Поэтому «ещё не открыто» считается бедой
+     только когда ждать больше WAIT (по умолчанию два часа).
+     Возвращает {from, wait, ok, why} — время, с которого реально начнётся
+     посещение. Одна функция на страницу, проверку и сборщик. */
+  var WAIT = 120;
+  function arrive(str, date, from, to, waitMax) {
+    var dur = to - from;
+    var f = fits(str, date, from, to);
+    if (!f || f.ok) return { from: from, wait: 0, ok: true };
+    var d = day(str, date);
+    if (!d || !d.open.length) return { from: from, wait: 0, ok: false, why: f.why, open: f.open };
+    var lim = (waitMax == null ? WAIT : waitMax);
+    for (var i = 0; i < d.open.length; i++) {
+      var a = d.open[i][0], b = d.open[i][1];
+      if (from < a && a - from <= lim && a + dur <= b)
+        return { from: a, wait: a - from, ok: true };
+    }
+    return { from: from, wait: 0, ok: false, why: f.why, open: f.open };
+  }
+
   /* ── ВЫХОДНЫЕ ДНИ НЕДЕЛИ ──────────────────────────────────────────────────
      Её просьба: «может, в плашку добавить — выходной понедельник, выходной
      суббота-воскресенье». Считаем по неделе ВОКРУГ этой даты: у половины мест
@@ -192,6 +214,13 @@
     var f = fits('Tu-Su 09:00-18:30', D(2026, 8, 5), 19 * 60, 20 * 60);
     if (!f || f.ok || f.why !== 'уже закрыто') { bad++; log('  ✗ приезд в семь вечера должен быть «уже закрыто»'); }
     else log('  ✓ приезд после закрытия виден');
+    /* подождать открытия — нормально, если недолго */
+    var w1 = arrive('Tu-Su 10:00-18:00', D(2026, 8, 4), 9 * 60, 10 * 60);
+    if (!w1.ok || w1.from !== 600 || w1.wait !== 60) { bad++; log('  ✗ час до открытия должны подождать'); }
+    else log('  ✓ пришли за час до открытия — подождём');
+    var w2 = arrive('Tu-Su 12:00-22:00', D(2026, 8, 4), 9 * 60 + 18, 10 * 60 + 18);
+    if (w2.ok) { bad++; log('  ✗ ждать почти три часа — это не «подождём»'); }
+    else log('  ✓ ждать три часа не считается — это беда дня');
     /* выходные дни недели — то, что человек видит плашкой */
     [['Tu-Su 09:00-18:30', 'выходной: пн'],
      ['Mo-Fr 06:45-20:00', 'выходные: сб, вс'],
@@ -205,7 +234,8 @@
     return bad;
   }
 
-  return { parse: parse, day: day, text: text, fits: fits, weekOff: weekOff, offText: offText,
+  return { parse: parse, day: day, text: text, fits: fits, arrive: arrive, WAIT: WAIT,
+           weekOff: weekOff, offText: offText,
            selftest: selftest, RU: RU };
 }));
 

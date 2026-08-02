@@ -35,8 +35,7 @@ const DAYS=[
   note:'<b>Вещи оставь в камере хранения на вокзале</b> — тогда последнее утро не пропадёт.'}
 ];
 
-const P=[
- {id:'cdg',d:1,base:'par',cat:'transport',lat:49.0097,lng:2.5479,nm:'Aéroport Paris–Charles de Gaulle (CDG)',q:'Paris Charles de Gaulle Airport',tag:['прилёт','t-easy'],
+const P=[ {id:'cdg',d:1,base:'par',cat:'transport',lat:49.0097,lng:2.5479,nm:'Aéroport Paris–Charles de Gaulle (CDG)',q:'Paris Charles de Gaulle Airport',tag:['прилёт','t-easy'],
   why:'Сюда прилетаешь. В город — поезд RER B с терминала: 35–50 минут до центра, ходит с 5 утра до полуночи.'},
  {id:'sei',d:1,base:'par',cat:'town',lat:48.8530,lng:2.3499,nm:'Île de la Cité · Notre-Dame',q:'Notre-Dame de Paris',tag:['первый вечер','t-easy'],star:1,
   why:'Остров, с которого начался город. Собор снова открыт после пожара; вечером у набережной тише всего.'},
@@ -44,16 +43,19 @@ const P=[
   why:'Узкие улицы напротив острова: студенческие кафе, книжные, недорогая еда. Хорошее место для первого ужина.'},
  /* ДЕНЬ ИДЁТ С ВОСТОКА НА ЗАПАД, а не туда-обратно. По-старому: Лувр, потом
     назад на остров в Сент-Шапель, потом ещё дальше на восток в Марэ — и снова
-    через весь центр к Орсэ. Полтора километра и девятнадцать минут пешком на
+    через весь центр к Орсэ. Полтора километра и девятнадцать минут пешком на,
     возвраты. Теперь остров → Марэ → Лувр → Орсэ, одной линией вдоль реки */
- {id:'sai',d:2,base:'par',cat:'town',lat:48.8554,lng:2.3450,nm:'Sainte-Chapelle',q:'Sainte-Chapelle, Paris',tag:['витражи','t-must'],star:1,
-  why:'Пятнадцать метров витражей XIII века в маленькой часовне. Иди в солнечный час — стены светятся насквозь.'},
  {id:'mar',d:2,base:'par',cat:'town',lat:48.8554,lng:2.3653,nm:'Le Marais · Place des Vosges',q:'Place des Vosges, Paris',tag:['квартал','t-easy'],
   why:'Старейшая площадь города и квартал вокруг: галереи, мастерские, лучшая уличная еда в Париже.'},
- {id:'lou',d:2,base:'par',cat:'town',lat:48.8606,lng:2.3376,nm:'Musée du Louvre',q:'Louvre Museum, Paris',tag:['нужен билет','t-must'],star:1,
-  why:'Самый большой музей мира. За один заход всё не обойти — выбери два крыла и не пытайся успеть остальное. Билет по времени, вторник закрыт.'},
+ {id:'pai',d:2,base:'par',cat:'town',lat:48.8710,lng:2.3623,nm:'Du Pain et des Idées',q:'Du Pain et des Idees, Paris',tag:['завтрак','t-easy'],
+  why:'Пекарня 1889 года по дороге с Монмартра: улитки с шоколадом и хлеб, за которым стоит очередь местных.'},
+
+ {id:'sai',d:2,base:'par',cat:'town',lat:48.8554,lng:2.3450,nm:'Sainte-Chapelle',q:'Sainte-Chapelle, Paris',tag:['витражи','t-must'],star:1,
+  why:'Пятнадцать метров витражей XIII века в маленькой часовне. Иди в солнечный час — стены светятся насквозь.'},
  {id:'ors',d:2,base:'par',cat:'town',lat:48.8600,lng:2.3266,nm:"Musée d'Orsay",q:'Musee d Orsay, Paris',tag:['если останутся силы','t-easy'],
   why:'Импрессионисты в здании вокзала. Меньше Лувра, и обойти можно за два часа — хороший вариант на вечер.'},
+ {id:'lou',d:2,base:'par',cat:'town',lat:48.8606,lng:2.3376,nm:'Musée du Louvre',q:'Louvre Museum, Paris',tag:['нужен билет','t-must'],star:1,
+  why:'Самый большой музей мира. За один заход всё не обойти — выбери два крыла и не пытайся успеть остальное. Билет по времени, вторник закрыт.'},
  {id:'ver',d:3,base:'par',cat:'town',lat:48.8049,lng:2.1204,nm:'Château de Versailles',q:'Chateau de Versailles',tag:['на весь день','t-must'],star:1,
   why:'Дворец и парк, ради которых стоит потратить день. Билет заранее, вход по времени; по понедельникам дворец закрыт.'},
  {id:'tri',d:3,base:'par',cat:'nature',lat:48.8149,lng:2.1096,nm:'Grand Trianon et Hameau de la Reine',q:'Hameau de la Reine, Versailles',tag:['в парке','t-easy'],
@@ -61,10 +63,7 @@ const P=[
  {id:'eif',d:3,base:'par',cat:'town',lat:48.8584,lng:2.2945,nm:'Tour Eiffel',q:'Eiffel Tower, Paris',tag:['вечер','t-must'],star:1,
   why:'Вернувшись из Версаля — на закат к башне. Каждый час после темноты она пять минут мерцает.'},
  {id:'mon',d:4,base:'par',cat:'town',lat:48.8867,lng:2.3431,nm:'Basilique du Sacré-Cœur · Montmartre',q:'Sacre-Coeur, Paris',tag:['утро','t-must'],star:1,
-  why:'Последнее утро: холм с видом на весь город, улицы художников, лестницы. Приходи к открытию — днём тут тесно.'},
- {id:'pai',d:4,base:'par',cat:'town',lat:48.8710,lng:2.3623,nm:'Du Pain et des Idées',q:'Du Pain et des Idees, Paris',tag:['завтрак','t-easy'],
-  why:'Пекарня 1889 года по дороге с Монмартра: улитки с шоколадом и хлеб, за которым стоит очередь местных.'}
-];
+  why:'Последнее утро: холм с видом на весь город, улицы художников, лестницы. Приходи к открытию — днём тут тесно.'},];
 
 const FOODCITIES=[
  {city:'Париж',base:'par',q:'Paris, France',lat:48.8566,lng:2.3522,
@@ -149,19 +148,19 @@ const BUDGET=[
 /* ── ДОРОГИ ПО-НАСТОЯЩЕМУ ── считано road-times.js, руками не править ── */
 const ROADS={
  1:{ids:["@par","cdg","sei","lat"],km:[[null,null,0.6,1.2],[null,null,null,null],[0.6,null,null,0.7],[1.2,null,0.7,null]],min:[[null,null,9,15],[null,null,null,null],[9,null,null,9],[15,null,9,null]]},
- 2:{ids:["@par","sai","mar","lou","ors"],km:[[null,0.7,1.2,1.3,2.1],[0.7,null,1.9,1.2,1.7],[1.2,1.9,null,2.4,3.3],[1.3,1.2,2.4,null,1.1],[2.1,1.7,3.3,1.1,null]],min:[[null,10,16,17,29],[10,null,25,15,23],[16,25,null,33,44],[17,15,33,null,14],[29,23,44,14,null]]},
+ 2:{ids:["@par","mar","pai","sai","ors","lou"],km:[[null,1.2,2,0.7,2.1,1.3],[1.2,null,2,1.9,3.3,2.4],[2,2,null,2.6,3.6,2.7],[0.7,1.9,2.6,null,1.7,1.2],[2.1,3.3,3.6,1.7,null,1.1],[1.3,2.4,2.7,1.2,1.1,null]],min:[[null,16,26,10,29,17],[16,null,26,25,44,33],[26,26,null,35,49,36],[10,25,35,null,23,15],[29,44,49,23,null,14],[17,33,36,15,14,null]]},
  3:{ids:["@par","ver","tri","eif"],km:[[null,null,null,4.8],[null,null,1.7,null],[null,1.7,null,null],[4.8,null,null,null]],min:[[null,null,null,65],[null,null,23,null],[null,23,null,null],[65,null,null,null]]},
- 4:{ids:["@par","mon","pai"],km:[[null,4,2],[4,null,2.6],[2,2.6,null]],min:[[null,53,26],[53,null,35],[26,35,null]]},
+ 4:{ids:["@par","mon"],km:[[null,4],[4,null]],min:[[null,53],[53,null]]},
 };
 const ROADSTEPS={
  "sei>lat":"etdiHi_jMu@dDzIrHpE`NQjBnAv@[V",
- "@par>sai":"okeiH{kjMg@Uk@rEl@|Fh@RU`BbAl@iAxGNbBzJpI",
- "sai>mar":"{_eiHkbiM}EsDjFuWmCaC`BmGa@]P{B}@_@`@mCw@y@OcGzAaLZgKxDkXwGyD^kCd@^",
- "mar>lou":"maeiHg}lMe@_@_@jCvGxDaDvK_MlaAwQlw@JvF`Bn@}BzJOjE",
- "lou>ors":"uafiH}pgMIh@|Ad@qDzT|CxB}AlMdGnG}CpO",
+ "@par>mar":"okeiH{kjMg@UxKwy@`DwKwGyD^kCd@^",
+ "mar>pai":"maeiHg}lMe@_@[fBwAk@s@tB{r@mAIv@iM|GyAc@uAhC{AuBy@`@{FkBsFlE",
+ "pai>sai":"adhiHyllMQpBnOjL}BbPT~Dx@|AtWvLdAjIdn@bYEvAxJlI",
+ "sai>ors":"{_eiHkbiMzFhGcDlI{GtJwGpNuAdPgGl^^TuExT",
+ "ors>lou":"k_fiHgmeM|CqOeGoG|AmM}CyBpD{T}Ae@Hi@",
  "ver>tri":"ye{hH{b}KsCu@wBd@sBhCqImEwHnEm@vQaKz`@cPtFPtA",
  "@par>mon":"okeiH{kjM}GrXsJpIuBr@sA{@U|AkGiCo@zAqJvEg_@~LoHuAcKv@aT|Uw_@}JYcCsI|AaJcC@y@wB{AC}AkAS",
- "mon>pai":"{dkiHeuhM`BOPkBs@gEfB@f@kNtBRdBgKtBDAcA|A[niAyaAfC{DmBuBp@kB",
 };
 /* ── конец дорог ── */
 

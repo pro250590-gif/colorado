@@ -44,12 +44,11 @@ const DAYS=[
   note:'<b>Заложи час на сдачу машины и шаттл.</b> Терминалы в LAX разнесены, и переезд между ними занимает время.'}
 ];
 
-const P=[
- {id:'jfk',d:1,base:'nyc',cat:'transport',lat:40.6413,lng:-73.7781,nm:'John F. Kennedy International Airport (JFK)',q:'JFK Airport, New York',tag:['прилёт','t-easy'],
+const P=[ {id:'jfk',d:1,base:'nyc',cat:'transport',lat:40.6413,lng:-73.7781,nm:'John F. Kennedy International Airport (JFK)',q:'JFK Airport, New York',tag:['прилёт','t-easy'],
   why:'Сюда прилетаешь. AirTrain до станции Jamaica, дальше метро — около часа до Мидтауна.'},
  /* СНАЧАЛА ХАЙ-ЛАЙН, ПОТОМ ТАЙМС-СКВЕР: из аэропорта человек въезжает с юга, и
     парк на эстакаде оказывается по дороге. По-старому он сначала поднимался в
-    мидтаун, потом спускался обратно вниз и снова возвращался ночевать — 1,7
+    мидтаун, потом спускался обратно вниз и снова возвращался ночевать — 1,7,
     лишних километра. Таймс-сквер и без того «первый вечер»: ему конец дня */
  {id:'hig',d:1,base:'nyc',cat:'town',lat:40.7480,lng:-74.0048,nm:'The High Line',q:'The High Line, New York',tag:['вечер','t-easy'],star:1,
   why:'Парк на бывшей эстакаде железной дороги: два километра над улицами, вид на Гудзон.'},
@@ -77,12 +76,12 @@ const P=[
   why:'Пирс с колесом обозрения и конец шоссе Route 66. Рядом — велодорожка вдоль всего побережья.'},
  {id:'ven',d:6,base:'lax',cat:'town',lat:33.9850,lng:-118.4695,nm:'Venice Beach Boardwalk',q:'Venice Beach, Los Angeles',tag:['рядом','t-easy'],
   why:'Набережная уличных артистов, скейт-парк и каналы в двух кварталах от неё — про них почти никто не знает.'},
- {id:'gri',d:7,base:'lax',cat:'nature',lat:34.1184,lng:-118.3004,nm:'Griffith Observatory',q:'Griffith Observatory, Los Angeles',tag:['закат','t-must'],star:1,
-  why:'Обсерватория на холме: отсюда виден и город, и надпись Hollywood. Внутрь бесплатно, парковка платная.'},
  {id:'hol',d:7,base:'lax',cat:'town',lat:34.1016,lng:-118.3269,nm:'Hollywood Walk of Fame',q:'Hollywood Walk of Fame',tag:['раз в жизни','t-easy'],
   why:'Звёзды на тротуаре и Китайский театр. Двадцати минут хватает — дальше интереснее в холмах.'},
+ {id:'gri',d:7,base:'lax',cat:'nature',lat:34.1184,lng:-118.3004,nm:'Griffith Observatory',q:'Griffith Observatory, Los Angeles',tag:['закат','t-must'],star:1,
+  why:'Обсерватория на холме: отсюда виден и город, и надпись Hollywood. Внутрь бесплатно, парковка платная.'},
  {id:'mal',d:8,base:'lax',cat:'nature',lat:34.0259,lng:-118.7798,nm:'Malibu · El Matador State Beach',q:'El Matador State Beach, Malibu',tag:['перед вылетом','t-must'],star:1,
-  why:'Скалы и арки прямо в воде в часе езды по шоссе вдоль океана. Лестница вниз крутая, но недлинная.'}
+  why:'Скалы и арки прямо в воде в часе езды по шоссе вдоль океана. Лестница вниз крутая, но недлинная.'},
 ];
 
 const FOODCITIES=[
@@ -189,7 +188,7 @@ const ROADS={
  4:{ids:["@nyc","sum","gct"],km:[[null,0.4,1.1],[0.4,null,0.8],[1.1,0.8,null]],min:[[null,5,14],[5,null,10],[14,10,null]]},
  5:{ids:["@lax","@nyc","lgx"],km:[[null,4499.8,30.6],[4498.5,null,4525.5],[30.1,4526.6,null]],min:[[null,2990,27],[2981,null,3004],[27,3011,null]]},
  6:{ids:["@lax","sam","ven"],km:[[null,26.2,24.6],[26.2,null,4.6],[24.6,4.1,null]],min:[[null,23,26],[23,null,9],[26,8,null]]},
- 7:{ids:["@lax","gri","hol"],km:[[null,12.8,10.7],[12.3,null,6.6],[10.4,7,null]],min:[[null,18,11],[17,null,11],[11,12,null]]},
+ 7:{ids:["@lax","hol","gri"],km:[[null,10.7,12.8],[10.4,null,7],[12.3,6.6,null]],min:[[null,11,18],[11,null,12],[17,11,null]]},
  8:{ids:["@lax","mal"],km:[[null,53.7],[53.5,null]],min:[[null,51],[51,null]]},
 };
 const ROADLINES={
@@ -211,8 +210,8 @@ const ROADSTEPS={
  "@lax>lgx":"czynEfmupU{BtDvOvNe_@tp@qAz@sCF]rAnZhWhj@zdAvJ|IfLnEhl@|Efg@Efy@fa@lLvDnJl@~fAApn@}B~\\h@vg@YzV|@nkCRbSa@nk@sFdTnAnj@VnLv@nX|DpDhCnAlFVx\\vBtk@xQ~zA\\rMSty@rBhbAOxM_BpJsDdKaa@|q@}DtLcD`THzTzQt}@bB~NCbi@yE~c@Np_@{Bht@{@~BkDxB}o@@yM]qFqGaBq@y@d@TtIaA`GOzShCxj@nAnAxJwA",
  "@lax>sam":"czynEfmupU{BtDvOvNe_@tp@qAz@sCF]rAnZhW~m@xiA~MjKlP`DvBdBpAbGhAfVhEj_@e@fkDfKj{AxHtnEiAlVkNdgAgAlO^jHnBlItd@h_AdCrHnA~ILxIwEpjAkGfZy@jLX~zArI`kAjLns@Vn^nDfZjVnvAzEvKv^df@~NzWxF|NnA`JcEdF`MjPnEqErAjBJv@mDxEpBfD",
  "sam>ven":"msqnEpzfrUoE`G_B}BmCvCg@q@nK{N\\oB]kBpi@cn@hh@sh@boA}~@a@s@_AT",
- "@lax>gri":"czynEfmupUcGjKoU_TsAgDzA@TtAgGzOgIfKwUzRmTv\\_ErK{Npk@uYt{@}Jhg@_Kfu@sJ|Su}DRyIq@_EcG{Fy@{Dz@eFjD_CtEaA~IoHxGyMnHwLRu@~@F|@dF~Bl@xD{BvDAjHrCrFzEkCK_EhAqArMmA",
- "gri>hol":"{{foEjp`qU_D_@_DaCiCxA}CiAiBdA_AQLaDu@{D}EiB?qAl@k@vLSxMoHdJeJl@cGnAwCrGwEjHs@fB`A~DdG|IAlS`kBlAt@vKQZ~pAfHP?jYjLC?f@",
+ "@lax>hol":"czynEfmupUcGjKoU_TsAgDzA@TtAgGzOgIfKwUzRmTv\\_ErK{Npk@e\\rbAmHj`@mJfs@eBtHaWjp@sYhf@eHdG}WpOyQ|ZgF`GwJ~FkQnGLdbA",
+ "hol>gri":"encoEbveqU?g@qT@_@mE]meBiLEo@s@ySkjB}Is@yC_FmCyAkIx@mGzEwAdDaA~IoHxGyMnHwLRm@j@?pAtE|A|@fE{BjECzFJvAhCjEzEkCK_EhAqArMmA",
  "@lax>mal":"czynEfmupU{BtDvOvNe_@tp@qAz@sCF]rAnZhW~m@xiA~MjKlP`DvBdBpAbGhAfVhEj_@e@fkDfKj{AxHtnEiAlVkNdgAgAlO^jHnBlItd@h_AdCrHnA~ILxIwEpjAkGfZy@jLX~zArI`kAjLns@Vn^nDfZjVnvAzEvKfa@ri@rSz_@zBjHx@dObEpL[zFyAbDc[l^ep@|_Asi@jnAyCdJoBpL}Ll`@gFtIoN|]kE`Ue@~Gh@xLYvLvDvYG|J_Ojk@uDhe@HnHfArGnIlTIdWbG|\\mF`n@EvOtAxKf@vVKbP~EjTnFtJv@jHkGplAPxJpCzOs@pYfCt]wIjx@|BdVoDld@sCpq@t@`m@lAhLnFlStCxGpH|JvCtKjA~b@qDr}@nGdnB{@l`AvCli@Ul^l@|[lEp]nKxk@pCvJ~Nt\\vDrRtAnl@_Atj@TpI",
 };
 /* ── конец дорог ── */

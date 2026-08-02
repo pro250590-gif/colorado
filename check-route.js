@@ -432,8 +432,10 @@ function checkRoute(file) {
           const dur = ((MET[p.id] || {}).min) || 0;
           const h = (MET[p.id] || {}).hours;
           if (h) {
-            const f = OPEN.fits(h, date, clock, clock + dur);
-            if (f && !f.ok)
+            /* пришли раньше открытия и ждать недолго — не беда, просто зайдём позже
+               (общая функция OPEN.arrive, ею же считает сборщик fit-hours) */
+            const f = OPEN.arrive(h, date, clock, clock + dur);
+            if (!f.ok)
               warn('день ' + d.n + ': «' + (p.nm || p.id) + '» — ' + f.why
                 + (f.open ? ' (работает ' + f.open + ')' : '')
                 + ', а мы там в ' + Math.floor(clock / 60) + ':' + String(clock % 60).padStart(2, '0')
