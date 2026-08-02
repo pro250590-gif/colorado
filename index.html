@@ -3087,7 +3087,7 @@ function buildCities(){
             +'</span></div>'+metaStrip(p)+(p.why?'<span class="cwhy">'+convDist(p.why)+'</span>':'')+'</li>';}).join('')
           +(list.length?'':'<li class="cfree">Свободный день — планы пока не заданы.</li>')+'</ul>'
         +'<button class="cadd" data-addto="'+e.tid+'">'+ic('plus','i-sm')+' Добавить место в этот день</button>'
-        +(d&&d.note?'<div class="cnote">'+convDist(d.note)+'</div>':'')
+        +noteHTML(e.tid,'cnote')
         +(e.pin?'':'<button class="crm" data-rmthis="'+e.tid+'" data-rmbase="'+b.id+'">'+ic('close','i-sm')+' Убрать этот день</button>')
         +'</div></details>';}).join('')+'</div>';
     /* сколько ночей в городе — кнопки прямо здесь, над днями */
@@ -3618,6 +3618,19 @@ function activeOpt(tid){
   const alt=list.find(p=>optOf(p)&&picked.has(p.id));
   return alt?optOf(alt):'';
 }
+/* ПОДСКАЗКА ДНЯ ПРИНАДЛЕЖИТ ПЛАНУ, А НЕ ДНЮ. Её слова 02.08: «если я убираю
+   второй вариант, он мне пишет про билеты вовнутрь — но это подсказка для
+   первого варианта, не для второго». Правда: подсказка в DAYS относится к
+   основной цепочке (билеты в Меса-Верде — про Меса-Верде), а у варианта своя
+   подсказка живёт в OPTS[ключ].note. Выбран вариант — показываем его подсказку
+   и только её; выбрана основная цепочка — свою. */
+function dayNote(tid){
+  const meta=(typeof OPTS!=='undefined'&&OPTS)?OPTS:{};
+  const act=activeOpt(tid);
+  if(act)return (meta[act]&&meta[act].note)||'';
+  const e=SCHED_BY[tid];
+  return (e&&e.tpl&&e.tpl.note)||'';
+}
 /* вариант, который сейчас НЕ идёт в счёт: он остаётся на карте и в списке, но
    выглядит иначе — это другой день вместо этого, а не продолжение */
 function isAlt(p){return !!(p&&optOf(p)&&optOf(p)!==activeOpt(p.d));}
@@ -3706,9 +3719,11 @@ function dayMinutes(tid){
     if(p.hop){const r=rideMin(p,prev);ride+=r.min;rides++;if(r.est)est=true;return;}
     if(prev)move+=stepMin(prev,p);
   });
-  /* еда — часть дня, а не довесок к нему: перерывы считаются наравне с местами */
+  /* еда — часть дня, а не довесок к нему: перерывы считаются наравне с местами.
+     Но только те, что стоят МЕЖДУ точками (см. chainMinutes): ужин после
+     последней точки — вечер, а не отнятое у дня время */
   let food=0,meals=0;
-  dayPlan(tid).forEach(it=>{if(it.kind==='meal'){food+=it.min;meals++;}});
+  dayPlan(tid).forEach(it=>{if(it.kind==='meal'&&!it.tail){food+=it.min;meals++;}});
   return {place:place,move:move,ride:ride,rides:rides,food:food,meals:meals,est:est,
           extra:extra,total:place+move+ride+food,n:list.length};
 }
@@ -3808,11 +3823,12 @@ function chainMinutes(tid,skip){
     });
     clock+=move+dur;prev=p;
   });
-  /* ⚠️ ужин в конце дня прибавляет своё время, но НЕ ожидание до семи вечера:
-     иначе день, который кончился в пять, считался бы длиннее, чем он есть, и
-     счётчик начал бы вытеснять точки ради того, чтобы раньше поужинать */
-  MEALS.forEach(ml=>{if(eaten[ml.key])return;const at=Math.max(clock,ml.from);
-    if(at<=ml.to){eaten[ml.key]=1;clock+=ml.min;}});
+  /* ⚠️ ЕДА ПОСЛЕ ПОСЛЕДНЕЙ ТОЧКИ В СЧЁТ ДНЯ НЕ ИДЁТ. Ужин в конце — это уже
+     вечер: он ни с чем не соперничает и ничего не мешает успеть. Пока он
+     считался, день Чимни-Рок + Пагоса выходил 10 ч 28 (7 ч 58 дороги и мест
+     плюс два часа еды) — и разгрузка отправляла в «если успеете» трёхчасовые
+     купальни, ради которых туда и едут, а в шапке при этом стояло «6 ч 31 из
+     10». В счёт идут только перерывы МЕЖДУ точками: они и правда отнимают день. */
   return clock-DAY_START;
 }
 function planMinutes(tid,key){
@@ -3905,12 +3921,19 @@ function dayPlan(tid){
     const at=Math.max(clock,ml.from);
     if(at>ml.to)return;
     const last=list[list.length-1];
-    out.push({kind:'meal',meal:ml.key,at:at,min:ml.min,
+    out.push({kind:'meal',meal:ml.key,at:at,min:ml.min,tail:true,
       spot:pickSpot(last,ml.key,last.base,used,tid),near:last});
     clock=at+ml.min;
   });
   out.est=est;out.end=clock;
   return out;
+}
+/* подсказка рисуется всегда, а текстом и видимостью управляет пересчёт: на
+   переключении вкладки меняется и она */
+function noteHTML(tid,cls){
+  const t=dayNote(tid);
+  return '<div class="'+cls+'" data-dnote="'+tid+'"'+(t?'':' style="display:none"')+'>'
+    +convDist(t)+'</div>';
 }
 function dayBudgetHTML(tid){
   const b=dayMinutes(tid);
@@ -4009,6 +4032,11 @@ function refreshBudgets(){
     const p=P.find(x=>x.id===id);
     li.classList.toggle('offplan',!!(p&&p.cat!=='food'&&optOf(p)!==activeOpt(p.d)));
   });
+  /* подсказка дня — та, что относится к выбранному плану */
+  document.querySelectorAll('[data-dnote]').forEach(el=>{
+    const t=dayNote(tidOf(el.dataset.dnote));
+    el.innerHTML=convDist(t);el.style.display=t?'':'none';
+  });
   /* «если успеете»: точка остаётся на своём месте в цепочке, но в счёт дня не
      идёт — так человек видит и её, и то, что день без неё сходится */
   document.querySelectorAll('[data-later]').forEach(el=>{
@@ -4060,7 +4088,7 @@ function buildDays(){
         +'<span class="sinfo"><span class="snm"><span class="pseq" data-seq="'+p.id+'"></span>'+emo+'<a href="'+mapURL(p)+'" target="_blank" rel="noopener">'+p.nm+'</a>'+(p.tag?'<span class="tag '+p.tag[1]+'">'+p.tag[0]+'</span>':'')+'</span>'+origHTML(p)
         +metaStrip(p)
         +'<span class="why">'+convDist(p.why)+'</span></span></li>';}).join('')+'</ul>'
-      +(d.note?'<div class="dnote">'+convDist(d.note)+'</div>':'')+'</div></details>';
+      +noteHTML(e.tid,'dnote')+'</div></details>';
   });
   host.innerHTML=out;
 }
@@ -4651,9 +4679,11 @@ function dayTitle(e){
   /* день, наполненный вариантом, называется его именем — «Свободный день» тут
      было бы неправдой: планы как раз заданы */
   const pts=P.filter(p=>p.d===e.tid&&p.cat!=='food');
-  const k=pts.length&&pts[0].opt;
-  if(k&&pts.every(p=>p.opt===k)){
+  /* вариантов в свободном дне может быть несколько — тогда день называется тем,
+     что человек выбрал вкладкой */
+  if(pts.length&&pts.every(p=>p.opt)){
     const meta=(typeof OPTS!=='undefined'&&OPTS)?OPTS:{};
+    const k=activeOpt(e.tid)||pts[0].opt;
     if(meta[k]&&meta[k].nm)return meta[k].nm;
   }
   return 'Свободный день · '+shortName(baseById(e.base).name);
@@ -4707,10 +4737,16 @@ function autoPlans(){
       if(MOVED[p.id]!==undefined)return;          /* человек уже переносил — не трогаем */
       (groups[k]=groups[k]||[]).push(p);
     });
+    /* 🔑 её правка 02.08: «в последний день переходят ВСЕ варианты». Раньше в
+       свободный день уезжал только старший, а остальные оставались вкладками в
+       своём дне — и день Меса-Верде так и стоял с выбором, хотя выбирать уже
+       некогда. Теперь: сколько свободных дней — столько старших вариантов
+       разъезжаются по одному, а всё, что не поместилось, собирается в ПОСЛЕДНЕМ
+       свободном дне и выбирается уже там */
     Object.keys(groups)
       .sort((x,y)=>((meta[x]&&meta[x].rank)||9)-((meta[y]&&meta[y].rank)||9))
-      .slice(0,free.length)
-      .forEach((k,i)=>{groups[k].forEach(p=>{AUTOD[p.id]=free[i];});});
+      .forEach((k,i)=>{const day=free[Math.min(i,free.length-1)];
+        groups[k].forEach(p=>{AUTOD[p.id]=day;});});
   });
 }
 function applyMoves(){

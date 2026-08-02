@@ -53,7 +53,7 @@ function load(file) {
   const src = fs.readFileSync(file, 'utf8');
   const S = {};
   const names = ['BASES','DAYS','DAY_BASE','P','FOODCITIES','LINES','TRIP_NAME','START','PHOTO',
-    'BPHOTO','IMGPREF','ALT','ORIGIN','AIRPORT','AIRPORTNM','AIRPORTWAY','SEGMENT','TRANSFER','BUDGET','HERO','META','ROADS','CITYMOVE'];
+    'BPHOTO','IMGPREF','ALT','ORIGIN','AIRPORT','AIRPORTNM','AIRPORTWAY','SEGMENT','TRANSFER','BUDGET','HERO','META','ROADS','CITYMOVE','OPTS'];
   const grab = names.map(n => `S.${n}=typeof ${n}!=='undefined'?${n}:undefined;`).join('');
   new Function('S', 'with(S){' + src + ';' + grab + '}')(S);
   return S;
@@ -239,6 +239,20 @@ function checkRoute(file) {
         + '» разорван — точки одной ветки должны идти в файле подряд, иначе на экране развилка через строку');
       if (pts.length && pts.every(p => p.opt)) warn('день ' + d.n + ' («' + (d.title || '')
         + '»): все точки помечены вариантами, основной цепочки нет — какая-то ветка должна быть основной');
+      /* правило 15б: подсказка дня принадлежит основной цепочке. Если основной
+         цепочки в дне нет, подсказку никто не увидит — её место в OPTS[k].note */
+      if (d.note && pts.length && pts.every(p => p.opt))
+        warn('день ' + d.n + ' («' + (d.title || '') + '»): подсказка написана в дне, а основной цепочки '
+          + 'в нём нет — на экране она не покажется. Перенесите её в OPTS[\'' + pts[0].opt + '\'].note '
+          + '(подсказка принадлежит плану, а не дню — правило 15б)');
+      /* вариант с именем, но без подписи и приоритета — вкладка «Вариант 2» без
+         лица: человек не поймёт, между чем выбирает */
+      [...new Set(pts.filter(p => p.opt).map(p => p.opt))].forEach(k => {
+        const o = (S.OPTS || {})[k];
+        if (!o) { warn('день ' + d.n + ': вариант «' + k + '» не описан в OPTS — вкладка получится безымянной'); return; }
+        if (!o.nm) warn('вариант «' + k + '»: нет nm — имя вкладки взять неоткуда');
+        if (!o.rank) warn('вариант «' + k + '»: нет rank — очередь не поймёт, какой из вариантов старший (правило 15а)');
+      });
     });
     P.filter(p => p.cat !== 'food').forEach(p => {
       if (!p.why) bad('место «' + (p.nm || p.id) + '»: нет why — на карточке будет пусто');
@@ -379,12 +393,9 @@ function checkRoute(file) {
         place += dur; move += legs[i];
         clock += legs[i] + dur;
       });
-      /* день кончился, а ужинное время только настало — ужин всё равно будет */
-      need.forEach(ml => {
-        if (ml.done) return;
-        const at = Math.max(clock, ml.from);
-        if (at <= ml.to) { food += ml.min; ml.done = 1; }
-      });
+      /* ⚠️ ужин ПОСЛЕ последней точки в счёт дня не идёт — это уже вечер, он
+         ничего не мешает успеть. Считаем только перерывы между точками, ровно
+         как страница (см. chainMinutes в index.html и правило 16б). */
       const total = place + move + food;
       /* если день не влезает, движок отложит лишнее сам («если успеете»). Но
          звёздные точки он не трогает — и если день не сходится даже по ним,
