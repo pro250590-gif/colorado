@@ -2269,7 +2269,7 @@ function mapURL(p){
 }
 function fmtDate(dt){return WD[dt.getDay()]+', '+dt.getDate()+' '+MONTHS[dt.getMonth()];}
 function addDays(iso,n){const d=new Date(iso+'T00:00:00');d.setDate(d.getDate()+n);return d;}
-function dayDate(startIso,dayN){return fmtDate(addDays(startIso,dayN-1));}
+function dayDate(startIso,dayN){return fmtDate(addDays(planIso(),dayN-1));}
 
 /* ================= ФОТО МЕСТ (Викисклад, свободные лицензии) ================= */
 /* фотографии мест лежат в папке img/ — три размера: p (булавка), t (миниатюра), l (крупно) */
@@ -2318,12 +2318,10 @@ function flightSearch(){
   const back=PARTS.legs.slice().reverse().find(l=>l.mode==='flight'&&l.to==='home');
   const outAir=out?((partPoint(out.to)||{}).air||''):(AIRPORT[BASES[0].id]||'');
   const backAir=back?((partPoint(back.from)||{}).air||''):(AIRPORT[BASES[BASES.length-1].id]||'');
-  /* билет ищем на день ВЫЛЕТА. Дальний перелёт на восток уходит накануне вечером,
-     и поиск на день прилёта показывал рейсы, которых человек уже не застанет */
-  const ovn=(typeof outboundNight==='function')?outboundNight():null;
-  const od=out?dayDate(out.day):null;
-  const outIso=od?fmtISO(ovn?new Date(od.getFullYear(),od.getMonth(),od.getDate()-1):od):startIso;
-  const backIso=back?fmtISO(dayDate(back.day)):fmtISO(addDays(startIso,totalNights()));
+  /* билет ищем на ДЕНЬ СТАРТА: это и есть день вылета из дома (правило 19б).
+     Отдельно вычитать сутки больше не нужно — прилёт движок считает сам. */
+  const outIso=startIso;
+  const backIso=back?fmtISO(dayDate(back.day)):fmtISO(addDays(planIso(),totalNights()));
   const O=originNow();
   /* из России и соседних стран Kayak рейсов не покажет — там Aviasales */
   if(ruMarket())return 'https://www.aviasales.ru/search/'+O.code+ddmm(outIso)+outAir+ddmm(backIso)+PEOPLE;
@@ -2495,7 +2493,7 @@ function buildRoute(){
   const CB=tripBases();
   CB.forEach(b=>{
     const before=nightsBefore(b.id);
-    const ci=addDays(startIso,before),co=addDays(startIso,before+b.nights);
+    const ci=addDays(planIso(),before),co=addDays(planIso(),before+b.nights);
     stops.push({id:b.id,name:shortName(b.name),dates:dm(ci)+' – '+dm(co),nights:b.nights});
   });
   if(homeBack)stops.push({gh:1,name:originNow().city});
@@ -2613,7 +2611,7 @@ function buildRoute(){
   });
   const tn=totalNights();
   const foot='<div class="rfoot"><span><b>'+CB.length+' '+plural(CB.length,'город','города','городов')+'</b> · '+tn+' '+nights(tn)+'</span>'
-    +'<span>'+dm(addDays(startIso,0))+' – '+dm(addDays(startIso,tn))+'</span></div>';
+    +'<span>'+dm(addDays(planIso(),0))+' – '+dm(addDays(planIso(),tn))+'</span></div>';
   host.innerHTML=svg+deco+foot;
 }
 
@@ -3116,7 +3114,7 @@ function buildCities(){
        ночь в пути и ночёвка на выезде уменьшают срок пребывания, и выезд из
        города наступает раньше. Дальше все даты этого блока считаются от co. */
     const hnc0=hotelNights(b);
-    const ci=addDays(startIso,before),co=addDays(startIso,before+Math.max(0,hnc0));
+    const ci=addDays(planIso(),before),co=addDays(planIso(),before+Math.max(0,hnc0));
     const coRange=(co>ci)?dmRange(ci,co):dm(ci);
     const days=daysOfBase(b.id);
     const firstDay=days.length?days[0].disp:1,lastDay=days.length?days[days.length-1].disp:1;
@@ -3139,9 +3137,9 @@ function buildCities(){
           +'<div class="cpt"><b>'+esc0((ar.from&&ar.from.name)||'')+'</b><span>'+((ar.from&&ar.from.air)||'')+' · '+dm(depDay)+(ovn?' вечером':'')+'</span></div>'
           +'<div class="cmid"><div class="cic">'+ic('plane','i-sm')+'</div></div>'
           +'<div class="cpt r"><b>'+esc0(arrCity)+'</b><span>'+arrCode+' · '+dm(ci)+(ovn?' утром':'')+'</span></div></div>'
-          +(ovn?'<div class="cnight">'+ic('moon','i-sm')+' Ночь проводим в самолёте: вылет '+dm(depDay)
-              +' вечером, в воздухе около '+ovn.hours+' ч, посадка утром '+dm(ci)
-              +'. Отель за эту ночь не нужен, а из дома выезжаем накануне.</div>':'')
+          +(ovn?'<div class="cnight">'+ic('moon','i-sm')+' Ночь проводим в самолёте: вылетаем '+dm(depDay)
+              +' — это и есть день старта, — в воздухе около '+ovn.hours+' ч, садимся утром '+dm(ci)
+              +'. Отель за эту ночь не нужен: маршрут начинается с прилёта.</div>':'')
           +(arrWay&&arrCity!==shortName(b.name)
             ? '<div class="cway">оттуда до города: '+esc0(convDist(arrWay))+'</div>':'')
           /* город вылета меняется наверху, в блоке «Как добираешься», рядом с
@@ -3161,7 +3159,7 @@ function buildCities(){
          вечером и приехать шестого утром, логики нет». Верно: поезд 22:40 → 7:35
          пересекает полночь, и обе даты в карточке одинаковыми быть не могут. */
       const wayN=nightWay(b.id);
-      const dep=wayN?addDays(startIso,nightsBefore(b.id)-1):ci;
+      const dep=wayN?addDays(planIso(),nightsBefore(b.id)-1):ci;
       arrival='<div class="cnode"><span class="cdot">'+ic(segIc,'i-sm')+'</span>'
         +'<div class="clbl"><b>Переезд</b><span>'+(wayN?(dm(dep)+' → '+dm(ci)+' · ночь в дороге'):dm(ci))+'</span></div>'
         +'<div class="carr"><div class="crow">'
@@ -3218,7 +3216,7 @@ function buildCities(){
     const stay=(!b.nights||!hnc)
       ? '<div class="cnode"><span class="cdot pale">'+ic('bed','i-sm')+'</span>'
         +'<div class="clbl"><b>'+(b.nights?'Ночь в пути':'Без ночёвки')+'</b><span>'+(b.nights
-          ? ('уезжаем вечером '+dm(addDays(startIso,nightsBefore(b.id)+b.nights-1))+' · '+wayNc+(nextStayBase(b.id)?(' → '+shortName(nextStayBase(b.id).name)):''))
+          ? ('уезжаем вечером '+dm(addDays(planIso(),nightsBefore(b.id)+b.nights-1))+' · '+wayNc+(nextStayBase(b.id)?(' → '+shortName(nextStayBase(b.id).name)):''))
           : (dm(ci)+' · в этом городе не ночуем'))+'</span></div>'
         +'<div class="cstay nostay"><span class="cin"><span class="cmeta">'+(b.nights
           ? ('Ночь в этом городе не нужна: вечером садимся на '+wayNc
@@ -3227,7 +3225,7 @@ function buildCities(){
              +', и приезжаем туда утром. Отель здесь не бронируем и в бюджет не считаем — спим в дороге.')
           : 'Ночей поставлено 0, поэтому жильё тут не ищем и в бюджет ничего не считаем. Вернёшь ночь — вернётся и блок.')+'</span></span></div></div>'
       : '<div class="cnode"><span class="cdot">'+ic('bed','i-sm')+'</span>'
-      +'<div class="clbl"><b>Проживание</b><span>Дни '+firstDay+'–'+lastDay+' · '+dm(ci)+'–'+dm(addDays(startIso,nightsBefore(b.id)+hnc))+' · '+hnc+' '+nights(hnc)
+      +'<div class="clbl"><b>Проживание</b><span>Дни '+firstDay+'–'+lastDay+' · '+dm(ci)+'–'+dm(addDays(planIso(),nightsBefore(b.id)+hnc))+' · '+hnc+' '+nights(hnc)
         +(awayNights(b.id).length?(' · '+awayNights(b.id).length+' '+nights(awayNights(b.id).length)+' на выезде: '+awayNights(b.id).map(e=>esc0(sleepAway(e.tid).nm)).join(', ')):'')
         +(wayNc?' · последняя ночь в пути':'')+'</span></div>'
       +(mine.length
@@ -3242,10 +3240,10 @@ function buildCities(){
         : '<div class="cstay noyet">'
           +'<div class="ahead"><span class="cph sm"'+(basePhoto(b.id)?' style="background-image:url('+basePhoto(b.id)+')"':'')+'></span>'
             +'<span class="atxt"><h3>Где остановиться</h3>'
-            +'<span class="cmeta">'+shortName(b.name)+' · '+hnc+' '+nights(hnc)+' · '+dmRange(ci,addDays(startIso,nightsBefore(b.id)+hnc))+' · '+guests+'</span></span></div>'
+            +'<span class="cmeta">'+shortName(b.name)+' · '+hnc+' '+nights(hnc)+' · '+dmRange(ci,addDays(planIso(),nightsBefore(b.id)+hnc))+' · '+guests+'</span></span></div>'
           /* обе кнопки — одна пара: один рост, одна ширина, один стиль (просьба клиента) */
           +'<div class="stacts">'
-            +'<a class="sbtn pri" href="'+bookHotel(b.q,ci,addDays(startIso,nightsBefore(b.id)+hnc),PEOPLE)+'" target="_blank" rel="noopener">Booking</a>'
+            +'<a class="sbtn pri" href="'+bookHotel(b.q,ci,addDays(planIso(),nightsBefore(b.id)+hnc),PEOPLE)+'" target="_blank" rel="noopener">Booking</a>'
             +'<button class="sbtn sec" data-stayadd="'+b.id+'">Уже есть жильё</button>'
           +'</div>'
           +'</div>')
@@ -3319,7 +3317,10 @@ function buildCities(){
         +(w?(' · <button class="wtemp" data-weather="'+b.id+'" title="откуда эти градусы">'
              +ic('sun','i-w wsun')+' ≈'+fmtTempShort(w.d)+' '+ic('moon','i-w wmoon')+' ≈'+fmtTempShort(w.n)+'</button>'):'')+'</span>'
       +'<h2>'+shortName(b.name)+'</h2>'+origHTML(b,'big')+'<p>'+convDist(b.desc)+'</p>'+nb+'</div>'
-      +'<div class="ctl">'+carHire+stay+route+more+'</div></div></section>';
+      /* ⚠️ СНАЧАЛА ЖИЛЬЁ, ПОТОМ МАШИНА. Её слова: «я прилетаю — первым делом мне
+         нужно жильё и заселиться; если нужна машина, то машина, если не нужна —
+         не пиши машину». Прокат стоял выше жилья и читался как первое дело. */
+      +'<div class="ctl">'+stay+carHire+route+more+'</div></div></section>';
   }).join('')+departureBlock();
 
   /* тумблеры активностей: вкл/выкл место (на карте + тускнеет строка) */
@@ -4416,6 +4417,9 @@ function buildDays(){
       +'<span class="dcount">'+list.length+' '+plural(list.length,'точка','точки','точек')+'</span>'+'<span class="chev"><svg class="i i-sm" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9.5 18 6-6-6-6"/></svg></span></summary>'
       +'<div class="day-body">'
       +'<div class="leg"><span class="pill">'+d.pill+'</span> <b>'+convDist(d.leg)+'</b><a class="dirlink" href="#" data-dir="'+e.tid+'" target="_blank" rel="noopener">Маршрут в Google Maps →</a></div>'
+      /* «прилетаю — первым делом мне нужно жильё и заселиться»: в день приезда
+         в город это стоит ПЕРВЫМ, а не строкой в другом разделе */
+      +checkinHTML(e)
       +plansHTML(e.tid)
       +'<div class="daytools"><button class="tiny" data-dayon="'+e.tid+'">Отметить день</button><button class="tiny" data-dayoff="'+e.tid+'">Снять день</button></div>'
       +'<ul class="stops">'+list.map((p,pi)=>{const emo=p.star?'<span class="cemo star">'+ic('star','i-sm')+'</span>':'';
@@ -4431,9 +4435,26 @@ function buildDays(){
       /* день вылета кончался последней точкой, и ни дороги в аэропорт, ни самого
          рейса в дне не было. Теперь дорога домой стоит в конце этого дня. */
       +(e.fin?depDayHTML():'')
+
       +noteHTML(e.tid,'dnote')+'</div></details>';
   });
   host.innerHTML=out;
+}
+/* ── ЗАСЕЛЕНИЕ — ПЕРВОЕ ДЕЛО В ДЕНЬ ПРИЕЗДА ───────────────────────────────
+   Её слова 03.08: «я прилетаю — первым делом мне нужно жильё и заселиться, если
+   нужна машина, то машина, если не нужна — не пиши машину. И это про любые
+   города». Строка появляется только там, где заселяться и вправду есть куда:
+   ночь в пути и ночёвка на выезде своего жилья в этом городе не дают. */
+function checkinHTML(e){
+  const b=baseById(e.base);if(!b)return '';
+  const ds=daysOfBase(b.id);
+  if(!ds.length||ds[0].tid!==e.tid)return '';        /* не день приезда в город */
+  if(hotelNights(b)<=0)return '';                     /* заселяться некуда */
+  if(sleepAway(e.tid))return '';                      /* в эту ночь спим на выезде */
+  const car=vehiclesTakenAt(b.id).length
+    ?' Машина нужна — берём её здесь же.':'';         /* не нужна — и не пишем */
+  return '<div class="cnight">'+ic('bed','i-sm')+' Первым делом — заселение: '
+    +esc0(shortName(b.name))+', с этого дня и бронируем жильё.'+car+'</div>';
 }
 function depDayHTML(){
   const d=(typeof departureInfo==='function')?departureInfo():null;
@@ -4743,7 +4764,7 @@ function buildSchedule(){
     else if(lastTripBase()&&lastTripBase().id===b.id&&b.nights>0)
       SCHED.push({tid:'fin-'+b.id,base:b.id,tpl:null,fin:1,pin:1});
   });
-  SCHED.forEach((e,i)=>{e.disp=i+1;e.date=addDays(startIso,i);SCHED_BY[e.tid]=e;});
+  SCHED.forEach((e,i)=>{e.disp=i+1;e.date=addDays(planIso(),i);SCHED_BY[e.tid]=e;});
   autoPlans();applyMoves();           /* свободный день наполняем старшим вариантом */
   buildParts();                       /* дни поменялись — детали маршрута тоже */
 }
@@ -4773,7 +4794,27 @@ function airLL(code){
     &&(new RegExp('\\('+code+'\\)','i').test(x.nm||'')||new RegExp('\\b'+code+'\\b','i').test(x.q||'')));
   return p?[p.lat,p.lng]:null;
 }
-function dayDate(disp){return addDays(startIso,Math.max(0,(disp||1)-1));}
+/* ── ⚠️ СТАРТ ПОЕЗДКИ — ЭТО ВЫЛЕТ ИЗ ДОМА, А НЕ ПРИЛЁТ ────────────────────
+   Её правило, 03.08: «старт поездки — это старт, когда я стартую из дома. Если
+   я лечу 16 часов, я прилетаю — первым делом мне нужно жильё и заселиться».
+   Раньше движок считал ровно наоборот: датой старта был ПЕРВЫЙ ДЕНЬ МАРШРУТА,
+   а вылет из дома он подписывал вчерашним числом. Человек открывал Токио и
+   спрашивал: «старт поездки второго — почему вылет первого?».
+   Теперь дата старта = дата вылета = дата на билете. Сколько времени займёт
+   дорога, считаем сами (часы в воздухе + сдвиг поясов): не влезло в сутки —
+   значит садимся назавтра, и маршрут, жильё и все даты идут ОТ ПРИЛЁТА.
+   planIso() — это и есть день, когда начинается первый день маршрута. */
+function arriveShift(){
+  const CB=tripBases(),fb=CB[0];
+  if(!fb)return 0;
+  if(((typeof SEGMENT!=='undefined'&&SEGMENT[fb.id])||'car')!=='flight')return 0;
+  const O=originNow();
+  if(!O||!O.ll)return 0;
+  const ll=airLL((typeof AIRPORT!=='undefined'&&AIRPORT[fb.id])||'')||[fb.lat,fb.lng];
+  return overnightFlight(O.ll,ll)?1:0;
+}
+function planIso(){const d=arriveShift();return d?fmtISO(addDays(startIso,d)):startIso;}
+function dayDate(disp){return addDays(planIso(),Math.max(0,(disp||1)-1));}
 /* дальше этого от своего города — это уже выезд, а не прогулка по городу */
 const OUT_KM=25;
 function buildParts(){
@@ -5204,7 +5245,7 @@ function deletePlace(id){
 /* лист «У меня уже есть жильё» — им же правим уже добавленное */
 function addStaySheet(bid,id){
   const b=baseById(bid),before=nightsBefore(bid);
-  const ci=addDays(startIso,before),co=addDays(startIso,before+b.nights);
+  const ci=addDays(planIso(),before),co=addDays(planIso(),before+b.nights);
   const p=id?placeById(id):null,esc=s=>String(s||'').replace(/"/g,'&quot;');
   const i=BASES.findIndex(x=>x.id===bid),rate=p?(p.rate||''):(hotelRate(i)||'');
   sheet('<div class="dsh"><b>'+(p?'Изменить жильё':'У меня уже есть жильё')+'</b>'
@@ -5843,7 +5884,7 @@ function hotelNights(b){
   const way=(nx&&nightWay(nx.id))?1:0;
   return Math.max(0,b.nights-way-awayNights(b.id).length);
 }
-function dayDateFor(tid){const e=SCHED_BY[tid];return e?e.date:addDays(startIso,0);}
+function dayDateFor(tid){const e=SCHED_BY[tid];return e?e.date:addDays(planIso(),0);}
 function totalNights(){return BASES.reduce((s,b)=>s+b.nights,0);}
 /* в скобках показываем только латинское название (Ouray), русские уточнения не дублируем */
 function shortName(s){return s.replace(/\s*\(.*?\)/,'').replace(/\s*\/.*$/,'').trim();}
@@ -5869,7 +5910,9 @@ function recomputeDates(){
   const nn=document.getElementById('tNights');if(nn)nn.textContent=tn+' '+nights(tn);
   const ns=document.getElementById('tNightsSub');
   if(ns)ns.textContent=td+' '+plural(td,'день','дня','дней')+' · '+BASES.length+' '+plural(BASES.length,'база','базы','баз');
-  {const s=addDays(startIso,0),e=addDays(startIso,tn);
+  /* поездка начинается, когда человек выходит из дома, а кончается последним днём
+     маршрута: если дорога заняла ночь, в шапке это лишний день, и он настоящий */
+  {const s=addDays(startIso,0),e=addDays(planIso(),tn);
     const dstr=s.getDate()+'–'+e.getDate()+' '+MONTHS[e.getMonth()]+' '+e.getFullYear();
     const td2=document.getElementById('topDate');if(td2)td2.textContent=dstr;
     const hd=document.getElementById('heroDate');if(hd)hd.textContent=dstr;}
@@ -5906,9 +5949,9 @@ function buildPlanner(){
   renderStays();
 }
 function renderStays(){
-  const rows=BASES.map((b,i)=>{if(b.off)return '';const before=nightsBefore(b.id);const ci=addDays(startIso,before),co=addDays(startIso,before+b.nights);
+  const rows=BASES.map((b,i)=>{if(b.off)return '';const before=nightsBefore(b.id);const ci=addDays(planIso(),before),co=addDays(planIso(),before+b.nights);
     const hn=hotelNights(b), wayNx=nextStayBase(b.id)&&nightWay(nextStayBase(b.id).id);
-    const co2=addDays(startIso,before+hn);      /* выезжаем раньше: последнюю ночь спим в дороге */
+    const co2=addDays(planIso(),before+hn);      /* выезжаем раньше: последнюю ночь спим в дороге */
     const rate=hotelRate(i), tot=stayPlaces(b.id).length?stayTotal(b.id,hn):rate*hn;
     const own=stayRates(b.id);           /* свои дома: цену меняют в их карточках */
     const ro=own.length?' readonly title="цена берётся из карточек жилья"':'';
@@ -5937,7 +5980,7 @@ function renderStays(){
       +'</div>'
       /* ночи на выезде идут отдельными строками: у них своя цена и своя бронь */
       +awayNights(b.id).map(e=>{
-        const sl=sleepAway(e.tid),dt=e.date,dt2=addDays(startIso,SCHED.indexOf(e)+1);
+        const sl=sleepAway(e.tid),dt=e.date,dt2=addDays(planIso(),SCHED.indexOf(e)+1);
         const r=ARATE[e.tid]||0;
         return '<div class="hrow away">'
           +'<span class="hdot pale">'+ic('bed','i-sm')+'</span>'
@@ -6366,7 +6409,7 @@ function fmtTempShort(c){return (c>0?'+':'')+tempC(c)+'°';}
 /* Пояснение по тапу на градусы: цифры не прогноз, и человек вправе это знать. */
 function weatherSheet(bid){
   const b=baseById(bid);if(!b)return;
-  const before=nightsBefore(b.id),ci=addDays(startIso,before),co=addDays(startIso,before+b.nights);
+  const before=nightsBefore(b.id),ci=addDays(planIso(),before),co=addDays(planIso(),before+b.nights);
   const w=weatherOf(b.id,ci,co);if(!w)return;
   const yrs=(w.y0&&w.y1)?(w.y0+'–'+w.y1):'прошлого года';
   sheet('<div class="dsh"><b>Погода примерная</b><span>'+shortName(b.name)+' · '+dmRange(ci,co)+'</span></div>'
@@ -6450,7 +6493,7 @@ function loadWeather(){
   const need=[];
   BASES.forEach((b,i)=>{
     if(!b.nights)return;
-    const before=nightsBefore(b.id),ci=addDays(startIso,before),co=addDays(startIso,before+b.nights);
+    const before=nightsBefore(b.id),ci=addDays(planIso(),before),co=addDays(planIso(),before+b.nights);
     const k=wKeyFor(b,ci,co);
     if(!WEATHER[k])need.push({b:b,k:k,ci:ci,co:co});
   });
@@ -6669,7 +6712,7 @@ function sizeMoneyInputs(){document.querySelectorAll('#budgetBox .b3box input, #
 function itemQty(per,days){return per==='day'?days:per==='person'?PEOPLE:per==='personday'?PEOPLE*days:1;}
 /* кнопка брони под группой бюджета */
 function groupBook(g){
-  const ci=addDays(startIso,0),co=addDays(startIso,totalNights());
+  const ci=addDays(planIso(),0),co=addDays(planIso(),totalNights());
   let url,label,icon;
   if(g==='Перелёт'){url=flightSearch();label='Подобрать билеты (туда-обратно)';icon='flight';}
   /* прокат ищем там же, где он записан в деталях (обычно аэропорт), и на те же даты,
