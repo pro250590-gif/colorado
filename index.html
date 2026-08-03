@@ -3046,7 +3046,13 @@ function buildCities(){
   const CB=tripBases();
   host.innerHTML=CB.map((b,i)=>{
     const before=nightsBefore(b.id);
-    const ci=addDays(startIso,before),co=addDays(startIso,before+b.nights);
+    /* ⚠️ ДАТЫ ГОРОДА — ЭТО ЕГО НОЧИ, А НЕ ЧИСЛО ДНЕЙ. Её разбор: «Лион стоит
+       5–6 сен, а мы шестого уже в дороге — должно быть только пятое». Верно:
+       ночь в пути и ночёвка на выезде уменьшают срок пребывания, и выезд из
+       города наступает раньше. Дальше все даты этого блока считаются от co. */
+    const hnc0=hotelNights(b);
+    const ci=addDays(startIso,before),co=addDays(startIso,before+Math.max(0,hnc0));
+    const coRange=(co>ci)?dmRange(ci,co):dm(ci);
     const days=daysOfBase(b.id);
     const firstDay=days.length?days[0].disp:1,lastDay=days.length?days[days.length-1].disp:1;
     /* Прибытие — из деталей маршрута, а не «если это первый город, значит перелёт».
@@ -3111,7 +3117,7 @@ function buildCities(){
       const from=dayDate(v.take.day),to=dayDate(v.drop.day);
       const whole=v.take.day===1&&v.drop.day===PARTS.days;
       carHire+='<div class="cnode"><span class="cdot">'+ic('car','i-sm')+'</span>'
-        +'<div class="clbl"><b>Аренда машины</b><span>'+(whole?'на всю поездку':('дни '+v.take.day+'–'+v.drop.day))+' · '+dm(from)+'–'+dm(to)+'</span></div>'
+        +'<div class="clbl"><b>Аренда машины</b><span>'+(whole?'на всю поездку · ':'')+dm(from)+' → '+dm(to)+'</span></div>'
         +'<div class="carr"><div class="crow">'
           +'<div class="cpt"><b>'+esc0(tp.name||'')+'</b><span>забрать · '+(tp.air||'аэропорт')+'</span></div>'
           +'<div class="cmid"><div class="cic">'+ic('car','i-sm')+'</div></div>'
@@ -3237,7 +3243,7 @@ function buildCities(){
          даты одним куском, погода значками. Слово «База» клиент вернула — с ним
          строка всё равно помещается. «≈» — потому что это не прогноз;
          по тапу на градусы объясняем, откуда цифры (просьба клиента). */
-      +'<div class="chead"><span class="ckick">База '+(i+1)+' из '+CB.length+' · '+dmRange(ci,co)
+      +'<div class="chead"><span class="ckick">База '+(i+1)+' из '+CB.length+' · '+coRange
         +(w?(' · <button class="wtemp" data-weather="'+b.id+'" title="откуда эти градусы">'
              +ic('sun','i-w wsun')+' ≈'+fmtTempShort(w.d)+' '+ic('moon','i-w wmoon')+' ≈'+fmtTempShort(w.n)+'</button>'):'')+'</span>'
       +'<h2>'+shortName(b.name)+'</h2>'+origHTML(b,'big')+'<p>'+convDist(b.desc)+'</p>'+nb+'</div>'
