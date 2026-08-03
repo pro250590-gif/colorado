@@ -3125,9 +3125,14 @@ function buildCities(){
     const hnc=hotelNights(b), wayNc=nextStayBase(b.id)&&nightWay(nextStayBase(b.id).id);
     const stay=(!b.nights||!hnc)
       ? '<div class="cnode"><span class="cdot pale">'+ic('bed','i-sm')+'</span>'
-        +'<div class="clbl"><b>'+(b.nights?'Ночь в пути':'Без ночёвки')+'</b><span>'+dm(ci)+' · '+(b.nights?('спим в дороге: '+wayNc):'в этом городе не ночуем')+'</span></div>'
+        +'<div class="clbl"><b>'+(b.nights?'Ночь в пути':'Без ночёвки')+'</b><span>'+(b.nights
+          ? ('уезжаем вечером '+dm(addDays(startIso,nightsBefore(b.id)+b.nights-1))+' · '+wayNc+(nextStayBase(b.id)?(' → '+shortName(nextStayBase(b.id).name)):''))
+          : (dm(ci)+' · в этом городе не ночуем'))+'</span></div>'
         +'<div class="cstay nostay"><span class="cin"><span class="cmeta">'+(b.nights
-          ? ('Из города уезжаем вечером и ночь проводим в дороге ('+wayNc+'), поэтому отель здесь не нужен и в бюджет не идёт.')
+          ? ('Ночь в этом городе не нужна: вечером садимся на '+wayNc
+             +((nextStayBase(b.id)&&TRANSFER[nextStayBase(b.id).id]&&TRANSFER[nextStayBase(b.id).id].clean)?(', '+TRANSFER[nextStayBase(b.id).id].clean+' в пути'):'')
+             +(nextStayBase(b.id)?(', следующий город — '+shortName(nextStayBase(b.id).name)):'')
+             +', и приезжаем туда утром. Отель здесь не бронируем и в бюджет не считаем — спим в дороге.')
           : 'Ночей поставлено 0, поэтому жильё тут не ищем и в бюджет ничего не считаем. Вернёшь ночь — вернётся и блок.')+'</span></span></div></div>'
       : '<div class="cnode"><span class="cdot">'+ic('bed','i-sm')+'</span>'
       +'<div class="clbl"><b>Проживание</b><span>Дни '+firstDay+'–'+lastDay+' · '+dm(ci)+'–'+dm(addDays(startIso,nightsBefore(b.id)+hnc))+' · '+hnc+' '+nights(hnc)
@@ -5781,7 +5786,7 @@ function renderStays(){
         +'<span class="hf"><label>всего</label><span class="hpill"><input class="htot" data-hi="'+i+'" inputmode="decimal" value="'+(tot?fmtIn(tot):'')+'" placeholder="0"'+ro+'><span class="hu">'+curSym()+'</span></span></span>'
       +'</span>')
       /* жильё в этом городе уже своё — Booking понижаем в «другие варианты», как в ленте */
-      +(zero?'<span class="hpass">'+(b.nights?('Ночь в пути · '+wayNx+' · отель не нужен'):'Проездом · жильё не ищем')+'</span>'
+      +(zero?'<span class="hpass">'+(b.nights?('Вечером уезжаем: '+wayNx+(nextStayBase(b.id)?(' → '+shortName(nextStayBase(b.id).name)):'')+' · отель не нужен'):'Проездом · жильё не ищем')+'</span>'
         :'<a class="hbook'+(stayPlaces(b.id).length?' alt':'')+'" href="'+bookHotel(b.q,ci,co2,PEOPLE)+'" target="_blank" rel="noopener" title="подобрать жильё на Booking">'+ic('bed','i-sm')
         +'<span>'+(stayPlaces(b.id).length?'Посмотреть другие варианты на Booking':'Забронировать на Booking')+' · '+dm(ci)+'–'+dm(co2)+' · '+PEOPLE+' гост.</span></a>')
       +'</div>'
@@ -5792,7 +5797,7 @@ function renderStays(){
         return '<div class="hrow away">'
           +'<span class="hdot pale">'+ic('bed','i-sm')+'</span>'
           +'<span class="hmain"><span class="hname">'+esc0(sl.nm)+'</span>'
-            +'<span class="hdate">ночь на выезде · '+dm(dt)+' → '+dm(dt2)+' · вместо ночи в '+shortName(b.name)+'</span></span>'
+            +'<span class="hdate">ночь на выезде · '+dm(dt)+' → '+dm(dt2)+' · вместо ночи · '+shortName(b.name)+'</span></span>'
           +'<span class="hmoney"><span class="hf"><label>за ночь</label><span class="hpill">'
             +'<input class="arate" data-at="'+e.tid+'" inputmode="decimal" value="'+(r?fmtIn(r):'')+'" placeholder="0"><span class="hu">'+curSym()+'</span></span></span></span>'
           +'<a class="hbook" href="'+bookHotel(sl.q||sl.nm,dt,dt2,PEOPLE)+'" target="_blank" rel="noopener">'+ic('bed','i-sm')

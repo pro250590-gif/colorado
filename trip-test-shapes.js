@@ -42,7 +42,7 @@ const AIRPORTWAY={CDG:'RER B, 45 мин',LYS:'Rhônexpress, 30 мин',NCE:'тр
 const SEGMENT={a:'flight',b:'train',c:'train'};
 const TRANSFER={b:{km:465,clean:'2 ч',stops:'поезда каждый час'},
                 /* ФОРМА: ночной поезд — ночь в пути, отель в Лионе не нужен */
-                c:{km:470,clean:'9 ч ночью',stops:'ночной поезд, отправление 22:40',night:'ночной поезд'}};
+                c:{km:470,clean:'9 ч ночью',stops:'ночной поезд, отправление 22:40, прибытие 7:35',night:'ночной поезд'}};
 /* ФОРМА: в Париже и Лионе машина не нужна, в Ницце — только на выезды */
 const CITYMOVE={a:'metro_walk',b:'metro_walk',c:'car_trips'};
 
