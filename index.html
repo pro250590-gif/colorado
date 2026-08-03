@@ -2095,6 +2095,24 @@ section h2.big{margin-bottom:4px}
      поездку. Файл ничего не рисует и наружу отдаёт одно имя — CONSTRUCTOR. -->
 <script src="constructor.js"></script>
 <script>
+/* ── НЕОБЯЗАТЕЛЬНЫЕ БЛОКИ ДАННЫХ ──────────────────────────────────────────
+   Маршрут может не объявить то, чего у него нет: у городской поездки не бывает
+   профиля высоты, у поездки без машины — таблицы дорог. Раньше движок на этом
+   падал молча (страница просто не дорисовывалась), а виноват был не он и не
+   данные, а отсутствие заглушки. Ловушка нашлась на пробном маршруте форм:
+   не объявлен ALT — «ReferenceError: ALT is not defined» и белый экран.
+   Дальше маршруты будет собирать ИИ, и каждый недостающий блок стоил бы разбора,
+   поэтому заглушки стоят ЗДЕСЬ, один раз, с правильными типами. */
+(function(){
+  const need={ALT:{},ALTNM:{},SEGMENT:{},TRANSFER:{},CITYMOVE:{},AIRPORT:{},AIRPORTNM:{},
+    AIRPORTWAY:{},PHOTO:{},BPHOTO:{},META:{},ROADS:{},ROADLINES:{},ROADSTEPS:{},
+    FOODNEAR:{},OPTS:{},HERO:null,IMGPREF:'',
+    LINES:[],FOODCITIES:[],BUDGET:[]};
+  Object.keys(need).forEach(k=>{
+    try{ if(eval('typeof '+k)!=='undefined')return; }catch(e){}
+    window[k]=need[k];
+  });
+})();
 
 /* ================= ИКОНКИ (SVG вместо эмодзи) ================= */
 /* Сборщик ошибок страницы: если что-то падает, оно оказывается здесь, а не только
@@ -4611,6 +4629,8 @@ function airLL(code){
   return p?[p.lat,p.lng]:null;
 }
 function dayDate(disp){return addDays(startIso,Math.max(0,(disp||1)-1));}
+/* дальше этого от своего города — это уже выезд, а не прогулка по городу */
+const OUT_KM=25;
 function buildParts(){
   if(typeof TRIPPARTS!=='undefined'&&TRIPPARTS&&Array.isArray(TRIPPARTS.points)){PARTS=TRIPPARTS;return;}
   const pts=[],legs=[],nts=[],veh=[],trips=[],days=SCHED.length;
@@ -4628,7 +4648,10 @@ function buildParts(){
     if(!p){
       const ll=airLL(code);
       p={id:id,kind:'airport',air:code,base:near?near.id:'',
-        name:(typeof AIRPORTNM!=='undefined'&&AIRPORTNM[code])||(near?shortName(near.name):code),
+        /* в отрезках это отдельная точка, и «Лион → Лион» читать нельзя:
+           у аэропорта своё имя со словом «аэропорт» и кодом */
+        name:'Аэропорт '+code,
+        city:(typeof AIRPORTNM!=='undefined'&&AIRPORTNM[code])||(near?shortName(near.name):''),
         way:(typeof AIRPORTWAY!=='undefined'&&AIRPORTWAY[code])||'',
         q:near?near.q:'',
         lat:ll?ll[0]:(near?near.lat:null),lng:ll?ll[1]:(near?near.lng:null)};
@@ -4768,9 +4791,25 @@ function buildParts(){
      жильё и машину такой день не трогает */
   SCHED.forEach(e=>{
     if(e.pin||e.fin||!e.tpl)return;
-    /* чем едет выезд — зависит от города: в Нью-Йорке метро, в Лос-Анджелесе машина */
+    /* ⚠️ ВЫЕЗД — ЭТО КОГДА УЕХАЛИ ИЗ ГОРОДА И ВЕРНУЛИСЬ, а не любой день подряд.
+       Раньше выездом считался каждый день, кроме приезда и вылета, — и «Париж
+       пешком» попадал в выезды наравне с Комо из Милана. Смотрим, далеко ли
+       уходят точки дня от своего города: Меса-Верде из Дуранго — 66 км, это
+       выезд; Лувр из центра Парижа — полтора, это просто день в городе. */
+    const b=baseById(e.base);
+    const far=P.filter(p=>p.d===e.tid&&p.cat!=='food'&&typeof p.lat==='number')
+      .reduce((m,p)=>(b&&typeof b.lat==='number')?Math.max(m,kmBetween(b.lat,b.lng,p.lat,p.lng)):m,0);
+    if(far<OUT_KM)return;                       /* день в городе — не выезд */
+    /* чем едет выезд: если в дне есть расписанный переезд (поезд, катер) — им;
+       иначе машиной, когда она в эти дни есть, иначе своим ходом */
+    /* чем ДОБИРАЮТСЯ, написано у ПЕРВОЙ точки дня: «поезд с Cadorna, 1 час».
+       Любой hop подряд брать нельзя — у Меса-Верде это «10 минут по Cliff Palace
+       Loop», то есть переход внутри парка, а не дорога туда */
+    const day1=P.filter(p=>p.d===e.tid&&p.cat!=='food')[0];
+    const hop=(day1&&day1.hop)?day1:null;
     const hasCar=veh.some(v=>v.take.day<=e.disp&&v.drop.day>=e.disp);
-    trips.push({at:e.base,day:e.disp,name:e.tpl.title||'',by:hasCar?'own':'walk',why:''});
+    trips.push({at:e.base,day:e.disp,name:e.tpl.title||'',km:Math.round(far),
+      by:hop?'scheduled':(hasCar?'own':'walk'),way:hop?hop.hop:'',why:''});
   });
   PARTS={days:days,points:pts,legs:legs,nights:nts,vehicles:veh,daytrips:trips};
 }
