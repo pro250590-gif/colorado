@@ -1151,6 +1151,10 @@ a.rglyph:active{transform:translate(-50%,-50%) scale(.9)}
 .dskind .cursym{font:800 15px/1 "JetBrains Mono",ui-monospace,monospace;color:inherit!important}
 .dskind.wait{opacity:.55}
 /* ── КНОПКИ БРОНИ (партнёрские) ── */
+.daway{display:flex;align-items:center;gap:5px;margin-top:5px;color:#5b3fc4;font:700 11px/1.3 "Inter",sans-serif}
+.dsub .daway{margin-top:0;margin-left:10px;display:inline-flex}
+.hrow.away{background:rgba(124,92,255,.05)}
+.hdot.pale{background:#c9ccdb!important}
 .hway{display:flex;align-items:center;gap:6px;margin-top:3px;color:#5b3fc4;font:700 11px/1.3 "Inter",sans-serif}
 .hway .i{opacity:.85}
 .hbook{display:flex;align-items:center;gap:8px;width:100%;margin-top:2px;padding:11px 14px;border-radius:13px;text-decoration:none;background:linear-gradient(150deg,#1c9166,#0a6047);color:#fff;font:800 12px/1.2 "Plus Jakarta Sans",sans-serif;letter-spacing:-.02em;box-shadow:var(--sh1),inset 0 1px 0 rgba(255,255,255,.25)}
@@ -3119,7 +3123,9 @@ function buildCities(){
           ? ('Из города уезжаем вечером и ночь проводим в дороге ('+wayNc+'), поэтому отель здесь не нужен и в бюджет не идёт.')
           : 'Ночей поставлено 0, поэтому жильё тут не ищем и в бюджет ничего не считаем. Вернёшь ночь — вернётся и блок.')+'</span></span></div></div>'
       : '<div class="cnode"><span class="cdot">'+ic('bed','i-sm')+'</span>'
-      +'<div class="clbl"><b>Проживание</b><span>Дни '+firstDay+'–'+lastDay+' · '+dm(ci)+'–'+dm(co)+' · '+b.nights+' '+nights(b.nights)+'</span></div>'
+      +'<div class="clbl"><b>Проживание</b><span>Дни '+firstDay+'–'+lastDay+' · '+dm(ci)+'–'+dm(addDays(startIso,nightsBefore(b.id)+hnc))+' · '+hnc+' '+nights(hnc)
+        +(awayNights(b.id).length?(' · '+awayNights(b.id).length+' '+nights(awayNights(b.id).length)+' на выезде: '+awayNights(b.id).map(e=>esc0(sleepAway(e.tid).nm)).join(', ')):'')
+        +(wayNc?' · последняя ночь в пути':'')+'</span></div>'
       +(mine.length
         ? stayCard
           +'<button class="cadd" data-stayadd="'+b.id+'">'+ic('plus','i-sm')+' Добавить ещё жильё</button>'
@@ -3132,10 +3138,10 @@ function buildCities(){
         : '<div class="cstay noyet">'
           +'<div class="ahead"><span class="cph sm"'+(basePhoto(b.id)?' style="background-image:url('+basePhoto(b.id)+')"':'')+'></span>'
             +'<span class="atxt"><h3>Где остановиться</h3>'
-            +'<span class="cmeta">'+shortName(b.name)+' · '+b.nights+' '+nights(b.nights)+' · '+dmRange(ci,co)+' · '+guests+'</span></span></div>'
+            +'<span class="cmeta">'+shortName(b.name)+' · '+hnc+' '+nights(hnc)+' · '+dmRange(ci,addDays(startIso,nightsBefore(b.id)+hnc))+' · '+guests+'</span></span></div>'
           /* обе кнопки — одна пара: один рост, одна ширина, один стиль (просьба клиента) */
           +'<div class="stacts">'
-            +'<a class="sbtn pri" href="'+bookHotel(b.q,ci,co,PEOPLE)+'" target="_blank" rel="noopener">Booking</a>'
+            +'<a class="sbtn pri" href="'+bookHotel(b.q,ci,addDays(startIso,nightsBefore(b.id)+hnc),PEOPLE)+'" target="_blank" rel="noopener">Booking</a>'
             +'<button class="sbtn sec" data-stayadd="'+b.id+'">Уже есть жильё</button>'
           +'</div>'
           +'</div>')
@@ -4061,7 +4067,10 @@ function dayBudgetHTML(tid){
   return '<span class="dbud'+(over?' over':'')+'" data-bud="'+tid+'">'+ic('clock','i-sm')
     +' ≈'+fmtHM(b.total)+' из '+fmtHM(DAY_LIMIT)+'</span>'
     /* закрытые места видно в шапке дня, а не только внутри карточек */
-    +'<span class="dshut" data-shut="'+tid+'" style="display:none"></span>';
+    +'<span class="dshut" data-shut="'+tid+'" style="display:none"></span>'
+    /* ночёвка на выезде — это про сегодняшний день, и человек должен видеть её
+       там же, где часы: иначе вечером окажется не в том городе */
+    +(sleepAway(tid)?('<span class="daway">'+ic('bed','i-sm')+' ночуем на выезде: '+esc0(sleepAway(tid).nm)+'</span>'):'');
 }
 /* карточка перерыва прямо в цепочке: во сколько, где и почему именно здесь */
 const KINDNM={restaurant:'ресторан',cafe:'кафе',fast_food:'быстро перекусить',
@@ -4728,6 +4737,9 @@ function buildParts(){
     const nx=SCHED[i+1];
     const way=(nx&&nx.base!==e.base)?nightWay(nx.base):'';
     if(way){nts.push({n:i+1,at:e.base,to:nx.base,stay:'way',how:way,name:''});return;}
+    /* ночёвка на выезде: спим не в своём городе, а там, куда съездили */
+    const away=sleepAway(e.tid);
+    if(away){nts.push({n:i+1,at:e.base,stay:'hotel',away:away.nm||'',q:away.q||'',name:away.nm||''});return;}
     nts.push({n:i+1,at:e.base,stay:'hotel',name:own?own.nm:''});
   });
   /* Машина нужна под ПЕРЕЕЗДЫ МЕЖДУ ГОРОДАМИ. Дорога из аэропорта в город машиной
@@ -5654,11 +5666,26 @@ function nextStayBase(bid){
   const i=st.findIndex(b=>b.id===bid);
   return (i>=0&&i+1<st.length)?st[i+1]:null;
 }
+/* ── НОЧЁВКА НА ВЫЕЗДЕ ────────────────────────────────────────────────────
+   Её пример: «Комо из Милана: вернулся — выезд; заночевал — уже переезд».
+   В данных это пишется у ДНЯ: DAYS[n].sleep={nm:'Белладжо',q:'Bellagio, Italy'}.
+   Смысл: в эту ночь человек спит не в своём городе. Значит отель в городе за неё
+   не платится, а на выезде появляется своя ночь — со своей ценой и своей бронью. */
+function sleepAway(tid){
+  const e=SCHED_BY[tid];
+  const t=e&&e.tpl;
+  return (t&&t.sleep)?t.sleep:null;
+}
+/* ночи города, в которые человек ночует на выезде */
+function awayNights(bid){
+  return SCHED.filter(e=>e.base===bid&&!e.fin&&sleepAway(e.tid));
+}
 /* сколько ночей в этом городе оплачивается отелем */
 function hotelNights(b){
   if(!b||!b.nights)return 0;
   const nx=nextStayBase(b.id);
-  return b.nights-((nx&&nightWay(nx.id))?1:0);
+  const way=(nx&&nightWay(nx.id))?1:0;
+  return Math.max(0,b.nights-way-awayNights(b.id).length);
 }
 function dayDateFor(tid){const e=SCHED_BY[tid];return e?e.date:addDays(startIso,0);}
 function totalNights(){return BASES.reduce((s,b)=>s+b.nights,0);}
@@ -5750,7 +5777,21 @@ function renderStays(){
       +(zero?'<span class="hpass">'+(b.nights?('Ночь в пути · '+wayNx+' · отель не нужен'):'Проездом · жильё не ищем')+'</span>'
         :'<a class="hbook'+(stayPlaces(b.id).length?' alt':'')+'" href="'+bookHotel(b.q,ci,co2,PEOPLE)+'" target="_blank" rel="noopener" title="подобрать жильё на Booking">'+ic('bed','i-sm')
         +'<span>'+(stayPlaces(b.id).length?'Посмотреть другие варианты на Booking':'Забронировать на Booking')+' · '+dm(ci)+'–'+dm(co2)+' · '+PEOPLE+' гост.</span></a>')
-      +'</div>';
+      +'</div>'
+      /* ночи на выезде идут отдельными строками: у них своя цена и своя бронь */
+      +awayNights(b.id).map(e=>{
+        const sl=sleepAway(e.tid),dt=e.date,dt2=addDays(startIso,SCHED.indexOf(e)+1);
+        const r=ARATE[e.tid]||0;
+        return '<div class="hrow away">'
+          +'<span class="hdot pale">'+ic('bed','i-sm')+'</span>'
+          +'<span class="hmain"><span class="hname">'+esc0(sl.nm)+'</span>'
+            +'<span class="hdate">ночь на выезде · '+dm(dt)+' → '+dm(dt2)+' · вместо ночи в '+shortName(b.name)+'</span></span>'
+          +'<span class="hmoney"><span class="hf"><label>за ночь</label><span class="hpill">'
+            +'<input class="arate" data-at="'+e.tid+'" inputmode="decimal" value="'+(r?fmtIn(r):'')+'" placeholder="0"><span class="hu">'+curSym()+'</span></span></span></span>'
+          +'<a class="hbook" href="'+bookHotel(sl.q||sl.nm,dt,dt2,PEOPLE)+'" target="_blank" rel="noopener">'+ic('bed','i-sm')
+            +'<span>Забронировать на Booking · '+dm(dt)+'–'+dm(dt2)+' · '+PEOPLE+' гост.</span></a>'
+        +'</div>';
+      }).join('');
   }).join('');
   const tn=totalNights();
   BASES.forEach(b=>{const el=document.querySelector('[data-basenights="'+b.id+'"]');
@@ -5761,6 +5802,9 @@ function renderStays(){
 }
 /* цена за ночь по базе — из памяти бюджета */
 var HRATE={};
+/* цена ночи на выезде — по дню, а не по городу: ночей на выезде может быть
+   несколько и в разных местах */
+var ARATE={};
 /* Читаем ставки функцией, а не тут же на месте. Раньше здесь стоял IIFE, а BKEY
    объявлен ниже по файлу: обращение к нему из временной мёртвой зоны падало,
    ошибку глотал catch — и HRATE на КАЖДОЙ загрузке получался нулевым. Цена жилья
@@ -5769,6 +5813,7 @@ var HRATE={};
 function loadHRates(){
   let s={};try{s=JSON.parse(localStorage.getItem(BKEY))||{};}catch(e){}
   BASES.forEach((b,i)=>HRATE[i]=numIn(s['h'+(i+1)+'rate']));
+  Object.keys(s).forEach(k=>{const m=/^a(.+)rate$/.exec(k);if(m)ARATE[m[1]]=numIn(s[k]);});
   /* у кого ставку уже обнулило, она уцелела в карточке своего жилья — забираем оттуда */
   BASES.forEach((b,i)=>{
     if(HRATE[i])return;
@@ -5792,8 +5837,13 @@ function hotelRate(i){
   if(own.length)return own.reduce((s,v)=>s+v,0);
   return HRATE[i]||0;
 }
-function hotelTotal(){return BASES.reduce((a,b,i)=>{const hn=hotelNights(b);
-  return a+(stayPlaces(b.id).length?stayTotal(b.id,hn):hotelRate(i)*hn);},0);}
+function hotelTotal(){
+  const base=BASES.reduce((a,b,i)=>{const hn=hotelNights(b);
+    return a+(stayPlaces(b.id).length?stayTotal(b.id,hn):hotelRate(i)*hn);},0);
+  /* ночи на выезде платятся отдельно: это своя гостиница в другом месте */
+  const away=SCHED.filter(e=>!e.fin&&sleepAway(e.tid)).reduce((a,e)=>a+(ARATE[e.tid]||0),0);
+  return base+away;
+}
 function saveHotelRate(i,rate){HRATE[i]=rate;let s={};try{s=JSON.parse(localStorage.getItem(BKEY))||{};}catch(e){}
   s['h'+(i+1)+'rate']=rate;try{localStorage.setItem(BKEY,JSON.stringify(s));}catch(e){}}
 /* два поля: за ночь ↔ всего, второе считается */
@@ -5810,6 +5860,13 @@ function wireHotelInputs(){
       const rate=BASES[i].nights?Math.round(tot/BASES[i].nights):0;
       saveHotelRate(i,rate);
       const r=document.querySelector('.hrate[data-hi="'+i+'"]');if(r){r.value=rate||'';sizeInput(r);}
+      sizeInput(inp);updateHotelSum();});
+    inp.addEventListener('focus',()=>inp.select());
+  });
+  document.querySelectorAll('#stayList .arate').forEach(inp=>{
+    inp.addEventListener('input',()=>{const t=inp.dataset.at;ARATE[t]=numIn(inp.value);
+      let st={};try{st=JSON.parse(localStorage.getItem(BKEY))||{};}catch(e){}
+      st['a'+t+'rate']=ARATE[t];try{localStorage.setItem(BKEY,JSON.stringify(st));}catch(e){}
       sizeInput(inp);updateHotelSum();});
     inp.addEventListener('focus',()=>inp.select());
   });
