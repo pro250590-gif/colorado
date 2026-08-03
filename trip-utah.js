@@ -179,7 +179,7 @@ const META={
  brp:{min:45,price:'$35/машина',best:'вечер'},
  nav:{min:120,price:'вход в парк',best:'днём'},
  sun:{min:30,price:'вход в парк',best:'рассвет'},
- cap:{min:90,price:'бесплатно',best:'днём',route:'по пути'},
+ cap:{min:90,price:'бесплатно',best:'днём',route:'по пути',hours:'24/7',hsrc:'nps'},
  arv:{min:30,price:'$30/машина',best:'утром',hours:'Mo-Su 07:30-18:00'},
  del:{min:150,price:'вход в парк',best:'закат'},
  win:{min:60,price:'вход в парк',best:'днём'},

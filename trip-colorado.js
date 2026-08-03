@@ -71,7 +71,7 @@ const P=[
     центр севернее. По-старому человек ехал в центр, потом назад мимо города к
     озеру и снова в центр ночевать — 4,5 лишних километра и два прохода по
     одному месту. Теперь дорога идёт в одну сторону: аэропорт → озеро → центр */
- {id:'lnh',d:1,base:'dur',cat:'nature',lat:37.2350,lng:-107.9200,nm:'Lake Nighthorse',q:'Lake Nighthorse',tag:['если есть силы','t-easy'],
+ {id:'lnh',d:1,base:'dur',cat:'nature',lat:37.231640,lng:-107.928032,nm:'Lake Nighthorse',q:'Lake Nighthorse',tag:['если есть силы','t-easy'],
   why:'Если бодрая — закат на спокойном озере в 15 мин от города. Сап, купание.'},
  {id:'art',d:1,base:'dur',cat:'town',lat:37.2700,lng:-107.8790,nm:'Animas River Trail + Main Avenue',q:'Animas River Trail Durango',
   why:'Первый вечер: набережная вдоль реки через весь город и исторический центр Дуранго.'},
@@ -87,7 +87,7 @@ const P=[
  {id:'bch',d:3,base:'dur',cat:'town',lat:37.161563,lng:-108.464670,when:'fixed',nm:'Balcony House',q:'Balcony House Mesa Verde',tag:['нужен билет','t-must'],star:1,
   hop:'10 минут по Cliff Palace Loop',
   why:'Самая азартная экскурсия парка: час, лестница 10 м, лаз в скале 45 см шириной, обратно подъём по стене. Боишься высоты или тесноты — не бери. Мест 35, билет $8.'},
- {id:'mtl',d:3,base:'dur',cat:'town',lat:37.1830,lng:-108.4640,nm:'Mesa Top Loop Road',q:'Mesa Top Loop Road',tag:['без билетов','t-easy'],
+ {id:'mtl',d:3,base:'dur',cat:'town',lat:37.179685,lng:-108.472228,nm:'Mesa Top Loop Road',q:'Mesa Top Loop Road',tag:['без билетов','t-easy'],
   why:'Если билетов нет — кольцевая дорога с площадками, откуда жилища видно с другого края каньона.'},
  /* ВАРИАНТЫ ДНЯ, А НЕ ПРОДОЛЖЕНИЕ ЦЕПОЧКИ. Меса-Верде — на запад, эти — на
     восток и на север, в один день с ней они не складываются. Раньше это было
@@ -96,7 +96,7 @@ const P=[
     Чимни-Рок и Пагоса лежат на одной дороге на восток и как раз собираются в
     один день вдвоём (2,5 ч + 3 ч + дорога), поэтому они одна ветка. Озеро —
     другое направление, поэтому своя. */
- {id:'chr',d:3,base:'dur',cat:'town',lat:37.1900,lng:-107.3000,opt:'east',nm:'Chimney Rock National Monument',q:'Chimney Rock National Monument',tag:['вариант дня','t-easy'],
+ {id:'chr',d:3,base:'dur',cat:'town',lat:37.189881,lng:-107.310105,opt:'east',nm:'Chimney Rock National Monument',q:'Chimney Rock National Monument',tag:['вариант дня','t-easy'],
   why:'Храм анасази на высокой меса с ориентацией на луну — тише и атмосфернее Меса-Верде.'},
  {id:'pag',d:3,base:'dur',cat:'springs',lat:37.264784,lng:-107.010959,opt:'east',nm:'The Springs Resort, Pagosa Springs',q:'The Springs Resort Pagosa Springs',tag:['вариант дня','t-easy'],
   why:'40+ горячих ванн террасами к реке, глубочайший геотермальный источник в мире. 1 ч на восток.'},
@@ -114,7 +114,7 @@ const P=[
   why:'Ржаво-красные от окислов горы, остовы шахт, цветные отвалы. Самый «марсианский» участок.'},
  {id:'mdh',d:4,base:'our',cat:'nature',lat:37.9500,lng:-107.6900,nm:'Million Dollar Highway (US-550)',pin:'смотровая над серпантином у Ouray, а не середина шоссе',q:'Million Dollar Highway',tag:['легендарная дорога','t-must'],star:1,
   why:'40 км серпантина в отвесной стене над ущельем, без отбойников. Едешь на север (Силвертон→Урей) — внешняя полоса над обрывом, виды максимальные (боишься высоты — знай заранее). 25 миль/ч, не в грозу.'},
- {id:'bcf',d:4,base:'our',cat:'nature',lat:38.0050,lng:-107.6720,nm:'Bear Creek Falls',q:'Bear Creek Falls Ouray',
+ {id:'bcf',d:4,base:'our',cat:'nature',lat:38.008048,lng:-107.674231,nm:'Bear Creek Falls',q:'Bear Creek Falls Ouray',
   why:'Последний карман перед Уреем: водопад падает под мостом, по которому едешь.'},
  {id:'ohs',d:4,base:'our',cat:'springs',lat:38.0290,lng:-107.6720,nm:'Ouray Hot Springs Pool',q:'Ouray Hot Springs Pool',tag:['вечер','t-easy'],
   why:'Заезд в Урей — и сразу в горячий бассейн под открытым небом среди скал. До 22:00.'},
@@ -122,15 +122,15 @@ const P=[
   why:'В 5 мин от центра Урея: 26-метровый водопад в узкой щели, подвесной настил прямо по стене.'},
  {id:'per',d:5,base:'our',cat:'nature',lat:38.0250,lng:-107.6650,nm:'Perimeter Trail / Cascade Falls',q:'Cascade Falls Ouray',tag:['по желанию','t-hike'],
   why:'Тропа-кольцо вокруг города по склонам с мостами. До Cascade Falls 20 мин вверх.'},
- {id:'ykb',d:5,base:'our',cat:'nature',lat:37.9900,lng:-107.7800,nm:'Yankee Boy Basin',q:'Yankee Boy Basin',tag:['нужен джип','t-4x4'],star:1,
+ {id:'ykb',d:5,base:'our',cat:'nature',lat:37.9900,lng:-107.7800,nm:'Yankee Boy Basin',q:'Yankee Boy Basin',pin:'к бассейну ведёт только джиповая дорога — маршрутизатор её не считает, время до неё прикидка',tag:['нужен джип','t-4x4'],star:1,
   why:'Альпийский цирк на 3 500 м, ковёр из колокольчиков и водопадов под Mt. Sneffels. На прокатной легковой нельзя — джип-тур из Урея, полдня, ~$100–150 с человека.'},
  {id:'tel',d:5,base:'our',cat:'town',lat:37.9375,lng:-107.8123,nm:'Telluride Gondola',q:'Telluride Gondola',tag:['бесплатно','t-must'],star:1,
   why:'Городок в тупике цирка. Бесплатная гондола через хребет в Mountain Village — 13 мин, вид на весь каньон. До полуночи.'},
- {id:'bvf',d:5,base:'our',cat:'nature',lat:37.9270,lng:-107.7860,nm:'Bridal Veil Falls',q:'Bridal Veil Falls Telluride',tag:['111 м','t-must'],star:1,
+ {id:'bvf',d:5,base:'our',cat:'nature',lat:37.932803,lng:-107.786566,nm:'Bridal Veil Falls',q:'Bridal Veil Falls Telluride',tag:['111 м','t-must'],star:1,
   why:'Самый высокий свободнопадающий водопад Колорадо в торце каньона. По асфальту до конца долины — смотришь снизу. Наверх только 4×4 или пешком 3 км.'},
  {id:'dld',d:5,base:'our',cat:'nature',lat:38.094400,lng:-107.888400,nm:'Dallas Divide',q:'Dallas Divide',
   why:'Дорога Урей–Теллурайд через этот перевал: классический вид на хребет Sneffels над ранчо. Лучше на закате.'},
- {id:'rid',d:6,base:'asp',cat:'nature',lat:38.229200,lng:-107.747000,nm:'Ridgway State Park',q:'Ridgway State Park',tag:['по пути','t-easy'],
+ {id:'rid',d:6,base:'asp',cat:'nature',lat:38.235637,lng:-107.746383,nm:'Ridgway State Park',q:'Ridgway State Park',tag:['по пути','t-easy'],
   why:'Первая остановка за Уреем: водохранилище с пляжем под хребтом Сан-Хуан — размять ноги.'},
  /* координата была в 2,4 км севернее — на ДРУГОМ БЕРЕГУ каньона, куда от нашей
     дороги ехать полтора часа кругом. Нашлось через странное «улучшение» дня в
@@ -167,7 +167,7 @@ const P=[
   why:'Изумрудный котёл-ванна в скалах выше Grottos. Вода ледяная.'},
  {id:'ash',d:8,base:'asp',cat:'town',lat:39.055591,lng:-106.799564,nm:'Ashcroft Ghost Town',q:'Ashcroft Ghost Town',tag:['$5','t-easy'],star:1,
   why:'Долина Castle Creek, 18 км: серебряный город 1880-х — салун, почта, хижины в лугу под пиками.'},
- {id:'cth',d:8,base:'asp',cat:'nature',lat:39.042866,lng:-106.808119,nm:'Cathedral Lake',q:'Cathedral Lake Trailhead',tag:['9 км · тяжело','t-hike'],
+ {id:'cth',d:8,base:'asp',cat:'nature',lat:39.040703,lng:-106.804406,nm:'Cathedral Lake',q:'Cathedral Lake Trailhead',tag:['9 км · тяжело','t-hike'],
   why:'Набор 600 м до бирюзового озера в цирке на 3 617 м. Один из лучших хайков штата. Выходить не позже 8 утра.'},
  {id:'rgt',d:8,base:'asp',cat:'nature',lat:39.274950,lng:-106.887346,nm:'Rio Grande Trail → Woody Creek Tavern',pin:'Woody Creek Tavern — конец прогулки, а не середина тропы',q:'Rio Grande Trail Aspen CO',tag:['лёгкий вариант','t-easy'],
   why:'Асфальтовая велодорожка вдоль реки, 13 км до легендарной таверны Хантера Томпсона (сама таверна — в разделе «Где поесть», Аспен). Велосипед берётся в Аспене.'},
@@ -286,7 +286,7 @@ const META={
  art:{min:90,price:'бесплатно',best:'вечер',pid:'EiRBbmltYXMgUml2ZXIgVHJhaWwsIER1cmFuZ28sIENPLCBVU0EiLiosChQKEgllb4vqowI8hxE15UA6VBiGmBIUChIJI_yFvaYCPIcRWn6mo4KIK9w'},
  lnh:{min:90,price:'бесплатно',best:'закат',pid:'ChIJbW-mBbIDPIcRzisqY9pKESw'},
  trn:{min:540,price:'$90–144/чел',best:'весь день',pid:'ChIJjwETifznPocRCw9gNkYXKmk'},
- mvp:{min:60,price:'$30/маш',best:'до полудня',route:'~1 ч от Дуранго',pid:'ChIJH3HXLr9gOYcRYxj2G6KV9nk'},
+ mvp:{min:60,price:'$30/маш',best:'до полудня',route:'~1 ч от Дуранго',pid:'ChIJH3HXLr9gOYcRYxj2G6KV9nk',hours:'24/7',hsrc:'nps'},
  clp:{min:60,price:'$8/чел',best:'первый утренний',route:'билет за 14 дней',pid:'ChIJv_p7Q57fO4cRGrCqJN6KTZg'},
  bch:{min:60,price:'$8/чел',best:'через 2 ч после Cliff Palace',route:'лестница 10 м и лаз',pid:'ChIJR7FP66LfO4cRvmirsjdsTRc'},
  mtl:{min:90,price:'входит в парк',best:'днём',pid:'ChIJPwjqCnHfO4cRt6L_i06MnI0'},
@@ -308,7 +308,7 @@ const META={
  bvf:{min:60,price:'бесплатно (снизу)',best:'днём',route:'за Теллурайдом',pid:'ChIJ9YMPUdHYPocRfbikMvHWv5Y'},
  dld:{min:15,price:'бесплатно',best:'закат',route:'по дороге в Теллурайд',pid:'ChIJbzqy8NsvP4cRQ2teSf5j-Vk'},
  rid:{min:30,price:'~$10/маш',route:'по пути',pid:'ChIJJ_3D-Ls-P4cRhx359u6etqM'},
- bcg:{min:120,price:'$30/маш',best:'днём',route:'крюк ~30 мин',pid:'ChIJ8Wo3SfxeP4cRvIuts5LWMT8'},
+ bcg:{min:120,price:'$30/маш',best:'днём',route:'крюк ~30 мин',pid:'ChIJ8Wo3SfxeP4cRvIuts5LWMT8',hours:'24/7',hsrc:'nps'},
  pnt:{min:15,price:'входит в парк',best:'днём',route:'в парке',pid:'ChIJheWU1gBfP4cR8TvBr3pdGcQ'},
  mcc:{min:15,price:'бесплатно',route:'по пути',pid:'ChIJhZUQTodYQIcRhSL2ngNfaGw'},
  mar:{min:30,price:'бесплатно',route:'крюк ~20 мин',pid:'ChIJ18-3RilcQIcRgkFQciGVVGM'},
@@ -361,7 +361,7 @@ const BUDGET=[
 const ROADS={
  1:{ids:["@dur","dro","lnh","art"],km:[[null,27,10.3,0.8],[26.9,null,31,26.5],[10.3,31,null,9.9],[1.4,26.6,10,null]],min:[[null,36,20,2],[36,null,49,36],[20,49,null,20],[2,35,19,null]]},
  2:{ids:["@dur","trn"],km:[[null,0.2],[0.2,null]],min:[[null,1],[1,null]]},
- 3:{ids:["@dur","mvp","clp","bch","mtl","chr","pag","vlc"],km:[[null,66.1,92.7,95.4,91.3,80.2,97.3,37.2],[66,null,31.9,34.6,30.5,144,161,103],[96.1,35.4,null,2.7,4.9,174.1,191.1,133.1],[93.5,32.8,1.9,null,2.2,171.4,188.4,130.4],[91.2,30.5,1.4,4.1,null,169.2,186.2,128.2],[80.2,144.1,170.7,173.4,169.3,null,37.3,72.5],[97.2,161.1,187.8,190.4,186.3,37.3,null,89.5],[37.2,103.1,129.7,132.4,128.3,72.6,89.6,null]],min:[[null,68,96,101,93,91,83,46],[68,null,49,54,46,155,147,113],[102,55,null,5,9,189,181,146],[97,50,4,null,4,184,176,141],[92,46,3,8,null,180,172,137],[91,156,183,188,181,null,58,92],[83,148,175,180,173,58,null,84],[46,113,141,146,138,92,85,null]]},
+ 3:{ids:["@dur","mvp","clp","bch","mtl","chr","pag","vlc"],km:[[null,66.1,92.7,95.4,91.3,80.2,97.3,37.2],[66,null,31.9,34.6,30.5,144,161,103],[96.1,35.4,null,2.7,null,174.1,191.1,133.1],[93.5,32.8,1.9,null,2.2,171.4,188.4,130.4],[91.2,30.5,1.4,4.1,null,169.2,186.2,128.2],[80.2,144.1,170.7,173.4,169.3,null,37.3,72.5],[97.2,161.1,187.8,190.4,186.3,37.3,null,89.5],[37.2,103.1,129.7,132.4,128.3,72.6,89.6,null]],min:[[null,68,96,101,93,91,83,46],[68,null,49,54,46,155,147,113],[102,55,null,5,null,189,181,146],[97,50,4,null,4,184,176,141],[92,46,3,8,null,180,172,137],[91,156,183,188,181,null,58,92],[83,148,175,180,173,58,null,84],[46,113,141,146,138,92,85,null]]},
  4:{ids:["@our","@dur","hav","cbp","mol","sil","rmp","mdh","bcf","ohs"],km:[[null,113.6,84.4,58.5,47.5,37.7,21.1,19.2,4.6,0.7],[112.9,null,33,55.1,68.1,77.7,92.4,103.2,116.2,113.6],[83.7,33,null,25.8,38.8,48.5,63.2,74,87,84.3],[57.8,55.1,25.8,null,13,22.7,37.4,48.2,61.2,58.5],[46.8,68.1,38.8,13,null,11.6,26.3,37.1,50.1,47.5],[37,77.7,48.5,22.7,11.6,null,16.6,27.4,40.4,37.7],[20.4,92.5,63.2,37.4,26.3,16.6,null,10.8,23.8,21.1],[18.5,103.2,74,48.2,37.1,27.4,10.8,null,null,19.2],[4.6,116.2,87,61.2,50.1,40.4,23.8,null,null,5.3],[0.7,114.3,85,59.2,48.1,38.4,21.8,19.9,5.3,null]],min:[[null,109,89,67,62,53,34,49,13,1],[109,null,29,41,53,58,75,113,118,110],[89,29,null,22,33,38,55,93,99,90],[67,42,22,null,12,16,33,71,77,68],[62,53,33,11,null,11,28,66,71,63],[53,58,38,16,11,null,19,57,63,54],[34,75,55,33,28,19,null,38,44,35],[49,113,93,71,66,57,38,null,null,50],[13,118,99,77,71,63,44,null,null,15],[1,110,90,69,63,54,35,50,15,null]]},
  5:{ids:["@our","box","per","ykb","tel","bvf","dld"],km:[[null,0.7,3.1,null,null,null,33.5],[0.7,null,2.4,null,null,null,34.2],[2.4,2.4,null,null,null,null,35.9],[null,null,null,null,null,null,null],[null,null,null,null,null,2.4,46.4],[null,null,null,null,2.4,null,48.8],[33.5,34.2,36.5,null,46.4,48.8,null]],min:[[null,1,7,null,null,null,30],[1,null,5,null,null,null,31],[7,5,null,null,null,null,37],[null,null,null,null,null,null,null],[null,null,null,null,null,8,46],[null,null,null,null,8,null,55],[30,31,37,null,47,55,null]]},
  6:{ids:["@asp","@our","rid","bcg","pnt","mcc","mar","red"],km:[[null,277.6,254.3,242.3,249.7,87.2,91.3,74.6],[277.5,null,27.8,81.2,88.7,190.4,206.4,206],[254.2,27.8,null,58,65.4,167.1,183.2,182.8],[242.2,81.2,58,null,7.6,155.1,171.2,170.8],[249.6,88.6,65.4,7.7,null,162.5,178.6,178.2],[87.1,190.4,167.1,155.1,162.6,null,16,15.6],[91.2,206.4,183.2,171.2,178.6,16,null,19.8],[74.5,206,182.8,170.8,178.2,15.6,19.8,null]],min:[[null,259,246,234,256,84,94,73],[258,null,31,76,98,174,197,192],[245,31,null,63,85,161,183,179],[234,76,63,null,23,150,172,168],[256,98,85,23,null,172,194,190],[84,175,162,150,172,null,22,18],[96,199,186,174,196,24,null,30],[73,193,180,168,190,18,28,null]]},

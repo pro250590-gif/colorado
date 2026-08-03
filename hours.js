@@ -165,8 +165,18 @@ async function doFile(file, dry) {
   /* ⚠️ СНАЧАЛА СТИРАЕМ СТАРЫЕ. Правила отбора со временем строже (район Синдзюку
      когда-то получил часы соседнего заведения), и написанное прошлым прогоном
      должно уйти само. Источник правды — этот прогон, а не осадок от прошлых */
-  const wiped = (src.match(/,hours:'[^']*'/g) || []).length;
-  src = src.replace(/,hours:'[^']*'/g, '');
+  /* ⚠️ Часы, взятые у Службы парков (hsrc:'nps'), НЕ ТРОГАЕМ: у парков в карте
+     часов нет, и наш прогон стёр бы хорошие данные, ничего не дав взамен. */
+  let wiped = 0;
+  src = src.split('
+').map(line => {
+    if (/hsrc:'nps'/.test(line)) return line;
+    const n = (line.match(/,hours:'[^']*'/g) || []).length;
+    if (!n) return line;
+    wiped += n;
+    return line.replace(/,hours:'[^']*'/g, '');
+  }).join('
+');
   if (wiped) console.log('  стёрла старых записей: ' + wiped);
   if (!n) { fs.writeFileSync(file, src); return; }
   let done = 0, missing = [];

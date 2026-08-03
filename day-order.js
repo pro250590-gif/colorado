@@ -246,8 +246,8 @@ function load(file) {
 module.exports = { analyze, load, km, total, fmt };
 
 /* ── запуск из командной строки ── */
-if (require.main === module) {
-  const arg = process.argv[2];
+if (require.main === module && process.argv.indexOf('--apply') < 0) {
+  const arg = process.argv.slice(2).filter(x => x.charAt(0) !== '-')[0];
   const files = arg ? [arg] : fs.readdirSync(__dirname).filter(f => /^trip-[a-z0-9-]+\.js$/.test(f));
   files.forEach(f => {
     const S = load(path.join(__dirname, path.basename(f)));
@@ -267,5 +267,52 @@ if (require.main === module) {
     });
     console.log('  ИТОГО: сейчас ' + fmt(sumNow) + ', можно ' + fmt(sumBest)
       + (sumNow - sumBest > 0.05 ? ('  (минус ' + fmt(sumNow - sumBest) + ')') : ''));
+  });
+}
+
+/* ── --apply: ПРИВЕСТИ ПОРЯДОК ТОЧЕК К ЛУЧШЕМУ ────────────────────────────
+   Её слова 02.08: «это не должно быть вопросом, система должна решать сама».
+   Раньше счётчик только говорил «можно короче на 5,5 км» — и ждал, пока
+   человек переставит строчки руками. Теперь переставляет сам:
+     node day-order.js trip-colorado.js --apply
+   Двигаются только точки внутри дня; дни, переезды и закреплённые пары
+   (`hop`, `when:'fixed'`, транспорт) счётчик и так не разлучает. */
+if (require.main === module && process.argv.indexOf('--apply') >= 0) {
+  const edit = require('./edit-trip.js');
+  const files = process.argv.slice(2).filter(a => a.charAt(0) !== '-');
+  const list = files.length ? files
+    : fs.readdirSync(__dirname).filter(f => /^trip-[a-z0-9-]+\.js$/.test(f) && f !== 'trip-TEMPLATE.js');
+  list.forEach(f => {
+    const file = path.join(__dirname, path.basename(f));
+    const S = load(file);
+    const rows = analyze(S).filter(r => r.bestOrder && r.bestOrder.length);
+    console.log('\n=== ' + path.basename(f) + ' ===');
+    if (!rows.length) { console.log('  порядок точек уже лучший'); return; }
+    /* новый порядок: по дням, внутри дня — как посчитал счётчик */
+    const byDay = {};
+    (S.P || []).filter(p => p.cat !== 'food').forEach(p => { (byDay[p.d] = byDay[p.d] || []).push(p); });
+    rows.forEach(r => {
+      const cur = byDay[r.day] || [];
+      const pos = {};
+      r.bestOrder.forEach((id, i) => { pos[id] = i; });
+      /* точки-варианты (opt) счётчик не считает — оставляем их в конце дня,
+         не перемешивая: ветка должна идти в файле подряд (правило 15) */
+      byDay[r.day] = cur.slice().sort((a, b) => {
+        const ia = pos[a.id], ib = pos[b.id];
+        if (ia === undefined && ib === undefined) return 0;
+        if (ia === undefined) return 1;
+        if (ib === undefined) return -1;
+        return ia - ib;
+      });
+      console.log('  день ' + r.day + ' («' + r.title + '»): порядок стал короче — '
+        + (r.now - r.bestLen).toFixed(1) + ' км');
+    });
+    const order = [], dayOfId = {};
+    Object.keys(byDay).map(Number).sort((a, b) => a - b).forEach(n => {
+      byDay[n].forEach(p => { order.push(p.id); dayOfId[p.id] = n; });
+    });
+    const src = fs.readFileSync(file, 'utf8');
+    fs.writeFileSync(file, edit.rewritePlaces(src, order, dayOfId));
+    console.log('  ✅ применено. Теперь пересчитайте дороги: node road-times.js ' + path.basename(f));
   });
 }
