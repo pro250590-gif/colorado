@@ -1237,10 +1237,34 @@ body{background:linear-gradient(168deg,#eef1f8,#e9edf6 60%,#e6eaf4)!important}
 .cbook small{font-weight:500;opacity:.78}
 /* три ответа вместо одной кнопки: искать в одну сторону, туда-обратно, или
    вписать свой рейс. Столбиком — на телефоне в строку они не помещаются. */
+/* форма рейса: города в один ряд, под каждым — дата и время (её эскиз).
+   На узком экране дата и время внутри колонки переносятся друг под друга. */
+.flform{display:block}
+.flleg{margin-bottom:14px}
+.fllt{font:800 11px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8b8fa3;margin:0 2px 8px}
+.flcols{display:flex;gap:10px}
+.flcol{flex:1 1 0;min-width:0}
+.flcol em{display:block;font:600 11.5px/1 "Inter",sans-serif;color:#8b8fa3;font-style:normal;margin:0 2px 5px}
+.flcol .qtxt{width:100%}
+.fldt{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.fldt .qtxt{flex:1 1 84px;min-width:0}
+.flnote{margin-top:2px}
+.flnote em{display:block;font:600 11.5px/1 "Inter",sans-serif;color:#8b8fa3;font-style:normal;margin:0 2px 5px}
+.flnote .qtxt{width:100%}
 .flbtns{display:flex;gap:8px;margin-top:16px}
 .flb{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:11px 6px;border-radius:12px;background:#5b3fc4;color:#fff;border:0;cursor:pointer;text-decoration:none;font:700 11.5px/1.25 "Inter",sans-serif;text-align:center}
-.flb .i{width:17px;height:17px;flex:none}
+.flb .i{width:16px;height:16px;flex:none}
+.flbt{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;font:700 11px/1.2 "Inter",sans-serif;opacity:.92}
+.flb b{font:600 11.5px/1.25 "Inter",sans-serif;opacity:.85}
 .flb.alt{background:#fff;color:#5b3fc4;border:1.5px solid #d9d3f2}
+/* на телефоне — ПО ОДНОЙ КНОПКЕ В РЯД (её правка по скрину): в узкой карточке три
+   штуки становятся нечитаемыми столбиками из двух слов. Ряд остаётся на широком. */
+@media(max-width:700px){
+  .flbtns{flex-direction:column;gap:8px}
+  .flb{flex:none;flex-direction:row;gap:8px;padding:13px 12px;font-size:13px}
+  .flbt{flex:none;font-size:13px}
+  .flb b{font-size:13px;opacity:.78;font-weight:500}
+}
 .cbook.alt{background:#fff;color:#5b3fc4;border:1.5px solid #d9d3f2}
 .ctransf{margin-top:14px;padding-top:14px;border-top:1px solid #e8e9f2;text-align:center;font:500 12px/1 "Inter",sans-serif;color:#8b8fa3}
 /* «оттуда до города» — когда аэропорт и город ночёвки в разных местах */
@@ -1932,14 +1956,6 @@ section h2.big{margin-bottom:4px}
 
 <section id="s-route"><div class="wrap">
   <div class="startcard"><span class="scmed" id="scMedIcon"></span><span class="scin"><span class="sclbl">Старт поездки</span><span class="scsub" id="scSub"></span></span><input type="date" id="startDate" class="scdate"></div>
-  <!-- ⚠️ ДЛИНУ ПЕРЕЛЁТА МЫ ЗНАТЬ НЕ МОЖЕМ. Её вопрос: «он может лететь 16 часов —
-       это одна дата брони отелей и машин, а может 28 — и другая, а предугадать мы
-       не можем». Верно: прямой рейс и три стыковки дают разные дни прилёта.
-       Поэтому прилёт — не догадка движка, а отдельная строка, которую видно и
-       можно поправить одним касанием. По умолчанию мы ставим свою прикидку по
-       прямому рейсу и честно об этом пишем. Всё жильё, машины и дни считаются
-       от этой даты. Строка появляется только когда в поездку летят. -->
-  <div class="startcard" id="arrCard" hidden><span class="scmed" id="arrMedIcon"></span><span class="scin"><span class="sclbl">Прилёт на место</span><span class="scsub" id="arrSub"></span></span><input type="date" id="arrDate" class="scdate"></div>
   <!-- Город вылета — вторым, сразу после даты: обе вещи задают всю поездку и
        должны выглядеть одинаково (выбор клиента из двух эскизов). -->
   <div class="startcard"><span class="scmed"><svg class="i i-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2 16 11l3.5-3.5a2.1 2.1 0 0 0-3-3L13 8 4.8 6.2a.6.6 0 0 0-.6.9L7 12l-2 2H3l1.5 2.5L7 18l2-2 4.9 2.8a.6.6 0 0 0 .9-.6Z"/></svg></span><span class="scin"><span class="sclbl">Город вылета</span></span><button class="scdate scfrom" id="fromBtn" data-homeopen="1">—</button></div>
@@ -3102,8 +3118,8 @@ function departureBlock(){
   /* обратный рейс из билета не сходится с последним днём маршрута — говорим
      прямо, а не подгоняем маршрут молча под чужую дату */
   const lastIso=fmtISO(dayDate(d.day||PARTS.days));
-  const mism=(flightHas()&&ISO10(FLIGHT.outDate)&&FLIGHT.outDate!==lastIso)
-    ? ('<div class="cnight">'+ic('info','i-sm')+' В вашем билете обратный рейс '+dm(addDays(FLIGHT.outDate,0))
+  const mism=(flightHas()&&ISO10(FLIGHT.bDepDate)&&FLIGHT.bDepDate!==lastIso)
+    ? ('<div class="cnight">'+ic('info','i-sm')+' В вашем билете обратный рейс '+dm(addDays(FLIGHT.bDepDate,0))
        +', а маршрут кончается '+date+'. Добавьте или снимите ночь, чтобы сошлось.</div>') : '';
   const cityNm=d.from?shortName(d.from.name||''):'';
   return '<div class="citymove"><div class="wrap"><div class="ctl one">'
@@ -3158,11 +3174,10 @@ function buildCities(){
           +'<div class="cpt"><b>'+esc0((ar.from&&ar.from.name)||'')+'</b><span>'+((ar.from&&ar.from.air)||'')+' · '+dm(depDay)+(ovn?' вечером':'')+'</span></div>'
           +'<div class="cmid"><div class="cic">'+ic('plane','i-sm')+'</div></div>'
           +'<div class="cpt r"><b>'+esc0(arrCity)+'</b><span>'+arrCode+' · '+dm(ci)+(ovn?' утром':'')+'</span></div></div>'
-          +(ovn?'<div class="cnight">'+ic('moon','i-sm')+' Ночь проводим в самолёте: вылетаем '+dm(depDay)
-              +' — это и есть день старта, — в воздухе около '+ovn.hours+' ч, садимся утром '+dm(ci)
-              +'. Отель за эту ночь не нужен: маршрут начинается с прилёта.</div>':'')
-          +(arrWay&&arrCity!==shortName(b.name)
-            ? '<div class="cway">оттуда до города: '+esc0(convDist(arrWay))+'</div>':'')
+          /* ⚠️ ЗДЕСЬ БЫЛО ДВА ПОЯСНЕНИЯ, И КЛИЕНТ ИХ УБРАЛА: рассказ про ночь в
+             самолёте и «оттуда до города». Оба повторяли то, что уже написано
+             рядом: даты вылета и посадки стоят прямо над ними, а дорога из
+             аэропорта — строкой переезда в первом дне. */
           /* город вылета меняется наверху, в блоке «Как добираешься», рядом с
              датой старта — здесь кнопки нет, чтобы одно и то же не жило дважды */
           +flightBtns()+'</div></div>';
@@ -4837,7 +4852,7 @@ function airLL(code){
    по её дате, и прикидка больше не вмешивается.
    Храним не саму дату, а СКОЛЬКО СУТОК ДОРОГА: тогда перенос даты старта тянет
    прилёт за собой, а не оставляет его в прошлом месяце. */
-let ARRDAYS=null;                 /* null — наша прикидка; число — сказал человек */
+
 /* ── РЕЙС ЧЕЛОВЕКА ────────────────────────────────────────────────────────
    Её решение, 03.08: «мы не можем понять, во сколько же он полетит… здесь нам
    поможет только рейс». Прикидка по прямому рейсу — это всё-таки догадка: он
@@ -4848,13 +4863,49 @@ let ARRDAYS=null;                 /* null — наша прикидка; чис�
    Вписан рейс — даты перестают быть примерными и считаются от него. */
 let FLIGHT=null,_flDraft=null;
 const ISO10=s=>/^\d{4}-\d\d-\d\d$/.test(String(s||''));
-function flightHas(){return !!(FLIGHT&&ISO10(FLIGHT.inDate));}
+function flightHas(){return !!(FLIGHT&&ISO10(FLIGHT.arrDate));}
+/* рейс, записанный прежней формой (ключи анкеты), переносим на новые поля:
+   сохранённая поездка не должна терять то, что человек уже вписал */
+function flightFix(f){
+  if(!f||typeof f!=='object')return null;
+  if(f.arrDate||f.depDate)return f;
+  const o={};
+  if(f.inCity)o.arrCity=f.inCity; if(f.inDate)o.arrDate=f.inDate; if(f.inTime)o.arrTime=f.inTime;
+  if(f.outCity)o.bDepCity=f.outCity; if(f.outDate)o.bDepDate=f.outDate; if(f.outTime)o.bDepTime=f.outTime;
+  if(f.note)o.note=f.note;
+  return Object.keys(o).length?o:null;
+}
+/* строка «Ваш рейс» — тем же порядком, что и форма: откуда, когда → куда, когда */
+function flightSummary(){
+  const f=FLIGHT||{},V=k=>String(f[k]||'').trim(),D=k=>ISO10(f[k])?dm(addDays(f[k],0)):'',T=k=>f[k]?(' '+f[k]):'';
+  const there=[V('depCity'),(D('depDate')+T('depTime')).trim()].filter(Boolean).join(', ')
+    +' → '+[V('arrCity'),(D('arrDate')+T('arrTime')).trim()].filter(Boolean).join(', ');
+  const back=ISO10(f.bDepDate)
+    ? (' · обратно '+[V('bDepCity'),(D('bDepDate')+T('bDepTime')).trim()].filter(Boolean).join(', ')):'';
+  return there+back;
+}
+/* ⚠️ ФОРМА РЕЙСА — ЭТО ОТРЕЗОК, А НЕ СПИСОК ПОЛЕЙ. Её правка 03.08: «город
+   вылета и город прилёта на одной строке, под ними даты и время». Так и читается
+   билет: слева откуда, справа куда, под каждым — когда. В анкете форма осталась
+   прежней (там спрашивают про уже купленные брони вообще), а на странице поездки
+   стоит эта — по её эскизу. */
+const FLLEGS=[
+  {k:'',   t:'Туда',    a:'Город вылета',    b:'Город прилёта'},
+  {k:'b',  t:'Обратно', a:'Город вылета',    b:'Город прилёта'}
+];
+function flCol(pfx,lbl,ph){
+  return '<div class="flcol"><em>'+lbl+'</em>'
+    +inp('fl.'+pfx+'City','',    'text',_flDraft[pfx+'City'])
+    +'<div class="fldt">'+inp('fl.'+pfx+'Date','','date',_flDraft[pfx+'Date'])
+      +inp('fl.'+pfx+'Time','','time',_flDraft[pfx+'Time'])+'</div></div>';
+}
 function flightSheet(){
   _flDraft=Object.assign({},FLIGHT||{});
-  const rows=BKFIELDS.flight.map(f=>'<span class="bkf'+(f[3]&&f[3].indexOf('w')>=0?' wide':'')+'"><em>'+f[1]+'</em>'
-    +inp('fl.'+f[0],f[4]||'',f[2],_flDraft[f[0]])+'</span>').join('');
+  const legs=FLLEGS.map(l=>'<div class="flleg"><div class="fllt">'+l.t+'</div>'
+    +'<div class="flcols">'+flCol(l.k?'bDep':'dep',l.a)+flCol(l.k?'bArr':'arr',l.b)+'</div></div>').join('');
   sheet('<div class="dsh"><b>Ваш рейс</b><span>Впишите то, что стоит в билете — и все даты перестанут быть примерными</span></div>'
-    +'<div class="qf bkq"><div class="bkrow">'+rows+'</div>'
+    +'<div class="qf bkq flform">'+legs
+    +'<div class="flnote"><em>комментарий</em>'+inp('fl.note','если есть что добавить — необязательно','area',_flDraft.note)+'</div>'
     +'<button class="bkok" data-flsave="1">Готово</button></div>'
     +(flightHas()?'<button class="dscancel del" data-flclear="1">Убрать рейс</button>':'')
     +'<button class="dscancel" data-dsclose="1">Отмена</button>');
@@ -4862,10 +4913,12 @@ function flightSheet(){
 function flightSave(){
   const d=_flDraft||{};
   FLIGHT=Object.keys(d).some(k=>String(d[k]||'').trim())?d:null;
-  /* прилёт из рейса главнее нашей прикидки — и наоборот тоже: сказал руками
-     другую дату прилёта, значит прикидку он уже поправил сам */
-  if(flightHas())ARRDAYS=null;
-  _flDraft=null;savePlan();closeDaySheet();rerenderTrip();
+  /* вылет из билета — это и есть старт поездки (правило 19б): одна дата, один
+     источник правды. Прилёт из билета отменяет нашу прикидку. */
+  if(FLIGHT&&ISO10(FLIGHT.depDate)){startIso=FLIGHT.depDate;DATEACC='exact';}
+  _flDraft=null;savePlan();closeDaySheet();
+  const sd=document.getElementById('startDate');if(sd)sd.value=startIso;
+  syncDateAcc();rerenderTrip();
 }
 /* три кнопки вместо одной. Ссылки — те же поиски, что были: разница только в
    том, что человек сразу говорит, какой билет ему нужен. */
@@ -4873,16 +4926,18 @@ function flightBtns(){
   const O=originNow(),ar=arrivalAirport(),dp=departureAirport();
   const oneWay=(O&&O.code&&ar&&ar.air)?skyscanner(O.code,ar.air,startIso):'';
   if(flightHas()){
-    const s=bkSummary('flight',FLIGHT);
+    const s=flightSummary();
     return '<div class="cway">Ваш рейс: '+esc0(s)+'</div>'
       +'<button class="cbook" data-flopen="1">'+ic('pencil','i-sm')+' Изменить рейс</button>';
   }
   /* три ответа стоят В ОДИН РЯД — её эскиз 03.08. Подписи короткие и в две
      строки: на телефоне карточка всего 277 px, длинные туда не влезают. */
   return '<div class="flbtns">'
-    +(oneWay?'<a class="flb" href="'+oneWay+'" target="_blank" rel="noopener">'+ic('plane','i-sm')+'<b>В одну сторону</b></a>':'')
-    +'<a class="flb" href="'+flightSearch()+'" target="_blank" rel="noopener">'+ic('plane','i-sm')+'<b>Туда-обратно</b></a>'
-    +'<button class="flb alt" data-flopen="1">'+ic('ticket','i-sm')+'<b>Уже есть рейс</b></button>'
+    /* «где самолётик — нужно ещё написать подобрать рейс» (её правка по скрину):
+       сверху что делаем, снизу какой билет */
+    +(oneWay?'<a class="flb" href="'+oneWay+'" target="_blank" rel="noopener"><span class="flbt">'+ic('plane','i-sm')+'Подобрать рейс</span><b>В одну сторону</b></a>':'')
+    +'<a class="flb" href="'+flightSearch()+'" target="_blank" rel="noopener"><span class="flbt">'+ic('plane','i-sm')+'Подобрать рейс</span><b>Туда-обратно</b></a>'
+    +'<button class="flb alt" data-flopen="1"><span class="flbt">'+ic('ticket','i-sm')+'Мой билет</span><b>Уже есть рейс</b></button>'
     +'</div>';
 }
 function flightIn(){              /* перелёт в начало маршрута, если он вообще есть */
@@ -4895,32 +4950,13 @@ function flightIn(){              /* перелёт в начало маршру
   return {from:O.ll,to:ll,hours:Math.round(flightHours(O.ll,ll))};
 }
 function arriveGuess(){const f=flightIn();return (f&&overnightFlight(f.from,f.to))?1:0;}
-function arriveShift(){
-  if(typeof ARRDAYS==='number'&&ARRDAYS>=0)return Math.min(7,ARRDAYS);
-  return arriveGuess();
-}
+function arriveShift(){return arriveGuess();}
 function planIso(){
   /* вписан рейс — дата прилёта берётся из билета, а не из наших прикидок */
-  if(flightHas()&&FLIGHT.inDate>=startIso)return FLIGHT.inDate;
+  if(flightHas()&&FLIGHT.arrDate>=startIso)return FLIGHT.arrDate;
   const d=arriveShift();return d?fmtISO(addDays(startIso,d)):startIso;
 }
-/* строка «Прилёт на место»: показываем только когда летят, и честно подписываем,
-   откуда взялась дата */
-function syncArrival(){
-  const card=document.getElementById('arrCard');if(!card)return;
-  const f=flightIn();
-  card.hidden=!f;
-  if(!f)return;
-  const inp=document.getElementById('arrDate');
-  if(inp){inp.value=planIso();inp.min=startIso;}
-  const sub=document.getElementById('arrSub');
-  if(sub)sub.textContent=flightHas()
-    ? 'из вашего рейса — даты точные'
-    : ((typeof ARRDAYS==='number')
-        ? 'вы поставили сами'
-        : ('наша прикидка: прямой рейс ~'+f.hours+' ч. Пока не вписан рейс, даты брони примерные'));
-  card.classList.toggle('guess',!flightHas()&&typeof ARRDAYS!=='number');
-}
+
 function dayDate(disp){return addDays(planIso(),Math.max(0,(disp||1)-1));}
 /* дальше этого от своего города — это уже выезд, а не прогулка по городу */
 const OUT_KM=25;
@@ -5911,16 +5947,14 @@ function rerenderTrip(){
   buildSchedule();
   applyHero();          /* город ушёл проездом — заголовок поездки тоже другой */
   renderUnits();renderStays();buildRoute();buildDays();buildCities();buildFilters();buildElev();
-  recomputeDates();refreshBudgetCounts();syncChecks();updateMarkerStyles();applyFilter();syncArrival();updateDirLinks();
+  recomputeDates();refreshBudgetCounts();syncChecks();updateMarkerStyles();applyFilter();updateDirLinks();
   uiRestore(snap);
   /* сменили дату старта или число ночей — даты городов другие, а погода привязана
      к числам. Догружаем недостающее; если всё уже есть, функция сразу выходит. */
   loadWeather();
 }
 function loadPlan(){try{const s=JSON.parse(localStorage.getItem(PKEY));if(s){if(s.start)startIso=s.start;if(s.pace&&DAYPACES.some(x=>x.k===s.pace))DAYPACE=s.pace;if(s.plans&&typeof s.plans==='object')PLANPICK=s.plans;if(s.merge&&typeof s.merge==='object')MERGE=s.merge;DATEACC=s.acc||'exact';if(typeof s.people==='number'&&s.people>=1)PEOPLE=s.people;
-  /* сколько суток занимает дорога до места: null — считаем сами */
-  ARRDAYS=(typeof s.arr==='number'&&s.arr>=0)?Math.min(7,s.arr):null;
-  FLIGHT=(s.fl&&typeof s.fl==='object')?s.fl:null;/* >=0, а не >=1: ноль ночей — законное состояние, и с прежней проверкой
+  FLIGHT=flightFix(s.fl);/* >=0, а не >=1: ноль ночей — законное состояние, и с прежней проверкой
    сохранённый ноль отбрасывался, а город возвращал себе дни из данных */
   if(Array.isArray(s.nights))BASES.forEach((b,i)=>{if(typeof s.nights[i]==='number'&&s.nights[i]>=0)b.nights=s.nights[i];});if(s.hidden&&typeof s.hidden==='object')HIDDEN=s.hidden;
   if(s.moved&&typeof s.moved==='object')MOVED=s.moved;
@@ -5937,7 +5971,7 @@ function loadPlan(){try{const s=JSON.parse(localStorage.getItem(PKEY));if(s){if(
   if(Array.isArray(s.off)&&s.off.length)setOnly(BASES.filter(b=>s.off.indexOf(b.id)<0).map(b=>b.id));
   else setOnly(null);}}catch(e){}
   applyCurDefaults();mergeCustom();applyMoves();}
-function savePlan(){try{localStorage.setItem(PKEY,JSON.stringify({start:startIso,people:PEOPLE,acc:DATEACC,arr:ARRDAYS,fl:FLIGHT,
+function savePlan(){try{localStorage.setItem(PKEY,JSON.stringify({start:startIso,people:PEOPLE,acc:DATEACC,fl:FLIGHT,
   nights:BASES.map(b=>b.nights),hidden:HIDDEN,moved:MOVED,custom:CUSTOM,cur:CUR,crate:CRATE,
   temp:TEMP,dist:DIST,lang:LANG,asm:ASM,off:offIds(),car:CARMODE,custb:CUSTB,pace:DAYPACE,plans:PLANPICK,merge:MERGE}));}catch(e){}}
 /* Если дату придумали мы — говорим это на самой странице, а не только всплывашкой
@@ -8009,21 +8043,6 @@ applyHero();
 const scMed=document.getElementById('scMedIcon');if(scMed)scMed.innerHTML=ic('cal','i-sm');
 /* назвал дату руками — она перестала быть нашей прикидкой */
 const sd0=document.getElementById('startDate');if(sd0){sd0.value=startIso;sd0.addEventListener('change',e=>{startIso=e.target.value||START;DATEACC='exact';savePlan();syncDateAcc();rerenderTrip();});}
-/* ДАТА ПРИЛЁТА. Человек ставит ту, что стоит у него в билете, — и с этого дня
-   считаются жильё, прокат и все дни маршрута. Ничего не трогал — работает наша
-   прикидка по прямому рейсу, и под строкой об этом написано. */
-{const am=document.getElementById('arrMedIcon');if(am)am.innerHTML=ic('plane','i-sm');
- const ad=document.getElementById('arrDate');
- if(ad)ad.addEventListener('change',e=>{
-   const v=e.target.value;
-   if(!v){ARRDAYS=null;}
-   else{
-     const d=Math.round((new Date(v+'T00:00:00')-new Date(startIso+'T00:00:00'))/864e5);
-     ARRDAYS=(isFinite(d)&&d>=0)?Math.min(7,d):null;
-   }
-   savePlan();rerenderTrip();
- });
- syncArrival();}
 buildSchedule();
 syncDateAcc();     /* и подпись под датой, и ссылка «Как мы собрали» — она живёт в плане */
 renderUnits();buildRoute();buildElev();buildFilters();buildDays();buildCities();buildFood();buildBases();buildPlanner();buildPace();wireButtons();wireBudget();buildBudgetStay();
@@ -8555,7 +8574,6 @@ function reinit(){try{
   try{const s=JSON.parse(localStorage.getItem(FKEY));if(Array.isArray(s))foodPicked=new Set(s);}catch(e){}
   loadHRates();
   const sd=document.getElementById('startDate');if(sd)sd.value=startIso;
-  syncArrival();          /* дата прилёта тоже часть плана и приезжает из облака */
   syncFromBtn();
   syncDateAcc();
   const pn=document.getElementById('pNum');if(pn)pn.textContent=PEOPLE;
