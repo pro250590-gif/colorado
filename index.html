@@ -2080,6 +2080,13 @@ section h2.big{margin-bottom:4px}
    а весь движок ниже рассчитывает, что данные уже есть. */
 (function(){
   var f='trip-colorado.js';
+  /* ?data=trip-xxx.js — открыть конкретный файл маршрута. Нужно, чтобы показать
+     готовое живьём (например пробный маршрут форм) по одной ссылке, не трогая
+     сохранённые поездки человека. Имя проверяем по строгому образцу. */
+  try{
+    var q=new URLSearchParams(location.search).get('data');
+    if(q&&/^trip-[a-z0-9-]+.js$/.test(q)){window.__dataFile=q;document.write('<scr'+'ipt src="'+q+'"></scr'+'ipt>');return;}
+  }catch(e){}
   try{
     var t=JSON.parse(localStorage.getItem('co-trip-trips')||'null');
     if(t&&t.list&&t.active){
