@@ -2091,6 +2091,16 @@ section h2.big{margin-bottom:4px}
   }catch(e){}
   f=q||fileOf(act);
   window.__dataFile=f;
+  /* ⚠️ ССЫЛКА ?data=… СРАБАТЫВАЕТ ОДИН РАЗ, И АДРЕС ЧИСТИТСЯ.
+     Иначе получалась ловушка: человек открывал по ссылке пробный маршрут, потом
+     в «Моих поездках» жал «Колорадо» — движок переключал поездку и перезагружал
+     страницу, а в адресе всё ещё висело ?data=пробный, и мы честно возвращали
+     обратно пробный. Её слова: «открываю Колорадо, открывается Париж — Ницца».
+     Поездка уже переключена выше, поэтому параметр больше не нужен. */
+  if(q){try{
+    var u=new URL(location.href);u.searchParams.delete('data');
+    history.replaceState(null,'',u.pathname+(u.search||'')+(u.hash||''));
+  }catch(e){}}
   document.write('<scr'+'ipt src="'+f+'"></scr'+'ipt>');
 })();
 </script>
@@ -2308,7 +2318,11 @@ function flightSearch(){
   const back=PARTS.legs.slice().reverse().find(l=>l.mode==='flight'&&l.to==='home');
   const outAir=out?((partPoint(out.to)||{}).air||''):(AIRPORT[BASES[0].id]||'');
   const backAir=back?((partPoint(back.from)||{}).air||''):(AIRPORT[BASES[BASES.length-1].id]||'');
-  const outIso=out?fmtISO(dayDate(out.day)):startIso;
+  /* билет ищем на день ВЫЛЕТА. Дальний перелёт на восток уходит накануне вечером,
+     и поиск на день прилёта показывал рейсы, которых человек уже не застанет */
+  const ovn=(typeof outboundNight==='function')?outboundNight():null;
+  const od=out?dayDate(out.day):null;
+  const outIso=od?fmtISO(ovn?new Date(od.getFullYear(),od.getMonth(),od.getDate()-1):od):startIso;
   const backIso=back?fmtISO(dayDate(back.day)):fmtISO(addDays(startIso,totalNights()));
   const O=originNow();
   /* из России и соседних стран Kayak рейсов не покажет — там Aviasales */
@@ -3084,12 +3098,19 @@ function buildCities(){
     let arrival='';
     if(ar&&ar.kind==='air'){
       const arrCode=ar.to.air||'',arrCity=ar.to.name||shortName(b.name),arrWay=ar.way||'';
+      /* ночь в самолёте: вылет накануне, посадка утром первого дня поездки */
+      const ovn=(ar.from&&ar.from.id==='home')?overnightFlight([ar.from.lat,ar.from.lng],[ar.to.lat,ar.to.lng]):null;
+      /* ci — уже дата, а не строка: addDays принимает ISO, поэтому сдвигаем сами */
+      const depDay=ovn?new Date(ci.getFullYear(),ci.getMonth(),ci.getDate()-1):ci;
       arrival='<div class="cnode"><span class="cdot">'+ic('plane','i-sm')+'</span>'
         +'<div class="clbl"><b>Прибытие</b><span>'+dm(ci)+'</span></div>'
         +'<div class="carr"><div class="crow">'
-          +'<div class="cpt"><b>'+esc0((ar.from&&ar.from.name)||'')+'</b><span>'+((ar.from&&ar.from.air)||'')+' · '+dm(ci)+'</span></div>'
+          +'<div class="cpt"><b>'+esc0((ar.from&&ar.from.name)||'')+'</b><span>'+((ar.from&&ar.from.air)||'')+' · '+dm(depDay)+(ovn?' вечером':'')+'</span></div>'
           +'<div class="cmid"><div class="cic">'+ic('plane','i-sm')+'</div></div>'
-          +'<div class="cpt r"><b>'+esc0(arrCity)+'</b><span>'+arrCode+' · '+dm(ci)+'</span></div></div>'
+          +'<div class="cpt r"><b>'+esc0(arrCity)+'</b><span>'+arrCode+' · '+dm(ci)+(ovn?' утром':'')+'</span></div></div>'
+          +(ovn?'<div class="cnight">'+ic('moon','i-sm')+' Ночь проводим в самолёте: вылет '+dm(depDay)
+              +' вечером, в воздухе около '+ovn.hours+' ч, посадка утром '+dm(ci)
+              +'. Отель за эту ночь не нужен, а из дома выезжаем накануне.</div>':'')
           +(arrWay&&arrCity!==shortName(b.name)
             ? '<div class="cway">оттуда до города: '+esc0(convDist(arrWay))+'</div>':'')
           /* город вылета меняется наверху, в блоке «Как добираешься», рядом с
@@ -4925,6 +4946,32 @@ function arrivalInfo(bid){
   }
   return {kind:'road',mode:l.mode,from:fp,to:partPoint(bid),km:l.km,hours:l.hours,
           clean:l.clean,stops:l.stops,via:(l.via||[]).map(id=>partPoint(id)).filter(Boolean),leg:l};
+}
+/* ── НОЧЬ В САМОЛЁТЕ ──────────────────────────────────────────────────────
+   Из Майами в Париж лететь десять часов на восток: вылетают вечером, садятся
+   следующим утром. Страница показывала обе даты одинаковыми — «Майами 10 сен →
+   аэропорт CDG 10 сен», — и ночь, которую человек проводит в кресле, пропадала
+   совсем. Её слова: «где-то ваще ночь пропала».
+   Считаем без выдумок: часы в воздухе по расстоянию плюс сдвиг часов по долготе
+   (пояс ≈ долгота/15). Если в сутки не влезает — вылет накануне.
+   Обратная дорога считается той же формулой и обычно остаётся тем же днём:
+   на запад часы отыгрываются назад. */
+function tzByLng(lng){return Math.round((+lng||0)/15);}
+function flightHours(a,b){return kmBetween(a[0],a[1],b[0],b[1])/800+0.7;}
+function overnightFlight(fromLL,toLL){
+  if(!fromLL||!toLL||typeof fromLL[0]!=='number'||typeof toLL[0]!=='number')return null;
+  const h=flightHours(fromLL,toLL),shift=tzByLng(toLL[1])-tzByLng(fromLL[1]);
+  /* порог 11, а не 12: на Кефлавике считалось 11,1 — и ночной рейс из Майами,
+     который садится в 6:35 утра, оставался «тем же днём». Пояс по долготе у
+     Исландии выходит на час меньше настоящего, отсюда и запас. */
+  return (h+shift>11)?{hours:Math.round(h),shift:shift}:null;
+}
+/* ночь в самолёте по дороге В поездку: 1 — вылетаем накануне, 0 — тем же днём */
+function outboundNight(){
+  const l=PARTS.legs.find(x=>x.mode==='flight'&&x.from==='home');
+  if(!l)return null;
+  const a=partPoint(l.from),b=partPoint(l.to);
+  return (a&&b)?overnightFlight([a.lat,a.lng],[b.lat,b.lng]):null;
 }
 function vehiclesTakenAt(bid){return PARTS.vehicles.filter(v=>v.take&&v.take.base===bid);}
 /* что писать в ссылку проката: код аэропорта, если он есть, иначе название города */
@@ -7919,6 +7966,15 @@ function applyTripKeys(keys){
   _applying=false;
 }
 function tripData(m){return (m&&m.data)||'trip-colorado.js';}
+/* перезагрузка БЕЗ ?data= в адресе: этот параметр — разовое «открой вот этот
+   маршрут», и если оставить его в строке, он отменит только что сделанное
+   переключение поездки. Ровно на этом человек и застряла. */
+function reloadClean(){
+  try{const u=new URL(location.href);
+    if(u.searchParams.has('data')){u.searchParams.delete('data');location.replace(u.pathname+(u.search||'')+(u.hash||''));return;}
+  }catch(e){}
+  location.reload();
+}
 function switchTrip(id){
   const t=syncActiveIntoTrips();
   if(id===t.active||!t.list.some(x=>x.id===id))return false;
@@ -7927,7 +7983,7 @@ function switchTrip(id){
   t.active=id;tripsSave(t);
   /* у поездок разные файлы данных, а они объявлены через const — подменить их
      на лету нельзя, поэтому честно перезагружаем страницу */
-  if(tripData(to)!==window.__dataFile){location.reload();return true;}
+  if(tripData(to)!==window.__dataFile){reloadClean();return true;}
   reinit();syncHomeUI();
   return true;
 }
@@ -7941,7 +7997,7 @@ function newTripFromData(title,dataFile,ask){
   t.active=id;tripsSave(t);
   applyTripKeys({});
   try{localStorage.setItem(PENDKEY,JSON.stringify(ask||null));}catch(e){}
-  location.reload();
+  reloadClean();
   return id;
 }
 /* новая поездка = копия открытой: маршрут тот же, а даты/дни/люди меняешь заново */
@@ -8319,7 +8375,8 @@ function staleReload(){
       markClean();_applying=false;
     }
   }catch(e){}
-  location.reload();
+  /* из облака приехала своя открытая поездка — ?data= в адресе её бы перебил */
+  reloadClean();
 }
 async function cloudSync(session){
   if(!sb||!session)return;
