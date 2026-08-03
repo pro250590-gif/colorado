@@ -1239,7 +1239,7 @@ body{background:linear-gradient(168deg,#eef1f8,#e9edf6 60%,#e6eaf4)!important}
    вписать свой рейс. Столбиком — на телефоне в строку они не помещаются. */
 /* форма рейса: города в один ряд, под каждым — дата и время (её эскиз).
    На узком экране дата и время внутри колонки переносятся друг под друга. */
-.flform{display:block}
+.flform{display:block;margin-top:2px}
 .flleg{margin-bottom:14px}
 .fllt{font:800 11px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8b8fa3;margin:0 2px 8px}
 .flcols{display:flex;gap:10px}
@@ -1539,8 +1539,10 @@ body.stale{padding-top:44px}
 @media(min-width:620px) and (max-width:999px){#daySheet.wide .dspanel{left:50%;right:auto;width:580px;transform:translateX(-50%)}}
 /* дата и время в форме рейса: каждому полю хватает места, иначе браузер
    обрезает «09:45» до «09:4» (её скрин 03.08) */
-.fldt .qtxt{flex:1 1 108px;min-width:104px}
-.fldt .qtxt[type="date"]{min-width:118px}
+.fldtf{flex:1 1 112px;min-width:104px}
+.fldtf em{display:block;font:600 10.5px/1 "Inter",sans-serif;color:#8b8fa3;font-style:normal;margin:0 2px 4px}
+.fldtf .qtxt{width:100%}
+.fldtf:has(.qtxt[type="date"]){min-width:118px}
 .cdtx{flex:1;min-width:0}
 .cdm{font:500 10.5px/1 "Inter",sans-serif;color:#8b8fa3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.01em}
 /* планы дня: выбор одним нажатием вместо «или вместо этого» в ленте */
@@ -4919,8 +4921,13 @@ function flCol(pfx,lbl,ph){
   return '<div class="flcol"><em>'+lbl+'</em><div class="flac">'
     +inp('fl.'+pfx+'City','город или код аэропорта','text',_flDraft[pfx+'City'])
     +'<div class="acbox" data-acfor="'+pfx+'"></div></div>'
-    +'<div class="fldt">'+inp('fl.'+pfx+'Date','','date',_flDraft[pfx+'Date'])
-      +inp('fl.'+pfx+'Time','','time',_flDraft[pfx+'Time'])+'</div></div>';
+    /* ⚠️ У ПОЛЕЙ ДАТЫ И ВРЕМЕНИ ПОДПИСИ СВЕРХУ, А НЕ ВНУТРИ. На телефоне пустое
+       поле type="date" не показывает ничего — ни «дд.мм.гггг», ни «--:--», — и
+       человек видит просто пустые прямоугольники (её скрин 03.08). */
+    +'<div class="fldt">'
+      +'<span class="fldtf"><em>дата</em>'+inp('fl.'+pfx+'Date','','date',_flDraft[pfx+'Date'])+'</span>'
+      +'<span class="fldtf"><em>время</em>'+inp('fl.'+pfx+'Time','','time',_flDraft[pfx+'Time'])+'</span>'
+    +'</div></div>';
 }
 /* строка подсказки — тем же видом, что в «Откуда вы летите?», но выбор попадает
    в поле рейса, а не в город вылета человека */
@@ -4956,7 +4963,11 @@ function flightSheet(){
   const legs=FLLEGS.map(l=>'<div class="flleg"><div class="fllt">'+l.t+'</div>'
     +'<div class="flcols">'+flCol(l.k?'bDep':'dep',l.a)+flCol(l.k?'bArr':'arr',l.b)+'</div></div>').join('');
   sheet('<div class="dsh"><b>Ваш рейс</b><span>Впишите то, что стоит в билете — и все даты перестанут быть примерными</span></div>'
-    +'<div class="qf bkq flform">'+legs
+    /* ⚠️ БЕЗ ФИОЛЕТОВОЙ РАМКИ. Форма пришла из анкеты вместе с её карточкой —
+       сиреневый фон и пунктир, — и на листе поездки это выглядело коробкой в
+       коробке, а поля из-за отступов сжимались. Её правка: «убери этот
+       фиолетовый блок и расширь сами поля, лишнее не нужно». */
+    +'<div class="flform">'+legs
     +'<div class="flnote"><em>комментарий</em>'+inp('fl.note','если есть что добавить — необязательно','area',_flDraft.note)+'</div>'
     +'<button class="bkok" data-flsave="1">Готово</button></div>'
     +(flightHas()?'<button class="dscancel del" data-flclear="1">Убрать рейс</button>':'')
