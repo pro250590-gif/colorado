@@ -1209,6 +1209,11 @@ body{background:linear-gradient(168deg,#eef1f8,#e9edf6 60%,#e6eaf4)!important}
 .chead h2{font:600 38px/1 "Fraunces",Georgia,serif;letter-spacing:-.01em;margin:12px 0 10px}
 .chead p{font:400 14.5px/1.55 "Inter",sans-serif;color:#6a6e82;max-width:360px}
 .ctl{position:relative;padding:16px 18px 8px 56px}
+/* переезд между городами — отдельная полоса, а не первый блок нового города */
+.citymove{padding:2px 0 6px}
+.ctl.one{padding-top:10px;padding-bottom:2px}
+.ctl.one::before{display:none}
+.ctl.one .cnode{margin-bottom:8px}
 .ctl::before{content:"";position:absolute;left:34px;top:20px;bottom:20px;width:1.5px;background:#e2e5f0}
 .cnode{position:relative;margin-bottom:22px}
 .cdot{position:absolute;left:-38px;top:-2px;width:34px;height:34px;border-radius:50%;background:#5b3fc4;color:#fff;display:grid;place-items:center;box-shadow:0 0 0 4px #eef1f8}
@@ -1305,7 +1310,8 @@ body{background:linear-gradient(168deg,#eef1f8,#e9edf6 60%,#e6eaf4)!important}
 .cdph.free .i{width:24px;height:24px}
 .cfree{list-style:none;padding:12px 13px;border:1.5px dashed rgba(91,63,196,.3);border-radius:12px;font:600 12px/1.45 "Inter",sans-serif;color:#8b8698;background:#faf9ff}
 /* ночи в городе — прямо в шапке города, над днями */
-.cnights{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:15px;padding:12px 14px;background:#fff;border:1px solid #eceef6;border-radius:15px;box-shadow:var(--sh1)}
+.cnsub{display:block;margin-top:4px;font:500 11px/1.35 "Inter",sans-serif;color:#8b8fa3;font-style:normal}
+.cnights{display:flex;align-items:flex-start;align-items:center;justify-content:space-between;gap:12px;margin-top:15px;padding:12px 14px;background:#fff;border:1px solid #eceef6;border-radius:15px;box-shadow:var(--sh1)}
 .cnl{font:800 12.5px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:-.02em;color:var(--ink2)}
 /* отложенные места города */
 .cmore{background:#fff;border:1px solid #eceef6;border-radius:15px;box-shadow:var(--sh1)}
@@ -3184,7 +3190,14 @@ function buildCities(){
         +(e.pin?'':'<button class="crm" data-rmthis="'+e.tid+'" data-rmbase="'+b.id+'">'+ic('close','i-sm')+' Убрать этот день</button>')
         +'</div></details>';}).join('')+'</div>';
     /* сколько ночей в городе — кнопки прямо здесь, над днями */
-    const nb='<div class="cnights"><span class="cnl">Ночей в городе</span>'
+    /* если все ночи города человек спит не тут (в дороге или на выезде) —
+       так и пишем под счётчиком: иначе «1 ночь» читается как ночь в отеле */
+    const nOut=b.nights-hotelNights(b);
+    const nb='<div class="cnights"><span class="cnl">Ночей в городе'
+      +(nOut?('<i class="cnsub">'+(hotelNights(b)?('из них '+nOut+' не тут: '):'эта ночь не тут: ')
+        +[nightWay(b.id)?'':'',awayNights(b.id).length?('на выезде — '+awayNights(b.id).map(e=>esc0(sleepAway(e.tid).nm)).join(', ')):'',
+           (nextStayBase(b.id)&&nightWay(nextStayBase(b.id).id))?('в дороге — '+nightWay(nextStayBase(b.id).id)):''].filter(Boolean).join(' · ')+'</i>'):'')
+      +'</span>'
       +'<span class="hstep"><button class="stepbtn" data-nd="'+i+'" data-dir="-1" aria-label="меньше ночей">−</button>'
       +'<span class="hn"><b>'+b.nights+'</b> '+nights(b.nights)+'</span>'
       +'<button class="stepbtn" data-nd="'+i+'" data-dir="1" aria-label="больше ночей">+</button></span></div>';
@@ -3204,7 +3217,13 @@ function buildCities(){
         +metaStrip(p)+(p.why?'<span class="cwhy">'+convDist(p.why)+'</span>':'')+'</li>').join('')
       +'</ul><div class="cmoren">Тап «в день» — место встанет в выбранный день. Вернёшь ночь — вернётся и убранный день.</div></div></details></div>'):'';
 
-    return '<section class="city" id="city-'+b.id+'"><div class="wrap">'
+    /* ⚠️ ПЕРЕЕЗД ЖИВЁТ МЕЖДУ ГОРОДАМИ, А НЕ ВНУТРИ СЛЕДУЮЩЕГО. Её правка:
+       «переезд надо писать между городами — вынесла бы после маршрута и перед
+       новым городом». И правда: стоя первым блоком внутри города, он читался
+       как часть этого города, а на пробном маршруте ещё и путался с ночным
+       переездом, который случается ПОЗЖЕ. */
+    return (arrival?('<div class="citymove"><div class="wrap"><div class="ctl one">'+arrival+'</div></div></div>'):'')
+      +'<section class="city" id="city-'+b.id+'"><div class="wrap">'
       /* строка над названием: было «База 1 из 4 · 7 авг–10 авг · днём +32 °C, ночью
          +14 °C» — 54 знака вразрядку, уезжало на вторую строку. Сжали: «база» лишняя,
          даты одним куском, погода значками. Слово «База» клиент вернула — с ним
@@ -3214,7 +3233,7 @@ function buildCities(){
         +(w?(' · <button class="wtemp" data-weather="'+b.id+'" title="откуда эти градусы">'
              +ic('sun','i-w wsun')+' ≈'+fmtTempShort(w.d)+' '+ic('moon','i-w wmoon')+' ≈'+fmtTempShort(w.n)+'</button>'):'')+'</span>'
       +'<h2>'+shortName(b.name)+'</h2>'+origHTML(b,'big')+'<p>'+convDist(b.desc)+'</p>'+nb+'</div>'
-      +'<div class="ctl">'+arrival+carHire+stay+route+more+'</div></div></section>';
+      +'<div class="ctl">'+carHire+stay+route+more+'</div></div></section>';
   }).join('');
 
   /* тумблеры активностей: вкл/выкл место (на карте + тускнеет строка) */
