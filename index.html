@@ -1248,6 +1248,14 @@ body{background:linear-gradient(168deg,#eef1f8,#e9edf6 60%,#e6eaf4)!important}
 .flcol .qtxt{width:100%}
 .fldt{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
 .fldt .qtxt{flex:1 1 84px;min-width:0}
+/* подсказка аэропортов под полем: тот же вид строк, что в «Откуда вы летите?» */
+.flac{position:relative}
+.acbox{display:none;position:absolute;left:0;right:0;top:100%;z-index:40;margin-top:5px;padding:5px;
+  background:#fff;border:1px solid #e8e9f2;border-radius:13px;box-shadow:0 16px 34px -14px rgba(27,30,46,.45);
+  max-height:236px;overflow:auto;-webkit-overflow-scrolling:touch}
+.acbox.on{display:block}
+.acbox .dsrow{margin:0 0 4px}
+.acbox .dsrow:last-child{margin-bottom:0}
 .flnote{margin-top:2px}
 .flnote em{display:block;font:600 11.5px/1 "Inter",sans-serif;color:#8b8fa3;font-style:normal;margin:0 2px 5px}
 .flnote .qtxt{width:100%}
@@ -4896,10 +4904,45 @@ const FLLEGS=[
   {k:'b',  t:'Обратно', a:'Город вылета',    b:'Город прилёта'}
 ];
 function flCol(pfx,lbl,ph){
-  return '<div class="flcol"><em>'+lbl+'</em>'
-    +inp('fl.'+pfx+'City','',    'text',_flDraft[pfx+'City'])
+  /* ⚠️ ГОРОД ЗДЕСЬ ИЩЕТСЯ ПО ТОЙ ЖЕ БАЗЕ АЭРОПОРТОВ, ЧТО И «ГОРОД ВЫЛЕТА».
+     Её правка: «эту базу с городами нужно добавить и сюда — пишем Майами, а
+     высвечиваются аэропорты; пишем аэропорт — высвечивается город». Список,
+     разметка строки и поиск (по-русски и латиницей) взяты те же, что в выборе
+     города вылета: airFind + airRow. */
+  return '<div class="flcol"><em>'+lbl+'</em><div class="flac">'
+    +inp('fl.'+pfx+'City','город или код аэропорта','text',_flDraft[pfx+'City'])
+    +'<div class="acbox" data-acfor="'+pfx+'"></div></div>'
     +'<div class="fldt">'+inp('fl.'+pfx+'Date','','date',_flDraft[pfx+'Date'])
       +inp('fl.'+pfx+'Time','','time',_flDraft[pfx+'Time'])+'</div></div>';
+}
+/* строка подсказки — тем же видом, что в «Откуда вы летите?», но выбор попадает
+   в поле рейса, а не в город вылета человека */
+function flAirRow(a,pfx){
+  const nm=a[1]||'',city=a[2]||'',all=a[7]===3;
+  const head=(a[9]||a[8])||(nm+((city&&nm.toLowerCase().indexOf(city.toLowerCase())<0)?(' · '+city):''));
+  const sub=all?('все аэропорты · '+(a[10]||'')+' · '+(a[4]||'')):[nm,a[3],a[4]].filter(Boolean).join(' · ');
+  return '<button class="dsrow airrow'+(all?' airall':'')+'" data-flpick="'+a[0]+'" data-flfld="'+pfx+'">'
+    +'<span class="aircode">'+a[0]+'</span>'
+    +'<span class="dst"><b>'+esc0(head)+'</b><span>'+esc0(sub)+'</span></span></button>';
+}
+/* подсказки включаются после того, как лист нарисован */
+function flAirWire(){
+  const host=document.getElementById('daySheet');if(!host)return;
+  loadAirports(function(){});                       /* база подгружается заранее */
+  [].forEach.call(host.querySelectorAll('[data-abk]'),el=>{
+    const k=el.dataset.abk;
+    if(k.indexOf('fl.')!==0||!/City$/.test(k))return;
+    const pfx=k.slice(3).replace(/City$/,'');
+    const box=host.querySelector('.acbox[data-acfor="'+pfx+'"]');
+    if(!box)return;
+    const draw=()=>{
+      const list=airFind(el.value,8);
+      box.innerHTML=list.map(a=>flAirRow(a,pfx)).join('');
+      box.classList.toggle('on',!!list.length);
+    };
+    el.addEventListener('input',draw);
+    el.addEventListener('focus',draw);
+  });
 }
 function flightSheet(){
   _flDraft=Object.assign({},FLIGHT||{});
@@ -4911,6 +4954,7 @@ function flightSheet(){
     +'<button class="bkok" data-flsave="1">Готово</button></div>'
     +(flightHas()?'<button class="dscancel del" data-flclear="1">Убрать рейс</button>':'')
     +'<button class="dscancel" data-dsclose="1">Отмена</button>');
+  flAirWire();
 }
 function flightSave(){
   const d=_flDraft||{};
@@ -4924,9 +4968,21 @@ function flightSave(){
 }
 /* три кнопки вместо одной. Ссылки — те же поиски, что были: разница только в
    том, что человек сразу говорит, какой билет ему нужен. */
+/* ⚠️ ОБЕ КНОПКИ ВЕДУТ В ОДНО МЕСТО. Её вопрос: «нажимаю в одну сторону —
+   открывается один сайт, туда-обратно — совсем другой». Так и было: «в одну
+   сторону» шло на Skyscanner, а «туда-обратно» на Kayak. Теперь поиск один и
+   тот же, разница только в том, что билет в одну сторону ищется без обратной
+   даты. Для вылета из России и соседей — Aviasales, как и раньше. */
+function flightSearchOne(){
+  const out=PARTS.legs.find(l=>l.mode==='flight'&&l.from==='home');
+  const air=out?((partPoint(out.to)||{}).air||''):(AIRPORT[BASES[0].id]||'');
+  const O=originNow();
+  if(!O.code||!air)return '';
+  if(ruMarket())return 'https://www.aviasales.ru/search/'+O.code+ddmm(startIso)+air+PEOPLE;
+  return 'https://www.kayak.com/flights/'+O.code+'-'+air+'/'+startIso+'/'+PEOPLE+'adults?sort=price_a';
+}
 function flightBtns(){
-  const O=originNow(),ar=arrivalAirport(),dp=departureAirport();
-  const oneWay=(O&&O.code&&ar&&ar.air)?skyscanner(O.code,ar.air,startIso):'';
+  const oneWay=flightSearchOne();
   if(flightHas()){
     const s=flightSummary();
     return '<div class="cway">Ваш рейс: '+esc0(s)+'</div>'
@@ -6250,6 +6306,21 @@ document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)r
   if(t.dataset.rmday){closeDaySheet();removeDay(t.dataset.rmbase,tidOf(t.dataset.rmday));}
   if(t.dataset.dsclose){closeDaySheet();}
   /* рейс человека: открыть форму, сохранить, убрать */
+  /* выбрали аэропорт из подсказки: в поле встаёт «Город · КОД», код запоминаем
+     отдельно — он пригодится для ссылок на брони */
+  if(t.dataset.flpick){
+    const a=(window.AIRPORTS||[]).find(x=>x[0]===t.dataset.flpick),pfx=t.dataset.flfld;
+    if(a){
+      const city=a[9]||((a[2]&&(a[1]||'').toLowerCase().indexOf(a[2].toLowerCase())<0)?a[1]:(a[2]||a[1]));
+      if(!_flDraft)_flDraft={};
+      _flDraft[pfx+'City']=city+' · '+a[0];_flDraft[pfx+'Code']=a[0];
+      const el=document.querySelector('#daySheet [data-abk="fl.'+pfx+'City"]');
+      if(el)el.value=_flDraft[pfx+'City'];
+      const bx=document.querySelector('#daySheet .acbox[data-acfor="'+pfx+'"]');
+      if(bx){bx.innerHTML='';bx.classList.remove('on');}
+    }
+    return;
+  }
   if(t.dataset.flopen){flightSheet();}
   if(t.dataset.flsave){flightSave();}
   if(t.dataset.flclear){FLIGHT=null;_flDraft=null;savePlan();closeDaySheet();rerenderTrip();}
