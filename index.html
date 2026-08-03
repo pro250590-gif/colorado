@@ -3070,6 +3070,33 @@ let fopen=null;                       /* какой список сейчас р
 /* фото для карточки: берём первый снимок из точек дня */
 /* ================= ЛЕНТА ПО ГОРОДАМ (Layla-style) ================= */
 
+/* ── ВЫЛЕТ ДОМОЙ ──────────────────────────────────────────────────────────
+   Прилёт на странице был, а вылета не было вовсе: последний день кончался
+   деревней в горах, и ни дороги в аэропорт, ни самого рейса человек не видел.
+   Строим тем же блоком, что и прибытие, и из тех же деталей маршрута: город →
+   аэропорт → дом. Нет перелёта домой (уехали поездом) — блока нет. */
+function departureInfo(){
+  const fl=PARTS.legs.slice().reverse().find(x=>x.mode==='flight'&&x.to==='home');
+  if(!fl)return null;
+  const air=partPoint(fl.from);if(!air)return null;
+  const toAir=PARTS.legs.find(x=>x.to===air.id&&x.mode!=='flight');
+  return {air:air,from:toAir?partPoint(toAir.from):null,way:(toAir&&toAir.way)||air.way||'',day:fl.day,home:partPoint('home')};
+}
+function departureBlock(){
+  const d=departureInfo();if(!d||!d.home)return '';
+  const date=dm(dayDate(d.day||PARTS.days));
+  const cityNm=d.from?shortName(d.from.name||''):'';
+  return '<div class="citymove"><div class="wrap"><div class="ctl one">'
+    +'<div class="cnode"><span class="cdot">'+ic('plane','i-sm')+'</span>'
+    +'<div class="clbl"><b>Вылет домой</b><span>'+date+'</span></div>'
+    +'<div class="carr"><div class="crow">'
+      +'<div class="cpt"><b>'+esc0(d.air.city||cityNm)+'</b><span>'+esc0(d.air.air||'')+' · '+date+'</span></div>'
+      +'<div class="cmid"><div class="cic">'+ic('plane','i-sm')+'</div></div>'
+      +'<div class="cpt r"><b>'+esc0(d.home.name||'')+'</b><span>'+esc0(d.home.air||'')+' · '+date+'</span></div></div>'
+    +(d.way&&cityNm?'<div class="cway">из города в аэропорт: '+esc0(convDist(d.way))+'</div>':'')
+    +'<a class="cbook" href="'+flightSearch()+'" target="_blank" rel="noopener">'+ic('plane','i-sm')+' Подобрать рейсы <small>туда+обратно</small></a>'
+    +'</div></div></div></div></div>';
+}
 function buildCities(){
   const host=document.getElementById('cities');if(!host)return;
   const stepHost=document.getElementById('cityStep');
@@ -3289,7 +3316,7 @@ function buildCities(){
              +ic('sun','i-w wsun')+' ≈'+fmtTempShort(w.d)+' '+ic('moon','i-w wmoon')+' ≈'+fmtTempShort(w.n)+'</button>'):'')+'</span>'
       +'<h2>'+shortName(b.name)+'</h2>'+origHTML(b,'big')+'<p>'+convDist(b.desc)+'</p>'+nb+'</div>'
       +'<div class="ctl">'+carHire+stay+route+more+'</div></div></section>';
-  }).join('');
+  }).join('')+departureBlock();
 
   /* тумблеры активностей: вкл/выкл место (на карте + тускнеет строка) */
   host.querySelectorAll('.cpsw').forEach(sw=>{
@@ -4397,9 +4424,21 @@ function buildDays(){
         +'<span class="sinfo"><span class="snm"><span class="pseq" data-seq="'+p.id+'"></span>'+emo+'<a href="'+mapURL(p)+'" target="_blank" rel="noopener">'+p.nm+'</a>'+(p.tag?'<span class="tag '+p.tag[1]+'">'+p.tag[0]+'</span>':'')+'</span>'+origHTML(p)
         +metaStrip(p)
         +'<span class="why">'+convDist(p.why)+'</span></span></li>';}).join('')+'</ul>'
+      /* день вылета кончался последней точкой, и ни дороги в аэропорт, ни самого
+         рейса в дне не было. Теперь дорога домой стоит в конце этого дня. */
+      +(e.fin?depDayHTML():'')
       +noteHTML(e.tid,'dnote')+'</div></details>';
   });
   host.innerHTML=out;
+}
+function depDayHTML(){
+  const d=(typeof departureInfo==='function')?departureInfo():null;
+  if(!d||!d.home)return '';
+  const city=d.from?shortName(d.from.name||''):'';
+  return '<div class="cnight">'+ic('plane','i-sm')+' Дорога домой: '
+    +(city?esc0(city)+' → ':'')+'аэропорт '+esc0(d.air.air||'')
+    +(d.way?' ('+esc0(convDist(d.way))+')':'')+' → '+esc0(d.home.name||'')
+    +'. В аэропорту быть заранее — этот кусок дня тоже занят.</div>';
 }
 /* карточки баз — лента со стрелками, как в приложениях-планировщиках */
 function buildBases(){
