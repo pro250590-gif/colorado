@@ -1533,7 +1533,14 @@ body.stale{padding-top:44px}
   .dspanel .dsbody{max-height:none;flex:1 1 auto;min-height:0}
   /* сверху — прижимаем к шапке, по горизонтали остаёмся по центру */
   #daySheet.top .dspanel{top:70px;transform:translate(-50%,0);max-height:80vh}
+  #daySheet.wide .dspanel{width:620px}
 }
+/* и на планшете лист шире, если в нём форма рейса */
+@media(min-width:620px) and (max-width:999px){#daySheet.wide .dspanel{left:50%;right:auto;width:580px;transform:translateX(-50%)}}
+/* дата и время в форме рейса: каждому полю хватает места, иначе браузер
+   обрезает «09:45» до «09:4» (её скрин 03.08) */
+.fldt .qtxt{flex:1 1 108px;min-width:104px}
+.fldt .qtxt[type="date"]{min-width:118px}
 .cdtx{flex:1;min-width:0}
 .cdm{font:500 10.5px/1 "Inter",sans-serif;color:#8b8fa3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.01em}
 /* планы дня: выбор одним нажатием вместо «или вместо этого» в ленте */
@@ -4953,7 +4960,7 @@ function flightSheet(){
     +'<div class="flnote"><em>комментарий</em>'+inp('fl.note','если есть что добавить — необязательно','area',_flDraft.note)+'</div>'
     +'<button class="bkok" data-flsave="1">Готово</button></div>'
     +(flightHas()?'<button class="dscancel del" data-flclear="1">Убрать рейс</button>':'')
-    +'<button class="dscancel" data-dsclose="1">Отмена</button>');
+    +'<button class="dscancel" data-dsclose="1">Отмена</button>',{wide:true});
   flAirWire();
 }
 function flightSave(){
@@ -5812,6 +5819,9 @@ function sheet(inner,opts){
     +'<button class="dsx" data-dsclose="1" aria-label="закрыть">'+ic('close','i-sm')+'</button>'
     +'<div class="dsbody">'+inner+'</div></div>';
   el.classList.toggle('top',!!(opts&&opts.top));
+  /* форма рейса шире обычного листа: в 460 px дата и время не помещаются и
+     обрезаются на «09:4» (её скрин) */
+  el.classList.toggle('wide',!!(opts&&opts.wide));
   el.classList.add('on');
 }
 function dayRow(e,attrs,note,cls){
