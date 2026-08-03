@@ -4,8 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#f6f2ea">
-<title>Колорадо · Дуранго → Денвер · 7–16 августа 2026</title>
-<meta name="description" content="Маршрут по Колорадо на 10 дней: Дуранго, Урей, Аспен, Денвер. Карта, план по дням, где поесть, бюджет.">
+<!-- Название вкладки ставит движок из открытого маршрута (applyHero). Здесь
+     стояло «Колорадо · Дуранго → Денвер · 7–16 августа 2026» — и так подписывалась
+     вкладка с ЛЮБЫМ маршрутом, включая Париж и Токио. -->
+<title>KOLIBRI Pro · маршрут</title>
+<meta name="description" content="План поездки по дням: карта, жильё, где поесть, бюджет.">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1892,23 +1895,28 @@ section h2.big{margin-bottom:4px}
 
 <header class="hero">
   <div class="wrap">
-    <div class="kickrow"><div class="kicker" id="heroDate">7–16 августа 2026</div>
+    <!-- ⚠️ В ШАПКЕ НЕТ ГОТОВОГО ТЕКСТА. Здесь стояло Колорадо — заголовок, рассказ
+         про Скалистые горы, фотография Maroon Bells, «$2 106» и «2 национальных
+         парка». Всё это оставалось на месте под любым другим маршрутом. Теперь
+         шапку заполняет applyHero из HERO своего маршрута, а чего маршрут не
+         сказал — того на странице и нет. -->
+    <div class="kickrow"><div class="kicker" id="heroDate"></div>
       <button class="shbtn" data-ushare="1">Поделиться</button></div>
-    <h1>Дуранго → Урей<em>Аспен → Денвер</em></h1>
-    <p class="sub">Поперёк Скалистых гор: паровоз на Силвертон, скальные города Меса-Верде, Million Dollar Highway без отбойников, Чёрный каньон и перевал Independence на 3 687 метрах.</p>
+    <h1></h1>
+    <p class="sub"></p>
     <div class="bento">
       <div class="tile wide tile-photo">
-        <img src="img/hero-w.webp" alt="Maroon Bells, Колорадо" decoding="async" fetchpriority="high">
-        <div class="cnt"><h2>Maroon Bells</h2><p>седьмой день · самое фотографируемое место Колорадо</p></div>
+        <img alt="" decoding="async" fetchpriority="high">
+        <div class="cnt"></div>
       </div>
-      <div class="tile tile-g o"><span class="thead"><span class="ic" id="tileIc1"></span><b id="hDates">12 дней</b></span>
-        <span class="tcap" id="tDays">11 ночей · 4 базы</span></div>
-      <div class="tile tile-g g"><span class="thead"><span class="ic" id="tileIc2"></span><b id="tPlaces">47</b></span>
+      <div class="tile tile-g o"><span class="thead"><span class="ic" id="tileIc1"></span><b id="hDates">—</b></span>
+        <span class="tcap" id="tDays">—</span></div>
+      <div class="tile tile-g g"><span class="thead"><span class="ic" id="tileIc2"></span><b id="tPlaces">—</b></span>
         <span class="tcap">мест отобрано</span></div>
-      <div class="tile tile-w"><span class="thead"><span class="ic" id="tileIc3"></span><b id="tMoney">$2 106</b></span>
+      <div class="tile tile-w"><span class="thead"><span class="ic" id="tileIc3"></span><b id="tMoney">—</b></span>
         <span class="tcap">на человека</span></div>
-      <div class="tile tile-g d"><span class="thead"><span class="ic" id="tileIc4"></span><b>2</b></span>
-        <span class="tcap">национальных парка</span></div>
+      <div class="tile tile-g d"><span class="thead"><span class="ic" id="tileIc4"></span><b></b></span>
+        <span class="tcap"></span></div>
       <!-- профиль высоты: маршрут — это набор и сброс высоты -->
       <div class="elev" id="elev"></div>
     </div>
@@ -1994,72 +2002,16 @@ section h2.big{margin-bottom:4px}
   <div class="tblwrap"><table>
     <colgroup><col class="c-day"><col class="c-seg"><col class="c-num"><col class="c-num"><col class="c-num"></colgroup>
     <thead><tr><th>День</th><th>Отрезок</th><th class="num"><span class="thf">Расстояние</span><span class="ths">Путь</span></th><th class="num">Время</th><th class="num"><span class="thf">С остановками</span><span class="ths">С ост.</span></th></tr></thead>
-    <tbody>
-      <tr><td>1</td><td>Прилёт DRO → Дуранго</td><td class="num">24 км</td><td class="num">25 мин</td><td class="num">вечер</td></tr>
-      <tr><td>2</td><td>Поезд в Силвертон (без машины)</td><td class="num">—</td><td class="num">—</td><td class="num">6–9 ч</td></tr>
-      <tr><td>3</td><td>Дуранго ↔ Меса-Верде</td><td class="num">170 км</td><td class="num">2 ч</td><td class="num">весь день</td></tr>
-      <tr><td>4</td><td>Дуранго → Урей (Million Dollar Hwy)</td><td class="num">120 км</td><td class="num">2 ч</td><td class="num">5–6 ч</td></tr>
-      <tr><td>5</td><td>Урей ↔ Теллурайд</td><td class="num">150 км</td><td class="num">2,5 ч</td><td class="num">весь день</td></tr>
-      <tr><td>6</td><td>Урей → Аспен (Чёрный каньон)</td><td class="num">330 км</td><td class="num">5 ч</td><td class="num">весь день</td></tr>
-      <tr><td>7</td><td>Аспен ↔ Maroon Bells</td><td class="num">30 км</td><td class="num">30 мин</td><td class="num">весь день</td></tr>
-      <tr><td>8</td><td>Аспен ↔ долины Castle Creek</td><td class="num">60 км</td><td class="num">1 ч</td><td class="num">весь день</td></tr>
-      <tr><td>9</td><td>Аспен → Денвер (Independence Pass)</td><td class="num">260 км</td><td class="num">4 ч</td><td class="num">6–7 ч</td></tr>
-      <tr><td>10</td><td>Денвер → аэропорт DEN, вылет</td><td class="num">—</td><td class="num">30 мин</td><td class="num">утро</td></tr>
-      <tr><td><b>Σ</b></td><td><b>Дуранго → Денвер</b></td><td class="num"><b>~1 150 км</b></td><td class="num"><b>~18 ч</b></td><td class="num"><b>10 дней</b></td></tr>
-    </tbody>
+    <!-- строки приходят из DRIVE в файле маршрута; нет их — раздела нет вовсе -->
+    <tbody id="driveBody"></tbody>
   </table></div>
 </div></section>
 
 <section id="s-tips"><div class="wrap">
   <div class="eyebrow">Пока просто иметь в виду</div>
   <h2 class="big">Что занять заранее и практика</h2>
-
-  <details class="acc" open><summary>Что бронировать заранее (по срочности)<span class="chev"><svg class="i i-sm" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9.5 18 6-6-6-6"/></svg></span></summary>
-    <div class="acc-body">
-      <ul>
-        <li><b>Меса-Верде (Cliff Palace) — критично.</b> Билеты открываются ровно за 14 дней в 08:00 по местному времени (MDT). День в парке 9 августа → релиз <b>26 июля</b>. Разбирают за минуты, только <a href="https://www.recreation.gov/ticket/facility/233362" target="_blank" rel="noopener">recreation.gov</a>. В сам парк пускают и без билета.</li>
-        <li><b>Maroon Bells — критично.</b> Август пик. Парковка $10 (только до 08:00 или после 17:00) либо шаттл $16. <a href="https://www.visitmaroonbells.com/" target="_blank" rel="noopener">visitmaroonbells.com</a>.</li>
-        <li><b>Поезд Durango &amp; Silverton.</b> Открытые вагоны на август берут заранее. <a href="https://durangotrain.com/" target="_blank" rel="noopener">durangotrain.com</a>.</li>
-        <li><b>Машина Дуранго → Денвер (one-way).</b> Сбор за возврат в другом городе ~$100-150. SUV разбирают первыми.</li>
-        <li><b>Джип-тур Yankee Boy Basin</b> — опционально, из Урея, полдня.</li>
-      </ul>
-    </div>
-  </details>
-
-  <details class="acc"><summary>Погода и грозы в августе<span class="chev"><svg class="i i-sm" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9.5 18 6-6-6-6"/></svg></span></summary>
-    <div class="acc-body"><ul>
-      <li>Сезон муссонов: почти каждый день после 13:00–14:00 короткая гроза в горах.</li>
-      <li>Правило: всё высокогорное — до полудня; города, музеи, источники — после.</li>
-      <li>Долины +25…30°, перевалы +10…15°, ночью до +5°. Нужны слои и ветровка.</li>
-      <li>Солнце на 3 000 м жжёт втрое — крем 50+.</li>
-    </ul></div>
-  </details>
-
-  <details class="acc"><summary>Машина и дороги<span class="chev"><svg class="i i-sm" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9.5 18 6-6-6-6"/></svg></span></summary>
-    <div class="acc-body"><ul>
-      <li>Обычной легковой хватает на 95%. SUV нужен только для Yankee Boy, Last Dollar Road, верхней Bridal Veil.</li>
-      <li>Independence Pass: нельзя ТС длиннее 10,7 м.</li>
-      <li>Million Dollar Highway — без отбойников. Не ночью и не в дождь.</li>
-      <li>Между Уреем и Силвертоном заправок нет — заправляйся заранее.</li>
-      <li>Связь пропадает на перевалах — скачай офлайн-карты Google Maps на юго-запад Колорадо.</li>
-      <li>Статус дорог: <a href="https://www.cotrip.org/" target="_blank" rel="noopener">cotrip.org</a>.</li>
-    </ul></div>
-  </details>
-
-  <details class="acc"><summary>Входы в парки<span class="chev"><svg class="i i-sm" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9.5 18 6-6-6-6"/></svg></span></summary>
-    <div class="acc-body"><ul>
-      <li>Black Canyon $30/машина, Mesa Verde $30/машина — только карта, наличные не берут.</li>
-      <li>Годовой <a href="https://www.nps.gov/planyourvisit/passes.htm" target="_blank" rel="noopener">America the Beautiful</a> $80 окупается от трёх парков — тут два.</li>
-    </ul></div>
-  </details>
-
-  <details class="acc"><summary>Если появится лишний день<span class="chev"><svg class="i i-sm" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9.5 18 6-6-6-6"/></svg></span></summary>
-    <div class="acc-body"><ul>
-      <li><b>Great Sand Dunes</b> — раз вылетаешь из Денвера, можно с дня 9 южным путём US-160 через дюны (+1 день).</li>
-      <li><b>Rocky Mountain NP</b> — 2 ч севернее Денвера; заменить ночь у аэропорта на Estes Park.</li>
-      <li><b>Crested Butte</b> — «столица полевых цветов», крюк с дня 6.</li>
-    </ul></div>
-  </details>
+  <!-- блоки приходят из TIPS в файле маршрута; нет их — раздела нет вовсе -->
+  <div id="tipsBox"></div>
 </div></section>
 
 <footer><div class="wrap">
@@ -2085,22 +2037,59 @@ section h2.big{margin-bottom:4px}
    (все старые поездки) — Колорадо, как было.
    document.write здесь намеренно: он единственный грузит скрипт синхронно,
    а весь движок ниже рассчитывает, что данные уже есть. */
+/* ⚠️ У КАЖДОЙ ПОЕЗДКИ СВОЙ ПЛАН, И ССЫЛКА ЕГО НЕ ПОДМЕНЯЕТ.
+   Было так: план (дата старта, ночи, спрятанные и перенесённые дни) лежит в
+   ЧЕТЫРЁХ ключах — это «открытая сейчас поездка». Ссылка ?data=… грузила другой
+   файл маршрута, но поездку НЕ переключала, и на новый маршрут ложился план
+   старого: чужая дата старта и ночи ПО НОМЕРУ ГОРОДА. Пробный маршрут из пяти
+   дней становился девятидневным с 7 августа, а даты не сходились ни с чем.
+   Хуже того — правки на такой странице записывались в план НАСТОЯЩЕЙ поездки.
+   Теперь ссылка честно переключает поездку: план открытой прячем в общий список,
+   для запрошенного файла берём его собственный план (а если поездки на этот файл
+   ещё нет — заводим её с чистым планом, и значения возьмутся из файла маршрута).
+   Делается это ЗДЕСЬ, до движка: движок читает ключи сразу, как проснётся. */
 (function(){
-  var f='trip-colorado.js';
-  /* ?data=trip-xxx.js — открыть конкретный файл маршрута. Нужно, чтобы показать
-     готовое живьём (например пробный маршрут форм) по одной ссылке, не трогая
-     сохранённые поездки человека. Имя проверяем по строгому образцу. */
+  var TK='co-trip-trips',
+      KEYS=['co-trip-2026-plan','co-trip-2026-budget','co-trip-2026-picks','co-trip-2026-food'],
+      DEF='trip-colorado.js',
+      ok=/^trip-[a-z0-9-]+\.js$/;
+  var f=DEF,q=null;
+  try{q=new URLSearchParams(location.search).get('data');if(!ok.test(q||''))q=null;}catch(e){}
+  var t=null;try{t=JSON.parse(localStorage.getItem(TK)||'null');}catch(e){}
+  var fileOf=function(m){return (m&&m.data&&ok.test(m.data))?m.data:DEF;};
+  var newId=function(){return 't'+Date.now().toString(36)+Math.floor(Math.random()*1e3).toString(36);};
+  var keysNow=function(){var o={};for(var i=0;i<KEYS.length;i++){var v=localStorage.getItem(KEYS[i]);if(v!=null)o[KEYS[i]]=v;}return o;};
+  var act=(t&&t.list&&t.list.length&&t.active)
+    ? (t.list.filter(function(x){return x.id===t.active;})[0]||null) : null;
   try{
-    var q=new URLSearchParams(location.search).get('data');
-    if(q&&/^trip-[a-z0-9-]+.js$/.test(q)){window.__dataFile=q;document.write('<scr'+'ipt src="'+q+'"></scr'+'ipt>');return;}
-  }catch(e){}
-  try{
-    var t=JSON.parse(localStorage.getItem('co-trip-trips')||'null');
-    if(t&&t.list&&t.active){
-      var m=t.list.filter(function(x){return x.id===t.active;})[0];
-      if(m&&m.data&&/^trip-[a-z0-9-]+\.js$/.test(m.data))f=m.data;
+    if(q&&q!==fileOf(act)){
+      /* списка ещё нет: то, что лежит в ключах, — её первая поездка (Колорадо).
+         Заворачиваем её в список ДО переключения, иначе план потеряется. */
+      if(!act){
+        var id0=newId();
+        t={active:id0,list:[{id:id0,title:'Моя поездка',created:0,data:DEF}],data:{}};
+        t.data[id0]=keysNow();
+        act=t.list[0];
+      }
+      t.data=t.data||{};
+      t.data[t.active]=keysNow();            /* прячем план открытой поездки */
+      var to=null;
+      for(var i=0;i<t.list.length;i++)if(fileOf(t.list[i])===q){to=t.list[i];break;}
+      /* поездки на этот файл ещё не было — заводим. Имя маршрута лежит в самом
+         файле (TRIP_NAME), а он ещё не загружен, поэтому ставим метку auto:
+         движок подставит настоящее название, как только прочитает данные. */
+      if(!to){to={id:newId(),title:q.replace(/^trip-|\.js$/g,''),created:Date.now(),data:q,auto:1};t.list.push(to);}
+      t.active=to.id;
+      var kk=t.data[to.id]||{};
+      for(var j=0;j<KEYS.length;j++){
+        if(kk[KEYS[j]]!=null)localStorage.setItem(KEYS[j],kk[KEYS[j]]);
+        else localStorage.removeItem(KEYS[j]);
+      }
+      localStorage.setItem(TK,JSON.stringify(t));
+      act=to;
     }
   }catch(e){}
+  f=q||fileOf(act);
   window.__dataFile=f;
   document.write('<scr'+'ipt src="'+f+'"></scr'+'ipt>');
 })();
@@ -2127,6 +2116,8 @@ section h2.big{margin-bottom:4px}
   const need={ALT:{},ALTNM:{},SEGMENT:{},TRANSFER:{},CITYMOVE:{},AIRPORT:{},AIRPORTNM:{},
     AIRPORTWAY:{},PHOTO:{},BPHOTO:{},META:{},ROADS:{},ROADLINES:{},ROADSTEPS:{},
     FOODNEAR:{},OPTS:{},HERO:null,IMGPREF:'',
+    /* сводка переездов и «что занять заранее» — тоже данные маршрута */
+    DRIVE:null,TIPS:[],
     LINES:[],FOODCITIES:[],BUDGET:[]};
   Object.keys(need).forEach(k=>{
     try{ if(eval('typeof '+k)!=='undefined')return; }catch(e){}
@@ -2610,6 +2601,35 @@ function buildRoute(){
   const foot='<div class="rfoot"><span><b>'+CB.length+' '+plural(CB.length,'город','города','городов')+'</b> · '+tn+' '+nights(tn)+'</span>'
     +'<span>'+dm(addDays(startIso,0))+' – '+dm(addDays(startIso,tn))+'</span></div>';
   host.innerHTML=svg+deco+foot;
+}
+
+/* ── СВОДКА ПЕРЕЕЗДОВ И «ЧТО ЗАНЯТЬ ЗАРАНЕЕ» ──────────────────────────────
+   ⚠️ ЭТО ДАННЫЕ МАРШРУТА, А НЕ СТРАНИЦА. Обе таблицы стояли готовым текстом
+   прямо в index.html — с Дуранго, Меса-Верде и «грозами в августе». Показывались
+   они под ЛЮБЫМ маршрутом: под Парижем и Токио тоже. Клиент прочитала эту
+   таблицу как «даты не соответствуют» — и была права, там дни 1–10 чужой поездки.
+   Теперь содержимое приходит из файла маршрута (DRIVE и TIPS), а если маршрут
+   про это ничего не сказал, раздела на странице нет вовсе. */
+const CHEVR='<span class="chev"><svg class="i i-sm" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9.5 18 6-6-6-6"/></svg></span>';
+function buildDrive(){
+  const sec=document.getElementById('s-drive'),tb=document.getElementById('driveBody');
+  if(!sec||!tb)return;
+  const D=(typeof DRIVE!=='undefined'&&DRIVE)||null;
+  if(!D||!Array.isArray(D.rows)||!D.rows.length){sec.remove();return;}
+  const cell=v=>'<td class="num">'+esc0(v==null?'—':v)+'</td>';
+  const row=r=>'<tr><td>'+esc0(r.d)+'</td><td>'+esc0(r.seg)+'</td>'+cell(r.km)+cell(r.t)+cell(r.stops)+'</tr>';
+  const b=v=>'<td class="num"><b>'+esc0(v==null?'—':v)+'</b></td>';
+  tb.innerHTML=D.rows.map(row).join('')
+    +(D.total?('<tr><td><b>Σ</b></td><td><b>'+esc0(D.total.seg)+'</b></td>'+b(D.total.km)+b(D.total.t)+b(D.total.stops)+'</tr>'):'');
+}
+function buildTips(){
+  const sec=document.getElementById('s-tips'),host=document.getElementById('tipsBox');
+  if(!sec||!host)return;
+  const T=(typeof TIPS!=='undefined'&&TIPS)||null;
+  if(!Array.isArray(T)||!T.length){sec.remove();return;}
+  host.innerHTML=T.map((g,i)=>
+    '<details class="acc'+(g.open||i===0?'" open':'"')+'><summary>'+esc0(g.t||'')+CHEVR+'</summary>'
+    +'<div class="acc-body"><ul>'+(g.li||[]).map(x=>'<li>'+x+'</li>').join('')+'</ul></div></details>').join('');
 }
 
 function buildElev(){
@@ -5751,9 +5771,10 @@ function recomputeDates(){
   const hd2=document.getElementById('hDates');if(hd2)hd2.textContent=td+' '+plural(td,'день','дня','дней');
   const pl=document.getElementById('tPlaces');
   if(pl)pl.textContent=P.filter(p=>p.cat!=='food').length;
-  const mn=document.getElementById('tMoney');
-  if(mn){let sum=0;document.querySelectorAll('#budgetTbl tbody input.money').forEach(i=>sum+=numIn(i.value));
-    if(sum>0)mn.textContent=money(sum/2);}
+  /* цену в шапке считает и ставит ТОЛЬКО бюджет (recalcBudget). Здесь стоял
+     второй счёт по своей выборке полей, и она давно ничего не находила — ноль
+     молча гасился условием «если больше нуля». Два хозяина у одной цифры —
+     это как раз то, из-за чего в шапке чужого маршрута висела цена Колорадо. */
   const nn=document.getElementById('tNights');if(nn)nn.textContent=tn+' '+nights(tn);
   const ns=document.getElementById('tNightsSub');
   if(ns)ns.textContent=td+' '+plural(td,'день','дня','дней')+' · '+BASES.length+' '+plural(BASES.length,'база','базы','баз');
@@ -6604,7 +6625,7 @@ function sumBudget(){
   document.getElementById('sumAll').textContent=money(sum);
   document.getElementById('sumPer').textContent=money(Math.round(sum/PEOPLE));
   const sd=document.getElementById('sumDay');if(sd)sd.textContent=money(Math.round(sum/days));
-  const mn=document.getElementById('tMoney');if(mn&&sum>0)mn.textContent=money(sum/PEOPLE);
+  const mn=document.getElementById('tMoney');if(mn)mn.textContent=sum>0?money(sum/PEOPLE):'—';
   if(typeof requestAnimationFrame==='function')requestAnimationFrame(fitSums);else fitSums();
 }
 /* подгоняет размер шрифта итоговых сумм под самую крупную из трёх — ЕДИНЫЙ размер для всех, чтобы не скакал */
@@ -7656,8 +7677,10 @@ function applyHero(){
   const own=isAuthored();          /* поездка = маршрут, как его написал автор */
   const CB=tripBases();
   const h1=q('header.hero h1');
+  let HT=null;
   if(h1){
     const t=(H&&H.h1&&own)?{h1:H.h1,em:H.em||''}:heroTitle();
+    HT=t;
     if(t)h1.innerHTML=esc0(t.h1)+(t.em?'<em>'+esc0(t.em)+'</em>':'');
     /* список городов держим на самом заголовке: раскрой строк пересчитывается
        при каждом замере, а не гадается один раз при сборке */
@@ -7668,46 +7691,57 @@ function applyHero(){
   /* Шапка написана про ВЕСЬ маршрут. Если поездку пересобрали под ответы, её текст
      и фотография начинают врать: в поездке по одному Дуранго нет ни Million Dollar
      Highway, ни Maroon Bells на картинке. Тогда берём то, что правда есть. */
-  if(!own){
-    /* ⚠️ ФОТОГРАФИЯ ШАПКИ ПРИНАДЛЕЖИТ МАРШРУТУ, А НЕ РАСКЛАДКЕ ДНЕЙ.
-       Её правило: в готовом маршруте нельзя менять НАБОР ГОРОДОВ — можно менять
-       дни, людей, даты. Значит и снимок меняться не должен: он у маршрута один,
-       самый красивый, с авторской подписью. Я это вчера сломала, подставив первую
-       картинку города, — возвращено как было.
-       Новый набор городов — это уже ДРУГОЙ маршрут (его соберёт генерация), и
-       фотография у него будет своя. */
-    const b=CB[0];
-    const sub0=q('header.hero .sub');
+  /* ⚠️ ФОТОГРАФИЯ ШАПКИ ПРИНАДЛЕЖИТ МАРШРУТУ, А НЕ РАСКЛАДКЕ ДНЕЙ.
+     Её правило: в готовом маршруте нельзя менять НАБОР ГОРОДОВ — можно менять
+     дни, людей, даты. Значит и снимок меняться не должен: он у маршрута один,
+     самый красивый, с авторской подписью. Я это вчера сломала, подставив первую
+     картинку города, — возвращено как было.
+     Новый набор городов — это уже ДРУГОЙ маршрут (его соберёт генерация), и
+     фотография у него будет своя. */
+  /* подпись вкладки — из маршрута, а не из страницы. Заголовок читаем прямо из
+     h1: там текст и <em> двумя кусками, и без разделителя они слипаются
+     («Токиои Киото»). Название маршрута не повторяем, если оно и есть заголовок. */
+  {const nm=((typeof TRIP_NAME!=='undefined'&&TRIP_NAME)||'').trim();
+   const parts=h1?Array.prototype.map.call(h1.childNodes,n=>(n.textContent||'').trim()).filter(Boolean):[];
+   const out=nm?[nm]:[];
+   parts.forEach(p=>{if(nm.indexOf(p)<0)out.push(p);});   /* дважды одно не пишем */
+   document.title=out.join(' · ')||'KOLIBRI Pro · маршрут';}
+  const sub=q('header.hero .sub');
+  if(sub){
+    let s=(H&&H.sub)||'';
     /* поездка в один город — берём его описание: рассказ про весь маршрут тут не про неё */
-    if(sub0&&CB.length===1&&b&&b.desc)sub0.textContent=b.desc;
-    else if(sub0&&H&&H.sub)sub0.textContent=H.sub;
-    if(H&&H.photo){
-      const im1=q('header.hero .tile-photo img');
-      if(im1){im1.src=H.photo;im1.alt=H.alt||'';}
-      const cn1=q('header.hero .tile-photo .cnt');
-      if(cn1&&H.capTitle)cn1.innerHTML='<h2>'+esc0(H.capTitle)+'</h2><p>'+esc0(H.capSub||'')+'</p>';
-      return;
-    }
-    /* у маршрута нет своей шапки (так будет у сгенерированных) — выбираем сами */
-    const best=heroPick();
-    if(best){
-      const im0=q('header.hero .tile-photo img');
-      if(im0){im0.src=best.img;im0.alt=best.p.nm;}
-      const cn0=q('header.hero .tile-photo .cnt');
-      if(cn0)cn0.innerHTML='<h2>'+esc0(shortName(best.p.nm))+'</h2><p>'+esc0(best.sub)+'</p>';
-    }
-    return;
+    if(!own&&CB.length===1&&CB[0]&&CB[0].desc)s=CB[0].desc;
+    sub.textContent=s;sub.hidden=!s;
   }
-  if(!H)return;
-  const sub=q('header.hero .sub');if(sub&&H.sub)sub.textContent=H.sub;
-  const img=q('header.hero .tile-photo img');
-  if(img&&H.photo){img.src=H.photo;img.alt=H.alt||'';}
-  const cnt=q('header.hero .tile-photo .cnt');
-  if(cnt&&H.capTitle)cnt.innerHTML='<h2>'+esc0(H.capTitle)+'</h2><p>'+esc0(H.capSub||'')+'</p>';
-  if(H.parks){
-    const t=document.querySelectorAll('header.hero .tile-g.d b, header.hero .tile-g.d .tcap');
-    if(t[0])t[0].textContent=H.parks;
-    if(t[1])t[1].textContent=H.parksCap||t[1].textContent;
+  /* ⚠️ ПУСТО ЗНАЧИТ ПУСТО. Раньше при отсутствии данных на месте оставалось то,
+     что лежало в HTML, — то есть Колорадо. Теперь плитка, про которую маршрут
+     ничего не сказал, со страницы убирается. */
+  /* прячем, а не выкидываем: шапка перерисовывается при каждой правке поездки,
+     и выкинутую плитку было бы уже не вернуть */
+  const show=(el,on)=>{if(el)el.style.display=on?'':'none';};
+  const ptile=q('header.hero .tile-photo'),img=ptile&&ptile.querySelector('img'),cnt=ptile&&ptile.querySelector('.cnt');
+  const pick=(H&&H.photo)?null:heroPick();
+  if(ptile){
+    if(H&&H.photo){
+      if(img){img.src=H.photo;img.alt=H.alt||'';}
+      if(cnt)cnt.innerHTML='<h2>'+esc0(H.capTitle||'')+'</h2><p>'+esc0(H.capSub||'')+'</p>';
+      show(ptile,true);
+    }else if(pick){
+      if(img){img.src=pick.img;img.alt=pick.p.nm;}
+      if(cnt)cnt.innerHTML='<h2>'+esc0(shortName(pick.p.nm))+'</h2><p>'+esc0(pick.sub)+'</p>';
+      show(ptile,true);
+    }else show(ptile,false);
+  }
+  const dt=q('header.hero .tile-g.d');
+  if(dt){
+    /* число парков (городов, машин) написано про ВЕСЬ маршрут. Поездку пересобрали
+       под ответы — ручаться за него уже нельзя, и плитка уходит вместе с рассказом. */
+    if(H&&H.parks&&own){
+      const t=dt.querySelectorAll('b, .tcap');
+      if(t[0])t[0].textContent=H.parks;
+      if(t[1])t[1].textContent=H.parksCap||'';
+      show(dt,true);
+    }else show(dt,false);
   }
 }
 
@@ -7722,6 +7756,7 @@ const sd0=document.getElementById('startDate');if(sd0){sd0.value=startIso;sd0.ad
 buildSchedule();
 syncDateAcc();     /* и подпись под датой, и ссылка «Как мы собрали» — она живёт в плане */
 renderUnits();buildRoute();buildElev();buildFilters();buildDays();buildCities();buildFood();buildBases();buildPlanner();buildPace();wireButtons();wireBudget();buildBudgetStay();
+buildDrive();buildTips();   /* сводка и практика — из файла маршрута, иначе разделов нет */
 syncFromBtn();   /* иначе при первой загрузке на кнопке города остаётся прочерк */
 /* линия маршрута считается от ширины экрана и ширины подписей — пересобираем после ресайза и загрузки шрифтов */
 let _rrt;addEventListener('resize',()=>{clearTimeout(_rrt);_rrt=setTimeout(()=>{buildRoute();fitHeroTitle();},160);});
@@ -7856,6 +7891,10 @@ function trips(){
     _rawSet(TKEY,JSON.stringify(t));
   }
   if(!t.data)t.data={};
+  /* поездку завёл загрузчик по ссылке ?data=… — там ещё не было названия маршрута
+     (файл данных грузится после него). Теперь оно есть: подставляем настоящее. */
+  const am=t.list.find(x=>x.id===t.active);
+  if(am&&am.auto&&TRIP_TITLE){am.title=TRIP_TITLE;delete am.auto;_rawSet(TKEY,JSON.stringify(t));}
   return t;
 }
 function tripsSave(t){try{localStorage.setItem(TKEY,JSON.stringify(t));}catch(e){}}
