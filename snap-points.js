@@ -17,6 +17,12 @@
      · не трогаем точки с полем `pin` (там сказано, почему координата такая) и
        те, к которым добираются пешком/катером/поездом (`hop`);
      · пешеходные города считаем пешей сетью, автомобильные — автомобильной.
+
+   Дальше трёх километров от дорог сами не двигаем, но и «зовём человека» — это
+   не про клиента: клиент этого не видит НИКОГДА. Сначала пробуем проверенную
+   координату из places-db (её ставил справочник), а если и она в поле — пишем
+   измеренный факт в pin: «дорог рядом нет, ближайшая в N км, время прикидкой».
+   К человеку (нам, на сборке) вопрос уходит только если координаты нет вовсе.
    ========================================================================== */
 const fs = require('fs');
 const path = require('path');
@@ -24,6 +30,9 @@ const path = require('path');
 const SNAP_M = 300;        /* дальше этого от дороги — точка «в поле» */
 const MOVE_MAX_M = 3000;   /* дальше этого не двигаем: это уже другое место */
 const PAUSE = 1200;
+/* проверенные координаты: их ставил справочник (verify-coords.js) */
+let DB = {};
+try { DB = JSON.parse(fs.readFileSync(path.join(__dirname, 'places-db.json'), 'utf8')); } catch (e) {}
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 const R = 6371, rad = x => x * Math.PI / 180;
@@ -59,7 +68,7 @@ async function nearest(profile, lat, lng) {
 async function doFile(file, apply) {
   const S = load(file);
   const P = S.P || [];
-  const moves = [];
+  const moves = [], notes = [];
   for (const p of P) {
     if (p.cat === 'food' || typeof p.lat !== 'number') continue;
     if (p.pin) continue;                 /* координата поставлена нами намеренно */
@@ -75,18 +84,43 @@ async function doFile(file, apply) {
     if (!near) { console.log('  ' + p.nm + ': не спросили про дорогу — пропускаю'); continue; }
     if (near.d <= SNAP_M) continue;
     if (near.d > MOVE_MAX_M) {
-      console.log('  ⚠ ' + p.nm + ': до ближайшей дороги ' + (near.d / 1000).toFixed(1)
-        + ' км — слишком далеко, чтобы двигать самим. Проверьте координату руками');
+      /* ⚠️ ДАЛЬШЕ ТРЁХ КИЛОМЕТРОВ ОТ ДОРОГИ — САМИ НЕ ДВИГАЕМ, но и человека
+         дёргать не спешим: сперва пробуем ПРОВЕРЕННУЮ координату из places-db
+         (её ставил справочник, а не автор). Встала у дороги — берём её. */
+      const rec = DB[path.basename(file).replace(/^trip-|\.js$/g, '') + ':' + p.id];
+      if (rec && typeof rec.lat === 'number') {
+        const alt = await nearest(car ? 'routed-car' : 'routed-foot', rec.lat, rec.lng);
+        await sleep(PAUSE);
+        if (alt && alt.d <= SNAP_M) {
+          moves.push({ p: p, to: { lat: rec.lat, lng: rec.lng }, d: Math.round(near.d) });
+          console.log('  ' + p.nm + ': наша точка в ' + (near.d / 1000).toFixed(1)
+            + ' км от дорог, а проверенная стоит у дороги — беру проверенную');
+          continue;
+        }
+      }
+      /* и справочник далеко — значит место правда без подъезда: пишем это
+         словами в pin, чтобы время честно считалось прикидкой, а проверка не
+         ругалась вслепую. Ошибкой это станет только если координаты нет вовсе */
+      notes.push({ p: p, d: near.d });
+      console.log('  ' + p.nm + ': дорог рядом нет (ближайшая ' + (near.d / 1000).toFixed(1)
+        + ' км) — пишу это в данные, время до неё останется прикидкой');
       continue;
     }
     moves.push({ p: p, to: near, d: Math.round(near.d) });
     console.log('  ' + p.nm + ': дорога в ' + Math.round(near.d) + ' м — двигаю к съезду '
       + near.lat.toFixed(5) + ',' + near.lng.toFixed(5));
   }
-  if (!moves.length) { console.log('  все точки стоят у дороги'); return; }
+  if (!moves.length && !notes.length) { console.log('  все точки стоят у дороги'); return; }
   if (!apply) { console.log('  (это черновик; чтобы применить — добавьте --apply)'); return; }
 
   let src = S.src;
+  /* точкам без подъезда дописываем причину — ту, что ИЗМЕРИЛИ, а не выдумали */
+  notes.forEach(n => {
+    if (n.p.pin) return;
+    const rx = new RegExp("(\{id:'" + n.p.id + "'[^\n]*?)(,nm:)");
+    if (!rx.test(src)) return;
+    src = src.replace(rx, (m, a, b) => a + ",pin:'дорог рядом нет: ближайшая в " + (n.d / 1000).toFixed(1) + " км, время до точки — прикидка'" + b);
+  });
   moves.forEach(m => {
     const rx = new RegExp("(\\{id:'" + m.p.id + "'[^\\n]*?lat:)(-?[\\d.]+)(,lng:)(-?[\\d.]+)");
     if (!rx.test(src)) { console.log('  ⚠ не нашла строку места ' + m.p.id); return; }

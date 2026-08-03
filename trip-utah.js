@@ -65,7 +65,7 @@ const P=[
   why:'Лучшая обзорная точка на весь амфитеатр. Приезжай под вечер: солнце сбоку, и каменные фигуры отбрасывают длинные тени.'},
  {id:'nav',d:3,base:'bry',cat:'nature',lat:37.6247,lng:-112.1650,nm:'Navajo Loop Trail',q:'Navajo Loop Trail, Bryce Canyon',tag:['2 часа','t-med'],
   why:'Единственный способ понять масштаб — спуститься вниз. Серпантин Wall Street уходит между стен, наверху остаётся полоска неба.'},
- {id:'sun',d:4,base:'moa',cat:'nature',lat:37.6283,lng:-112.1600,nm:'Sunrise Point',q:'Sunrise Point, Bryce Canyon',star:1,tag:['рассвет','t-must'],
+ {id:'sun',d:4,base:'moa',cat:'nature',lat:37.630484,lng:-112.164607,nm:'Sunrise Point',q:'Sunrise Point, Bryce Canyon',star:1,tag:['рассвет','t-must'],
   why:'Ради этого тут и ночуют. Первые лучи заходят в амфитеатр снизу, и фигуры по очереди загораются оранжевым.'},
  {id:'cap',d:4,base:'moa',cat:'nature',lat:38.2919,lng:-111.2615,nm:'Capitol Reef National Park',q:'Capitol Reef National Park',tag:['по пути','t-easy'],
   why:'Дорога проходит прямо через парк, и это бесплатно. Останови у сада в Фрутите — там растут яблони, посаженные мормонами в XIX веке.'},
