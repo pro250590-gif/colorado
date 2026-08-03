@@ -184,7 +184,12 @@ function analyze(S) {
     const orderRun = (run0, pinLast, tailExtra, headExtra) => {
       const extra = tailExtra || [];
       const run = (headExtra || []).concat(run0);
-      if (run.length + extra.length < 3) return run.slice();
+      /* ⚠️ КОРОТКИЙ КУСОК ТОЖЕ КОНЧАЕТСЯ ПОРОГОМ. Здесь возвращался только сам
+         кусок, без tailExtra, — то есть без дороги до ночёвки. Длина «как есть»
+         её считала, а «как можно» нет, и счётчик показывал улучшение на ровно
+         эту дорогу, предлагая ТОТ ЖЕ САМЫЙ порядок. Поймано на дне 4 пробного
+         маршрута: «КОРОЧЕ 8,3 км, gnc → pro → eze» — при том же gnc → pro → eze. */
+      if (run.length + extra.length < 3) return run.concat(extra);
       const rest = run.slice(1);
       const evening = rest.filter(p => when(p) === 'вечер');
       const morning = rest.filter(p => when(p) === 'утро');
