@@ -63,6 +63,17 @@ console.log('\n████ математика дня (day-math.js)');
 console.log('\n████ движок без текста маршрутов (check-static.js)');
 hard += require('./check-static.js').run(s => console.log(s));
 
+/* И сама страница: половина ошибок разбора 03.08 жила не в данных, а в том, что
+   человек видел на экране. Открываем страницу в браузере без окна и читаем её.
+   Без jsdom проверка честно говорит, что пропущена, и никого не задерживает. */
+console.log('\n████ страница целиком (check-page.js)');
+{
+  const p = run('check-page.js', file);
+  const lines = p.out.split('\n').filter(l => /ОШИБКА|пропущено|все страницы/.test(l));
+  if (lines.length) console.log(lines.join('\n'));
+  hard += (p.out.match(/^\s*ОШИБКА/gm) || []).length;
+}
+
 files.forEach(f => {
   console.log('\n████ ' + f);
 
