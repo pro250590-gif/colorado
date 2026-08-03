@@ -1958,7 +1958,9 @@ section h2.big{margin-bottom:4px}
   <div class="startcard"><span class="scmed" id="scMedIcon"></span><span class="scin"><span class="sclbl">Старт поездки</span><span class="scsub" id="scSub"></span></span><input type="date" id="startDate" class="scdate"></div>
   <!-- Город вылета — вторым, сразу после даты: обе вещи задают всю поездку и
        должны выглядеть одинаково (выбор клиента из двух эскизов). -->
-  <div class="startcard"><span class="scmed"><svg class="i i-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2 16 11l3.5-3.5a2.1 2.1 0 0 0-3-3L13 8 4.8 6.2a.6.6 0 0 0-.6.9L7 12l-2 2H3l1.5 2.5L7 18l2-2 4.9 2.8a.6.6 0 0 0 .9-.6Z"/></svg></span><span class="scin"><span class="sclbl">Город вылета</span></span><button class="scdate scfrom" id="fromBtn" data-homeopen="1">—</button></div>
+  <!-- значок берём из общего набора (ICONS.plane), а не рисуем на месте: этот
+       самолётик был нарисован отдельно и выглядел кривым рядом с остальными -->
+  <div class="startcard"><span class="scmed" id="fromMedIcon"></span><span class="scin"><span class="sclbl">Город вылета</span></span><button class="scdate scfrom" id="fromBtn" data-homeopen="1">—</button></div>
   <!-- Все три строки блока — одной формы и одной высоты: значок, название и
        поле справа. Просьба клиента: «чтобы визуально было красиво и равномерно». -->
   <div class="startcard"><span class="scmed"><svg class="i i-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg></span><span class="scin"><span class="sclbl">Сколько людей</span></span><span class="pstep"><button class="stepbtn" id="pMinus" aria-label="меньше человек">−</button><span class="pnum"><b id="pNum">2</b></span><button class="stepbtn" id="pPlus" aria-label="больше человек">+</button></span></div>
@@ -8041,6 +8043,7 @@ loadHRates();   /* только здесь: BKEY к этому моменту у
 applyHero();
 ['tileIc1|clock','tileIc2|pin','tileIc3|money','tileIc4|tree'].forEach(p=>{const [id,ico]=p.split('|');const el=document.getElementById(id);if(el)el.innerHTML=ic(ico);});
 const scMed=document.getElementById('scMedIcon');if(scMed)scMed.innerHTML=ic('cal','i-sm');
+{const fm=document.getElementById('fromMedIcon');if(fm)fm.innerHTML=ic('plane','i-sm');}
 /* назвал дату руками — она перестала быть нашей прикидкой */
 const sd0=document.getElementById('startDate');if(sd0){sd0.value=startIso;sd0.addEventListener('change',e=>{startIso=e.target.value||START;DATEACC='exact';savePlan();syncDateAcc();rerenderTrip();});}
 buildSchedule();
