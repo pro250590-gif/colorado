@@ -1235,6 +1235,12 @@ body{background:linear-gradient(168deg,#eef1f8,#e9edf6 60%,#e6eaf4)!important}
 .cic{width:32px;height:32px;border-radius:50%;background:#eef1f8;border:1px solid #e2e5f0;display:grid;place-items:center;color:#8b8fa3;position:relative;z-index:1}
 .cbook{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:16px;padding:13px;border-radius:12px;text-decoration:none;background:#5b3fc4;color:#fff;font:700 13.5px/1 "Inter",sans-serif}
 .cbook small{font-weight:500;opacity:.78}
+/* три ответа вместо одной кнопки: искать в одну сторону, туда-обратно, или
+   вписать свой рейс. Столбиком — на телефоне в строку они не помещаются. */
+.flbtns{display:flex;flex-direction:column;gap:8px}
+.flbtns .cbook{margin-top:10px;width:100%;border:0;cursor:pointer}
+.flbtns .cbook:first-child{margin-top:16px}
+.cbook.alt{background:#fff;color:#5b3fc4;border:1.5px solid #d9d3f2}
 .ctransf{margin-top:14px;padding-top:14px;border-top:1px solid #e8e9f2;text-align:center;font:500 12px/1 "Inter",sans-serif;color:#8b8fa3}
 /* «оттуда до города» — когда аэропорт и город ночёвки в разных местах */
 .cway{margin-top:10px;text-align:center;font:600 11.5px/1.4 "Inter",sans-serif;color:#8a4b0a;
@@ -3092,6 +3098,12 @@ function departureInfo(){
 function departureBlock(){
   const d=departureInfo();if(!d||!d.home)return '';
   const date=dm(dayDate(d.day||PARTS.days));
+  /* обратный рейс из билета не сходится с последним днём маршрута — говорим
+     прямо, а не подгоняем маршрут молча под чужую дату */
+  const lastIso=fmtISO(dayDate(d.day||PARTS.days));
+  const mism=(flightHas()&&ISO10(FLIGHT.outDate)&&FLIGHT.outDate!==lastIso)
+    ? ('<div class="cnight">'+ic('info','i-sm')+' В вашем билете обратный рейс '+dm(addDays(FLIGHT.outDate,0))
+       +', а маршрут кончается '+date+'. Добавьте или снимите ночь, чтобы сошлось.</div>') : '';
   const cityNm=d.from?shortName(d.from.name||''):'';
   return '<div class="citymove"><div class="wrap"><div class="ctl one">'
     +'<div class="cnode"><span class="cdot">'+ic('plane','i-sm')+'</span>'
@@ -3104,7 +3116,7 @@ function departureBlock(){
        электричка) в этом случае писать нельзя, он про тех, кто без машины */
     +(cityNm?('<div class="cway">из города в аэропорт: '
         +(d.mode==='car'?'на машине — её и сдаём в аэропорту':esc0(convDist(d.way||'')))+'</div>'):'')
-    +'<a class="cbook" href="'+flightSearch()+'" target="_blank" rel="noopener">'+ic('plane','i-sm')+' Подобрать рейсы <small>туда+обратно</small></a>'
+    +mism+flightBtns()
     +'</div></div></div></div></div>';
 }
 function buildCities(){
@@ -3152,7 +3164,7 @@ function buildCities(){
             ? '<div class="cway">оттуда до города: '+esc0(convDist(arrWay))+'</div>':'')
           /* город вылета меняется наверху, в блоке «Как добираешься», рядом с
              датой старта — здесь кнопки нет, чтобы одно и то же не жило дважды */
-          +'<a class="cbook" href="'+flightSearch()+'" target="_blank" rel="noopener">'+ic('plane','i-sm')+' Подобрать рейсы <small>туда+обратно</small></a></div></div>';
+          +flightBtns()+'</div></div>';
     }else if(ar){
       const seg=ar.mode,segIc=seg==='flight'?'plane':seg==='train'?'train':seg==='ferry'?'ferry':seg==='bus'?'bus':'car';
       const via=ar.via||[];
@@ -3235,7 +3247,10 @@ function buildCities(){
       : '<div class="cnode"><span class="cdot">'+ic('bed','i-sm')+'</span>'
       +'<div class="clbl"><b>Проживание</b><span>Дни '+firstDay+'–'+lastDay+' · '+dm(ci)+'–'+dm(addDays(planIso(),nightsBefore(b.id)+hnc))+' · '+hnc+' '+nights(hnc)
         +(awayNights(b.id).length?(' · '+awayNights(b.id).length+' '+nights(awayNights(b.id).length)+' на выезде: '+awayNights(b.id).map(e=>esc0(sleepAway(e.tid).nm)).join(', ')):'')
-        +(wayNc?' · последняя ночь в пути':'')+'</span></div>'
+        +(wayNc?' · последняя ночь в пути':'')
+        /* пока рейс не вписан, дата заезда — наша прикидка, и молчать об этом
+           нельзя: по ней человек нажимает «Забронировать» */
+        +(flightIn()&&!flightHas()?' · даты примерные, пока не вписан рейс':'')+'</span></div>'
       +(mine.length
         ? stayCard
           +'<button class="cadd" data-stayadd="'+b.id+'">'+ic('plus','i-sm')+' Добавить ещё жильё</button>'
@@ -4822,6 +4837,51 @@ function airLL(code){
    Храним не саму дату, а СКОЛЬКО СУТОК ДОРОГА: тогда перенос даты старта тянет
    прилёт за собой, а не оставляет его в прошлом месяце. */
 let ARRDAYS=null;                 /* null — наша прикидка; число — сказал человек */
+/* ── РЕЙС ЧЕЛОВЕКА ────────────────────────────────────────────────────────
+   Её решение, 03.08: «мы не можем понять, во сколько же он полетит… здесь нам
+   поможет только рейс». Прикидка по прямому рейсу — это всё-таки догадка: он
+   может лететь 16 часов, а может 30 с двумя стыковками, и дата брони будет
+   другая. Поэтому у кнопки поиска три ответа: искать в одну сторону, искать
+   туда-обратно и «у меня уже есть рейс». Третий открывает форму, КОТОРУЮ МЫ УЖЕ
+   СДЕЛАЛИ ДЛЯ АНКЕТЫ (BKFIELDS.flight): её слова — «заново создавать не нужно».
+   Вписан рейс — даты перестают быть примерными и считаются от него. */
+let FLIGHT=null,_flDraft=null;
+const ISO10=s=>/^\d{4}-\d\d-\d\d$/.test(String(s||''));
+function flightHas(){return !!(FLIGHT&&ISO10(FLIGHT.inDate));}
+function flightSheet(){
+  _flDraft=Object.assign({},FLIGHT||{});
+  const rows=BKFIELDS.flight.map(f=>'<span class="bkf'+(f[3]&&f[3].indexOf('w')>=0?' wide':'')+'"><em>'+f[1]+'</em>'
+    +inp('fl.'+f[0],f[4]||'',f[2],_flDraft[f[0]])+'</span>').join('');
+  sheet('<div class="dsh"><b>Ваш рейс</b><span>Впишите то, что стоит в билете — и все даты перестанут быть примерными</span></div>'
+    +'<div class="qf bkq"><div class="bkrow">'+rows+'</div>'
+    +'<button class="bkok" data-flsave="1">Готово</button></div>'
+    +(flightHas()?'<button class="dscancel del" data-flclear="1">Убрать рейс</button>':'')
+    +'<button class="dscancel" data-dsclose="1">Отмена</button>');
+}
+function flightSave(){
+  const d=_flDraft||{};
+  FLIGHT=Object.keys(d).some(k=>String(d[k]||'').trim())?d:null;
+  /* прилёт из рейса главнее нашей прикидки — и наоборот тоже: сказал руками
+     другую дату прилёта, значит прикидку он уже поправил сам */
+  if(flightHas())ARRDAYS=null;
+  _flDraft=null;savePlan();closeDaySheet();rerenderTrip();
+}
+/* три кнопки вместо одной. Ссылки — те же поиски, что были: разница только в
+   том, что человек сразу говорит, какой билет ему нужен. */
+function flightBtns(){
+  const O=originNow(),ar=arrivalAirport(),dp=departureAirport();
+  const oneWay=(O&&O.code&&ar&&ar.air)?skyscanner(O.code,ar.air,startIso):'';
+  if(flightHas()){
+    const s=bkSummary('flight',FLIGHT);
+    return '<div class="cway">Ваш рейс: '+esc0(s)+'</div>'
+      +'<button class="cbook" data-flopen="1">'+ic('pencil','i-sm')+' Изменить рейс</button>';
+  }
+  return '<div class="flbtns">'
+    +(oneWay?'<a class="cbook" href="'+oneWay+'" target="_blank" rel="noopener">'+ic('plane','i-sm')+' Подобрать рейс <small>в одну сторону</small></a>':'')
+    +'<a class="cbook" href="'+flightSearch()+'" target="_blank" rel="noopener">'+ic('plane','i-sm')+' Подобрать рейс <small>туда-обратно</small></a>'
+    +'<button class="cbook alt" data-flopen="1">'+ic('ticket','i-sm')+' У меня уже есть рейс</button>'
+    +'</div>';
+}
 function flightIn(){              /* перелёт в начало маршрута, если он вообще есть */
   const CB=tripBases(),fb=CB[0];
   if(!fb)return null;
@@ -4836,7 +4896,11 @@ function arriveShift(){
   if(typeof ARRDAYS==='number'&&ARRDAYS>=0)return Math.min(7,ARRDAYS);
   return arriveGuess();
 }
-function planIso(){const d=arriveShift();return d?fmtISO(addDays(startIso,d)):startIso;}
+function planIso(){
+  /* вписан рейс — дата прилёта берётся из билета, а не из наших прикидок */
+  if(flightHas()&&FLIGHT.inDate>=startIso)return FLIGHT.inDate;
+  const d=arriveShift();return d?fmtISO(addDays(startIso,d)):startIso;
+}
 /* строка «Прилёт на место»: показываем только когда летят, и честно подписываем,
    откуда взялась дата */
 function syncArrival(){
@@ -4847,10 +4911,12 @@ function syncArrival(){
   const inp=document.getElementById('arrDate');
   if(inp){inp.value=planIso();inp.min=startIso;}
   const sub=document.getElementById('arrSub');
-  if(sub)sub.textContent=(typeof ARRDAYS==='number')
-    ? 'вы поставили сами'
-    : ('наша прикидка: прямой рейс ~'+f.hours+' ч. Со стыковками дольше — поправьте дату');
-  card.classList.toggle('guess',typeof ARRDAYS!=='number');
+  if(sub)sub.textContent=flightHas()
+    ? 'из вашего рейса — даты точные'
+    : ((typeof ARRDAYS==='number')
+        ? 'вы поставили сами'
+        : ('наша прикидка: прямой рейс ~'+f.hours+' ч. Пока не вписан рейс, даты брони примерные'));
+  card.classList.toggle('guess',!flightHas()&&typeof ARRDAYS!=='number');
 }
 function dayDate(disp){return addDays(planIso(),Math.max(0,(disp||1)-1));}
 /* дальше этого от своего города — это уже выезд, а не прогулка по городу */
@@ -5850,7 +5916,8 @@ function rerenderTrip(){
 }
 function loadPlan(){try{const s=JSON.parse(localStorage.getItem(PKEY));if(s){if(s.start)startIso=s.start;if(s.pace&&DAYPACES.some(x=>x.k===s.pace))DAYPACE=s.pace;if(s.plans&&typeof s.plans==='object')PLANPICK=s.plans;if(s.merge&&typeof s.merge==='object')MERGE=s.merge;DATEACC=s.acc||'exact';if(typeof s.people==='number'&&s.people>=1)PEOPLE=s.people;
   /* сколько суток занимает дорога до места: null — считаем сами */
-  ARRDAYS=(typeof s.arr==='number'&&s.arr>=0)?Math.min(7,s.arr):null;/* >=0, а не >=1: ноль ночей — законное состояние, и с прежней проверкой
+  ARRDAYS=(typeof s.arr==='number'&&s.arr>=0)?Math.min(7,s.arr):null;
+  FLIGHT=(s.fl&&typeof s.fl==='object')?s.fl:null;/* >=0, а не >=1: ноль ночей — законное состояние, и с прежней проверкой
    сохранённый ноль отбрасывался, а город возвращал себе дни из данных */
   if(Array.isArray(s.nights))BASES.forEach((b,i)=>{if(typeof s.nights[i]==='number'&&s.nights[i]>=0)b.nights=s.nights[i];});if(s.hidden&&typeof s.hidden==='object')HIDDEN=s.hidden;
   if(s.moved&&typeof s.moved==='object')MOVED=s.moved;
@@ -5867,7 +5934,7 @@ function loadPlan(){try{const s=JSON.parse(localStorage.getItem(PKEY));if(s){if(
   if(Array.isArray(s.off)&&s.off.length)setOnly(BASES.filter(b=>s.off.indexOf(b.id)<0).map(b=>b.id));
   else setOnly(null);}}catch(e){}
   applyCurDefaults();mergeCustom();applyMoves();}
-function savePlan(){try{localStorage.setItem(PKEY,JSON.stringify({start:startIso,people:PEOPLE,acc:DATEACC,arr:ARRDAYS,
+function savePlan(){try{localStorage.setItem(PKEY,JSON.stringify({start:startIso,people:PEOPLE,acc:DATEACC,arr:ARRDAYS,fl:FLIGHT,
   nights:BASES.map(b=>b.nights),hidden:HIDDEN,moved:MOVED,custom:CUSTOM,cur:CUR,crate:CRATE,
   temp:TEMP,dist:DIST,lang:LANG,asm:ASM,off:offIds(),car:CARMODE,custb:CUSTB,pace:DAYPACE,plans:PLANPICK,merge:MERGE}));}catch(e){}}
 /* Если дату придумали мы — говорим это на самой странице, а не только всплывашкой
@@ -6143,6 +6210,10 @@ document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)r
   if(t.dataset.pickday){pickDaySheet(t.dataset.pickday);}
   if(t.dataset.rmday){closeDaySheet();removeDay(t.dataset.rmbase,tidOf(t.dataset.rmday));}
   if(t.dataset.dsclose){closeDaySheet();}
+  /* рейс человека: открыть форму, сохранить, убрать */
+  if(t.dataset.flopen){flightSheet();}
+  if(t.dataset.flsave){flightSave();}
+  if(t.dataset.flclear){FLIGHT=null;_flDraft=null;savePlan();closeDaySheet();rerenderTrip();}
   /* город вылета: открыть выбор, выбрать аэропорт, вернуть городу маршрута */
   if(t.dataset.homeopen!==undefined){homeSheet();}
   if(t.dataset.readygo){const d=document.getElementById('rsdate');
@@ -7762,7 +7833,15 @@ function syncNums(){
   });
 }
 document.addEventListener('input',e=>{
-  const el=e.target;if(!el||!ASK)return;
+  const el=e.target;if(!el)return;
+  /* та же форма из анкеты стоит и на странице поездки — там она пишет в рейс
+     поездки, а не в ответы анкеты (правило 19б) */
+  if(el.dataset&&el.dataset.abk&&el.dataset.abk.indexOf('fl.')===0){
+    if(!_flDraft)_flDraft={};
+    _flDraft[el.dataset.abk.slice(3)]=el.value;
+    return;
+  }
+  if(!ASK)return;
   if(el.id==='aDays'){const v=parseInt(el.value,10);if(v>0&&v<60)ASK.days=v;syncNums();return;}
   if(el.id==='aAd'){const v=parseInt(el.value,10);if(v>0&&v<40)ASK.adults=v;syncNums();return;}
   if(el.id==='aKid'){const v=parseInt(el.value,10);if(v>=0&&v<20)ASK.kids=v;syncNums();return;}
