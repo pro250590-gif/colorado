@@ -5021,21 +5021,42 @@ function flightBtns(){
   }
   /* три ответа стоят В ОДИН РЯД — её эскиз 03.08. Подписи короткие и в две
      строки: на телефоне карточка всего 277 px, длинные туда не влезают. */
-  /* Авиасейлс обратный конец в ссылке не понимает — говорим это прямо, а не
-     оставляем человека с билетом не из того города */
-  const jaw=(ruMarket()&&openJaw()&&dp&&dp.air)
-    ? ('<div class="cway">Обратно летим из другого аэропорта — '+esc0(dp.city||'')+' · '+esc0(dp.air)
-       +'. В поиске это второй билет: возьмите его отдельно или через «Сложный маршрут».</div>') : '';
-  return jaw+'<div class="flbtns">'
-    /* «где самолётик — нужно ещё написать подобрать рейс» (её правка по скрину):
-       сверху что делаем, снизу какой билет */
-    +(oneWay?'<a class="flb" href="'+oneWay+'" target="_blank" rel="noopener"><span class="flbt">'+ic('plane','i-sm')+'Подобрать рейс</span><b>В одну сторону</b></a>':'')
-    /* туда-обратно показываем, только если такой билет вообще можно найти одной
-       ссылкой: при вылете из России и возврате из ДРУГОГО аэропорта — нельзя,
-       и кнопка, которая открывает не тот билет, хуже, чем её отсутствие */
-    +((ruMarket()&&openJaw())?'':('<a class="flb" href="'+flightSearch()+'" target="_blank" rel="noopener"><span class="flbt">'+ic('plane','i-sm')+'Подобрать рейс</span><b>Туда-обратно</b></a>'))
-    +'<button class="flb alt" data-flopen="1"><span class="flbt">'+ic('ticket','i-sm')+'Мой билет</span><b>Уже есть рейс</b></button>'
-    +'</div>';
+  /* «где самолётик — нужно ещё написать подобрать рейс» (её правка по скрину):
+     сверху что делаем, снизу какой билет */
+  const A=(href,sub)=>'<a class="flb" href="'+href+'" target="_blank" rel="noopener"><span class="flbt">'
+    +ic('plane','i-sm')+'Подобрать рейс</span><b>'+esc0(sub)+'</b></a>';
+  const mine='<button class="flb alt" data-flopen="1"><span class="flbt">'+ic('ticket','i-sm')
+    +'Мой билет</span><b>Уже есть рейс</b></button>';
+  /* ⚠️ ДВА БИЛЕТА ВМЕСТО НАДПИСИ. Когда летим из России (там Авиасейлс) и
+     возвращаемся ИЗ ДРУГОГО аэропорта, билета «туда-обратно» одной ссылкой не
+     бывает. Раньше мы писали это словами — клиент: «мне не нравится такая
+     формулировка». Теперь просто даём две кнопки и подписываем их аэропортами:
+     «Москва → Токио» и «Осака → Москва». Где аэропорт один и тот же, кнопка
+     «туда-обратно» работает и остаётся — её отдельная просьба. */
+  const O=originNow(),ar=arrivalAirport();
+  if(ruMarket()&&openJaw()&&dp&&dp.air&&ar&&ar.air){
+    const there=(O.city||O.code||'')+' → '+(ar.city||ar.air),
+          back=(dp.city||dp.air)+' → '+(O.city||O.code||'');
+    return '<div class="flbtns">'
+      +(oneWay?A(oneWay,there):'')
+      +(flightSearchBack()?A(flightSearchBack(),back):'')
+      +mine+'</div>';
+  }
+  return '<div class="flbtns">'
+    +(oneWay?A(oneWay,'В одну сторону'):'')
+    +A(flightSearch(),'Туда-обратно')
+    +mine+'</div>';
+}
+/* обратный билет отдельной ссылкой: из того аэропорта, откуда мы и вправду
+   улетаем, и на день последнего дня маршрута */
+function flightSearchBack(){
+  const back=PARTS.legs.slice().reverse().find(l=>l.mode==='flight'&&l.to==='home');
+  const air=back?((partPoint(back.from)||{}).air||''):(AIRPORT[BASES[BASES.length-1].id]||'');
+  const O=originNow();
+  if(!O.code||!air)return '';
+  const iso=back?fmtISO(dayDate(back.day)):fmtISO(addDays(planIso(),totalNights()));
+  if(ruMarket())return 'https://www.aviasales.ru/search/'+air+ddmm(iso)+O.code+PEOPLE;
+  return 'https://www.kayak.com/flights/'+air+'-'+O.code+'/'+iso+'/'+PEOPLE+'adults?sort=price_a';
 }
 function flightIn(){              /* перелёт в начало маршрута, если он вообще есть */
   const CB=tripBases(),fb=CB[0];
