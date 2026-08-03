@@ -1311,6 +1311,7 @@ body{background:linear-gradient(168deg,#eef1f8,#e9edf6 60%,#e6eaf4)!important}
 .cfree{list-style:none;padding:12px 13px;border:1.5px dashed rgba(91,63,196,.3);border-radius:12px;font:600 12px/1.45 "Inter",sans-serif;color:#8b8698;background:#faf9ff}
 /* ночи в городе — прямо в шапке города, над днями */
 .cnsub{display:block;margin-top:4px;font:500 11px/1.35 "Inter",sans-serif;color:#8b8fa3;font-style:normal}
+.cnight{display:flex;align-items:center;gap:7px;margin:10px 0 2px;padding:9px 11px;border-radius:12px;background:rgba(91,63,196,.07);color:#4a3a7a;font:600 12px/1.4 "Inter",sans-serif}
 .cnights{display:flex;align-items:flex-start;align-items:center;justify-content:space-between;gap:12px;margin-top:15px;padding:12px 14px;background:#fff;border:1px solid #eceef6;border-radius:15px;box-shadow:var(--sh1)}
 .cnl{font:800 12.5px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:-.02em;color:var(--ink2)}
 /* отложенные места города */
@@ -3077,12 +3078,19 @@ function buildCities(){
       const MOVENM={train:'поезд',bus:'автобус',ferry:'паром',transfer:'трансфер'};
       const transit=(a1,b1)=>'https://www.google.com/maps/dir/?api=1&origin='+encodeURIComponent(a1)
         +'&destination='+encodeURIComponent(b1)+'&travelmode=transit';
+      /* ⚠️ НОЧНОЙ ПЕРЕЕЗД НАЧИНАЕТСЯ НАКАНУНЕ. Её разбор: «мы выезжаем шестого и
+         приезжаем шестого — если ночь в поезде, то должны были выехать пятого
+         вечером и приехать шестого утром, логики нет». Верно: поезд 22:40 → 7:35
+         пересекает полночь, и обе даты в карточке одинаковыми быть не могут. */
+      const wayN=nightWay(b.id);
+      const dep=wayN?addDays(startIso,nightsBefore(b.id)-1):ci;
       arrival='<div class="cnode"><span class="cdot">'+ic(segIc,'i-sm')+'</span>'
-        +'<div class="clbl"><b>Переезд</b><span>'+dm(ci)+'</span></div>'
+        +'<div class="clbl"><b>Переезд</b><span>'+(wayN?(dm(dep)+' → '+dm(ci)+' · ночь в дороге'):dm(ci))+'</span></div>'
         +'<div class="carr"><div class="crow">'
-          +'<div class="cpt"><b>'+shortName((ar.from&&ar.from.name)||'')+'</b><span>'+dm(ci)+'</span></div>'
-          +'<div class="cmid"><div class="cic">'+ic(segIc,'i-sm')+'</div></div>'
-          +'<div class="cpt r"><b>'+shortName(b.name)+'</b><span>'+dm(ci)+'</span></div></div>'
+          +'<div class="cpt"><b>'+shortName((ar.from&&ar.from.name)||'')+'</b><span>'+dm(dep)+(wayN?' · вечером':'')+'</span></div>'
+          +'<div class="cmid"><div class="cic">'+ic(wayN?'moon':segIc,'i-sm')+'</div></div>'
+          +'<div class="cpt r"><b>'+shortName(b.name)+'</b><span>'+dm(ci)+(wayN?' · утром':'')+'</span></div></div>'
+          +(wayN?'<div class="cnight">'+ic('moon','i-sm')+' Ночь проводим в дороге: '+esc0(wayN)+'. Отель ни здесь, ни там за эту ночь не нужен.</div>':'')
           +(seg==='flight'
             ? '<a class="cbook" href="'+skyscanner((ar.from&&ar.from.air)||AIRPORT[ar.from?ar.from.id:'']||'',AIRPORT[b.id]||'',fmtISO(ci))+'" target="_blank" rel="noopener">'+ic('plane','i-sm')+' Подобрать рейсы</a>'
             : (seg==='train'||seg==='bus'||seg==='ferry')
