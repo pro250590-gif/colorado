@@ -1237,9 +1237,10 @@ body{background:linear-gradient(168deg,#eef1f8,#e9edf6 60%,#e6eaf4)!important}
 .cbook small{font-weight:500;opacity:.78}
 /* три ответа вместо одной кнопки: искать в одну сторону, туда-обратно, или
    вписать свой рейс. Столбиком — на телефоне в строку они не помещаются. */
-.flbtns{display:flex;flex-direction:column;gap:8px}
-.flbtns .cbook{margin-top:10px;width:100%;border:0;cursor:pointer}
-.flbtns .cbook:first-child{margin-top:16px}
+.flbtns{display:flex;gap:8px;margin-top:16px}
+.flb{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:11px 6px;border-radius:12px;background:#5b3fc4;color:#fff;border:0;cursor:pointer;text-decoration:none;font:700 11.5px/1.25 "Inter",sans-serif;text-align:center}
+.flb .i{width:17px;height:17px;flex:none}
+.flb.alt{background:#fff;color:#5b3fc4;border:1.5px solid #d9d3f2}
 .cbook.alt{background:#fff;color:#5b3fc4;border:1.5px solid #d9d3f2}
 .ctransf{margin-top:14px;padding-top:14px;border-top:1px solid #e8e9f2;text-align:center;font:500 12px/1 "Inter",sans-serif;color:#8b8fa3}
 /* «оттуда до города» — когда аэропорт и город ночёвки в разных местах */
@@ -4876,10 +4877,12 @@ function flightBtns(){
     return '<div class="cway">Ваш рейс: '+esc0(s)+'</div>'
       +'<button class="cbook" data-flopen="1">'+ic('pencil','i-sm')+' Изменить рейс</button>';
   }
+  /* три ответа стоят В ОДИН РЯД — её эскиз 03.08. Подписи короткие и в две
+     строки: на телефоне карточка всего 277 px, длинные туда не влезают. */
   return '<div class="flbtns">'
-    +(oneWay?'<a class="cbook" href="'+oneWay+'" target="_blank" rel="noopener">'+ic('plane','i-sm')+' Подобрать рейс <small>в одну сторону</small></a>':'')
-    +'<a class="cbook" href="'+flightSearch()+'" target="_blank" rel="noopener">'+ic('plane','i-sm')+' Подобрать рейс <small>туда-обратно</small></a>'
-    +'<button class="cbook alt" data-flopen="1">'+ic('ticket','i-sm')+' У меня уже есть рейс</button>'
+    +(oneWay?'<a class="flb" href="'+oneWay+'" target="_blank" rel="noopener">'+ic('plane','i-sm')+'<b>В одну сторону</b></a>':'')
+    +'<a class="flb" href="'+flightSearch()+'" target="_blank" rel="noopener">'+ic('plane','i-sm')+'<b>Туда-обратно</b></a>'
+    +'<button class="flb alt" data-flopen="1">'+ic('ticket','i-sm')+'<b>Уже есть рейс</b></button>'
     +'</div>';
 }
 function flightIn(){              /* перелёт в начало маршрута, если он вообще есть */
