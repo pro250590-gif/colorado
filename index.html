@@ -1284,7 +1284,11 @@ body{background:linear-gradient(168deg,#eef1f8,#e9edf6 60%,#e6eaf4)!important}
 .bmk .i{width:15px;height:15px}
 .bmk.on{background:#5b3fc4;border-color:#5b3fc4;color:#fff}
 .bmk.on .i{fill:currentColor}
-.bmk.ontile{position:absolute;right:44px;top:9px;width:28px;height:28px;border-color:transparent}
+/* закладка и «⋯» на плитке — ОДНОГО РАЗМЕРА И С ПРОСВЕТОМ между ними
+   (её правка 04.08: «они прям прилипли друг к другу и должны быть одного
+   размера»). Размер и форма взяты у «⋯»: 32 px, круг. */
+.bmk.ontile{position:absolute;right:51px;top:11px;z-index:3;width:32px;height:32px;border-radius:50%;border-color:transparent}
+.bmk.ontile .i{width:16px;height:16px}
 .kbtns{display:flex;align-items:center;gap:8px}
 .bmkrow{display:flex;align-items:center;justify-content:center;gap:8px}
 .bmkrow.on{color:#5b3fc4!important}
