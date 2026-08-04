@@ -2426,9 +2426,9 @@ function flightSearch(){
      «откуда-дата-куда-дата» подразумевает возврат из того же аэропорта.
      Поэтому в этом случае мы НЕ делаем вид, что нашли билет туда-обратно:
      открываем поиск в одну сторону, а про обратный говорим словами рядом. */
-  if(ruMarket())return 'https://www.aviasales.ru/search/'+O.code+ddmm(outIso)+outAir
-    +(openJaw()?'':ddmm(backIso))+PEOPLE;
-  return 'https://www.kayak.com/flights/'+O.code+'-'+outAir+'/'+outIso+'/'+backAir+'-'+O.code+'/'+backIso+'/'+PEOPLE+'adults?sort=price_a';
+  if(ruMarket())return aff('https://www.aviasales.ru/search/'+O.code+ddmm(outIso)+outAir
+    +(openJaw()?'':ddmm(backIso))+PEOPLE,'flight');
+  return aff('https://www.kayak.com/flights/'+O.code+'-'+outAir+'/'+outIso+'/'+backAir+'-'+O.code+'/'+backIso+'/'+PEOPLE+'adults?sort=price_a','flight');
 }
 /* улетаем не из того аэропорта, куда прилетели */
 function openJaw(){
@@ -2561,21 +2561,39 @@ function airPick(code){
     +'. Карта, карточка перелёта и подбор рейсов пересчитаны</i>',null,null);
 }
 /* ================= ПАРТНЁРСКИЕ ССЫЛКИ БРОНИ ================= */
-/* AFF — метки партнёрок; пусто = ссылки работают, но без нашего процента. Заполнить после регистрации. */
-const AFF={booking:'',gyg:'',kayak:''};
+/* ⚠️ ОДНО МЕСТО НА ВСЕ ПАРТНЁРКИ. Пусто — ссылки работают как обычные, просто
+   без нашего процента; вписал — начинают считаться. Ничего, кроме этой таблицы,
+   для подключения править не нужно.
+   Формат: либо ГОТОВАЯ ЗАГОТОВКА ССЫЛКИ, которая кончается на u= (её выдаёт
+   кабинет Travelpayouts: tp.media/r?marker=…&p=…&u=), — тогда наш адрес просто
+   подставляется в конец; либо старый вид «одна метка» для Booking и GetYourGuide,
+   которые умеют принимать её прямо в адресе.
+   Так одна регистрация закрывает жильё, билеты, машины и экскурсии сразу. */
+const AFF={
+  booking:'',            /* aid= у Booking */
+  gyg:'',                /* partner_id= у GetYourGuide */
+  kayak:'',              /* пока не используется, оставлено под метку Kayak */
+  /* заготовки-обёртки, каждая должна кончаться на u= */
+  wrap:{hotel:'',flight:'',car:'',activity:'',train:'',transfer:'',esim:'',insurance:''}
+};
+/* обернуть наш адрес в партнёрскую ссылку, если для этой полки она задана */
+function aff(url,kind){
+  const w=(AFF.wrap&&AFF.wrap[kind])||'';
+  return w?(w+encodeURIComponent(url)):url;
+}
 function bookHotel(cityQ,ci,co,people){
   const p='ss='+encodeURIComponent(cityQ)+'&checkin='+fmtISO(ci)+'&checkout='+fmtISO(co)
     +'&group_adults='+(people||PEOPLE)+'&no_rooms='+Math.max(1,Math.ceil((people||PEOPLE)/2))+'&group_children=0';
-  return 'https://www.booking.com/searchresults.html?'+p+(AFF.booking?'&aid='+AFF.booking:'');
+  return aff('https://www.booking.com/searchresults.html?'+p+(AFF.booking?'&aid='+AFF.booking:''),'hotel');
 }
 /* Прокат ищем В АЭРОПОРТУ, если он известен: в посёлке у входа в парк
    (Спрингдейл) прокатов нет вовсе, и Kayak честно отдавал «0 результатов».
    Коды аэропортов Kayak понимает как есть: /cars/LAS/GJT/дата/дата */
 function bookCar(pickup,dropoff,ci,co){
-  return 'https://www.kayak.com/cars/'+encodeURIComponent(pickup)+'/'+encodeURIComponent(dropoff)+'/'+fmtISO(ci)+'/'+fmtISO(co);
+  return aff('https://www.kayak.com/cars/'+encodeURIComponent(pickup)+'/'+encodeURIComponent(dropoff)+'/'+fmtISO(ci)+'/'+fmtISO(co),'car');
 }
 function bookActivity(q){
-  return 'https://www.getyourguide.com/s/?q='+encodeURIComponent(q)+(AFF.gyg?'&partner_id='+AFF.gyg:'');
+  return aff('https://www.getyourguide.com/s/?q='+encodeURIComponent(q)+(AFF.gyg?'&partner_id='+AFF.gyg:''),'activity');
 }
 /* ширина подписи — меряем по-настоящему, иначе на длинных названиях подписи наезжают */
 let _mctx;
@@ -5121,8 +5139,8 @@ function flightSearchOne(){
   const air=out?((partPoint(out.to)||{}).air||''):(AIRPORT[BASES[0].id]||'');
   const O=originNow();
   if(!O.code||!air)return '';
-  if(ruMarket())return 'https://www.aviasales.ru/search/'+O.code+ddmm(startIso)+air+PEOPLE;
-  return 'https://www.kayak.com/flights/'+O.code+'-'+air+'/'+startIso+'/'+PEOPLE+'adults?sort=price_a';
+  if(ruMarket())return aff('https://www.aviasales.ru/search/'+O.code+ddmm(startIso)+air+PEOPLE,'flight');
+  return aff('https://www.kayak.com/flights/'+O.code+'-'+air+'/'+startIso+'/'+PEOPLE+'adults?sort=price_a','flight');
 }
 function flightBtns(){
   const oneWay=flightSearchOne(),dp=departureAirport();
@@ -5167,8 +5185,8 @@ function flightSearchBack(){
   const O=originNow();
   if(!O.code||!air)return '';
   const iso=back?fmtISO(dayDate(back.day)):fmtISO(addDays(planIso(),totalNights()));
-  if(ruMarket())return 'https://www.aviasales.ru/search/'+air+ddmm(iso)+O.code+PEOPLE;
-  return 'https://www.kayak.com/flights/'+air+'-'+O.code+'/'+iso+'/'+PEOPLE+'adults?sort=price_a';
+  if(ruMarket())return aff('https://www.aviasales.ru/search/'+air+ddmm(iso)+O.code+PEOPLE,'flight');
+  return aff('https://www.kayak.com/flights/'+air+'-'+O.code+'/'+iso+'/'+PEOPLE+'adults?sort=price_a','flight');
 }
 function flightIn(){              /* перелёт в начало маршрута, если он вообще есть */
   const CB=tripBases(),fb=CB[0];
