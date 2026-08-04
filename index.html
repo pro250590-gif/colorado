@@ -4022,6 +4022,54 @@ const DAYPACES=[{k:'calm',h:8,nm:'спокойный',sub:'8 часов на н�
 let DAYPACE='norm';
 function paceH(){const p=DAYPACES.find(x=>x.k===DAYPACE)||DAYPACES[1];return p.h;}
 Object.defineProperty(window,'DAY_LIMIT',{get:function(){return paceH()*60;}});
+/* ── ⚠️ РЕЙС РЕЖЕТ ПЕРВЫЙ И ПОСЛЕДНИЙ ДЕНЬ ────────────────────────────────
+   Её слова 03.08: «он может прилететь рано в 5 утра — и тогда день целый, а
+   может прилететь ночью». Раньше окно дня было одинаковым у всех дней, и в день
+   прилёта движок предлагал полный маршрут, даже если самолёт садится в 22:00.
+   Теперь так: день считается от 9 утра, а рейс отрезает от этого окна начало
+   (пока летим и проходим границу) или конец (пора выезжать в аэропорт).
+   Считаем только когда рейс ВПИСАН: без билета времени прилёта мы не знаем и
+   выдумывать его не будем (правило 19б).
+   Дорога из аэропорта в город отдельно НЕ вычитается — она и так стоит в самом
+   дне первым перегоном; вычитаем то, чего в дне нет: границу, багаж и
+   регистрацию. Для дальнего перелёта 1,5 ч на прилёте и 3 ч на вылете, для
+   ближнего 45 мин и 2 ч. */
+const DAY0=9*60;
+/* ⚠️ имя hhmm уже занято ФОРМАТТЕРОМ минут в часы (ниже по файлу), и
+   объявленный позже он молча перебивал этот разбор: «22:00» превращалось в NaN,
+   а в шапке дня стояло «из NaN ч». Поэтому здесь своё имя. */
+function clockMin(v){const m=/^(\d{1,2}):(\d{2})$/.exec(String(v||''));
+  return m?(Math.min(23,+m[1])*60+Math.min(59,+m[2])):null;}
+function longHaul(){
+  const f=flightIn();
+  return !!(f&&kmBetween(f.from[0],f.from[1],f.to[0],f.to[1])>3000);
+}
+function flightCut(tid){
+  const e=SCHED_BY[tid];
+  if(!e||!flightHas())return 0;
+  const lim=DAY_LIMIT,long=longHaul();
+  if(e.disp===1){
+    const t=clockMin(FLIGHT.arrTime);if(t===null)return 0;
+    return Math.max(0,Math.min(lim,(t+(long?90:45))-DAY0));
+  }
+  if(e.fin){
+    const t=clockMin(FLIGHT.bDepTime);if(t===null)return 0;
+    return Math.max(0,Math.min(lim,(DAY0+lim)-(t-(long?180:120))));
+  }
+  return 0;
+}
+function dayLimit(tid){return Math.max(0,DAY_LIMIT-flightCut(tid));}
+/* строка-объяснение: почему у этого дня окно короче */
+function flightDayNote(tid){
+  const cut=flightCut(tid);if(!cut)return '';
+  const e=SCHED_BY[tid],long=longHaul(),left=dayLimit(tid);
+  const tail=left?('на маршрут остаётся '+fmtHM(left)):'на маршрут времени в этот день нет';
+  if(e.disp===1)
+    return '<div class="cnight">'+ic('clock','i-sm')+' Прилетаем в '+esc0(FLIGHT.arrTime)
+      +', на границу и багаж '+(long?'~1,5 ч':'~45 мин')+' — '+tail+'.</div>';
+  return '<div class="cnight">'+ic('clock','i-sm')+' Вылет в '+esc0(FLIGHT.bDepTime)
+    +', в аэропорту быть за '+(long?'3 ч':'2 ч')+' — '+tail+'.</div>';
+}
 function stepMin(a,b){
   if(!a||!b||typeof a.lat!=='number'||typeof b.lat!=='number')return 0;
   const r=(a.id&&b.id)?roadMap().get(a.id+'>'+b.id):null;
@@ -4193,7 +4241,7 @@ function squeezed(tid){
   if(SQZ[tid])return SQZ[tid];
   const skip={};
   let guard=40;
-  while(chainMinutes(tid,skip)>DAY_LIMIT&&guard-->0){
+  while(chainMinutes(tid,skip)>dayLimit(tid)&&guard-->0){
     const list=chainOf(tid,skip);
     if(list.length<2)break;
     /* кандидаты: сперва «если время», потом «хочется». Звёздные — никогда */
@@ -4222,7 +4270,7 @@ function squeezed(tid){
     const now=chainMinutes(tid,skip);
     const minRank=Math.min.apply(null,cand.map(c=>c.rank));
     const same=cand.filter(c=>c.rank===minRank);
-    const fits=same.filter(c=>now-c.saved<=DAY_LIMIT).sort((a,b)=>b.i-a.i);
+    const fits=same.filter(c=>now-c.saved<=dayLimit(tid)).sort((a,b)=>b.i-a.i);
     const pick=fits.length?fits[0]:same.sort((a,b)=>b.saved-a.saved)[0];
     skip[pick.p.id]=1;
   }
@@ -4271,9 +4319,10 @@ function noteHTML(tid,cls){
 function dayBudgetHTML(tid){
   const b=dayMinutes(tid);
   if(!b.n)return '';
-  const over=b.total>DAY_LIMIT;
+  const lim=dayLimit(tid),over=b.total>lim;
+  /* окна не осталось совсем — «из 0 мин» читать нельзя, говорим словами */
   return '<span class="dbud'+(over?' over':'')+'" data-bud="'+tid+'">'+ic('clock','i-sm')
-    +' ≈'+fmtHM(b.total)+' из '+fmtHM(DAY_LIMIT)+'</span>'
+    +(lim?(' ≈'+fmtHM(b.total)+' из '+fmtHM(lim)):' в этот день только дорога')+'</span>'
     /* закрытые места видно в шапке дня, а не только внутри карточек */
     +'<span class="dshut" data-shut="'+tid+'" style="display:none"></span>'
     /* ночёвка на выезде — это про сегодняшний день, и человек должен видеть её
@@ -4361,12 +4410,12 @@ function planAddHTML(tid){
         +'<button class="pbtn2" data-unmerge="'+tid+'|'+k+'">Убрать из дня</button></div>';
     if(k===act)return '';
     const all=mergeMinutes(tid,k);
-    if(all<=DAY_LIMIT)
+    if(all<=dayLimit(tid))
       return '<div class="padd"><span>«'+esc0(nm)+'» влезает в этот день вдобавок к выбранному: выйдет '
-        +fmtHM(all)+' из '+fmtHM(DAY_LIMIT)+'</span>'
+        +fmtHM(all)+' из '+fmtHM(dayLimit(tid))+'</span>'
         +'<button class="pbtn2" data-merge="'+tid+'|'+k+'">Взять в этот день</button></div>';
     return '<div class="padd off"><span>«'+esc0(nm)+'» в один день с выбранным не влезает: вышло бы '
-      +fmtHM(all)+' из '+fmtHM(DAY_LIMIT)+' — это выбор вместо, а не вдобавок</span></div>';
+      +fmtHM(all)+' из '+fmtHM(dayLimit(tid))+' — это выбор вместо, а не вдобавок</span></div>';
   }).join('');
 }
 function refreshPlans(){
@@ -4478,8 +4527,9 @@ function refreshBudgets(){
     const tid=tidOf(el.dataset.bud),b=dayMinutes(tid);
     if(!b.n){el.style.display='none';return;}
     el.style.display='';
-    el.classList.toggle('over',b.total>DAY_LIMIT);
-    el.innerHTML=ic('clock','i-sm')+' ≈'+fmtHM(b.total)+' из '+fmtHM(DAY_LIMIT);
+    const lim=dayLimit(tid);
+    el.classList.toggle('over',b.total>lim);
+    el.innerHTML=ic('clock','i-sm')+(lim?(' ≈'+fmtHM(b.total)+' из '+fmtHM(lim)):' в этот день только дорога');
     el.title='на местах '+fmtHM(b.place)+' · в дороге '+fmtHM(b.move)
       +(b.rides?' · переезды по расписанию '+fmtHM(b.ride):'')
       +(b.meals?' · еда '+fmtHM(b.food):'')
@@ -4525,6 +4575,7 @@ function buildDays(){
       /* день вылета кончался последней точкой, и ни дороги в аэропорт, ни самого
          рейса в дне не было. Теперь дорога домой стоит в конце этого дня. */
       +(e.fin?depDayHTML():'')
+      +flightDayNote(e.tid)
 
       +noteHTML(e.tid,'dnote')+'</div></details>';
   });
