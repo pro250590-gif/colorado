@@ -101,12 +101,9 @@ body.athome,body.atland{padding-right:0!important}
 .askbox textarea{width:100%;border:0;background:none;resize:none;outline:none;min-height:84px;
   font:500 14.5px/1.5 "Inter",sans-serif;color:var(--ink)}
 .askbox textarea::placeholder{color:#a3a0b8}
-.askrow{display:flex;align-items:center;gap:10px}
+.askrow{display:flex;align-items:center;gap:10px;margin-top:12px}
 .askgo{flex:1;min-height:46px;border:0;border-radius:14px;cursor:pointer;-webkit-appearance:none;appearance:none;
   background:linear-gradient(150deg,#7a5cf0,#5b3fc4);color:#fff;font:800 13px/1 "Plus Jakarta Sans",sans-serif}
-.lchips{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
-.lchips button{border:1px solid #e4e6f0;background:#fff;border-radius:11px;padding:9px 11px;cursor:pointer;
-  font:600 12px/1 "Inter",sans-serif;color:#8b8fa3}
 .lor{text-align:center;margin-top:16px;font:600 12.5px/1.5 "Inter",sans-serif;color:#8b8fa3}
 .lcont{display:block;width:100%;margin-top:18px;padding:14px;border:1.5px solid rgba(91,63,196,.28);border-radius:14px;
   background:#fff;cursor:pointer;font:600 13px/1.3 "Inter",sans-serif;color:#5b3fc4;-webkit-appearance:none;appearance:none}
@@ -7695,12 +7692,11 @@ function landHTML(){
     +'<div class="lgrid"><div class="lleft">'
     +'<h1 class="landh">Маршрут, <em>который</em> собран под вас</h1>'
     +'<p class="landsub">Расскажите про поездку своими словами — вернём готовый план по дням, с картой, жильём и бюджетом.</p>'
-    +'<div class="askbox"><textarea id="askText" rows="3" placeholder="Колорадо с 10 по 20 сентября, вдвоём. Билеты уже купили. Любим горы и поесть, города — по минимуму…"></textarea>'
-      +'<div class="askrow"><button class="askgo" data-askgo="1">Собрать маршрут</button></div></div>'
-    +'<div class="lchips">'
-      +['Колорадо на 10 дней вдвоём','Юта на неделю с детьми','Юта с 3 по 10 октября, билеты есть']
-        .map(t=>'<button data-asktry="'+esc0(t)+'">'+t+'</button>').join('')
-    +'</div>'
+    /* ⚠️ Кнопка СНАРУЖИ поля, а не внутри рамки (её правка 04.08). Готовые
+       примеры запросов убраны по её же просьбе: с ними главная выглядела так,
+       будто мы возим только Колорадо и Юту. */
+    +'<div class="askbox"><textarea id="askText" rows="3" placeholder="Колорадо с 10 по 20 сентября, вдвоём. Билеты уже купили. Любим горы и поесть, города — по минимуму…"></textarea></div>'
+    +'<div class="askrow"><button class="askgo" data-askgo="1">Собрать маршрут</button></div>'
     +'<div class="lor">или <button class="lnk" data-askform="1">пройдите анкету</button> — спросим только нужное</div>'
     +landCont()
     +'</div><div class="lright"><canvas id="globe" aria-hidden="true"></canvas>'
@@ -7810,8 +7806,14 @@ function globeStart(){
     const line=[];for(let lat=-88;lat<=88;lat+=6)line.push(toXYZ(lat,lng));grid.push(line);
   }
   const short=nm=>String(nm||'').split(/[,·]|\s+и\s+/)[0].trim();
-  /* наши направления — ярко; будущие места — светлее и мельче */
-  const marks=(typeof CATALOG!=='undefined'?CATALOG:[]).filter(c=>c.ll)
+  /* ⚠️ ВСЕ ТОЧКИ И ПОДПИСИ ОДНОГО ВИДА — её правка 04.08: «точки городов и
+     названия городов все должны быть одного дизайна, как Милан». Деление на
+     «наши ярче, будущие бледнее» убрано: человеку на витрине эта разница ничего
+     не объясняла, а шар выглядел недорисованным.
+     ⚠️ Юта с шара снята по её просьбе: она стоит вплотную к Колорадо, и две
+     подписи перебивали друг друга. Маршрут при этом никуда не делся. */
+  const SKIP=/^Юта/i;
+  const marks=(typeof CATALOG!=='undefined'?CATALOG:[]).filter(c=>c.ll&&!SKIP.test(c.nm||''))
     .map(c=>({p:toXYZ(c.ll[0],c.ll[1]),nm:short(c.nm),ours:true}))
     .concat((typeof GLOBE_PLACES!=='undefined'?GLOBE_PLACES:[])
       .map(c=>({p:toXYZ(c.ll[0],c.ll[1]),nm:c.nm,ours:false})));
@@ -7834,14 +7836,16 @@ function globeStart(){
      Береговая линия — ломаная, и на изломах видны углы. Приём известный: вести
      кривую ЧЕРЕЗ СЕРЕДИНЫ отрезков, а сами точки делать вершинами дуг. Углы
      скругляются сами, лишних данных не нужно. */
-  const polyline=(pts,cx,cy,R,color,width,smooth)=>{
+  /* far=true — рисуем ТУ сторону шара, что сейчас от нас отвёрнута: она
+     просвечивает насквозь (её задумка про полупрозрачный шар) */
+  const polyline=(pts,cx,cy,R,color,width,smooth,far)=>{
     ctx.strokeStyle=color;ctx.lineWidth=width;
     ctx.lineJoin='round';ctx.lineCap='round';
     ctx.beginPath();
     let prev=null,started=false;
     for(let i=0;i<pts.length;i++){
       const q=put(pts[i],cx,cy,R);
-      if(q[2]<0.02){started=false;prev=null;continue;}   /* ушло за край — рвём линию */
+      if(far?(q[2]>-0.02):(q[2]<0.02)){started=false;prev=null;continue;}   /* другая сторона — рвём линию */
       if(!started){ctx.moveTo(q[0],q[1]);started=true;prev=q;continue;}
       if(smooth&&prev)ctx.quadraticCurveTo(prev[0],prev[1],(prev[0]+q[0])/2,(prev[1]+q[1])/2);
       else ctx.lineTo(q[0],q[1]);
@@ -7857,7 +7861,13 @@ function globeStart(){
     if(cv.width!==Math.round(w*k)){cv.width=Math.round(w*k);cv.height=Math.round(h*k);}
     ctx.setTransform(k,0,0,k,0,0);
     ctx.clearRect(0,0,w,h);
-    const R=Math.min(w,h)*0.42,cx=w/2,cy=h/2;
+    /* ⚠️ РАЗМЕР И МЕСТО ШАРА — её замер 04.08: «переборщили, уменьшить процентов
+       на семь и сместить вправо процентов на пятнадцать». Держим числами, чтобы
+       в следующий раз правилось одной цифрой, а не подбором. */
+    /* ⚠️ Сдвиг ограничен свободным местом: при сдвиге на глаз шар упирался в
+       край холста и обрезался справа (замер: до края оставался 1 пиксель). */
+    const R=Math.min(w,h)*0.42*0.93;
+    const cx=Math.min(w/2+R*0.30,w-R-10),cy=h/2;
     if(!drag)ry+=GLOBE.speed;
     /* ⚠️ ОБВОДКА САМОГО ШАРА — её правка: «у самого круга есть граница именно в
        тех местах, где пустота». Без неё край шара читался только там, где суша. */
@@ -7877,12 +7887,17 @@ function globeStart(){
       const q=put(dots[i],cx,cy,R),z=q[2];
       /* передняя сторона заметно контрастнее задней: иначе зерно с обратной
          стороны спорит с контуром берега */
-      const a=z>=0?(0.55+0.4*z):(0.09+0.07*(1+z));
+      /* ⚠️ ЗАДНЯЯ СТОРОНА ДОЛЖНА БЫТЬ ВИДНА. Её слова 04.08: «пропала задумка,
+         что шар как будто полупрозрачный и уходящие места тоже видно». Пропала
+         она не сама: точки мы дважды уменьшали, а шар увеличили — при яркости
+         0.09 и размере 0.13 пикселя от задней стороны не осталось ничего.
+         Держим её заметной отдельными числами. */
+      const a=z>=0?(0.55+0.4*z):(0.15+0.11*(1+z));
       /* квадратик вместо кружка: на полпикселя разницы не видно, круг втрое дороже */
       /* ⚠️ ВДВОЕ МЕЛЬЧЕ — её правка. Ниже полупикселя точка перестаёт быть точкой:
          браузер размазывает её сглаживанием, и зерно бледнеет. Поэтому вместе с
          размером поднята яркость, иначе материк выцвел бы. */
-      const r=z>=0?(0.21+0.15*z):0.13;
+      const r=z>=0?(0.21+0.15*z):0.19;
       let b=Math.round(a*(STEPS-1)/0.95);
       if(b<0)b=0;
       if(b>STEPS-1)b=STEPS-1;
@@ -7899,6 +7914,9 @@ function globeStart(){
        яркий — сейчас слишком бросается в глаза». Настоящее размытие на каждом
        кадре дорого, поэтому ведём линию дважды: широкую и почти прозрачную снизу
        (она даёт мягкий ореол) и тонкую сверху. Яркость снижена вдвое. */
+    /* и контур материков С ТОЙ СТОРОНЫ — бледной ниткой: именно он читается как
+       «шар прозрачный», одних точек для этого мало */
+    coast.forEach(c=>polyline(c,cx,cy,R,'rgba('+GLOBE.dot+',.13)',0.8,true,true));
     coast.forEach(c=>polyline(c,cx,cy,R,'rgba('+GLOBE.dot+',.10)',2.6,true));
     coast.forEach(c=>polyline(c,cx,cy,R,'rgba('+GLOBE.dot+',.34)',0.9,true));
     /* ⚠️ ЗАНЯТЫЕ МЕСТА СЧИТАЕМ С САМОГО НАЧАЛА. Город вылета рисуется первым, и
@@ -7911,13 +7929,19 @@ function globeStart(){
     /* город вылета */
     if(home){
       const H=put(home,cx,cy,R),hz=H[2];
-      ctx.fillStyle='rgba('+GLOBE.mark+','+(hz>=0?0.95:0.22).toFixed(2)+')';
-      ctx.beginPath();ctx.arc(H[0],H[1],hz>=0?3.4:2,0,6.283);ctx.fill();
+      /* город вылета рисуем ТЕМ ЖЕ ВИДОМ, что и остальные: «все одного дизайна» */
+      const ha=hz>=0?(0.45+0.5*hz):(0.12+0.1*(1+hz));
+      if(hz>=0){
+        ctx.fillStyle='rgba('+GLOBE.mark+','+(ha*0.18).toFixed(2)+')';
+        ctx.beginPath();ctx.arc(H[0],H[1],7,0,6.283);ctx.fill();
+      }
+      ctx.fillStyle='rgba('+GLOBE.mark+','+ha.toFixed(2)+')';
+      ctx.beginPath();ctx.arc(H[0],H[1],hz>=0?2.6:1.6,0,6.283);ctx.fill();
       if(GLOBE.labels&&hz>0.06&&O&&O.city){
         const la=Math.min(1,(hz-0.06)*2.6),right=H[0]>=cx;
-        ctx.font='800 12px "Inter",system-ui,sans-serif';
+        ctx.font='600 11.5px "Inter",system-ui,sans-serif';
         ctx.textAlign=right?'left':'right';
-        ctx.fillStyle='rgba('+GLOBE.mark+','+(la*0.95).toFixed(2)+')';
+        ctx.fillStyle='rgba(43,46,66,'+(la*0.9).toFixed(2)+')';
         ctx.fillText(O.city,H[0]+(right?10:-10),H[1]);
         taken.push([H[0],H[1]]);
       }
@@ -7930,25 +7954,24 @@ function globeStart(){
     marks.map(m=>({m:m,q:put(m.p,cx,cy,R)}))
       .sort((a,b)=>((b.m.ours?1:0)-(a.m.ours?1:0))||(b.q[2]-a.q[2]))
       .forEach(o=>{
-      const q=o.q,z=q[2],ours=!!o.m.ours;
-      const a=(z>=0?(0.45+0.5*z):(0.12+0.1*(1+z)))*(ours?1:0.6);
-      if(z>=0&&ours){
+      const q=o.q,z=q[2];
+      const a=z>=0?(0.45+0.5*z):(0.12+0.1*(1+z));
+      if(z>=0){
         ctx.fillStyle='rgba('+GLOBE.mark+','+(a*0.18).toFixed(2)+')';
         ctx.beginPath();ctx.arc(q[0],q[1],7,0,6.283);ctx.fill();
       }
       ctx.fillStyle='rgba('+GLOBE.mark+','+a.toFixed(2)+')';
-      ctx.beginPath();ctx.arc(q[0],q[1],ours?(z>=0?2.6:1.6):(z>=0?1.7:1.1),0,6.283);ctx.fill();
+      ctx.beginPath();ctx.arc(q[0],q[1],z>=0?2.6:1.6,0,6.283);ctx.fill();
       if(GLOBE.labels&&z>0.06&&free(q[0],q[1])){
         const la=Math.min(1,(z-0.06)*2.6),right=q[0]>=cx;
-        ctx.font=(ours?'600 11.5px':'500 10.5px')+' "Inter",system-ui,sans-serif';
+        ctx.font='600 11.5px "Inter",system-ui,sans-serif';
         /* ⚠️ подпись, которая не помещается, не рисуем вовсе: обрезанное
            «Килиманджа…» у края холста читается как поломка */
         const tw=ctx.measureText(o.m.nm).width;
         const x0=right?(q[0]+9):(q[0]-9-tw);
         if(x0<2||x0+tw>w-2)return;
         ctx.textAlign=right?'left':'right';
-        ctx.fillStyle=ours?('rgba(43,46,66,'+(la*0.9).toFixed(2)+')')
-                          :('rgba(110,114,135,'+(la*0.75).toFixed(2)+')');
+        ctx.fillStyle='rgba(43,46,66,'+(la*0.9).toFixed(2)+')';
         ctx.fillText(o.m.nm,q[0]+(right?9:-9),q[1]);
         taken.push([q[0],q[1]]);
       }
@@ -8443,7 +8466,6 @@ document.addEventListener('click',e=>{
   if(t.dataset.bdel!==undefined){delBudgetRow(t.dataset.bdel);}
   if(t.dataset.bper!==undefined){_bper=t.dataset.bper;
     [].forEach.call(document.querySelectorAll('.bkinds .dskind'),b=>b.classList.toggle('on',b.dataset.bper===t.dataset.bper));}
-  if(t.dataset.asktry){const ta=document.getElementById('askText');if(ta){ta.value=t.dataset.asktry;ta.focus();}}
   if(t.dataset.askform!==undefined){showLand(parseAsk(''));}
   if(t.dataset.aopen){_askOpen[t.dataset.aopen]=1;renderLand();}
   if(t.dataset.amore!==undefined){_askMore=!_askMore;renderLand();}
