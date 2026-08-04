@@ -92,7 +92,10 @@ body.atland>.bottomnav,body.atland>.siderail,body.atland>#mapShell,body.atland>h
 body.atland>#days,body.atland>#toast,body.atland>.orb,body.atland>.glow{display:none!important}
 body.athome,body.atland{padding-right:0!important}
 /* ── ГЛАВНАЯ СТРАНИЦА: первый блок ── */
-.landwrap{padding:22px 10px 44px;max-width:760px}
+/* ⚠️ На телефоне поля ШИРЕ, чем на большом экране (её правка 04.08: «в мобильной
+   версии отступ по краям сделаем больше в два раза»). На широком экране их режет
+   правило ниже — там место нужно шару. */
+.landwrap{padding:22px 20px 44px;max-width:760px}
 .landh{font:600 clamp(34px,10vw,46px)/1.02 "Fraunces",Georgia,serif;letter-spacing:-.02em;margin:12px 0 12px}
 .landh em{font-style:normal;color:#5b3fc4}
 .landsub{font:500 15px/1.55 "Inter",sans-serif;color:#6f7387;margin:0 0 20px}
