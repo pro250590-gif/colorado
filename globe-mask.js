@@ -172,13 +172,16 @@ function nearCoast(parts, stepDeg) {
     const px = ax + dx * t, py = ay + dy * t;
     return Math.hypot(px, py);
   };
+  /* отдаём РАССТОЯНИЕ до берега, а не «да/нет»: по нему видно, какая точка
+     острова самая серединная — её и вернём, если отступ съел весь остров */
   return (lng, lat) => {
     const cx = Math.floor(lng / CELL), cy = Math.floor(lat / CELL);
+    let best = 1e9;
     for (let x = cx - 1; x <= cx + 1; x++) for (let y = cy - 1; y <= cy + 1; y++) {
       const arr = grid.get(key(x, y)); if (!arr) continue;
-      for (let i = 0; i < arr.length; i++) if (dist(lng, lat, arr[i]) < stepDeg) return true;
+      for (let i = 0; i < arr.length; i++) { const d = dist(lng, lat, arr[i]); if (d < best) best = d; }
     }
-    return false;
+    return best;
   };
 }
 (async () => {
@@ -202,22 +205,52 @@ function nearCoast(parts, stepDeg) {
   const stepDeg = Math.sqrt(4 * Math.PI / N) * 180 / Math.PI;
   const gap = stepDeg / 2;
   console.log('  шаг между точками: ' + stepDeg.toFixed(2) + '°, отступ от берега: ' + gap.toFixed(2) + '°');
-  const tooClose = nearCoast(parts, gap);
+  const coastDist = nearCoast(parts, gap);
 
   const pts = points(N);
   const bits = new Uint8Array(Math.ceil(N / 8));
   let land = 0, trimmed = 0;
+  /* по каждому куску суши помним: сколько зерна оставили и что выбросили */
+  const isle = new Map();   /* номер многоугольника → {kept, cut:[{i,d}]} */
   pts.forEach(([lat, lng], i) => {
     for (let k = 0; k < polys.length; k++) {
       if (inPoly(lng, lat, polys[k])) {
+        if (!isle.has(k)) isle.set(k, { kept: 0, cut: [] });
+        const rec = isle.get(k);
+        const d = coastDist(lng, lat);
         /* ⚠️ у самого берега точку не ставим: иначе линия идёт прямо по зерну,
            а часть точек оказывается снаружи — это и увидела клиент */
-        if (tooClose(lng, lat)) { trimmed++; return; }
-        bits[i >> 3] |= (1 << (i & 7)); land++; return;
+        if (d < gap) { trimmed++; rec.cut.push({ i: i, d: d }); return; }
+        bits[i >> 3] |= (1 << (i & 7)); land++; rec.kept++; return;
       }
     }
   });
   console.log('  убрано у берега: ' + trimmed + ' точек');
+  /* ⚠️ ОСТРОВ С КОНТУРОМ НЕ БЫВАЕТ ПУСТЫМ ВНУТРИ.
+     Её правка 04.08 по скрину: «пусть просвечивают точки, которые внутри
+     границы» — она обвела Японию и Сулавеси, у которых был контур и ни одной
+     точки. Виноват отступ от берега: у острова уже, чем шаг сетки, он съедает
+     ВСЁ зерно, и остаётся пустой обвод. Возвращаем самые серединные точки —
+     правило отступа при этом не нарушается зря: без них остров выглядит дырой. */
+  let saved = 0, isles = 0;
+  isle.forEach(rec => {
+    if (rec.kept || !rec.cut.length) return;
+    isles++;
+    rec.cut.sort((a, b) => b.d - a.d);
+    const take = rec.cut.length >= 6 ? 3 : 1;
+    for (let t = 0; t < take && t < rec.cut.length; t++) {
+      const i = rec.cut[t].i;
+      if (bits[i >> 3] & (1 << (i & 7))) continue;
+      bits[i >> 3] |= (1 << (i & 7)); land++; trimmed--; saved++;
+    }
+  });
+  console.log('  островов, оставшихся без зерна: ' + isles + ' → вернули ' + saved + ' точек');
+  /* а эти острова мельче шага сетки: внутрь не попала НИ ОДНА точка спирали,
+     вернуть нечего. Считаем и говорим вслух — чтобы «пустой обвод» на шаре
+     не был для нас неожиданностью во второй раз. */
+  let tiny = 0;
+  for (let k = 0; k < polys.length; k++) if (!isle.has(k)) tiny++;
+  console.log('  мельче шага сетки (контур без зерна): ' + tiny + ' из ' + polys.length);
   const b64 = Buffer.from(bits).toString('base64');
   console.log('  точек всего: ' + N + ', на суше: ' + land + ' (' + Math.round(land / N * 100) + '%)');
   console.log('  строка данных: ' + b64.length + ' знаков');
