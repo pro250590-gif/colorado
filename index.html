@@ -1222,6 +1222,18 @@ body{background:linear-gradient(168deg,#eef1f8,#e9edf6 60%,#e6eaf4)!important}
 .cdot{position:absolute;left:-38px;top:-2px;width:34px;height:34px;border-radius:50%;background:#5b3fc4;color:#fff;display:grid;place-items:center;box-shadow:0 0 0 4px #eef1f8}
 /* значок в кружке ленты — тоже на весь кружок: та же её просьба про размер */
 .cdot .i,.cdot .i-sm{width:21px;height:21px;stroke-width:1.7;vertical-align:0}
+/* ⚠️ НА ТЕЛЕФОНЕ КАРТОЧКИ ГОРОДА ВО ВСЮ ШИРИНУ. Её правка 04.08: «хочу шире, а
+   сейчас узко; чтоб у всех поля были как там, где галочки» — то есть как у
+   верхних карточек «Старт поездки» и «Город вылета». Узко было из-за отступа в
+   56 px, который держали под кружком со значком. Теперь кружок стоит у самого
+   края, отступ остаётся только у ЗАГОЛОВКА строки, а белые карточки под ним
+   занимают всю ширину. На широком экране всё как было. */
+@media(max-width:700px){
+  .ctl{padding:14px 2px 8px 2px}
+  .ctl::before{left:19px}
+  .cdot{left:0;top:0}
+  .clbl{padding-left:44px;min-height:30px}
+}
 .clbl{margin-bottom:11px}
 .clbl b{display:block;font:700 15px/1 "Inter",sans-serif}
 .clbl span{display:block;font:500 12px/1 "Inter",sans-serif;color:#8b8fa3;margin-top:6px}
