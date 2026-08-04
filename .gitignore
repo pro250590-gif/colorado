@@ -2,6 +2,8 @@
 # Репозиторий публичный — всё остальное сюда не выкладываем.
 *
 !index.html
+# домен сайта: этот файл включает kolibripro.com на GitHub Pages
+!CNAME
 !constructor.js
 !trip-colorado.js
 !trip-utah.js
