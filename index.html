@@ -1479,19 +1479,28 @@ body{background:linear-gradient(168deg,#eef1f8,#e9edf6 60%,#e6eaf4)!important}
   font:600 11px/1.3 "Inter",sans-serif;border-bottom:1px dotted rgba(139,143,163,.55)}
 .orig.big{font-size:12.5px;margin:-4px 0 8px}
 /* витрина готовых маршрутов на главной */
-.ready{margin:34px 0 8px}
-.rdh{font:800 13px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:.02em;color:#1b1e2e}
-.rdlede{font:600 12.5px/1.5 "Inter",sans-serif;color:#6b7086;margin:8px 0 14px}
-.rdgrid{display:grid;grid-template-columns:1fr;gap:12px}
+.ready{margin:44px 0 8px}
+/* ⚠️ ЗАГОЛОВОК РАЗДЕЛА — её выбор из четырёх показанных видов (04.08): «вариант
+   два, но без надписи ПОДБОРКА». Заголовок крупнее и жирнее, пояснение под ним
+   отдельной строкой. Мелкая надстрочная метка не ставится намеренно. */
+.rdh{font:800 24px/1.15 "Plus Jakarta Sans",sans-serif;letter-spacing:-.02em;color:#1b1e2e}
+.rdlede{font:500 14px/1.55 "Inter",sans-serif;color:#6f7387;margin:8px 0 20px;max-width:560px}
+.rdgrid{display:grid;grid-template-columns:1fr;gap:14px}
 @media(min-width:760px){.rdgrid{grid-template-columns:1fr 1fr}}
-.rdcard{position:relative;display:block;width:100%;min-height:150px;border:0;padding:0;cursor:pointer;text-align:left;
-  border-radius:20px;overflow:hidden;background:#e7e9f3 center/cover no-repeat;box-shadow:0 14px 30px -22px rgba(27,30,46,.65)}
+/* ТРИ В РЯД — её правка. Ниже 1000 px три карточки не живут: обложка сжимается
+   в полоску, и подпись не помещается в две строки */
+@media(min-width:1000px){.rdgrid{grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}}
+.rdcard{position:relative;display:flex;align-items:flex-end;width:100%;min-height:200px;border:0;padding:0;cursor:pointer;text-align:left;
+  border-radius:22px;overflow:hidden;background:#e7e9f3 center/cover no-repeat;box-shadow:0 14px 30px -22px rgba(27,30,46,.65)}
+/* карточки выше — тоже её правка; подпись при этом прижата к низу, иначе на
+   высокой карточке она висит посередине */
+@media(min-width:1000px){.rdcard{min-height:250px}}
 .rdcard:active{transform:scale(.995)}
-.rdin{display:block;padding:64px 16px 16px;color:#fff;
+.rdin{display:block;width:100%;padding:90px 18px 18px;color:#fff;
   background:linear-gradient(180deg,rgba(12,14,26,0) 20%,rgba(12,14,26,.72) 75%,rgba(12,14,26,.85))}
-.rdin b{display:block;font:800 19px/1.15 "Plus Jakarta Sans",sans-serif;letter-spacing:-.02em}
-.rdsub{display:block;font:600 12px/1.4 "Inter",sans-serif;opacity:.92;margin-top:5px}
-.rdmeta{display:block;font:700 11px/1 "Inter",sans-serif;opacity:.8;margin-top:7px}
+.rdin b{display:block;font:800 20px/1.15 "Plus Jakarta Sans",sans-serif;letter-spacing:-.02em}
+.rdsub{display:block;font:600 12.5px/1.4 "Inter",sans-serif;opacity:.92;margin-top:6px}
+.rdmeta{display:block;font:700 11.5px/1 "Inter",sans-serif;opacity:.8;margin-top:8px}
 .orig:active{color:#5b3fc4!important}
 /* устаревшая вкладка: поля не редактируются, пока не обновили страницу */
 body.stale #cities input,body.stale #cities textarea,body.stale #cities select,
