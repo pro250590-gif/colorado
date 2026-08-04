@@ -19,7 +19,7 @@
    ========================================================================== */
 const fs = require('fs'), path = require('path'), https = require('https');
 
-const N = 11000;                    /* точек на шаре */
+const N = 33000;                    /* точек на шаре */
 const SRC = 'https://raw.githubusercontent.com/martynafford/natural-earth-geojson/master/110m/physical/ne_110m_land.json';
 const PAGE = path.join(__dirname, 'index.html');
 const MARK = 'const GLOBE_LAND=';
