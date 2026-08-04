@@ -74,6 +74,20 @@ console.log('\n████ страница целиком (check-page.js)');
   hard += (p.out.match(/^\s*ОШИБКА/gm) || []).length;
 }
 
+/* Переходы между экранами: главная / кабинет / поездка. Её жалоба 04.08 —
+   «стою на главной, жму обновить, попадаю в поездку». Проверка ходит по сайту
+   кнопками и следит, чтобы у каждого экрана был свой адрес. */
+console.log('
+████ один адрес — одна страница (check-nav.js)');
+{
+  const p = run('check-nav.js', '');
+  const lines = p.out.split('
+').filter(l => /ОШИБКА|пропущено|в порядке|не сошлось/.test(l));
+  if (lines.length) console.log(lines.join('
+'));
+  hard += (p.out.match(/^\s*ОШИБКА/gm) || []).length;
+}
+
 files.forEach(f => {
   console.log('\n████ ' + f);
 
