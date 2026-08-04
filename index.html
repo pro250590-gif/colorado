@@ -6561,6 +6561,9 @@ document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)r
   /* Логотип — как на обычном сайте: ведёт на главную (с анкетой), а не в кабинет.
      «Мои поездки» никуда не делись — они в меню аккаунта (просьба клиента). */
   if(t.id==='brandHome'){closeDaySheet();leaveTrip(()=>showLand(null));}
+  if(t.dataset.backup){backupSave();}
+  if(t.dataset.restore){backupRestore();}
+  if(t.dataset.bkrestore){popClose();backupApply();}
   if(t.dataset.gohome){accClose();closeDaySheet();leaveTrip(showHome);}
   if(t.dataset.goland){accClose();closeDaySheet();leaveTrip(()=>showLand(null));}
   /* закладка: плитка, меню, шапка поездки — одна и та же кнопка */
@@ -8819,6 +8822,76 @@ function renameSheet(id){
     +'<button class="dscancel" data-dsclose="1">Отмена</button>');
   setTimeout(()=>{const i=document.getElementById('trnm');if(i){i.focus();i.select();}},60);
 }
+/* ── ⚠️ ПЕРЕЕЗД НА ДРУГОЙ АДРЕС: НИЧЕГО НЕ ТЕРЯЕМ ─────────────────────────
+   Её вопрос 04.08: «а ты можешь всё сохранить, чтобы при переезде ничего не
+   потерялось?». Сам сайт переезжает целиком — он в репозитории. Теряется другое:
+   ПОЕЗДКИ ЛЕЖАТ В ПАМЯТИ БРАУЗЕРА, а она привязана к адресу. Новый адрес — новая
+   память, и там пусто.
+   Два пути, и лучше оба. Первый — аккаунт: план уезжает в облако и возвращается
+   по логину. Второй, который не зависит ни от сети, ни от входа, — файл: здесь
+   мы складываем ВСЕ наши ключи в один .json, а на новом адресе читаем его назад.
+   Это же и обычная резервная копия: перед крупной правкой её стоит сделать. */
+const BACKUP_KEYS=['co-trip-trips','co-trip-2026-plan','co-trip-2026-budget',
+  'co-trip-2026-picks','co-trip-2026-food','co-trip-home','co-trip-screen','co-trip-ask'];
+function backupData(){
+  const o={};BACKUP_KEYS.forEach(k=>{const v=localStorage.getItem(k);if(v!=null)o[k]=v;});
+  return {what:'kolibri-backup',v:1,at:new Date().toISOString(),from:location.host,keys:o};
+}
+function backupSave(){
+  /* открытую поездку сперва кладём в список — иначе в копию уедет вчерашняя */
+  try{syncActiveIntoTrips();}catch(e){}
+  const data=backupData(),txt=JSON.stringify(data);
+  const n=Object.keys(data.keys).length;
+  let trips0=0;try{trips0=(JSON.parse(data.keys['co-trip-trips']||'{}').list||[]).length;}catch(e){}
+  try{
+    const blob=new Blob([txt],{type:'application/json'});
+    const url=URL.createObjectURL(blob),a=document.createElement('a');
+    a.href=url;a.download='kolibri-'+fmtISO(new Date())+'.json';
+    document.body.appendChild(a);a.click();
+    setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},400);
+  }catch(e){}
+  accClose();
+  toast('<b>Копия готова</b><i>Поездок: '+trips0+' · блоков данных: '+n
+    +'. Файл сохранился в загрузки. На новом адресе открой меню → «Восстановить из файла».</i>',null,null);
+}
+function backupRestore(){
+  const inp=document.createElement('input');
+  inp.type='file';inp.accept='application/json,.json';
+  inp.addEventListener('change',()=>{
+    const f=inp.files&&inp.files[0];if(!f)return;
+    const rd=new FileReader();
+    rd.onload=()=>{
+      let d=null;try{d=JSON.parse(String(rd.result||''));}catch(e){}
+      if(!d||d.what!=='kolibri-backup'||!d.keys){
+        toast('<b>Это не наш файл</b><i>Нужен .json, который сделала кнопка «Сохранить всё в файл»</i>',null,null);
+        return;
+      }
+      let trips0=0;try{trips0=(JSON.parse(d.keys['co-trip-trips']||'{}').list||[]).length;}catch(e){}
+      /* спрашиваем перед тем, как затирать: восстановление — не мелочь */
+      popup('warn','Восстановить из файла?',
+        'В файле поездок: '+trips0+(d.at?(' · копия от '+dmy(d.at.slice(0,10))):'')
+        +'. Всё, что сейчас в этом браузере, будет заменено.',
+        '<div class="prow"><button class="pgo" data-bkrestore="1">Восстановить</button>'
+        +'<button class="pok" data-popclose="1">Отмена</button></div>');
+      _restorePending=d;
+    };
+    rd.readAsText(f);
+  });
+  accClose();inp.click();
+}
+let _restorePending=null;
+function backupApply(){
+  const d=_restorePending;if(!d)return;
+  try{
+    _applying=true;
+    BACKUP_KEYS.forEach(k=>{
+      if(d.keys[k]!=null)_rawSet(k,d.keys[k]);else localStorage.removeItem(k);
+    });
+    _applying=false;
+  }catch(e){}
+  _restorePending=null;
+  location.replace(location.pathname);       /* открываем начисто, без ?data и ?home */
+}
 /* ================= МЕНЮ АККАУНТА =================
    Выпадает из-под аватара, как у обычных сервисов, а не выскакивает по центру.
    Закрывается тапом мимо — отдельная кнопка «Закрыть» тут лишняя. */
@@ -8826,6 +8899,8 @@ const ACCITEMS=[
   {k:'gohome',ic:'layers',t:'Мои поездки'},
   {k:'newtrip',ic:'plus',t:'Новая поездка'},
   {k:'goland',ic:'mountain',t:'Главная страница'},
+  {k:'backup',ic:'doc',t:'Сохранить всё в файл'},
+  {k:'restore',ic:'layers',t:'Восстановить из файла'},
   {k:'soon',ic:'user',t:'Профиль'},
   {k:'soon',ic:'ticket',t:'Подписка'},
   {k:'soon',ic:'sun',t:'Настройки'},
