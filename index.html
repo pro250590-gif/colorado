@@ -6337,7 +6337,21 @@ function buildFooter(){
   const ct=document.getElementById('footContact');
   if(ct)ct.innerHTML='Нашли ошибку или есть вопрос — '+(SITE.email?'<a href="mailto:'+SITE.email+'">напишите нам</a>':'напишите нам')+'.';
   const cp=document.getElementById('footCopy');
-  if(cp){const y=(new Date()).getFullYear();cp.innerHTML='© '+y+' · <b>'+SITE.brand+'</b>. Все права защищены.';}
+  if(cp){
+    const y=(new Date()).getFullYear();
+    /* ⚠️ КАКУЮ ВЕРСИЮ СТРАНИЦЫ ВИДИТ ЧЕЛОВЕК. Её вопрос 04.08: «через какое время
+       я увижу изменения — я проверяю и не вижу». Между выкладкой и появлением на
+       сайте проходит несколько минут, а сверху ещё браузер держит своё старое.
+       document.lastModified — это время той версии, что открыта ПРЯМО СЕЙЧАС.
+       Сравнила с тем, что я написала, — и сразу понятно, обновилось или нет. */
+    let ver='';
+    try{
+      const d=new Date(document.lastModified);
+      if(!isNaN(+d))ver=' · страница от '+d.getDate()+' '+MONTHS[d.getMonth()].slice(0,3)+', '
+        +d.getHours()+':'+('0'+d.getMinutes()).slice(-2);
+    }catch(e){}
+    cp.innerHTML='© '+y+' · <b>'+SITE.brand+'</b>. Все права защищены.'+esc0(ver);
+  }
 }
 /* три кнопки темпа рядом с датой и числом людей */
 function buildPace(){
