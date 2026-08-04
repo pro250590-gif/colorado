@@ -7834,10 +7834,13 @@ function globeStart(){
       const q=put(dots[i],cx,cy,R),z=q[2];
       /* передняя сторона заметно контрастнее задней: иначе зерно с обратной
          стороны спорит с контуром берега */
-      const a=z>=0?(0.34+0.5*z):(0.05+0.05*(1+z));
+      const a=z>=0?(0.55+0.4*z):(0.09+0.07*(1+z));
       /* квадратик вместо кружка: на полпикселя разницы не видно, круг втрое дороже */
-      const r=z>=0?(0.42+0.3*z):0.25;
-      let b=Math.round(a*(STEPS-1)/0.84);
+      /* ⚠️ ВДВОЕ МЕЛЬЧЕ — её правка. Ниже полупикселя точка перестаёт быть точкой:
+         браузер размазывает её сглаживанием, и зерно бледнеет. Поэтому вместе с
+         размером поднята яркость, иначе материк выцвел бы. */
+      const r=z>=0?(0.21+0.15*z):0.13;
+      let b=Math.round(a*(STEPS-1)/0.95);
       if(b<0)b=0;
       if(b>STEPS-1)b=STEPS-1;
       bucket[b].push(q[0]-r,q[1]-r,r*2);
@@ -7845,7 +7848,7 @@ function globeStart(){
     for(let b=0;b<STEPS;b++){
       const arr=bucket[b];
       if(!arr.length)continue;
-      ctx.fillStyle='rgba('+GLOBE.dot+','+(0.84*b/(STEPS-1)).toFixed(2)+')';
+      ctx.fillStyle='rgba('+GLOBE.dot+','+(0.95*b/(STEPS-1)).toFixed(2)+')';
       for(let k=0;k<arr.length;k+=3)ctx.fillRect(arr[k],arr[k+1],arr[k+2],arr[k+2]);
     }
     /* контур материков поверх точек */
