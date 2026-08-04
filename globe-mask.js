@@ -140,6 +140,47 @@ function packRings(polys) {
             .join('|');
 }
 
+
+/* ── ⚠️ ЗЕРНО НЕ ДОЛЖНО КАСАТЬСЯ БЕРЕГА ──────────────────────────────────
+   Её правка 04.08: «граница местами идёт прямо по точкам, и точки есть за
+   границей. Надо, чтобы все точки были внутри, а от границы до точки было не
+   меньше половины расстояния между точками».
+   Считаем так: расстояние между соседними точками спирали ≈ корень из (4π/N) —
+   это шаг сетки. Половину шага берём как запас и выбрасываем те точки суши,
+   что ближе к берегу. Чтобы не сверять каждую точку с каждым отрезком берега
+   (это тридцать миллионов пар), раскладываем отрезки по ячейкам 5°×5° и
+   смотрим только соседние ячейки. */
+function nearCoast(parts, stepDeg) {
+  const CELL = 5, grid = new Map();
+  const key = (a, b) => a + ':' + b;
+  const add = (seg) => {
+    const x0 = Math.floor(Math.min(seg[0], seg[2]) / CELL), x1 = Math.floor(Math.max(seg[0], seg[2]) / CELL);
+    const y0 = Math.floor(Math.min(seg[1], seg[3]) / CELL), y1 = Math.floor(Math.max(seg[1], seg[3]) / CELL);
+    for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) {
+      const k = key(x, y); if (!grid.has(k)) grid.set(k, []); grid.get(k).push(seg);
+    }
+  };
+  parts.forEach(p => { for (let i = 1; i < p.length; i++) add([p[i - 1][0], p[i - 1][1], p[i][0], p[i][1]]); });
+  /* расстояние от точки до отрезка; долготу сжимаем по широте, иначе у полюсов
+     градус долготы «длиннее», чем он есть на самом деле */
+  const dist = (lng, lat, s) => {
+    const kx = Math.cos(lat * Math.PI / 180);
+    const ax = (s[0] - lng) * kx, ay = s[1] - lat, bx = (s[2] - lng) * kx, by = s[3] - lat;
+    const dx = bx - ax, dy = by - ay, L = dx * dx + dy * dy;
+    let t = L ? -(ax * dx + ay * dy) / L : 0;
+    t = t < 0 ? 0 : (t > 1 ? 1 : t);
+    const px = ax + dx * t, py = ay + dy * t;
+    return Math.hypot(px, py);
+  };
+  return (lng, lat) => {
+    const cx = Math.floor(lng / CELL), cy = Math.floor(lat / CELL);
+    for (let x = cx - 1; x <= cx + 1; x++) for (let y = cy - 1; y <= cy + 1; y++) {
+      const arr = grid.get(key(x, y)); if (!arr) continue;
+      for (let i = 0; i < arr.length; i++) if (dist(lng, lat, arr[i]) < stepDeg) return true;
+    }
+    return false;
+  };
+}
 (async () => {
   const dry = process.argv.indexOf('--dry') >= 0;
   console.log('беру карту материков…');
@@ -152,14 +193,31 @@ function packRings(polys) {
   });
   console.log('  многоугольников суши: ' + polys.length);
 
+  const coast = packRings(polys);
+  /* отступ считаем от ТОГО ЖЕ берега, который рисуется, а не от исходной карты */
+  const parts = coast.split('|').map(function (p) {
+    return p.split(';').map(function (t) { const c = t.split(','); return [+c[0], +c[1]]; });
+  });
+  /* шаг сетки точек и половина шага — обещанный запас до берега */
+  const stepDeg = Math.sqrt(4 * Math.PI / N) * 180 / Math.PI;
+  const gap = stepDeg / 2;
+  console.log('  шаг между точками: ' + stepDeg.toFixed(2) + '°, отступ от берега: ' + gap.toFixed(2) + '°');
+  const tooClose = nearCoast(parts, gap);
+
   const pts = points(N);
   const bits = new Uint8Array(Math.ceil(N / 8));
-  let land = 0;
+  let land = 0, trimmed = 0;
   pts.forEach(([lat, lng], i) => {
     for (let k = 0; k < polys.length; k++) {
-      if (inPoly(lng, lat, polys[k])) { bits[i >> 3] |= (1 << (i & 7)); land++; return; }
+      if (inPoly(lng, lat, polys[k])) {
+        /* ⚠️ у самого берега точку не ставим: иначе линия идёт прямо по зерну,
+           а часть точек оказывается снаружи — это и увидела клиент */
+        if (tooClose(lng, lat)) { trimmed++; return; }
+        bits[i >> 3] |= (1 << (i & 7)); land++; return;
+      }
     }
   });
+  console.log('  убрано у берега: ' + trimmed + ' точек');
   const b64 = Buffer.from(bits).toString('base64');
   console.log('  точек всего: ' + N + ', на суше: ' + land + ' (' + Math.round(land / N * 100) + '%)');
   console.log('  строка данных: ' + b64.length + ' знаков');
@@ -168,7 +226,6 @@ function packRings(polys) {
   const share = land / N;
   if (share < 0.2 || share > 0.4) console.log('  ⚠️ доля суши подозрительная — проверьте порядок осей');
 
-  const coast = packRings(polys);
   /* ⚠️ ПРОВЕРКА НА «ИГЛЫ». Настоящий берег не прыгает: соседние точки рядом.
      Длинный отрезок означает, что мы случайно соединили несоединимое — так на
      шаре и появилась прямая через полмира у Антарктиды, и заметил её человек, а
