@@ -1278,6 +1278,23 @@ body{background:linear-gradient(168deg,#eef1f8,#e9edf6 60%,#e6eaf4)!important}
 .flnote{margin-top:2px}
 .flnote em{display:block;font:600 11.5px/1 "Inter",sans-serif;color:#8b8fa3;font-style:normal;margin:0 2px 5px}
 .flnote .qtxt{width:100%}
+/* закладка «сохранить» — одна и та же в трёх местах (её выбор «вид 1») */
+.bmk{display:grid;place-items:center;width:30px;height:30px;border-radius:10px;border:1.5px solid #d9d3f2;
+  background:rgba(255,255,255,.94);color:#5b3fc4;cursor:pointer;flex:none;padding:0}
+.bmk .i{width:15px;height:15px}
+.bmk.on{background:#5b3fc4;border-color:#5b3fc4;color:#fff}
+.bmk.on .i{fill:currentColor}
+.bmk.ontile{position:absolute;right:44px;top:9px;width:28px;height:28px;border-color:transparent}
+.kbtns{display:flex;align-items:center;gap:8px}
+.bmkrow{display:flex;align-items:center;justify-content:center;gap:8px}
+.bmkrow.on{color:#5b3fc4!important}
+.bmkrow .i{width:15px;height:15px}
+.bmkrow.on .i{fill:currentColor}
+/* заголовки двух граф в кабинете */
+.hsec{display:flex;align-items:center;gap:9px;margin:22px 2px 10px;color:#5b3fc4;
+  font:800 11px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:.12em;text-transform:uppercase}
+.hsec.grey{color:#8b8fa3}
+.hsec i{flex:1;height:1px;background:#e2e5f0}
 .flbtns{display:flex;gap:8px;margin-top:16px}
 .flb{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:11px 6px;border-radius:12px;background:#5b3fc4;color:#fff;border:0;cursor:pointer;text-decoration:none;font:700 11.5px/1.25 "Inter",sans-serif;text-align:center}
 .flb .i{width:16px;height:16px;flex:none}
@@ -1968,7 +1985,10 @@ section h2.big{margin-bottom:4px}
          шапку заполняет applyHero из HERO своего маршрута, а чего маршрут не
          сказал — того на странице и нет. -->
     <div class="kickrow"><div class="kicker" id="heroDate"></div>
-      <button class="shbtn" data-ushare="1">Поделиться</button></div>
+      <!-- закладка рядом с «Поделиться»: посмотрел, понравилось — сохранил, не
+           выходя из поездки (её выбор: три места, вид один) -->
+      <span class="kbtns"><span id="saveBtn"></span>
+        <button class="shbtn" data-ushare="1">Поделиться</button></span></div>
     <h1></h1>
     <p class="sub"></p>
     <div class="bento">
@@ -2147,7 +2167,8 @@ section h2.big{margin-bottom:4px}
       /* поездки на этот файл ещё не было — заводим. Имя маршрута лежит в самом
          файле (TRIP_NAME), а он ещё не загружен, поэтому ставим метку auto:
          движок подставит настоящее название, как только прочитает данные. */
-      if(!to){to={id:newId(),title:q.replace(/^trip-|\.js$/g,''),created:Date.now(),data:q,auto:1};t.list.push(to);}
+      /* открыли по ссылке — это просмотр: в «сохранённые» кладёт только человек */
+      if(!to){to={id:newId(),title:q.replace(/^trip-|\.js$/g,''),created:Date.now(),data:q,auto:1,saved:0,seen:Date.now()};t.list.push(to);}
       t.active=to.id;
       var kk=t.data[to.id]||{};
       for(var j=0;j<KEYS.length;j++){
@@ -2213,6 +2234,7 @@ window.addEventListener('unhandledrejection',e=>{window.__pageErr.push('promise:
 const ICONS={
  map:'<path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14M15 6v14"/>',
  list:'<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',
+ bookmark:'<path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4.2L5 21V4a1 1 0 0 1 1-1Z"/>',
  bed:'<path d="M2 20v-8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v8M2 16h20M6 10V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v4"/>',
  sun:'<circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.4M12 19.6V22M4.2 4.2l1.7 1.7M18.1 18.1l1.7 1.7M2 12h2.4M19.6 12H22M4.2 19.8l1.7-1.7M18.1 5.9l1.7-1.7"/>',
  moon:'<path d="M20 14.5A8.2 8.2 0 0 1 9.5 4 8.3 8.3 0 1 0 20 14.5z"/>',
@@ -2528,6 +2550,8 @@ function airPick(code){
      Ferno, где физически стоит Мальпенса */
   const city=a[9]||((a[2]&&(a[1]||'').toLowerCase().indexOf(a[2].toLowerCase())<0)?a[1]:(a[2]||a[1]));
   saveHome({city:city,code:a[0],name:a[1],region:a[3],country:a[4],ll:[a[5],a[6]]});
+  /* пришли из окна «Когда стартуете» — возвращаемся туда, а не закрываем всё */
+  if(_readyBack){const b=_readyBack;closeDaySheet();readyStartSheet(b.k,b.date);return;}
   closeDaySheet();
   toast('<b>Летим из '+esc0(city)+'</b><i>Аэропорт '+esc0(a[0])+' · '+esc0(a[1])
     +'. Карта, карточка перелёта и подбор рейсов пересчитаны</i>',null,null);
@@ -5942,7 +5966,7 @@ function pickDaySheet(bid){
         +(isSug?'<span class="dssug">предлагаем</span>':(dayWeight(e)===0?'<span class="dsfree">пусто</span>':''))+'</button>';}).join('')
     +'<button class="dscancel" data-dsclose="1">Ничего не убирать</button>');
 }
-function closeDaySheet(){killFxMap();const el=document.getElementById('daySheet');if(el)el.classList.remove('on');}
+function closeDaySheet(){_readyBack=null;killFxMap();const el=document.getElementById('daySheet');if(el)el.classList.remove('on');}
 /* общий лист снизу — для переноса и добавления места */
 /* top:true — окно падает СВЕРХУ, из-под шапки. Для списков, которые открываются
    кнопками в шапке: глаз идёт вверх, и содержимое должно появляться там же,
@@ -6477,9 +6501,16 @@ document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)r
   if(t.dataset.flsave){flightSave();}
   if(t.dataset.flclear){FLIGHT=null;_flDraft=null;savePlan();closeDaySheet();rerenderTrip();}
   /* город вылета: открыть выбор, выбрать аэропорт, вернуть городу маршрута */
-  if(t.dataset.homeopen!==undefined){homeSheet();}
-  if(t.dataset.readygo){const d=document.getElementById('rsdate');
-    closeDaySheet();openReady(t.dataset.readygo,(d&&d.value)||'');}
+  if(t.dataset.homeopen!==undefined){
+    /* уходим в список аэропортов из окна «Когда стартуете» — забираем дату с
+       собой, чтобы человек не вводил её заново */
+    const rd=document.getElementById('rsdate');
+    if(_readyBack&&rd&&rd.value)_readyBack.date=rd.value;
+    else if(!rd)_readyBack=null;
+    homeSheet();
+  }
+  if(t.dataset.readygo){const d=document.getElementById('rsdate'),dv=(d&&d.value)||'';
+    closeDaySheet();openReady(t.dataset.readygo,dv);}
   if(t.dataset.airpick){airPick(t.dataset.airpick);}
   if(t.dataset.airreset){saveHome(null);closeDaySheet();}
   if(t.dataset.rmthis){removeDay(t.dataset.rmbase,tidOf(t.dataset.rmthis));}
@@ -6510,8 +6541,10 @@ document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)r
   if(t.id==='brandHome'){closeDaySheet();leaveTrip(()=>showLand(null));}
   if(t.dataset.gohome){accClose();closeDaySheet();leaveTrip(showHome);}
   if(t.dataset.goland){accClose();closeDaySheet();leaveTrip(()=>showLand(null));}
+  /* закладка: плитка, меню, шапка поездки — одна и та же кнопка */
+  if(t.dataset.tsave){toggleSaved(t.dataset.tsave);if(t.dataset.tclose)closeDaySheet();return;}
   if(t.dataset.topen){closeDaySheet();const id=t.dataset.topen;
-    if(id!==trips().active)switchTrip(id);hideHome();window.scrollTo(0,0);}
+    if(id!==trips().active)switchTrip(id);markSeen(id);syncSaveBtn();hideHome();window.scrollTo(0,0);}
   if(t.dataset.openlast){closeDaySheet();const id=t.dataset.openlast;
     if(id!==trips().active)switchTrip(id);hideLand();hideHome();window.scrollTo(0,0);}
   /* «Новая поездка» ведёт в АНКЕТУ, а не копирует открытую. Клиент: «когда
@@ -7969,12 +8002,20 @@ function destCat(a){
    Клиент: «длина поездки у нас уже посчитана, семь дней или десять, поэтому
    конец не нужен — нужно начало, от него всё пересчитается, и откуда стартует».
    Всё остальное человек меняет уже внутри. */
-function readyStartSheet(k){
+/* ⚠️ ВЫБОР ГОРОДА НЕ ДОЛЖЕН ВЫКИДЫВАТЬ ИЗ ОКНА. Её находка 04.08: «нажимаю
+   маршрут, открывается дата и город; меняю город — окно пропадает, надо всё
+   начинать заново». Так и было: список аэропортов — тот же самый лист снизу, он
+   просто затирал собой окно «Когда стартуете», а после выбора закрывался совсем.
+   Теперь запоминаем, из какого окна ушли и с какой датой, и возвращаемся туда
+   же — с уже выбранным городом и той же датой. */
+let _readyBack=null;
+function readyStartSheet(k,keepDate){
   const cat=CATALOG.find(c=>c.k===k);if(!cat)return;
   const o=originNow();
   /* по умолчанию — через месяц: ближе брать билеты обычно поздно */
   const d=new Date();d.setDate(d.getDate()+30);
-  const def=d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
+  const def=keepDate||(d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2));
+  _readyBack={k:k,date:def};
   sheet('<div class="dsh"><b>'+esc0(cat.nm)+'</b><span>'+cat.days+' '+plural(cat.days,'день','дня','дней')
       +' · '+esc0(cat.shape||'')+'</span></div>'
     +'<div class="rsfld"><span class="rslbl">Когда стартуете</span>'
@@ -8453,6 +8494,10 @@ function trips(){
     _rawSet(TKEY,JSON.stringify(t));
   }
   if(!t.data)t.data={};
+  /* ⚠️ ПЕРЕЕЗД НА ДВА СПИСКА. Всё, что уже лежало в кабинете до появления
+     «сохранённых», человек туда клал сам — значит это сохранённые, и пропасть
+     они не должны. Помечаем один раз. */
+  if(!t.mig2){t.list.forEach(x=>{if(x.saved===undefined)x.saved=1;});t.mig2=1;_rawSet(TKEY,JSON.stringify(t));}
   /* поездку завёл загрузчик по ссылке ?data=… — там ещё не было названия маршрута
      (файл данных грузится после него). Теперь оно есть: подставляем настоящее. */
   const am=t.list.find(x=>x.id===t.active);
@@ -8484,11 +8529,16 @@ function tripData(m){return (m&&m.data)||'trip-colorado.js';}
 /* перезагрузка БЕЗ ?data= в адресе: этот параметр — разовое «открой вот этот
    маршрут», и если оставить его в строке, он отменит только что сделанное
    переключение поездки. Ровно на этом человек и застряла. */
-function reloadClean(){
+/* keep=true — уходим ВПЕРЁД (из кабинета в поездку), и запись в истории нужна:
+   иначе «назад» в браузере некуда возвращаться. Её жалоба 04.08: стрелка назад
+   серая. location.replace как раз затирал ту запись, откуда мы пришли. */
+function reloadClean(keep){
   try{const u=new URL(location.href);
     let ch=false;
     ['data','home','land'].forEach(k=>{if(u.searchParams.has(k)){u.searchParams.delete(k);ch=true;}});
-    if(ch){location.replace(u.pathname+(u.search||'')+(u.hash||''));return;}
+    const to=u.pathname+(u.search||'')+(u.hash||'');
+    if(keep){location.assign(to);return;}
+    if(ch){location.replace(to);return;}
   }catch(e){}
   location.reload();
 }
@@ -8500,7 +8550,7 @@ function switchTrip(id){
   t.active=id;tripsSave(t);
   /* у поездок разные файлы данных, а они объявлены через const — подменить их
      на лету нельзя, поэтому честно перезагружаем страницу */
-  if(tripData(to)!==window.__dataFile){reloadClean();return true;}
+  if(tripData(to)!==window.__dataFile){reloadClean(true);return true;}
   reinit();syncHomeUI();
   return true;
 }
@@ -8618,10 +8668,48 @@ function stampRouteMeta(){
     if(changed)tripsSave(t);
   }catch(e){}
 }
+/* ── ⚠️ ДВА СПИСКА: СОХРАНЁННЫЕ И НЕДАВНО СМОТРЕЛИ ───────────────────────
+   Её слова 04.08: «все поездки, которые я открывала, сохраняются в мои — это
+   неудобно; должно быть два списка: просматривали и сохранили». Верно: раньше
+   любой открытый маршрут навсегда оседал в кабинете.
+   Теперь у поездки есть признак saved. Сохранённые лежат сверху и не пропадают
+   никогда; остальное — «Недавно смотрели», по времени последнего открытия, и
+   дальше десяти таких не копим. Кнопка одна и та же — значок-закладка (её выбор
+   «вид 1») — и стоит в трёх местах сразу: на плитке, в меню под «⋯» и в самой
+   поездке рядом с «Поделиться». */
+const SEEN_KEEP=10;
+function isSaved(m){return !!(m&&m.saved);}
+function toggleSaved(id){
+  const t=trips(),m=t.list.find(x=>x.id===id);
+  if(!m)return;
+  if(m.saved)delete m.saved;else m.saved=1;
+  tripsSave(t);
+  if(_atHome)showHome();
+  syncSaveBtn();
+}
+/* отметка «открывали» — по ней строится второй список */
+function markSeen(id){
+  const t=trips(),m=t.list.find(x=>x.id===(id||t.active));
+  if(!m)return;
+  m.seen=Date.now();
+  const seen=t.list.filter(x=>!x.saved&&x.id!==t.active).sort((a,b)=>(b.seen||0)-(a.seen||0));
+  if(seen.length>SEEN_KEEP){
+    const drop=seen.slice(SEEN_KEEP).map(x=>x.id);
+    t.list=t.list.filter(x=>drop.indexOf(x.id)<0);
+    drop.forEach(d=>{if(t.data)delete t.data[d];});
+  }
+  tripsSave(t);
+}
+function bmkBtn(id,cls){
+  const on=isSaved(tripMeta(id));
+  return '<button class="bmk'+(on?' on':'')+(cls?' '+cls:'')+'" data-tsave="'+id+'"'
+    +' aria-label="'+(on?'убрать из сохранённых':'сохранить поездку')+'"'
+    +' title="'+(on?'Убрать из сохранённых':'Сохранить в мои')+'">'+ic('bookmark','i-sm')+'</button>';
+}
 function homeHTML(){
   const t=trips();
   /* плитка целиком — кнопка «открыть»; «⋯» отдельной кнопкой в углу */
-  const cards=t.list.map((m,i)=>{
+  const card=(m,i)=>{
     /* Одна и та же фотография у поездки всегда — ГЛАВНАЯ, та же что в её шапке.
        Раньше бралось фото i-того города по кругу: у каждой плитки своё, и оно
        менялось от места в списке и от того, какой маршрут сейчас открыт.
@@ -8638,12 +8726,19 @@ function homeHTML(){
         +'<span class="tin"><span class="tnm">'+esc0(m.title)+'</span>'
         +(st.where?'<span class="twhere">'+esc0(st.where)+'</span>':'')
         +'<span class="tmeta">'+meta+'</span></span></button>'
+      +bmkBtn(m.id,'ontile')
       +'<button class="tdots" data-tmenu="'+m.id+'" aria-label="что сделать с поездкой">⋯</button></div>';
-  }).join('');
+  };
+  const saved=t.list.filter(isSaved),
+        seen=t.list.filter(m=>!isSaved(m)).sort((a,b)=>(b.seen||0)-(a.seen||0));
+  const group=(nm,list,grey)=>list.length
+    ? '<div class="hsec'+(grey?' grey':'')+'">'+nm+'<i></i></div><div class="tgrid">'+list.map(card).join('')+'</div>'
+    : '';
+  const cards=group('Сохранённые',saved)+group('Недавно смотрели',seen,1);
   return '<div class="wrap homewrap">'
     +'<div class="eyebrow">ЛИЧНЫЙ КАБИНЕТ</div><h1 class="homeh">Мои поездки</h1>'
     +'<button class="newtrip" data-newtrip="1"><i>'+ic('plus','i-sm')+'</i><span>Новая поездка<small>соберём маршрут по твоим ответам</small></span></button>'
-    +'<div class="tgrid">'+cards+'</div></div>';
+    +cards+'</div>';
 }
 function esc0(x){return String(x==null?'':x).replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));}
 function showHome(){
@@ -8666,10 +8761,18 @@ function hideHome(){
   document.body.classList.remove('athome');
 }
 function syncHomeUI(){if(_atHome)showHome();}
+/* кнопка сохранения в шапке поездки: рисуется и обновляется на месте */
+function syncSaveBtn(){
+  const host=document.getElementById('saveBtn');if(!host)return;
+  try{host.innerHTML=bmkBtn(trips().active,'onhero');}catch(e){}
+}
 /* меню поездки в кабинете */
 function tripMenuSheet(id){
   const m=tripMeta(id),one=trips().list.length<2;
   sheet('<div class="dsh"><b>'+esc0(m.title)+'</b><span>что сделать с поездкой</span></div>'
+    /* та же закладка, что на плитке и в самой поездке — три места, одна кнопка */
+    +'<button class="dscancel alt bmkrow'+(isSaved(m)?' on':'')+'" data-tsave="'+id+'" data-tclose="1">'
+      +ic('bookmark','i-sm')+(isSaved(m)?'Убрать из сохранённых':'Сохранить в мои')+'</button>'
     +'<button class="dscancel alt" data-trename="'+id+'">Переименовать</button>'
     +'<button class="dscancel alt" data-tcopy="'+id+'">Сделать копию</button>'
     +(one?'':'<button class="dscancel del" data-tdel="'+id+'">Удалить поездку</button>')
@@ -9034,6 +9137,12 @@ let openAuth=function(){};
    через const ниже по файлу — раньше вызвать нельзя (уже дважды обжигались) */
 stampRouteMeta();
 headerAuth();
+/* ⚠️ ЗДЕСЬ, А НЕ ВЫШЕ. Открытая поездка отмечается просмотренной, и в шапке
+   появляется закладка. Сначала я позвала это сразу после bootTop() — и оно
+   молча падало: trips() читает TKEY, а он объявлен через const НИЖЕ, то есть
+   в мёртвой зоне. Пустой catch это спрятал, и кнопки просто не было. Та же
+   ловушка, что уже дважды ловила нас в этом файле. */
+try{markSeen();syncSaveBtn();}catch(e){window.__pageErr.push('закладка: '+e.message);}
 /* Сайт открывается ГЛАВНОЙ, а не кабинетом: кабинет — это раздел для того, кто
    вошёл, а не витрина. Клиент: «главная страница должна быть та, которую мы
    сделали для анкеты». В кабинет по-прежнему можно попасть по ?home. */
