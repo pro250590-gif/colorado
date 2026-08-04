@@ -4995,21 +4995,32 @@ const FLLEGS=[
   {k:'',   t:'Туда',    a:'Город вылета',    b:'Город прилёта'},
   {k:'b',  t:'Обратно', a:'Город вылета',    b:'Город прилёта'}
 ];
-function flCol(pfx,lbl,ph){
+/* base — куда пишутся поля: 'fl.' на странице поездки, 'bk.flight.0.' в анкете.
+   Одна разметка на оба места: её правка «переделать анкету, чтоб они не
+   отличались». */
+function flVal(base,key){
+  if(base==='fl.')return (_flDraft||{})[key];
+  const l=base.split('.');            /* bk . flight . 0 . */
+  const list=(ASK&&ASK.bk&&ASK.bk[l[1]])||[];
+  const d=(Array.isArray(list)?list[+l[2]]:list)||{};
+  return d[key];
+}
+function flCol(pfx,lbl,base){
   /* ⚠️ ГОРОД ЗДЕСЬ ИЩЕТСЯ ПО ТОЙ ЖЕ БАЗЕ АЭРОПОРТОВ, ЧТО И «ГОРОД ВЫЛЕТА».
      Её правка: «эту базу с городами нужно добавить и сюда — пишем Майами, а
      высвечиваются аэропорты; пишем аэропорт — высвечивается город». Список,
      разметка строки и поиск (по-русски и латиницей) взяты те же, что в выборе
      города вылета: airFind + airRow. */
+  base=base||'fl.';
   return '<div class="flcol"><em>'+lbl+'</em><div class="flac">'
-    +inp('fl.'+pfx+'City','город или код аэропорта','text',_flDraft[pfx+'City'])
-    +'<div class="acbox" data-acfor="'+pfx+'"></div></div>'
+    +inp(base+pfx+'City','город или код аэропорта','text',flVal(base,pfx+'City'))
+    +'<div class="acbox" data-acfor="'+base+pfx+'"></div></div>'
     /* ⚠️ У ПОЛЕЙ ДАТЫ И ВРЕМЕНИ ПОДПИСИ СВЕРХУ, А НЕ ВНУТРИ. На телефоне пустое
        поле type="date" не показывает ничего — ни «дд.мм.гггг», ни «--:--», — и
        человек видит просто пустые прямоугольники (её скрин 03.08). */
     +'<div class="fldt">'
-      +'<span class="fldtf"><em>дата</em>'+inp('fl.'+pfx+'Date','','date',_flDraft[pfx+'Date'])+'</span>'
-      +'<span class="fldtf"><em>время</em>'+inp('fl.'+pfx+'Time','','time',_flDraft[pfx+'Time'])+'</span>'
+      +'<span class="fldtf"><em>дата</em>'+inp(base+pfx+'Date','','date',flVal(base,pfx+'Date'))+'</span>'
+      +'<span class="fldtf"><em>время</em>'+inp(base+pfx+'Time','','time',flVal(base,pfx+'Time'))+'</span>'
     +'</div></div>';
 }
 /* строка подсказки — тем же видом, что в «Откуда вы летите?», но выбор попадает
@@ -5023,13 +5034,13 @@ function flAirRow(a,pfx){
     +'<span class="dst"><b>'+esc0(head)+'</b><span>'+esc0(sub)+'</span></span></button>';
 }
 /* подсказки включаются после того, как лист нарисован */
-function flAirWire(){
-  const host=document.getElementById('daySheet');if(!host)return;
+function flAirWire(root){
+  const host=root||document.getElementById('daySheet');if(!host)return;
   loadAirports(function(){});                       /* база подгружается заранее */
   [].forEach.call(host.querySelectorAll('[data-abk]'),el=>{
     const k=el.dataset.abk;
-    if(k.indexOf('fl.')!==0||!/City$/.test(k))return;
-    const pfx=k.slice(3).replace(/City$/,'');
+    if(!/City$/.test(k)||!(k.indexOf('fl.')===0||k.indexOf('bk.flight.')===0))return;
+    const pfx=k.replace(/City$/,'');
     const box=host.querySelector('.acbox[data-acfor="'+pfx+'"]');
     if(!box)return;
     const draw=()=>{
@@ -5041,10 +5052,13 @@ function flAirWire(){
     el.addEventListener('focus',draw);
   });
 }
+function flLegsHTML(base){
+  return FLLEGS.map(l=>'<div class="flleg"><div class="fllt">'+l.t+'</div>'
+    +'<div class="flcols">'+flCol(l.k?'bDep':'dep',l.a,base)+flCol(l.k?'bArr':'arr',l.b,base)+'</div></div>').join('');
+}
 function flightSheet(){
   _flDraft=Object.assign({},FLIGHT||{});
-  const legs=FLLEGS.map(l=>'<div class="flleg"><div class="fllt">'+l.t+'</div>'
-    +'<div class="flcols">'+flCol(l.k?'bDep':'dep',l.a)+flCol(l.k?'bArr':'arr',l.b)+'</div></div>').join('');
+  const legs=flLegsHTML('fl.');
   sheet('<div class="dsh"><b>Ваш рейс</b><span>Впишите то, что стоит в билете — и все даты перестанут быть примерными</span></div>'
     /* ⚠️ БЕЗ ФИОЛЕТОВОЙ РАМКИ. Форма пришла из анкеты вместе с её карточкой —
        сиреневый фон и пунктир, — и на листе поездки это выглядело коробкой в
@@ -6442,14 +6456,19 @@ document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)r
   /* выбрали аэропорт из подсказки: в поле встаёт «Город · КОД», код запоминаем
      отдельно — он пригодится для ссылок на брони */
   if(t.dataset.flpick){
-    const a=(window.AIRPORTS||[]).find(x=>x[0]===t.dataset.flpick),pfx=t.dataset.flfld;
+    const a=(window.AIRPORTS||[]).find(x=>x[0]===t.dataset.flpick),path=t.dataset.flfld;
     if(a){
       const city=a[9]||((a[2]&&(a[1]||'').toLowerCase().indexOf(a[2].toLowerCase())<0)?a[1]:(a[2]||a[1]));
-      if(!_flDraft)_flDraft={};
-      _flDraft[pfx+'City']=city+' · '+a[0];_flDraft[pfx+'Code']=a[0];
-      const el=document.querySelector('#daySheet [data-abk="fl.'+pfx+'City"]');
-      if(el)el.value=_flDraft[pfx+'City'];
-      const bx=document.querySelector('#daySheet .acbox[data-acfor="'+pfx+'"]');
+      const val=city+' · '+a[0];
+      /* одна и та же подсказка живёт в двух местах: в листе поездки пишем в
+         черновик рейса, в анкете — прямо в ответы */
+      if(path.indexOf('fl.')===0){
+        if(!_flDraft)_flDraft={};
+        _flDraft[path.slice(3)+'City']=val;_flDraft[path.slice(3)+'Code']=a[0];
+      }else if(ASK){setPath(ASK,path+'City',val);setPath(ASK,path+'Code',a[0]);}
+      const el=document.querySelector('[data-abk="'+path+'City"]');
+      if(el)el.value=val;
+      const bx=document.querySelector('.acbox[data-acfor="'+path+'"]');
       if(bx){bx.innerHTML='';bx.classList.remove('on');}
     }
     return;
@@ -7229,8 +7248,14 @@ const BOOKED=[['flight','билеты'],['stay','жильё'],['car','машин
    человек допишет то, о чём мы не догадались спросить. */
 const BKNOTE=['note','комментарий','area','wo','если есть что добавить — необязательно'];
 const BKFIELDS={
-  flight:[['inCity','прилетаю в','text','w','город или аэропорт'],['inDate','дата','date'],['inTime','время','time'],
-          ['outCity','улетаю из','text','w','город или аэропорт'],['outDate','дата','date'],['outTime','время','time'],BKNOTE],
+  /* ⚠️ РЕЙС В АНКЕТЕ ЗАПОЛНЯЕТСЯ ТОЙ ЖЕ ФОРМОЙ, ЧТО И В ПОЕЗДКЕ (её правка
+     04.08: «переделать, чтоб они не отличались»). Ключи те же: dep/arr — билет
+     туда, bDep/bArr — обратно. Рисуется двумя колонками с городами в строку —
+     flLegsHTML, а не общей сеткой. */
+  flight:[['depCity','город вылета','text','w','город или код аэропорта'],['depDate','дата','date'],['depTime','время','time'],
+          ['arrCity','город прилёта','text','w','город или код аэропорта'],['arrDate','дата','date'],['arrTime','время','time'],
+          ['bDepCity','обратно: город вылета','text','wo','город или код аэропорта'],['bDepDate','дата','date','o'],['bDepTime','время','time','o'],
+          ['bArrCity','обратно: город прилёта','text','wo','город или код аэропорта'],['bArrDate','дата','date','o'],['bArrTime','время','time','o'],BKNOTE],
   stay:  [['city','город','text','w','город'],['from','с','date'],['to','по','date'],
           ['addr','адрес','area','w','адрес или ссылка на Google Maps'],BKNOTE],
   car:   [['takeCity','беру в','text','w','город или аэропорт'],['takeDate','дата','date'],
@@ -7453,7 +7478,10 @@ function bkMissing(k,d){return BKFIELDS[k].filter(f=>!bkOpt(f)&&!String(d[f[0]]|
 function bkSummary(k,d){
   const V=x=>String(d[x]||'').trim(),D=x=>dmy(d[x]),T=x=>d[x]?(' '+d[x]):'';
   const note=V('note')?(' · '+V('note')):'';
-  if(k==='flight')return V('inCity')+', '+D('inDate')+T('inTime')+'  →  '+V('outCity')+', '+D('outDate')+T('outTime')+note;
+  if(k==='flight'){
+    const there=V('depCity')+', '+D('depDate')+T('depTime')+'  →  '+V('arrCity')+', '+D('arrDate')+T('arrTime');
+    return there+(d.bDepDate?('  ·  обратно '+V('bDepCity')+', '+D('bDepDate')+T('bDepTime')):'')+note;
+  }
   if(k==='stay')  return V('city')+', '+D('from')+' — '+D('to')+(V('addr')?(' · '+V('addr')):'')+note;
   if(k==='car')   return V('takeCity')+', '+D('takeDate')+'  →  '+V('dropCity')+', '+D('dropDate')+note;
   if(k==='ferry'||k==='train')
@@ -7478,8 +7506,10 @@ function bkOne(k,i,d,nm,many){
     return '<div class="qf bkq"><label class="done">'+chk+ttl+'</label>'
       +'<div class="bksum"><span>'+esc0(bkSummary(k,d))+'</span>'
       +'<button class="bkedit" data-bkedit="'+id+'">изменить</button></div></div>';
-  const rows=BKFIELDS[k].map(f=>'<span class="bkf'+(f[3]&&f[3].indexOf('w')>=0?' wide':'')+'"><em>'+f[1]+'</em>'
-    +inp('bk.'+k+'.'+i+'.'+f[0],f[4]||'',f[2],d[f[0]])+'</span>').join('');
+  const rows=(k==='flight')
+    ? flLegsHTML('bk.flight.'+i+'.')
+    : BKFIELDS[k].map(f=>'<span class="bkf'+(f[3]&&f[3].indexOf('w')>=0?' wide':'')+'"><em>'+f[1]+'</em>'
+        +inp('bk.'+k+'.'+i+'.'+f[0],f[4]||'',f[2],d[f[0]])+'</span>').join('');
   return '<div class="qf bkq"><label>'+ttl+' — уточните'
     +(many>1?'<button class="bkdel" data-bkdel="'+id+'">убрать</button>':'')+'</label>'
     +'<div class="bkrow">'+rows+'</div>'
@@ -7647,6 +7677,7 @@ function renderLand(){
   const el=document.getElementById('land');if(!el)return;
   el.innerHTML=ASK?gotHTML():landHTML();
   growAll();                       /* растущие поля подгоняем под уже введённый текст */
+  flAirWire(el);                   /* подсказки аэропортов — те же, что в поездке */
   const ta=document.getElementById('askText');if(ta)ta.focus();
 }
 function showLand(ask){
@@ -7665,6 +7696,40 @@ function showLand(ask){
    же, где он был. Клиент: «нажимаю обновить — меня выкидывает на главную». */
 const SCREENK='co-trip-screen';
 function setScreen(v){try{localStorage.setItem(SCREENK,v);}catch(e){}}
+/* ── ⚠️ КНОПКА «НАЗАД» В БРАУЗЕРЕ ────────────────────────────────────────
+   Её жалоба 04.08: «не могу нажать назад, когда захожу по поездкам». И правда:
+   кабинет, главная и сама поездка — три разных экрана, но адрес у них был один,
+   и браузеру возвращаться было некуда.
+   Теперь экран написан в адресе: ?home — кабинет, ?land — главная, чисто —
+   поездка. Переход между ними кладёт запись в историю, и «назад» работает как
+   везде. Загрузка страницы по такому адресу открывает тот же экран — это уже
+   было раньше, поэтому и обновление страницы не собьётся. */
+let _navBusy=false;
+function screenUrl(v){
+  try{const u=new URL(location.href);
+    u.searchParams.delete('home');u.searchParams.delete('land');u.searchParams.delete('data');
+    if(v==='home')u.searchParams.set('home','');
+    if(v==='land')u.searchParams.set('land','');
+    /* «?home=» смотрится плохо — оставляем голый ключ */
+    return u.pathname+(u.search||'').replace(/=(?=&|$)/g,'')+(u.hash||'');
+  }catch(e){return location.href;}
+}
+function navTo(v){
+  if(_navBusy)return;
+  try{const want=screenUrl(v);
+    if(location.pathname+location.search!==want)history.pushState({s:v},'',want);
+  }catch(e){}
+}
+window.addEventListener('popstate',function(){
+  _navBusy=true;
+  try{
+    const q=location.search||'';
+    if(/[?&]home/.test(q)){showHome();}
+    else if(/[?&]land/.test(q)){showLand(null);}
+    else{hideLand();hideHome();window.scrollTo(0,0);}
+  }catch(e){}
+  _navBusy=false;
+});
 function lastScreen(){try{return localStorage.getItem(SCREENK)||'';}catch(e){return '';}}
 function hideLand(){
   _atLand=false;ASK=null;
@@ -8421,7 +8486,9 @@ function tripData(m){return (m&&m.data)||'trip-colorado.js';}
    переключение поездки. Ровно на этом человек и застряла. */
 function reloadClean(){
   try{const u=new URL(location.href);
-    if(u.searchParams.has('data')){u.searchParams.delete('data');location.replace(u.pathname+(u.search||'')+(u.hash||''));return;}
+    let ch=false;
+    ['data','home','land'].forEach(k=>{if(u.searchParams.has(k)){u.searchParams.delete(k);ch=true;}});
+    if(ch){location.replace(u.pathname+(u.search||'')+(u.hash||''));return;}
   }catch(e){}
   location.reload();
 }
@@ -8580,7 +8647,7 @@ function homeHTML(){
 }
 function esc0(x){return String(x==null?'':x).replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));}
 function showHome(){
-  setScreen('home');
+  setScreen('home');navTo('home');
   /* Кабинет и главная — РАЗНЫЕ экраны, и показывать их одновременно нельзя.
      showHome не прятал главную, поэтому после «Новой поездки» анкета
      оставалась висеть ПОД списком поездок (клиент прислала скрин). */
@@ -8593,7 +8660,7 @@ function showHome(){
   window.scrollTo(0,0);
 }
 function hideHome(){
-  setScreen('trip');          /* вышли из кабинета внутрь поездки */
+  setScreen('trip');navTo('trip');   /* вышли из кабинета внутрь поездки */
   _atHome=false;renderUnits();
   const h=document.getElementById('home');if(h)h.style.display='none';
   document.body.classList.remove('athome');
