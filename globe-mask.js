@@ -24,7 +24,7 @@ const SRC = 'https://raw.githubusercontent.com/martynafford/natural-earth-geojso
 const PAGE = path.join(__dirname, 'index.html');
 const MARK = 'const GLOBE_LAND=';
 const MARK2 = 'const GLOBE_COAST=';
-const TOL = 0.55;          /* насколько упрощаем береговую линию, в градусах */
+const TOL = 0.38;          /* насколько упрощаем береговую линию, в градусах */
 
 function get(url) {
   return new Promise((res, rej) => {
