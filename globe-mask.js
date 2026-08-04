@@ -126,7 +126,15 @@ function packRings(polys) {
       if (part.length > 2) out.push(part);
     });
   });
-  return out.map(function (r) { return simplifyRing(r, TOL); })
+  /* ⚠️ ЗАМЫКАТЬ МОЖНО ТОЛЬКО НАСТОЯЩЕЕ КОЛЬЦО. Разрезав кольцо по шву ±180°, мы
+     получаем ОТКРЫТУЮ цепочку, а «кольцевое» упрощение честно соединяло её конец
+     с началом — и через полшара тянулась прямая. У Антарктиды это была длинная
+     игла от края карты до полуострова: клиент её и обвела. Теперь смотрим, кольцо
+     это или обрывок, и обрабатываем по-разному. */
+  return out.map(function (r) {
+    const closed = r.length > 3 && r[0][0] === r[r.length - 1][0] && r[0][1] === r[r.length - 1][1];
+    return closed ? simplifyRing(r, TOL) : simplify(r, TOL);
+  })
             .filter(function (r) { return r.length > 2; })
             .map(function (r) { return r.map(function (p) { return p[0].toFixed(1) + ',' + p[1].toFixed(1); }).join(';'); })
             .join('|');
@@ -161,6 +169,18 @@ function packRings(polys) {
   if (share < 0.2 || share > 0.4) console.log('  ⚠️ доля суши подозрительная — проверьте порядок осей');
 
   const coast = packRings(polys);
+  /* ⚠️ ПРОВЕРКА НА «ИГЛЫ». Настоящий берег не прыгает: соседние точки рядом.
+     Длинный отрезок означает, что мы случайно соединили несоединимое — так на
+     шаре и появилась прямая через полмира у Антарктиды, и заметил её человек, а
+     не я. Теперь это видно сразу здесь. */
+  let jumps = 0;
+  coast.split('|').forEach(function (part) {
+    const p = part.split(';').map(function (t) { return t.split(',').map(Number); });
+    for (let k = 1; k < p.length; k++) {
+      if (Math.abs(p[k][0] - p[k - 1][0]) > 25 || Math.abs(p[k][1] - p[k - 1][1]) > 15) jumps++;
+    }
+  });
+  console.log('  проверка на «иглы»: ' + (jumps ? ('⚠️ ' + jumps + ' подозрительных отрезков') : 'чисто'));
   console.log('  береговая линия: ' + Math.round(coast.length/1024) + ' КБ, кусков ' + coast.split('|').length);
 
   if (dry) { console.log('\n' + b64.slice(0, 120) + '…'); return; }
