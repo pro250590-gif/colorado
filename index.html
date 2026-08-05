@@ -2675,12 +2675,16 @@ const HSITES=[
   {k:'vrbo',       nm:'Vrbo',        sub:'дома и квартиры целиком',          ab:'Vr', bg:'#0d6efd'},
   {k:'tripadvisor',nm:'Tripadvisor', sub:'цены рядом с отзывами',            ab:'Tr', bg:'#2fbe86'}
 ];
-/* Kayak СПЕЦИАЛЬНО вынесен из общего списка (её замечание: «он же среди всех»).
-   Это не витрина, а сравнение витрин: забронировать на нём нельзя, он отправляет
-   дальше. Ставить его строкой среди Booking и Agoda — врать про то, что он делает. */
-const HKAYAK={k:'kayak',nm:'Kayak',sub:'сравнить цены во всех сервисах сразу',ab:'Ka',bg:'#ff690f'};
+/* ⚠️ KAYAK ИЗ СПИСКА УБРАН, И ВОТ ПОЧЕМУ. Сначала он стоял отдельной строкой
+   «сравнить цены сразу» — её правка, и правка верная. Но клиент нажала и попала
+   на АВИАБИЛЕТЫ. Проверено запросом: stay22.com/allez/kayak?address=Durango…
+   отдаёт kayak.com/flights/MIA-FMN/2026-08-07 — то есть у Stay22 это адрес поиска
+   РЕЙСОВ, город и даты он читает как перелёт. Собрать ссылку на отели Kayak руками
+   тоже не вышло: kayak.com/hotels/Durango,CO/даты молча переезжает на /stays и
+   теряет и город, и даты. Обещать сравнение и вести на билеты нельзя, поэтому
+   строки нет. Вернём, когда найдётся работающий адрес сравнения по жилью. */
 let HSITE='';   /* выбранная витрина; пусто — спрашиваем при каждом нажатии */
-function hsiteBy(k){return k===HKAYAK.k?HKAYAK:HSITES.filter(s=>s.k===k)[0];}
+function hsiteBy(k){return HSITES.filter(s=>s.k===k)[0];}
 function bookHotel(cityQ,ci,co,people,site){
   if(AFF.stay22){
     const q='aid='+encodeURIComponent(AFF.stay22)
@@ -6202,9 +6206,12 @@ function stayMenuSheet(id){
     +'<button class="dscancel" data-dsclose="1">Отмена</button>');
 }
 /* ВЫБОР ВИТРИНЫ ЖИЛЬЯ. Открывается по кнопке брони, пока витрина не выбрана.
-   Галочка «запомнить» — чтобы не спрашивать в каждом из семи городов; переиграть
-   выбор можно строкой «искать в другом сервисе» в блоке «Проживание». */
-let HREM=true;
+   ⚠️ ГАЛОЧКА «ЗАПОМНИТЬ» ВЫКЛЮЧЕНА ПО УМОЛЧАНИЮ. Сначала она стояла сама —
+   и первый же выбор прилипал навсегда: клиент нажала Booking, чтобы посмотреть,
+   а дальше все кнопки молча вели на Booking, хотя она ни о чём таком не просила.
+   Её слова: «запомнить должно быть, только если на неё нажали». Запоминаем
+   ТОЛЬКО по явной галочке; сняли галочку — память стирается. */
+let HREM=false;
 function hotelSheet(q,ciIso,coIso,people,title){
   const d=' data-hsq="'+esc0(q)+'" data-hsci="'+ciIso+'" data-hsco="'+coIso+'" data-hspp="'+(people||PEOPLE)+'"';
   const row=s=>'<button class="dsrow hsrow'+(HSITE===s.k?' sug':'')+'" data-hsite="'+s.k+'"'+d+'>'
@@ -6213,8 +6220,6 @@ function hotelSheet(q,ciIso,coIso,people,title){
     +(HSITE===s.k?'<span class="dssug">ваш выбор</span>':'<span class="hsar">›</span>')+'</button>';
   sheet('<div class="dsh"><b>Где ищем жильё</b><span>'+esc0(title||'')+'. Город, даты и гостей подставим сами.</span></div>'
     +HSITES.map(row).join('')
-    +'<div class="dssep">или сравнить всё сразу</div>'
-    +row(HKAYAK)
     +'<button class="hsrem'+(HREM?' on':'')+'" data-hsrem="1">'
       +'<span class="hschk">'+(HREM?'✓':'')+'</span>'
       +'<span>Запомнить выбор и больше не спрашивать</span></button>'
@@ -6362,8 +6367,10 @@ function loadPlan(){try{const s=JSON.parse(localStorage.getItem(PKEY));if(s){if(
   if(Array.isArray(s.nights))BASES.forEach((b,i)=>{if(typeof s.nights[i]==='number'&&s.nights[i]>=0)b.nights=s.nights[i];});if(s.hidden&&typeof s.hidden==='object')HIDDEN=s.hidden;
   if(s.moved&&typeof s.moved==='object')MOVED=s.moved;
   if(s.cur&&CURS.some(x=>x.c===s.cur))CUR=s.cur;
-  if(s.hs&&hsiteBy(s.hs))HSITE=s.hs;
-  if(typeof s.hsrem==='boolean')HREM=s.hsrem;
+  /* hsv:2 — метка «выбор витрины сделан по явной галочке». Планы первой версии
+     (галочка стояла сама) читать нельзя: у клиента там прилип Booking, которого
+     она не выбирала. Без метки просто спросим заново. */
+  if(s.hsv===2){if(s.hs&&hsiteBy(s.hs))HSITE=s.hs;if(typeof s.hsrem==='boolean')HREM=s.hsrem;}
   if(s.temp==='C'||s.temp==='F')TEMP=s.temp;
   if(s.dist==='km'||s.dist==='mi')DIST=s.dist;
   if(s.lang&&LANGS.some(x=>x.c===s.lang))LANG=s.lang;
@@ -6379,7 +6386,7 @@ function loadPlan(){try{const s=JSON.parse(localStorage.getItem(PKEY));if(s){if(
 function savePlan(){try{localStorage.setItem(PKEY,JSON.stringify({start:startIso,people:PEOPLE,acc:DATEACC,fl:FLIGHT,
   nights:BASES.map(b=>b.nights),hidden:HIDDEN,moved:MOVED,custom:CUSTOM,cur:CUR,crate:CRATE,
   temp:TEMP,dist:DIST,lang:LANG,asm:ASM,off:offIds(),car:CARMODE,custb:CUSTB,pace:DAYPACE,plans:PLANPICK,merge:MERGE,
-  hs:HSITE,hsrem:HREM}));}catch(e){}}
+  hsv:2,hs:HSITE,hsrem:HREM}));}catch(e){}}
 /* Если дату придумали мы — говорим это на самой странице, а не только всплывашкой
    при сборке: по такой дате человек может купить билет. Назвал свою — надпись
    исчезает сама. */
@@ -6541,7 +6548,10 @@ function renderStays(){
       +(zero?'<span class="hpass">'+(b.nights?('Вечером уезжаем: '+wayNx+(nextStayBase(b.id)?(' → '+shortName(nextStayBase(b.id).name)):'')+' · отель не нужен'):'Проездом · жильё не ищем')+'</span>'
         :'<a class="hbook'+(stayPlaces(b.id).length?' alt':'')+'" href="'+bookHotel(b.q,ci,co2,PEOPLE)+'"'
         +hsData(b.q,ci,co2,PEOPLE,shortName(b.name)+' · '+dm(ci)+'–'+dm(co2))+' target="_blank" rel="noopener" title="подобрать жильё на эти даты">'+ic('bed','i-sm')
-        +'<span>'+hsLabel(stayPlaces(b.id).length?'Посмотреть другие варианты жилья':'Забронировать жильё')+' · '+dm(ci)+'–'+dm(co2)+' · '+PEOPLE+' гост.</span></a>')
+        +'<span>'+hsLabel(stayPlaces(b.id).length?'Посмотреть другие варианты жилья':'Забронировать жильё')+' · '+dm(ci)+'–'+dm(co2)+' · '+PEOPLE+' гост.</span></a>'
+        /* выход из запомненной витрины нужен ВЕЗДЕ, где есть кнопка брони, а не
+           только в ленте: в бюджете человек тоже жмёт «забронировать» (её правка) */
+        +(HSITE?'<button class="hswap" data-hswap="1"'+hsData(b.q,ci,co2,PEOPLE,shortName(b.name)+' · '+dm(ci)+'–'+dm(co2))+'>Искать в другом сервисе</button>':''))
       +'</div>'
       /* ночи на выезде идут отдельными строками: у них своя цена и своя бронь */
       +awayNights(b.id).map(e=>{
@@ -6556,6 +6566,7 @@ function renderStays(){
           +'<a class="hbook" href="'+bookHotel(sl.q||sl.nm,dt,dt2,PEOPLE)+'"'
             +hsData(sl.q||sl.nm,dt,dt2,PEOPLE,esc0(sl.nm)+' · '+dm(dt)+'–'+dm(dt2))+' target="_blank" rel="noopener">'+ic('bed','i-sm')
             +'<span>'+hsLabel('Забронировать жильё')+' · '+dm(dt)+'–'+dm(dt2)+' · '+PEOPLE+' гост.</span></a>'
+          +(HSITE?'<button class="hswap" data-hswap="1"'+hsData(sl.q||sl.nm,dt,dt2,PEOPLE,esc0(sl.nm)+' · '+dm(dt)+'–'+dm(dt2))+'>Искать в другом сервисе</button>':'')
         +'</div>';
       }).join('');
   }).join('');
@@ -6667,7 +6678,10 @@ document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)r
     /* окно открываем ПЕРВЫМ делом: браузер разрешает это только пока он считает
        нажатие «свежим», а перерисовка ленты — работа не быстрая */
     window.open(url,'_blank','noopener');
-    if(HREM&&HSITE!==t.dataset.hsite){HSITE=t.dataset.hsite;savePlan();rerenderTrip();}
+    /* без галочки не запоминаем НИЧЕГО — и снятая галочка стирает прежний выбор,
+       иначе из него не выбраться: сняли, выбрали другое, а ведёт по-старому */
+    const nx=HREM?t.dataset.hsite:'';
+    if(nx!==HSITE){HSITE=nx;savePlan();rerenderTrip();}else savePlan();
     return;
   }
   if(t.dataset.dayon){P.filter(p=>p.d===tidOf(t.dataset.dayon)).forEach(p=>picked.add(p.id));savePicks();syncChecks();applyFilter();}
