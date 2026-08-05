@@ -2714,7 +2714,19 @@ function hsLabel(base){return HSITE&&hsiteBy(HSITE)?(base+' на '+hsiteBy(HSITE
 function bookCar(pickup,dropoff,ci,co){
   return aff('https://www.kayak.com/cars/'+encodeURIComponent(pickup)+'/'+encodeURIComponent(dropoff)+'/'+fmtISO(ci)+'/'+fmtISO(co),'car');
 }
+/* Экскурсии и входные билеты — тоже через Stay22: у GetYourGuide там свой адрес,
+   и метку партнёра подставляет их сторона. Проверено запросом: /allez/getyourguide
+   с городом ИЛИ с названием места отдаёт getyourguide.com/s?q=… c partner_id и
+   нашим aid. Своей метки GetYourGuide (AFF.gyg) у нас нет, так что до этой правки
+   кнопка не приносила ничего.
+   ⚠️ Машины и перелёты так подключить НЕЛЬЗЯ: адресов /allez/cars, /allez/flights,
+   /allez/discovercars у Stay22 нет — неизвестное имя молча падает обратно на отели
+   Booking (проверено). А /allez/kayak — это поиск РЕЙСОВ, где город вылета берётся
+   по IP посетителя и не слушает никаких параметров: наш выбранный аэропорт он
+   проигнорирует. */
 function bookActivity(q){
+  if(AFF.stay22)return 'https://www.stay22.com/allez/getyourguide?aid='+encodeURIComponent(AFF.stay22)
+    +'&address='+encodeURIComponent(q)+'&campaign=trip';
   return aff('https://www.getyourguide.com/s/?q='+encodeURIComponent(q)+(AFF.gyg?'&partner_id='+AFF.gyg:''),'activity');
 }
 /* ширина подписи — меряем по-настоящему, иначе на длинных названиях подписи наезжают */
