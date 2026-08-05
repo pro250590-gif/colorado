@@ -2623,6 +2623,20 @@ const AFF={
   /* заготовки-обёртки, каждая должна кончаться на u= */
   wrap:{hotel:'',flight:'',car:'',activity:'',train:'',transfer:'',esim:'',insurance:''}
 };
+/* ⚠️ ГОТОВЫЕ ОБЁРТКИ ИЗ КАБИНЕТА Travelpayouts (её номер marker=760463, наш сайт
+   trs=558582). Лежат здесь и ПОКА НЕ ПОДКЛЮЧЕНЫ к полкам wrap — и вот почему.
+   Обёртка годится только для СВОЕГО партнёра: то, что подставляется в u=, должно
+   быть адресом на его же сайте. Сейчас полка car ведёт на kayak.com/cars, а
+   обёртка ниже — от Economybookings; подставь одно в другое, и ссылка сломается.
+   Значит сначала переписываем сам адрес на нужного партнёра, и только потом
+   включаем обёртку. Полок transfer и esim на страницах ещё нет вовсе — они
+   появятся вместе с разделом «Всё для путешествий». */
+const TP={
+  transfer:'https://tp.media/r?campaign_id=1&marker=760463&p=647&trs=558582&u=',    /* Kiwitaxi */
+  esim:'https://tp.media/r?campaign_id=224&marker=760463&p=5998&trs=558582&u=',     /* Yesim */
+  car:'https://tp.media/r?campaign_id=10&marker=760463&p=2018&trs=558582&u=',       /* Economybookings */
+  tickets:'https://tp.media/r?campaign_id=58&marker=760463&p=1674&trs=558582&u='    /* Unitiki */
+};
 /* обернуть наш адрес в партнёрскую ссылку, если для этой полки она задана */
 function aff(url,kind){
   const w=(AFF.wrap&&AFF.wrap[kind])||'';
@@ -6361,7 +6375,7 @@ function recomputeDates(){
   buildFooter();
 }
 /* конфиг сервиса (не поездки): бренд и контакт для футера — общие для всех маршрутов */
-const SITE={brand:'KOLIBRI Pro', email:''};
+const SITE={brand:'KOLIBRI Pro', email:'hi@kolibripro.com'};
 /* футер: дисклеймер + партнёрская пометка (статично) + контакт + копирайт (из SITE) */
 function buildFooter(){
   const ct=document.getElementById('footContact');
