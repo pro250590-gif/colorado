@@ -1359,6 +1359,9 @@ body{background:linear-gradient(168deg,#eef1f8,#e9edf6 60%,#e6eaf4)!important}
 .cin h3{font:600 19px/1 "Fraunces",Georgia,serif}
 .cmeta{font:500 12px/1.4 "Inter",sans-serif;color:#8b8fa3;margin-top:6px}
 .cbookl{margin-top:auto;display:inline-flex;align-items:center;gap:6px;font:700 13px/1 "Inter",sans-serif;color:#5b3fc4;text-decoration:none;padding-top:10px}
+/* вторая ссылка проката: тише главной кнопки, с честной подписью про пустую форму */
+.cbookl small{font-weight:500;color:#8b8698}
+.cbookl.bcarl{display:flex;justify-content:center;margin:2px 16px 14px;padding-top:0}
 /* своё жильё: карточка вместо предложения искать, Booking понижен до второстепенной ссылки */
 .cstay.myst{border-color:rgba(91,63,196,.28);background:linear-gradient(160deg,#fff,#faf8ff)}
 .cstay .cph.b{display:grid;place-items:center;background:linear-gradient(150deg,#f3effd,#ddd1f6);color:#5b3fc4}
@@ -2763,6 +2766,21 @@ function hsLabel(base){return HSITE&&hsiteBy(HSITE)?(base+' на '+hsiteBy(HSITE
 /* Прокат ищем В АЭРОПОРТУ, если он известен: в посёлке у входа в парк
    (Спрингдейл) прокатов нет вовсе, и Kayak честно отдавал «0 результатов».
    Коды аэропортов Kayak понимает как есть: /cars/LAS/GJT/дата/дата */
+/* ⚠️ ECONOMYBOOKINGS — ВТОРОЙ ССЫЛКОЙ, А НЕ ВМЕСТО KAYAK. Клиент сказала
+   «подключаем», и обёртка Travelpayouts работает: на выходе
+   economybookings.com/en?btag=travelpayouts&tpo_uid=…-760463 (проверено).
+   Но ПОДСТАВИТЬ ГОРОД И ДАТЫ в их адрес нельзя: поиск у них внутри страницы,
+   ссылками наружу не выражается. Проверено — /en/search?pickup=DEN отдаёт 404,
+   /car-rental/denver молча уезжает на общий список, глубже есть только страницы
+   регионов вроде /car-rental/north-america/usa-colorado (город и даты там всё
+   равно вводят руками).
+   Значит замена Kayak на них означала бы: человек приходит на пустую форму и
+   вбивает всё заново. Поэтому главной остаётся кнопка Kayak — она приходит
+   заполненной, — а Economybookings стоит рядом честной второй строкой.
+   Заменить местами — одна строка, если она захочет процент любой ценой. */
+function bookCarAlt(){
+  return TP.car?(TP.car+encodeURIComponent('https://www.economybookings.com/en')):'';
+}
 function bookCar(pickup,dropoff,ci,co){
   return aff('https://www.kayak.com/cars/'+encodeURIComponent(pickup)+'/'+encodeURIComponent(dropoff)+'/'+fmtISO(ci)+'/'+fmtISO(co),'car');
 }
@@ -3511,7 +3529,9 @@ function buildCities(){
           +'<div class="cpt"><b>'+esc0(tp.name||'')+'</b><span>забрать · '+(tp.air||'аэропорт')+'</span></div>'
           +'<div class="cmid"><div class="cic">'+ic('car','i-sm')+'</div></div>'
           +'<div class="cpt r"><b>'+esc0(dp.name||'')+'</b><span>сдать · '+(dp.air||'')+'</span></div></div>'
-          +'<a class="cbook" href="'+bookCar(partPlace(v.take.at),partPlace(v.drop.at),from,to)+'" target="_blank" rel="noopener">'+ic('car','i-sm')+' Забронировать машину <small>Kayak</small></a></div></div>';
+          +'<a class="cbook" href="'+bookCar(partPlace(v.take.at),partPlace(v.drop.at),from,to)+'" target="_blank" rel="noopener">'+ic('car','i-sm')+' Забронировать машину <small>Kayak</small></a>'
+          +(bookCarAlt()?'<a class="cbookl" href="'+bookCarAlt()+'" target="_blank" rel="noopener">Ещё цены на Economybookings <small>город и даты вводятся там</small></a>':'')
+          +'</div></div>';
     });
     /* проживание */
     /* Проживание: если жильё уже есть — показываем его, а Booking понижаем до «других вариантов» */
@@ -7433,7 +7453,10 @@ function groupBook(g){
     label='Забронировать машину';icon='car';}
   else if(g==='Входы и активности'){url=bookActivity(BASES[0].q+' tours tickets');label='Забронировать активности';icon='ticket';}
   else return '';
-  return '<a class="bbook" href="'+url+'" target="_blank" rel="noopener">'+ic(icon,'i-sm')+'<span>'+label+'</span></a>';
+  return '<a class="bbook" href="'+url+'" target="_blank" rel="noopener">'+ic(icon,'i-sm')+'<span>'+label+'</span></a>'
+    +((g==='Машина'&&bookCarAlt())
+      ? '<a class="cbookl bcarl" href="'+bookCarAlt()+'" target="_blank" rel="noopener">Ещё цены на Economybookings <small>город и даты вводятся там</small></a>'
+      : '');
 }
 /* пересчёт «всего» из «за ед.» + подписи множителей (при смене людей/дней) */
 function calcBudget(){
