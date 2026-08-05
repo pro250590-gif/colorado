@@ -2461,7 +2461,7 @@ function ddmm(iso){const d=addDays(iso,0);
   return ('0'+d.getDate()).slice(-2)+('0'+(d.getMonth()+1)).slice(-2);}
 /* один перелёт в одну сторону */
 function skyscanner(from,to,iso){
-  if(ruMarket())return 'https://www.aviasales.ru/search/'+from.toUpperCase()+ddmm(iso)+to.toUpperCase()+PEOPLE;
+  if(ruMarket())return avia('https://www.aviasales.ru/search/'+from.toUpperCase()+ddmm(iso)+to.toUpperCase()+PEOPLE);
   const d=addDays(iso,0);const yy=String(d.getFullYear()).slice(2),mm=('0'+(d.getMonth()+1)).slice(-2),dd=('0'+d.getDate()).slice(-2);
   return 'https://www.skyscanner.ru/transport/flights/'+from.toLowerCase()+'/'+to.toLowerCase()+'/'+yy+mm+dd+'/';
 }
@@ -2486,8 +2486,8 @@ function flightSearch(){
      «откуда-дата-куда-дата» подразумевает возврат из того же аэропорта.
      Поэтому в этом случае мы НЕ делаем вид, что нашли билет туда-обратно:
      открываем поиск в одну сторону, а про обратный говорим словами рядом. */
-  if(ruMarket())return aff('https://www.aviasales.ru/search/'+O.code+ddmm(outIso)+outAir
-    +(openJaw()?'':ddmm(backIso))+PEOPLE,'flight');
+  if(ruMarket())return avia('https://www.aviasales.ru/search/'+O.code+ddmm(outIso)+outAir
+    +(openJaw()?'':ddmm(backIso))+PEOPLE);
   return aff('https://www.kayak.com/flights/'+O.code+'-'+outAir+'/'+outIso+'/'+backAir+'-'+O.code+'/'+backIso+'/'+PEOPLE+'adults?sort=price_a','flight');
 }
 /* улетаем не из того аэропорта, куда прилетели */
@@ -2649,8 +2649,18 @@ const TP={
   transfer:'https://tp.media/r?campaign_id=1&marker=760463&p=647&trs=558582&u=',    /* Kiwitaxi */
   esim:'https://tp.media/r?campaign_id=224&marker=760463&p=5998&trs=558582&u=',     /* Yesim */
   car:'https://tp.media/r?campaign_id=10&marker=760463&p=2018&trs=558582&u=',       /* Economybookings */
-  tickets:'https://tp.media/r?campaign_id=58&marker=760463&p=1674&trs=558582&u='    /* Unitiki */
+  tickets:'https://tp.media/r?campaign_id=58&marker=760463&p=1674&trs=558582&u=',   /* Unitiki */
+  /* ✅ ПОДКЛЮЧЕНА. Aviasales, 40% — единственная в её кабинете, кто платит за
+     авиабилеты (AirHelp и Compensair это компенсации за задержку, а не продажа
+     билетов; Tutu.ru — только Россия). Проверено запросом: обёртка принимает и
+     главную, и наш глубокий поиск, и на .ru, и на .com — на выходе
+     aviasales.ru/search/MIA0708DRO16082?marker=760463… */
+  avia:'https://tp.media/r?campaign_id=100&marker=760463&p=4114&trs=558582&u='
 };
+/* ⚠️ ОБОРАЧИВАТЬ ТОЛЬКО АДРЕС AVIASALES. Обёртка партнёрская: подставишь в неё
+   чужой адрес (Kayak, Skyscanner) — ссылка сломается. Поэтому не через общий
+   aff(url,'flight'), который обернул бы всё подряд. */
+function avia(url){return TP.avia?(TP.avia+encodeURIComponent(url)):url;}
 /* обернуть наш адрес в партнёрскую ссылку, если для этой полки она задана */
 function aff(url,kind){
   const w=(AFF.wrap&&AFF.wrap[kind])||'';
@@ -5323,7 +5333,7 @@ function flightSearchOne(){
   const air=out?((partPoint(out.to)||{}).air||''):(AIRPORT[BASES[0].id]||'');
   const O=originNow();
   if(!O.code||!air)return '';
-  if(ruMarket())return aff('https://www.aviasales.ru/search/'+O.code+ddmm(startIso)+air+PEOPLE,'flight');
+  if(ruMarket())return avia('https://www.aviasales.ru/search/'+O.code+ddmm(startIso)+air+PEOPLE);
   return aff('https://www.kayak.com/flights/'+O.code+'-'+air+'/'+startIso+'/'+PEOPLE+'adults?sort=price_a','flight');
 }
 function flightBtns(){
@@ -5369,7 +5379,7 @@ function flightSearchBack(){
   const O=originNow();
   if(!O.code||!air)return '';
   const iso=back?fmtISO(dayDate(back.day)):fmtISO(addDays(planIso(),totalNights()));
-  if(ruMarket())return aff('https://www.aviasales.ru/search/'+air+ddmm(iso)+O.code+PEOPLE,'flight');
+  if(ruMarket())return avia('https://www.aviasales.ru/search/'+air+ddmm(iso)+O.code+PEOPLE);
   return aff('https://www.kayak.com/flights/'+air+'-'+O.code+'/'+iso+'/'+PEOPLE+'adults?sort=price_a','flight');
 }
 function flightIn(){              /* перелёт в начало маршрута, если он вообще есть */
