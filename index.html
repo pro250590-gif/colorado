@@ -2619,6 +2619,7 @@ const AFF={
   booking:'',            /* aid= у Booking */
   gyg:'',                /* partner_id= у GetYourGuide */
   kayak:'',              /* пока не используется, оставлено под метку Kayak */
+  stay22:'kolibripro',   /* AID из кабинета Stay22 — жильё идёт через него */
   /* заготовки-обёртки, каждая должна кончаться на u= */
   wrap:{hotel:'',flight:'',car:'',activity:'',train:'',transfer:'',esim:'',insurance:''}
 };
@@ -2641,7 +2642,23 @@ function aff(url,kind){
   const w=(AFF.wrap&&AFF.wrap[kind])||'';
   return w?(w+encodeURIComponent(url)):url;
 }
+/* ЖИЛЬЁ ИДЁТ ЧЕРЕЗ STAY22 (endpoint roam). Мы НЕ ведём человека на конкретную
+   витрину: roam сам решает, куда его отправить — Booking, Expedia, Hotels.com,
+   Agoda, — глядя на его страну. Поэтому в подписях кнопок слова «Booking» больше
+   нет: мы не знаем заранее, что откроется.
+   Скрипт LetMeAllez на страницу НЕ ставим: он подменяет ссылки на лету и подрался
+   бы с Drive от Travelpayouts за одну и ту же ссылку. Ссылку собираем сами —
+   город, даты и число гостей нам и так известны.
+   AFF.stay22 пусто → всё возвращается к прежней прямой ссылке на Booking. */
 function bookHotel(cityQ,ci,co,people){
+  if(AFF.stay22){
+    const q='aid='+encodeURIComponent(AFF.stay22)
+      +'&address='+encodeURIComponent(cityQ)
+      +'&checkin='+fmtISO(ci)+'&checkout='+fmtISO(co)
+      +'&adults='+(people||PEOPLE)
+      +'&campaign=trip';
+    return 'https://www.stay22.com/allez/roam?'+q;
+  }
   const p='ss='+encodeURIComponent(cityQ)+'&checkin='+fmtISO(ci)+'&checkout='+fmtISO(co)
     +'&group_adults='+(people||PEOPLE)+'&no_rooms='+Math.max(1,Math.ceil((people||PEOPLE)/2))+'&group_children=0';
   return aff('https://www.booking.com/searchresults.html?'+p+(AFF.booking?'&aid='+AFF.booking:''),'hotel');
@@ -3427,7 +3444,7 @@ function buildCities(){
       +(mine.length
         ? stayCard
           +'<button class="cadd" data-stayadd="'+b.id+'">'+ic('plus','i-sm')+' Добавить ещё жильё</button>'
-          +'<a class="cbooklq" href="'+bookHotel(b.q,ci,co,PEOPLE)+'" target="_blank" rel="noopener">Посмотреть другие варианты на Booking</a>'
+          +'<a class="cbooklq" href="'+bookHotel(b.q,ci,co,PEOPLE)+'" target="_blank" rel="noopener">Посмотреть другие варианты жилья</a>'
         /* Карточка «где остановиться» — той же строкой, что и карточка своего жилья:
            фото уменьшено до значка, город/ночи/даты/гости идут одной строкой,
            а Booking и «Уже есть жильё» — во всю ширину пополам (просьба клиента:
@@ -3439,7 +3456,7 @@ function buildCities(){
             +'<span class="cmeta">'+shortName(b.name)+' · '+hnc+' '+nights(hnc)+' · '+dmRange(ci,addDays(planIso(),nightsBefore(b.id)+hnc))+' · '+guests+'</span></span></div>'
           /* обе кнопки — одна пара: один рост, одна ширина, один стиль (просьба клиента) */
           +'<div class="stacts">'
-            +'<a class="sbtn pri" href="'+bookHotel(b.q,ci,addDays(planIso(),nightsBefore(b.id)+hnc),PEOPLE)+'" target="_blank" rel="noopener">Booking</a>'
+            +'<a class="sbtn pri" href="'+bookHotel(b.q,ci,addDays(planIso(),nightsBefore(b.id)+hnc),PEOPLE)+'" target="_blank" rel="noopener">Подобрать жильё</a>'
             +'<button class="sbtn sec" data-stayadd="'+b.id+'">Уже есть жильё</button>'
           +'</div>'
           +'</div>')
@@ -6452,8 +6469,8 @@ function renderStays(){
       +'</span>')
       /* жильё в этом городе уже своё — Booking понижаем в «другие варианты», как в ленте */
       +(zero?'<span class="hpass">'+(b.nights?('Вечером уезжаем: '+wayNx+(nextStayBase(b.id)?(' → '+shortName(nextStayBase(b.id).name)):'')+' · отель не нужен'):'Проездом · жильё не ищем')+'</span>'
-        :'<a class="hbook'+(stayPlaces(b.id).length?' alt':'')+'" href="'+bookHotel(b.q,ci,co2,PEOPLE)+'" target="_blank" rel="noopener" title="подобрать жильё на Booking">'+ic('bed','i-sm')
-        +'<span>'+(stayPlaces(b.id).length?'Посмотреть другие варианты на Booking':'Забронировать на Booking')+' · '+dm(ci)+'–'+dm(co2)+' · '+PEOPLE+' гост.</span></a>')
+        :'<a class="hbook'+(stayPlaces(b.id).length?' alt':'')+'" href="'+bookHotel(b.q,ci,co2,PEOPLE)+'" target="_blank" rel="noopener" title="подобрать жильё на эти даты">'+ic('bed','i-sm')
+        +'<span>'+(stayPlaces(b.id).length?'Посмотреть другие варианты жилья':'Забронировать жильё')+' · '+dm(ci)+'–'+dm(co2)+' · '+PEOPLE+' гост.</span></a>')
       +'</div>'
       /* ночи на выезде идут отдельными строками: у них своя цена и своя бронь */
       +awayNights(b.id).map(e=>{
@@ -6466,7 +6483,7 @@ function renderStays(){
           +'<span class="hmoney"><span class="hf"><label>за ночь</label><span class="hpill">'
             +'<input class="arate" data-at="'+e.tid+'" inputmode="decimal" value="'+(r?fmtIn(r):'')+'" placeholder="0"><span class="hu">'+curSym()+'</span></span></span></span>'
           +'<a class="hbook" href="'+bookHotel(sl.q||sl.nm,dt,dt2,PEOPLE)+'" target="_blank" rel="noopener">'+ic('bed','i-sm')
-            +'<span>Забронировать на Booking · '+dm(dt)+'–'+dm(dt2)+' · '+PEOPLE+' гост.</span></a>'
+            +'<span>Забронировать жильё · '+dm(dt)+'–'+dm(dt2)+' · '+PEOPLE+' гост.</span></a>'
         +'</div>';
       }).join('');
   }).join('');
