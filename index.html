@@ -2685,10 +2685,16 @@ const HSITES=[
    строки нет. Вернём, когда найдётся работающий адрес сравнения по жилью. */
 let HSITE='';   /* выбранная витрина; пусто — спрашиваем при каждом нажатии */
 function hsiteBy(k){return HSITES.filter(s=>s.k===k)[0];}
-function bookHotel(cityQ,ci,co,people,site){
+/* ⚠️ КООРДИНАТЫ ОБЯЗАТЕЛЬНЫ, НЕ ТОЛЬКО НАЗВАНИЕ. По одному тексту Stay22 ищет город
+   сам — и промахивается: на «Milan, Italy» Tripadvisor открывал ПОРДЕНОНЕ, город в
+   350 км (скрин клиента, воспроизведено запросом). С lat/lng тот же адрес отдаёт
+   Milan_Lombardy. Широта и долгота у городов маршрута точные, они лежат в BASES —
+   гадать незачем. */
+function bookHotel(cityQ,ci,co,people,site,ll){
   if(AFF.stay22){
     const q='aid='+encodeURIComponent(AFF.stay22)
       +'&address='+encodeURIComponent(cityQ)
+      +((ll&&typeof ll[0]==='number')?('&lat='+ll[0]+'&lng='+ll[1]):'')
       +'&checkin='+fmtISO(ci)+'&checkout='+fmtISO(co)
       +'&adults='+(people||PEOPLE)
       +'&campaign=trip';
@@ -2702,10 +2708,16 @@ function bookHotel(cityQ,ci,co,people,site){
 /* Данные для кнопки брони: по ним лист узнаёт город, даты и гостей. Висят на самой
    ссылке, поэтому href остаётся живым — не сработает скрипт, человек всё равно
    попадёт на поиск жилья, а не в никуда. */
-function hsData(q,ci,co,people,title){
+function hsData(q,ci,co,people,title,ll){
   return ' data-hsq="'+esc0(q)+'" data-hsci="'+fmtISO(ci)+'" data-hsco="'+fmtISO(co)
-    +'" data-hspp="'+(people||PEOPLE)+'" data-hstitle="'+esc0(title||'')+'"';
+    +'" data-hspp="'+(people||PEOPLE)+'" data-hstitle="'+esc0(title||'')+'"'
+    +((ll&&typeof ll[0]==='number')?(' data-hsll="'+ll[0]+','+ll[1]+'"'):'');
 }
+/* «45.46,9.19» обратно в пару чисел */
+function hsLL(s){const p=String(s||'').split(',');
+  return (p.length===2&&isFinite(+p[0])&&isFinite(+p[1]))?[+p[0],+p[1]]:null;}
+/* координаты города или места; нет их — вернём null, и ссылка соберётся по названию */
+function baseLL(x){return (x&&typeof x.lat==='number'&&typeof x.lng==='number')?[x.lat,x.lng]:null;}
 /* подпись кнопки: витрина выбрана — называем её, иначе обещать нечего */
 function hsLabel(base){return HSITE&&hsiteBy(HSITE)?(base+' на '+hsiteBy(HSITE).nm):base;}
 /* Прокат ищем В АЭРОПОРТУ, если он известен: в посёлке у входа в парк
@@ -3501,8 +3513,8 @@ function buildCities(){
       +(mine.length
         ? stayCard
           +'<button class="cadd" data-stayadd="'+b.id+'">'+ic('plus','i-sm')+' Добавить ещё жильё</button>'
-          +'<a class="cbooklq" href="'+bookHotel(b.q,ci,co,PEOPLE)+'"'+hsData(b.q,ci,co,PEOPLE,shortName(b.name)+' · '+dmRange(ci,co))+' target="_blank" rel="noopener">'+hsLabel('Посмотреть другие варианты жилья')+'</a>'
-          +(HSITE?'<button class="hswap" data-hswap="1"'+hsData(b.q,ci,co,PEOPLE,shortName(b.name)+' · '+dmRange(ci,co))+'>Искать в другом сервисе</button>':'')
+          +'<a class="cbooklq" href="'+bookHotel(b.q,ci,co,PEOPLE,'',baseLL(b))+'"'+hsData(b.q,ci,co,PEOPLE,shortName(b.name)+' · '+dmRange(ci,co),baseLL(b))+' target="_blank" rel="noopener">'+hsLabel('Посмотреть другие варианты жилья')+'</a>'
+          +(HSITE?'<button class="hswap" data-hswap="1"'+hsData(b.q,ci,co,PEOPLE,shortName(b.name)+' · '+dmRange(ci,co),baseLL(b))+'>Искать в другом сервисе</button>':'')
         /* Карточка «где остановиться» — той же строкой, что и карточка своего жилья:
            фото уменьшено до значка, город/ночи/даты/гости идут одной строкой,
            а Booking и «Уже есть жильё» — во всю ширину пополам (просьба клиента:
@@ -3514,14 +3526,14 @@ function buildCities(){
             +'<span class="cmeta">'+shortName(b.name)+' · '+hnc+' '+nights(hnc)+' · '+dmRange(ci,addDays(planIso(),nightsBefore(b.id)+hnc))+' · '+guests+'</span></span></div>'
           /* обе кнопки — одна пара: один рост, одна ширина, один стиль (просьба клиента) */
           +'<div class="stacts">'
-            +'<a class="sbtn pri" href="'+bookHotel(b.q,ci,addDays(planIso(),nightsBefore(b.id)+hnc),PEOPLE)+'"'
-              +hsData(b.q,ci,addDays(planIso(),nightsBefore(b.id)+hnc),PEOPLE,shortName(b.name)+' · '+dmRange(ci,addDays(planIso(),nightsBefore(b.id)+hnc))+' · '+guests)
+            +'<a class="sbtn pri" href="'+bookHotel(b.q,ci,addDays(planIso(),nightsBefore(b.id)+hnc),PEOPLE,'',baseLL(b))+'"'
+              +hsData(b.q,ci,addDays(planIso(),nightsBefore(b.id)+hnc),PEOPLE,shortName(b.name)+' · '+dmRange(ci,addDays(planIso(),nightsBefore(b.id)+hnc))+' · '+guests,baseLL(b))
               +' target="_blank" rel="noopener">'+(HSITE&&hsiteBy(HSITE)?hsiteBy(HSITE).nm:'Подобрать жильё')+'</a>'
             +'<button class="sbtn sec" data-stayadd="'+b.id+'">Уже есть жильё</button>'
           +'</div>'
           /* выбранную витрину надо уметь переиграть, иначе выбор становится ловушкой */
           +(HSITE?'<button class="hswap" data-hswap="1"'
-              +hsData(b.q,ci,addDays(planIso(),nightsBefore(b.id)+hnc),PEOPLE,shortName(b.name)+' · '+dmRange(ci,addDays(planIso(),nightsBefore(b.id)+hnc))+' · '+guests)
+              +hsData(b.q,ci,addDays(planIso(),nightsBefore(b.id)+hnc),PEOPLE,shortName(b.name)+' · '+dmRange(ci,addDays(planIso(),nightsBefore(b.id)+hnc))+' · '+guests,baseLL(b))
               +'>Искать в другом сервисе</button>':'')
           +'</div>')
       +'</div>';
@@ -6224,8 +6236,9 @@ function stayMenuSheet(id){
    Её слова: «запомнить должно быть, только если на неё нажали». Запоминаем
    ТОЛЬКО по явной галочке; сняли галочку — память стирается. */
 let HREM=false;
-function hotelSheet(q,ciIso,coIso,people,title){
-  const d=' data-hsq="'+esc0(q)+'" data-hsci="'+ciIso+'" data-hsco="'+coIso+'" data-hspp="'+(people||PEOPLE)+'"';
+function hotelSheet(q,ciIso,coIso,people,title,llStr){
+  const d=' data-hsq="'+esc0(q)+'" data-hsci="'+ciIso+'" data-hsco="'+coIso+'" data-hspp="'+(people||PEOPLE)+'"'
+    +(llStr?' data-hsll="'+esc0(llStr)+'"':'');
   const row=s=>'<button class="dsrow hsrow'+(HSITE===s.k?' sug':'')+'" data-hsite="'+s.k+'"'+d+'>'
     +'<span class="hslg" style="background:'+s.bg+'">'+s.ab+'</span>'
     +'<span class="dst"><b>'+s.nm+'</b><span>'+s.sub+'</span></span>'
@@ -6558,12 +6571,12 @@ function renderStays(){
       +'</span>')
       /* жильё в этом городе уже своё — Booking понижаем в «другие варианты», как в ленте */
       +(zero?'<span class="hpass">'+(b.nights?('Вечером уезжаем: '+wayNx+(nextStayBase(b.id)?(' → '+shortName(nextStayBase(b.id).name)):'')+' · отель не нужен'):'Проездом · жильё не ищем')+'</span>'
-        :'<a class="hbook'+(stayPlaces(b.id).length?' alt':'')+'" href="'+bookHotel(b.q,ci,co2,PEOPLE)+'"'
-        +hsData(b.q,ci,co2,PEOPLE,shortName(b.name)+' · '+dm(ci)+'–'+dm(co2))+' target="_blank" rel="noopener" title="подобрать жильё на эти даты">'+ic('bed','i-sm')
+        :'<a class="hbook'+(stayPlaces(b.id).length?' alt':'')+'" href="'+bookHotel(b.q,ci,co2,PEOPLE,'',baseLL(b))+'"'
+        +hsData(b.q,ci,co2,PEOPLE,shortName(b.name)+' · '+dm(ci)+'–'+dm(co2),baseLL(b))+' target="_blank" rel="noopener" title="подобрать жильё на эти даты">'+ic('bed','i-sm')
         +'<span>'+hsLabel(stayPlaces(b.id).length?'Посмотреть другие варианты жилья':'Забронировать жильё')+' · '+dm(ci)+'–'+dm(co2)+' · '+PEOPLE+' гост.</span></a>'
         /* выход из запомненной витрины нужен ВЕЗДЕ, где есть кнопка брони, а не
            только в ленте: в бюджете человек тоже жмёт «забронировать» (её правка) */
-        +(HSITE?'<button class="hswap" data-hswap="1"'+hsData(b.q,ci,co2,PEOPLE,shortName(b.name)+' · '+dm(ci)+'–'+dm(co2))+'>Искать в другом сервисе</button>':''))
+        +(HSITE?'<button class="hswap" data-hswap="1"'+hsData(b.q,ci,co2,PEOPLE,shortName(b.name)+' · '+dm(ci)+'–'+dm(co2),baseLL(b))+'>Искать в другом сервисе</button>':''))
       +'</div>'
       /* ночи на выезде идут отдельными строками: у них своя цена и своя бронь */
       +awayNights(b.id).map(e=>{
@@ -6575,10 +6588,10 @@ function renderStays(){
             +'<span class="hdate">ночь на выезде · '+dm(dt)+' → '+dm(dt2)+' · вместо ночи · '+shortName(b.name)+'</span></span>'
           +'<span class="hmoney"><span class="hf"><label>за ночь</label><span class="hpill">'
             +'<input class="arate" data-at="'+e.tid+'" inputmode="decimal" value="'+(r?fmtIn(r):'')+'" placeholder="0"><span class="hu">'+curSym()+'</span></span></span></span>'
-          +'<a class="hbook" href="'+bookHotel(sl.q||sl.nm,dt,dt2,PEOPLE)+'"'
-            +hsData(sl.q||sl.nm,dt,dt2,PEOPLE,esc0(sl.nm)+' · '+dm(dt)+'–'+dm(dt2))+' target="_blank" rel="noopener">'+ic('bed','i-sm')
+          +'<a class="hbook" href="'+bookHotel(sl.q||sl.nm,dt,dt2,PEOPLE,'',baseLL(sl))+'"'
+            +hsData(sl.q||sl.nm,dt,dt2,PEOPLE,esc0(sl.nm)+' · '+dm(dt)+'–'+dm(dt2),baseLL(sl))+' target="_blank" rel="noopener">'+ic('bed','i-sm')
             +'<span>'+hsLabel('Забронировать жильё')+' · '+dm(dt)+'–'+dm(dt2)+' · '+PEOPLE+' гост.</span></a>'
-          +(HSITE?'<button class="hswap" data-hswap="1"'+hsData(sl.q||sl.nm,dt,dt2,PEOPLE,esc0(sl.nm)+' · '+dm(dt)+'–'+dm(dt2))+'>Искать в другом сервисе</button>':'')
+          +(HSITE?'<button class="hswap" data-hswap="1"'+hsData(sl.q||sl.nm,dt,dt2,PEOPLE,esc0(sl.nm)+' · '+dm(dt)+'–'+dm(dt2),baseLL(sl))+'>Искать в другом сервисе</button>':'')
         +'</div>';
       }).join('');
   }).join('');
@@ -6676,16 +6689,16 @@ document.addEventListener('change',e=>{const id=e.target.dataset&&e.target.datas
 document.addEventListener('click',e=>{
   const a=e.target.closest('a[data-hsq]');if(!a||HSITE)return;
   e.preventDefault();
-  hotelSheet(a.dataset.hsq,a.dataset.hsci,a.dataset.hsco,+a.dataset.hspp||PEOPLE,a.dataset.hstitle||'');
+  hotelSheet(a.dataset.hsq,a.dataset.hsci,a.dataset.hsco,+a.dataset.hspp||PEOPLE,a.dataset.hstitle||'',a.dataset.hsll||'');
 });
 document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)return;
   /* выбор витрины жилья */
-  if(t.dataset.hswap){hotelSheet(t.dataset.hsq,t.dataset.hsci,t.dataset.hsco,+t.dataset.hspp||PEOPLE,t.dataset.hstitle||'');}
+  if(t.dataset.hswap){hotelSheet(t.dataset.hsq,t.dataset.hsci,t.dataset.hsco,+t.dataset.hspp||PEOPLE,t.dataset.hstitle||'',t.dataset.hsll||'');}
   if(t.dataset.hsrem){HREM=!HREM;t.classList.toggle('on',HREM);
     const c=t.querySelector('.hschk');if(c)c.textContent=HREM?'✓':'';}
   if(t.dataset.hsite){
     const d=s=>new Date(s+'T00:00:00');
-    const url=bookHotel(t.dataset.hsq,d(t.dataset.hsci),d(t.dataset.hsco),+t.dataset.hspp||PEOPLE,t.dataset.hsite);
+    const url=bookHotel(t.dataset.hsq,d(t.dataset.hsci),d(t.dataset.hsco),+t.dataset.hspp||PEOPLE,t.dataset.hsite,hsLL(t.dataset.hsll));
     closeDaySheet();
     /* окно открываем ПЕРВЫМ делом: браузер разрешает это только пока он считает
        нажатие «свежим», а перерисовка ленты — работа не быстрая */
