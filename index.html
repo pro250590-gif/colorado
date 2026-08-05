@@ -111,7 +111,11 @@ body.athome,body.atland{padding-right:0!important}
 .lcont{display:block;width:100%;margin-top:18px;padding:14px;border:1.5px solid rgba(91,63,196,.28);border-radius:14px;
   background:#fff;cursor:pointer;font:600 13px/1.3 "Inter",sans-serif;color:#5b3fc4;-webkit-appearance:none;appearance:none}
 .lcont b{font-weight:800;color:var(--ink)}
-.loginb{margin-left:auto;border:1.5px solid rgba(91,63,196,.32);background:#fff;border-radius:12px;padding:9px 15px;cursor:pointer;
+/* ⚠️ БЕЗ margin-left:auto. У логотипа стоит margin-right:auto, и он один
+   отжимает всё вправо. Когда «авто» было и здесь, пустота делилась ПОПОЛАМ, и
+   кнопки единиц уезжали в середину шапки — она увидела это в инкогнито, где
+   вместо аватарки показывается «Войти». */
+.loginb{border:1.5px solid rgba(91,63,196,.32);background:#fff;border-radius:12px;padding:9px 15px;cursor:pointer;
   font:800 12.5px/1 "Plus Jakarta Sans",sans-serif;color:#5b3fc4;-webkit-appearance:none;appearance:none}
 .lnk{border:0;background:none;padding:0;cursor:pointer;font:inherit;color:#5b3fc4;text-decoration:underline;
   text-decoration-color:rgba(91,63,196,.4)}
