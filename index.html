@@ -2685,16 +2685,23 @@ const HSITES=[
    строки нет. Вернём, когда найдётся работающий адрес сравнения по жилью. */
 let HSITE='';   /* выбранная витрина; пусто — спрашиваем при каждом нажатии */
 function hsiteBy(k){return HSITES.filter(s=>s.k===k)[0];}
-/* ⚠️ КООРДИНАТЫ ОБЯЗАТЕЛЬНЫ, НЕ ТОЛЬКО НАЗВАНИЕ. По одному тексту Stay22 ищет город
-   сам — и промахивается: на «Milan, Italy» Tripadvisor открывал ПОРДЕНОНЕ, город в
-   350 км (скрин клиента, воспроизведено запросом). С lat/lng тот же адрес отдаёт
-   Milan_Lombardy. Широта и долгота у городов маршрута точные, они лежат в BASES —
-   гадать незачем. */
+/* ⚠️ КООРДИНАТЫ — НЕ ВСЕМ, И ЭТО ВАЖНО.
+   По одному названию Stay22 ищет город сам и промахивается: на «Milan, Italy»
+   Tripadvisor открывал ПОРДЕНОНЕ, город в 350 км (скрин клиента, воспроизведено).
+   С lat/lng тот же адрес отдаёт Milan_Lombardy. Поэтому координаты даём.
+   НО BOOKING — ИСКЛЮЧЕНИЕ. С координатами Stay22 строит ему
+   booking.com/searchresults?latitude=…;longitude=… — без номера города и без дат.
+   На телефоне такую ссылку перехватывает ПРИЛОЖЕНИЕ Booking, разобрать её не может
+   и показывает ПРОШЛЫЙ поиск: клиент открыла Милан, а в приложении остался Дуранго.
+   По названию Stay22 отдаёт dest_id=-121726 — настоящий номер города, приложение
+   его понимает. roam сюда же: он чаще всего и приводит на Booking. */
+const HSLL={tripadvisor:1,expedia:1,hotelscom:1,agoda:1,vrbo:1};
 function bookHotel(cityQ,ci,co,people,site,ll){
   if(AFF.stay22){
+    const to=site||HSITE;
     const q='aid='+encodeURIComponent(AFF.stay22)
       +'&address='+encodeURIComponent(cityQ)
-      +((ll&&typeof ll[0]==='number')?('&lat='+ll[0]+'&lng='+ll[1]):'')
+      +((ll&&typeof ll[0]==='number'&&HSLL[to])?('&lat='+ll[0]+'&lng='+ll[1]):'')
       +'&checkin='+fmtISO(ci)+'&checkout='+fmtISO(co)
       +'&adults='+(people||PEOPLE)
       +'&campaign=trip';
@@ -6133,23 +6140,11 @@ function toast(html,bid,prev){
   el.classList.add('on');
 }
 function hideToast(){const el=document.getElementById('toast');if(el)el.classList.remove('on');}
-/* «Открываем Booking.com» — плашка на время перехода к витрине.
-   Кнопок нет намеренно: клиент попросила без «Отменить» (вкладка уже открыта,
-   отменять нечего), и это сообщение, а не вопрос. В отличие от плашки удаления
-   дня, эта ГАСНЕТ САМА — она закрывает паузу, а не ждёт решения.
-   ⚠️ Честная граница: сама задержка происходит В НОВОЙ ВКЛАДКЕ, у Stay22, и туда
-   мы ничего дорисовать не можем. Плашка видна на НАШЕЙ странице — то есть когда
-   вкладка открылась фоном и когда человек вернулся назад. */
-let _openT=null;
-function sayOpening(nm){
-  _undo=null;
-  let el=document.getElementById('toast');
-  if(!el){el=document.createElement('div');el.id='toast';document.body.appendChild(el);}
-  el.innerHTML='<span class="ttx"><b>Открываем '+esc0(nm)+'</b>'
-    +'<i>В новой вкладке идёт поиск жилья на ваши даты</i></span>';
-  el.classList.add('on');
-  clearTimeout(_openT);_openT=setTimeout(hideToast,5000);
-}
+/* ⚠️ ПЛАШКА «ОТКРЫВАЕМ BOOKING» БЫЛА И УБРАНА — не возвращать без нового повода.
+   Клиент сама её попросила, а посмотрев, отменила: «если она не уменьшает время
+   перехода, то лишняя — ожидание только растёт». Довод верный. Пауза живёт в
+   ЧУЖОЙ вкладке (Stay22 → партнёрская сеть → витрина), нашей страницей её не
+   закрыть, а лишняя плашка на своей странице ничего не ускоряет. */
 /* лист «какой день убрать»: ничего не происходит, пока не нажмёшь. Свой вариант — первым,
    с бейджем «предлагаем» и причиной. */
 function pickDaySheet(bid){
@@ -6706,7 +6701,7 @@ document.addEventListener('change',e=>{const id=e.target.dataset&&e.target.datas
 document.addEventListener('click',e=>{
   const a=e.target.closest('a[data-hsq]');if(!a)return;
   /* витрина уже выбрана — переходу не мешаем, только объясняем паузу */
-  if(HSITE){const s=hsiteBy(HSITE);sayOpening(s?s.nm:'витрину');return;}
+  if(HSITE)return;   /* витрина выбрана — переходу не мешаем */
   e.preventDefault();
   hotelSheet(a.dataset.hsq,a.dataset.hsci,a.dataset.hsco,+a.dataset.hspp||PEOPLE,a.dataset.hstitle||'',a.dataset.hsll||'');
 });
@@ -6722,7 +6717,6 @@ document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)r
     /* окно открываем ПЕРВЫМ делом: браузер разрешает это только пока он считает
        нажатие «свежим», а перерисовка ленты — работа не быстрая */
     window.open(url,'_blank','noopener');
-    sayOpening((hsiteBy(t.dataset.hsite)||{}).nm||'витрину');
     /* без галочки не запоминаем НИЧЕГО — и снятая галочка стирает прежний выбор,
        иначе из него не выбраться: сняли, выбрали другое, а ведёт по-старому */
     const nx=HREM?t.dataset.hsite:'';
