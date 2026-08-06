@@ -724,6 +724,9 @@ input[type=checkbox].tick:checked::after{content:"";position:absolute;left:8px;t
 .mpill.route{background:rgba(61,90,114,.12);color:var(--deep2);border-color:transparent}
 /* важность и время: «если время» уходит первым, «по расписанию» не трогаем при раскладке */
 .mpill.spare{background:rgba(20,32,27,.06);color:#7c8697;border-color:transparent}
+/* «если есть силы» — вечерняя точка. Цвет закатный, не тревожный: это не
+   предупреждение, а честная подсказка (её правило про восемь вечера). */
+.mpill.tired{background:rgba(224,160,32,.14);color:#8a6316;border-color:transparent}
 .mpill.fixed{background:rgba(124,92,255,.13);color:#5b3fc4;border-color:transparent}
 .mpill.nopt{background:rgba(192,57,43,.1);color:#b03a2b;border-color:transparent}
 .mpill.apx{background:rgba(168,99,10,.12);color:#a8630a;border-color:transparent}
@@ -4000,6 +4003,12 @@ function metaStrip(p){
      том же ряду: её просьба. Показывается по расчёту дня, поэтому рисуется
      всегда, а видимостью управляет пересчёт (refreshBudgets) */
   out+='<span class="mpill later" data-later="'+p.id+'" style="display:none">'+ic('clock','i-sm')+' если успеете</span>';
+  /* ⚠️ ТОЧКА, ДО КОТОРОЙ ДЕЛО ДОХОДИТ ПОСЛЕ ВОСЬМИ ВЕЧЕРА. Её правило 06.08:
+     «конец дня девять вечера, после девяти ничего не предлагаем; а если в
+     восемь — подписываем „если есть силы“». Плашка рисуется всегда, а
+     показывается пересчётом: во сколько человек досюда доберётся, зависит от
+     времени прилёта и от того, что он оставил в дне. */
+  out+='<span class="mpill tired" data-tired="'+p.id+'" style="display:none">'+ic('clock','i-sm')+' если есть силы</span>';
   if(pr==='must')out+='<span class="mpill must">'+ic('star','i-sm')+' обязательно</span>';
   if(pr==='spare')out+='<span class="mpill spare">'+ic('clock','i-sm')+' если время</span>';
   if(wh==='fixed')out+='<span class="mpill fixed">'+ic('ticket','i-sm')+' по расписанию</span>';
@@ -4383,6 +4392,16 @@ Object.defineProperty(window,'DAY_LIMIT',{get:function(){return paceH()*60;}});
    регистрацию. Для дальнего перелёта 1,5 ч на прилёте и 3 ч на вылете, для
    ближнего 45 мин и 2 ч. */
 const DAY0=9*60;
+/* ⚠️ ДЕНЬ КОНЧАЕТСЯ В 21:00. Её решение 06.08.2026: «конец дня 9 вечера, после
+   девяти ничего не предлагаем; а если в 8 вечера — подписываем „если есть силы“».
+   До этого конца дня не было вовсе: день считался как «девять утра плюс темп»,
+   то есть при темпе 10 ч он кончался в 19:00 и никакого вечера не существовало.
+   Отсюда и её претензия: прилетел в 12:30 — мы давали 5 ч 45, будто после семи
+   вечера человек ничего не делает. */
+const DAY_END=21*60;
+/* последний час перед концом дня: сюда ещё можно что-то поставить, но честно
+   подписав «если есть силы» — вечером после перелёта они есть не у всех */
+const DAY_TIRED=20*60;
 /* ⚠️ имя hhmm уже занято ФОРМАТТЕРОМ минут в часы (ниже по файлу), и
    объявленный позже он молча перебивал этот разбор: «22:00» превращалось в NaN,
    а в шапке дня стояло «из NaN ч». Поэтому здесь своё имя. */
@@ -4398,7 +4417,12 @@ function flightCut(tid){
   const lim=DAY_LIMIT,long=longHaul();
   if(e.disp===1){
     const t=clockMin(FLIGHT.arrTime);if(t===null)return 0;
-    return Math.max(0,Math.min(lim,(t+(long?90:45))-DAY0));
+    /* ⚠️ СЧИТАЕМ ДО КОНЦА ДНЯ, А НЕ ОТ НАЧАЛА. Было: «сколько дня уже прошло с
+       девяти утра» — и вечер пропадал. Стало: «сколько осталось до девяти
+       вечера», но не больше темпа. Её числа сходятся: прилёт 16:17 плюс 45 мин
+       на багаж — это 17:02, до 21:00 остаётся ровно около четырёх часов. */
+    const free=DAY_END-(t+(long?90:45));
+    return Math.max(0,lim-Math.max(0,Math.min(lim,free)));
   }
   if(e.fin){
     const t=clockMin(FLIGHT.bDepTime);if(t===null)return 0;
@@ -4878,6 +4902,22 @@ function refreshBudgets(){
   document.querySelectorAll('[data-later]').forEach(el=>{
     const p=P.find(x=>x.id===el.dataset.later);
     el.style.display=(p&&isSqueezed(p))?'':'none';
+  });
+  /* «если есть силы» — до точки доходит очередь в последний час дня.
+     Время берём из той же ленты, что рисует день по часам, чтобы не считать
+     дважды и не разойтись с ней. */
+  document.querySelectorAll('[data-tired]').forEach(el=>{
+    const id=el.dataset.tired;let late=false;
+    try{
+      const e=SCHED.find(x=>dayPlaces(x).some(p=>p.id===id));
+      if(e){
+        const cut=flightCut(e.tid);           /* прилёт сдвигает весь день */
+        (dayPlan(e.tid)||[]).forEach(it=>{
+          if(it.kind==='place'&&it.p&&it.p.id===id&&(DAY_START+cut+it.from-DAY_START)>=DAY_TIRED)late=true;
+        });
+      }
+    }catch(err){}
+    el.style.display=late?'':'none';
   });
   document.querySelectorAll('[data-bud]').forEach(el=>{
     const tid=tidOf(el.dataset.bud),b=dayMinutes(tid);
