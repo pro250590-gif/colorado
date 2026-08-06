@@ -1587,16 +1587,30 @@ body.guest.atland .guestbar,body.guest.athome .guestbar{display:none}
    не нажимается. Так он понимает, из чего собран план, и не решает, что у него
    сломался сайт. Настоящий запрет правок держит перехват нажатий ниже по коду —
    стили тут только показывают, что кнопка неживая. */
+/* ⚠️ ОДИН СПИСОК НА ВСЁ. Сначала я гасила кнопки вразнобой: часть посерела,
+   часть осталась фиолетовой. Клиент заметила: «где-то ты так сделала, а где-то
+   этого нету, добавь везде». Поэтому перечень ровно один, и он же красит.
+   Правило простое: кнопка не нажимается → она обесцвечена.
+   ⚠️ Кнопки БРОНИ сюда НЕ входят: у гостя они рабочие и должны остаться яркими. */
 body.guest .crm,body.guest .cadd,body.guest .cpmv,body.guest .cpup,
 body.guest .badd,body.guest .bmenu,body.guest .stbtn.add,body.guest .sbtn.sec,
 body.guest .mystact .cpmv,body.guest .shbtn,body.guest #saveBtn,
 body.guest .hswap,body.guest .stepbtn,body.guest .pacepick,body.guest .pnum,
 body.guest #s-route .scdate,body.guest #budgetBox input,body.guest #stayList input,
-body.guest .cst,body.guest .cadd,body.guest [data-tick]{pointer-events:none!important}
-/* приглушение — обычный признак «кнопка неживая»; сами кнопки на месте */
+body.guest [data-tick],body.guest .scfrom,body.guest .flb.alt,
+body.guest .cbook[data-flopen]{pointer-events:none!important}
+/* ⚠️ ЧТО В ЭТОТ СПИСОК НЕ КЛАСТЬ, ПРОВЕРЕНО НА СЕБЕ:
+   .dsx и .dscancel — крестик и «Отмена» в листах. Заглушив их, я уже один раз
+     заперла гостя в открытом окне; это ровно та ловушка, на которую она жаловалась.
+   .cst — вкладки городов вверху ленты, это переход по странице, а не правка.
+   .cmore summary — «показать ещё места», тоже просмотр. */
+/* «нельзя нажать» = серое и бледное. grayscale гасит фиолет, opacity — яркость;
+   вместе получается ровно то, что она просила: всё на месте, но видно, что мёртвое. */
 body.guest .crm,body.guest .cadd,body.guest .cpmv,body.guest .cpup,
 body.guest .badd,body.guest .bmenu,body.guest .stbtn.add,body.guest .sbtn.sec,
-body.guest .shbtn,body.guest #saveBtn,body.guest .hswap,body.guest .stepbtn{opacity:.45}
+body.guest .shbtn,body.guest #saveBtn,body.guest .hswap,body.guest .stepbtn,
+body.guest .pacepick,body.guest .scfrom,body.guest .flb.alt,
+body.guest .cbook[data-flopen],body.guest [data-tick]{filter:grayscale(1);opacity:.42}
 /* бюджет прячем целиком, если хозяин не разрешил его показывать */
 body.guest.nobudget #s-money,body.guest.nobudget .bottomnav a[href="#s-money"]{display:none!important}
 /* выбор витрины жилья: строка = сервис, значок квадратный, как логотип в приложении */
