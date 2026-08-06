@@ -1363,7 +1363,11 @@ body{background:linear-gradient(168deg,#eef1f8,#e9edf6 60%,#e6eaf4)!important}
 .cbookl{margin-top:auto;display:inline-flex;align-items:center;gap:6px;font:700 13px/1 "Inter",sans-serif;color:#5b3fc4;text-decoration:none;padding-top:10px}
 /* вторая ссылка проката: тише главной кнопки, с честной подписью про пустую форму */
 .cbookl small{font-weight:500;color:#8b8698}
-.cbookl.bcarl{display:flex;justify-content:center;margin:2px 16px 14px;padding-top:0}
+/* ⚠️ БЫЛО НАЛОЖЕНИЕ ТЕКСТА (её скрин 06.08): в inline-flex длинное название и
+   пояснение не переносились и налезали друг на друга. Обычный блок с переносом
+   по словам — строка сама разложится на две, как ей и надо. */
+.cbookl.bcarl{display:block;text-align:center;margin:2px 16px 14px;padding-top:0;line-height:1.45}
+.cbookl.bcarl small{display:inline;margin-left:5px}
 /* своё жильё: карточка вместо предложения искать, Booking понижен до второстепенной ссылки */
 .cstay.myst{border-color:rgba(91,63,196,.28);background:linear-gradient(160deg,#fff,#faf8ff)}
 .cstay .cph.b{display:grid;place-items:center;background:linear-gradient(150deg,#f3effd,#ddd1f6);color:#5b3fc4}
@@ -5338,8 +5342,18 @@ function flightFix(f){
    прилёте нужен только рейс туда, в вылете — только обратный. Верно: человек
    смотрит блок про сегодняшний перелёт, а ему показывают вчерашний.
    which: 'there' — туда, 'back' — обратно, пусто — оба (для листа формы). */
+/* ⚠️ В СТРОКЕ РЕЙСА — ТОЛЬКО КОД АЭРОПОРТА, БЕЗ ГОРОДА. Её правка 06.08: строка
+   «Майами · MIA, 7 авг 11:11 → Дуранго · DRO, 7 авг 16:17» не влезала и уезжала
+   на две строки. Города дублировать незачем: они крупно написаны прямо над этой
+   строкой, в самой карточке перелёта.
+   В поле лежит «Город · КОД» (так его кладёт подсказка аэропортов). Кода нет —
+   человек вписал город руками, тогда оставляем как есть: лучше длинно, чем пусто. */
+function airOnly(s){
+  const m=String(s||'').match(/(?:^|·)\s*([A-Za-z]{3})\s*$/);
+  return m?m[1].toUpperCase():String(s||'').trim();
+}
 function flightSummary(which){
-  const f=FLIGHT||{},V=k=>String(f[k]||'').trim(),D=k=>ISO10(f[k])?dm(addDays(f[k],0)):'',T=k=>f[k]?(' '+f[k]):'';
+  const f=FLIGHT||{},V=k=>airOnly(f[k]),D=k=>ISO10(f[k])?dm(addDays(f[k],0)):'',T=k=>f[k]?(' '+f[k]):'';
   const there=[V('depCity'),(D('depDate')+T('depTime')).trim()].filter(Boolean).join(', ')
     +' → '+[V('arrCity'),(D('arrDate')+T('arrTime')).trim()].filter(Boolean).join(', ');
   const backHas=ISO10(f.bDepDate);
