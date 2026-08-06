@@ -88,8 +88,11 @@ async function renderOne(file) {
     h = h.replace(/<head[^>]*>/i, m => m + '<script>'
       + 'localStorage.setItem("co-trip-2026-plan",' + JSON.stringify(alien) + ');'
       + 'localStorage.setItem("co-trip-trips",' + JSON.stringify(list) + ');</script>');
-    h = h.replace(/document\.write\('<scr'\+'ipt src="'\+f\+'"><\/scr'\+'ipt>'\);/, '');
-    h = h.replace('<script src="day-math.js"></script>',
+    /* ⚠️ ловим ОБА вида: раньше путь был относительный, теперь абсолютный («/»+f).
+       Сменили путь ради адресов по языкам (/en/), и старая точная строка перестала
+       совпадать — проверка молча начала грузить файл дважды. */
+    h = h.replace(/document\.write\('<scr'\+'ipt src="\/?'\+[^;]*?\);/g, '');
+    h = h.replace('<script src="/day-math.js"></script>',
       '<script src="' + file + '"></script>\n<script src="day-math.js"></script>');
     res.end(h);
   });
