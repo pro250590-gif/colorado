@@ -1591,43 +1591,17 @@ body.guest.atland .guestbar,body.guest.athome .guestbar{display:none}
    не нажимается. Так он понимает, из чего собран план, и не решает, что у него
    сломался сайт. Настоящий запрет правок держит перехват нажатий ниже по коду —
    стили тут только показывают, что кнопка неживая. */
-/* ⚠️ ОДИН СПИСОК НА ВСЁ. Сначала я гасила кнопки вразнобой: часть посерела,
-   часть осталась фиолетовой. Клиент заметила: «где-то ты так сделала, а где-то
-   этого нету, добавь везде». Поэтому перечень ровно один, и он же красит.
-   Правило простое: кнопка не нажимается → она обесцвечена.
-   ⚠️ Кнопки БРОНИ сюда НЕ входят: у гостя они рабочие и должны остаться яркими. */
-body.guest .crm,body.guest .cadd,body.guest .cpmv,body.guest .cpup,
-body.guest .badd,body.guest .bmenu,body.guest .stbtn.add,body.guest .sbtn.sec,
-body.guest .mystact .cpmv,body.guest .shbtn,body.guest #saveBtn,
-body.guest .hswap,body.guest .stepbtn,body.guest .pacepick,body.guest .pnum,
-body.guest #s-route .scdate,body.guest #budgetBox input,body.guest #stayList input,
-body.guest [data-tick],body.guest .scfrom,body.guest .flb.alt,
-body.guest .cbook[data-flopen],
-/* ⚠️ КНОПКИ БРОНИ ТОЖЕ ГАСИМ — ЭТО ЕЁ РЕШЕНИЕ, НЕ МОЁ. Я оставляла их живыми:
-   гость мог бы забронировать по чужому плану, и это её партнёрский доход. Она
-   дважды показала на них: «эти ссылки активны, ты их пропустил». Значит для неё
-   гостевой экран — только просмотр, без единого действия. Вернуть — убрать эти
-   четыре строки. */
-body.guest .cbook,body.guest .hbook,body.guest .bbook,body.guest .flb,
-body.guest .sbtn.pri,body.guest .cbooklq,body.guest .cbookl.bcarl,
-body.guest a[data-hsq]{pointer-events:none!important}
-/* ⚠️ ЧТО В ЭТОТ СПИСОК НЕ КЛАСТЬ, ПРОВЕРЕНО НА СЕБЕ:
-   .dsx и .dscancel — крестик и «Отмена» в листах. Заглушив их, я уже один раз
-     заперла гостя в открытом окне; это ровно та ловушка, на которую она жаловалась.
-   .cst — вкладки городов вверху ленты, это переход по странице, а не правка.
-   .cmore summary — «показать ещё места», тоже просмотр. */
-/* «нельзя нажать» = серое и бледное. grayscale гасит фиолет, opacity — яркость;
-   вместе получается ровно то, что она просила: всё на месте, но видно, что мёртвое. */
-body.guest .crm,body.guest .cadd,body.guest .cpmv,body.guest .cpup,
-body.guest .badd,body.guest .bmenu,body.guest .stbtn.add,body.guest .sbtn.sec,
-body.guest .shbtn,body.guest #saveBtn,body.guest .hswap,body.guest .stepbtn,
-body.guest .pacepick,body.guest .scfrom,body.guest .flb.alt,
-body.guest .cbook[data-flopen],body.guest [data-tick],
-body.guest .cbook,body.guest .hbook,body.guest .bbook,body.guest .flb,
-body.guest .sbtn.pri,body.guest .cbooklq,body.guest .cbookl.bcarl,
-body.guest a[data-hsq]{filter:grayscale(1);opacity:.42}
-/* «Открыть в Google Maps» НЕ гасим: это просмотр места, а не действие с планом */
-body.guest .cbookl:not(.bcarl){filter:none;opacity:1;pointer-events:auto}
+/* ⚠️ У ГОСТЯ СТРАНИЦА ВЫГЛЯДИТ РОВНО КАК У ХОЗЯИНА — НИЧЕГО НЕ ГАСИМ.
+   Это её окончательное решение 06.08, и оно отменяет две мои прошлые попытки:
+   сначала я прятала кнопки, потом красила их серым. Её слова: «красивее всё
+   выглядит как есть, со всеми цветами; пусть все кнопки будут как сейчас, просто
+   неактивные, и везде выходит служебное сообщение».
+   Значит запрет держится ТОЛЬКО перехватом нажатий (ниже по коду), а не стилями.
+   Это важно: `pointer-events:none` не даёт нажатию дойти до нас, и сообщение
+   тогда не появится вовсе — а оно и есть весь смысл.
+   ⚠️ Поля ввода — исключение: у них правку начинает не нажатие, а набор текста,
+   поэтому им ставим readonly (вид при этом не меняется). */
+body.guest #s-route .scdate,body.guest #budgetBox input,body.guest #stayList input{caret-color:transparent}
 /* бюджет прячем целиком, если хозяин не разрешил его показывать */
 body.guest.nobudget #s-money,body.guest.nobudget .bottomnav a[href="#s-money"]{display:none!important}
 /* выбор витрины жилья: строка = сервис, значок квадратный, как логотип в приложении */
@@ -10021,20 +9995,34 @@ function guestSay(){
   const now=Date.now();if(now-_guestSaid<1200)return;_guestSaid=now;
   toast('<b>Вы смотрите готовый план</b><i>Изменить его может только тот, кто его создал</i>',null,null);
 }
+/* Что именно перехватываем: всё, что правит план ИЛИ ведёт бронировать.
+   Список кнопок брони держим отдельно — они лежат вне зон правок (в бюджете, в
+   карточках городов) и их нельзя поймать по контейнеру. */
+const GUEST_STOP='.cbook,.hbook,.bbook,.flb,.sbtn,.cbooklq,.cbookl.bcarl,[data-hsq],'
+  +'.shbtn,#saveBtn,.stepbtn,.crm,.cadd,.cpmv,.cpup,.badd,.bmenu,.stbtn,.hswap,'
+  +'.pacepick,[data-tick],.scdate,.scfrom';
+const GUEST_ZONES='#cities,#days,#budgetBox,#planner,#s-route,#stayBox,#daySheet';
 document.addEventListener('click',function(e){
   if(!isGuest())return;
-  const t=e.target&&e.target.closest?e.target.closest('button,input,select,textarea,label,[role="switch"]'):null;
+  const t=e.target&&e.target.closest
+    ? e.target.closest('button,a,input,select,textarea,label,[role="switch"]'):null;
   if(!t)return;
   if(t.closest(GUEST_OK))return;
-  /* «Поделиться» и закладка живут в шапке, вне зон правок: делиться чужой
-     поездкой и класть её себе в сохранённые гость не может. Остальное в шапке
-     (валюта, язык, градусы, км) ему оставляем — это его удобство, не чужой план. */
-  if(t.closest('.shbtn')||t.closest('#saveBtn')){e.preventDefault();e.stopPropagation();guestSay();return;}
-  if(!t.closest('#cities,#days,#budgetBox,#planner,#s-route,#stayBox,#daySheet'))return;
+  /* «Открыть в Google Maps» и прочий просмотр не трогаем: план от этого не меняется */
+  if(t.matches&&t.matches('.cbookl:not(.bcarl)'))return;
+  if(!t.closest(GUEST_STOP)&&!t.closest(GUEST_ZONES))return;
   e.preventDefault();e.stopPropagation();
   closeDaySheet();          /* если лист всё же открылся — закрываем, а не запираем */
   guestSay();
 },true);
+/* ⚠️ ПОЛЯ ВВОДА ЛОВИМ ОТДЕЛЬНО: правку в них начинает не нажатие, а набор текста
+   и календарь. Ставим им readonly (вид не меняется) и объясняем при попытке. */
+document.addEventListener('focusin',function(e){
+  if(!isGuest())return;
+  const t=e.target;if(!t||!t.matches)return;
+  if(!t.matches('#s-route .scdate,#budgetBox input,#stayList input,#daySheet input'))return;
+  t.readOnly=true;t.blur();guestSay();
+});
 const STALE_ZONES='#cities,#days,#budgetBox,#planner,#s-route,#stayBox';
 document.addEventListener('click',function(e){
   if(!_stale)return;
