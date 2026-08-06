@@ -6795,12 +6795,17 @@ function dmRange(a,b){
   return dm(a)+'–'+dm(b);
 }
 /* ── ЯЗЫК СТРАНИЦЫ ──
-   t('фраза') отдаёт перевод для текущего языка, а если его ещё нет — саму
+   tr('фраза') отдаёт перевод для текущего языка, а если его ещё нет — саму
    фразу. Поэтому переносить текст можно кусками: непереведённое остаётся
    по-русски, и сайт от этого не ломается. Словарь — в i18n.js.
    ⚠️ Оборачивать надо ТОЛЬКО то, что человек читает. Названия мест, рестораны
    и поисковые строки не трогаем — они живут в оригинале (правило 10). */
-function t(s){try{return (window.I18N&&I18N.t)?I18N.t(s,LANG):s;}catch(e){return s;}}
+/* ⚠️ ИМЯ ФУНКЦИИ — tr, А НЕ t. Сначала я назвала её t() — и она молча
+   сломала кабинет: в файле 77 мест, где t это ОБЫЧНАЯ ПЕРЕМЕННАЯ (цель нажатия,
+   кусок текста, счётчик). Внутри таких функций вызов tr('фраза') попадал в
+   переменную, а не в перевод, и страница падала с «t is not a function».
+   Урок: у общей функции не должно быть однобуквенного имени. */
+function tr(s){try{return (window.I18N&&I18N.t)?I18N.t(s,LANG):s;}catch(e){return s;}}
 function plural(n,a,b,c){
   try{if(window.I18N&&I18N.plural)return I18N.plural(n,a,b,c,LANG);}catch(e){}
   const x=n%10,y=n%100;if(x===1&&y!==11)return a;if(x>=2&&x<=4&&(y<10||y>=20))return b;return c;}
@@ -7534,7 +7539,7 @@ function applyDomT(root){
     while((n=w.nextNode()))hit.push(n);
     hit.forEach(node=>{
       const raw=node.nodeValue,txt=raw.trim();
-      const v=t(txt);
+      const v=tr(txt);
       if(v!==txt)node.nodeValue=raw.replace(txt,v);
     });
   }catch(e){}
@@ -7542,7 +7547,7 @@ function applyDomT(root){
 function applyStaticT(){
   document.querySelectorAll('[data-t]').forEach(el=>{
     const ru=el.dataset.t;if(!ru)return;
-    const v=t(ru);if(el.textContent!==v)el.textContent=v;
+    const v=tr(ru);if(el.textContent!==v)el.textContent=v;
   });
 }
 function renderUnits(){
@@ -9827,7 +9832,7 @@ function homeHTML(){
      Теперь без входа предлагаем войти, а список поездок не рисуем вовсе. */
   if(!_signedIn)
     return '<div class="wrap homewrap">'
-      +'<div class="eyebrow">ЛИЧНЫЙ КАБИНЕТ</div><h1 class="homeh">'+t('Мои поездки')+'</h1>'
+      +'<div class="eyebrow">ЛИЧНЫЙ КАБИНЕТ</div><h1 class="homeh">'+tr('Мои поездки')+'</h1>'
       +'<div class="homeguest">'
         +'<p>Здесь будут ваши поездки — все, что вы собрали и сохранили. '
         +'Они хранятся в вашем аккаунте, поэтому нужен вход.</p>'
@@ -9835,8 +9840,8 @@ function homeHTML(){
         +'<button class="dscancel" data-goland="1">Посмотреть готовые маршруты</button>'
       +'</div></div>';
   return '<div class="wrap homewrap">'
-    +'<div class="eyebrow">ЛИЧНЫЙ КАБИНЕТ</div><h1 class="homeh">'+t('Мои поездки')+'</h1>'
-    +'<button class="newtrip" data-newtrip="1"><i>'+ic('plus','i-sm')+'</i><span>'+t('Новая поездка')+'<small>соберём маршрут по твоим ответам</small></span></button>'
+    +'<div class="eyebrow">ЛИЧНЫЙ КАБИНЕТ</div><h1 class="homeh">'+tr('Мои поездки')+'</h1>'
+    +'<button class="newtrip" data-newtrip="1"><i>'+ic('plus','i-sm')+'</i><span>'+tr('Новая поездка')+'<small>соберём маршрут по твоим ответам</small></span></button>'
     +cards+'</div>';
 }
 function esc0(x){return String(x==null?'':x).replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));}
@@ -9884,7 +9889,7 @@ function tripMenuSheet(id){
 function createTripSheet(srcId){
   const base=srcId?tripMeta(srcId):tripMeta();
   const proposed=(base&&base.title?base.title:'Поездка')+' · копия';
-  sheet('<div class="dsh"><b>'+t('Новая поездка')+'</b><span>копия «'+esc0(base?base.title:'')+'» — маршрут тот же, даты и дни поменяете</span></div>'
+  sheet('<div class="dsh"><b>'+tr('Новая поездка')+'</b><span>копия «'+esc0(base?base.title:'')+'» — маршрут тот же, даты и дни поменяете</span></div>'
     +'<div class="dsform"><input id="trnm" autocomplete="off" value="'+esc0(proposed)+'">'
     +'<button class="dsgo" data-tcreate="'+esc0(srcId||'')+'">Создать</button></div>'
     +'<button class="dscancel" data-dsclose="1">Отмена</button>');
