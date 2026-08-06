@@ -176,6 +176,31 @@
       'Ещё в городе': 'More in this city', 'Показать': 'Show',
       'Свернуть список': 'Collapse', 'Добавить строку': 'Add a line',
 
+
+      /* ——— фильтры карты и списки выбора ——— */
+      'Все базы': 'All cities', 'Все дни': 'All days', 'Все типы': 'All kinds',
+      'Все рестораны': 'All restaurants', 'Главное': 'Highlights',
+      'Выбери базу': 'Pick a city', 'Выбери день': 'Pick a day', 'Выбери тип': 'Pick a kind',
+      'Базы': 'Cities', 'Города': 'Cities', 'Город': 'City', 'Дни': 'Days',
+      'Природа': 'Nature', 'Источники': 'Hot springs', 'Бары': 'Bars',
+      'Активность': 'Activity', 'Заправка': 'Fuel', 'Продукты': 'Groceries',
+      'Другое': 'Other', 'Ресторан': 'Restaurant', 'Десерт': 'Dessert',
+      'Аэропорт': 'Airport', 'Вариант': 'Option',
+
+      /* ——— перелёт, подробности ——— */
+      'Город прилёта': 'Arriving in', 'Дорога домой:': 'Getting home:',
+      'В вашем билете обратный рейс': 'Your ticket has a return flight',
+      'Вылет в': 'Departure at',
+
+      /* ——— мелкие приписки к дню ——— */
+      'в дороге': 'travelling', 'в этом городе не ночуем': 'no overnight here',
+      'ночь в дороге': 'night on the move', 'последняя ночь в пути': 'last night on the move',
+      'переезды по расписанию': 'scheduled transfers', 'обратно': 'back',
+      'даты примерные, пока не вписан рейс': 'dates are approximate until you add your flight',
+
+      /* ——— времена года (в подписях к местам) ——— */
+      'Зима': 'Winter', 'Весна': 'Spring', 'Лето': 'Summer', 'Осень': 'Autumn',
+
       /* ——— месяцы и дни недели ———
          ⚠️ Порядок в дате другой: по-русски «7 августа», по-английски
          «August 7». Одним словарём это не решается — правит fmtDate(). */
