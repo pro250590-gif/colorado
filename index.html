@@ -13,19 +13,20 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&family=Inter:wght@400;500;600;700&display=swap">
-<!-- Travelpayouts Drive (ID 558582). Сам подменяет ссылки на Booking / Островок /
-     авиабилеты на партнёрские — вручную ставить метки в этих ссылках больше не надо.
-     Атрибуты вроде nowprocket и data-noptimize — просьба к плагинам-ускорителям
-     не трогать этот тег; у нас таких плагинов нет, но пусть стоят как выдал кабинет. -->
-<script nowprocket data-noptimize="1" data-cfasync="false" data-wpfc-render="false" seraph-accel-crit="1" data-no-defer="1" data-cmp-ab="2">
-  (function () {
-      var script = document.createElement("script");
-      script.async = 1;
-      script.setAttribute("data-cmp-ab","2");
-      script.src = 'https://tpembars.com/NTU4NTgy.js?t=558582';
-      document.head.appendChild(script);
-  })();
-</script>
+<!-- ⚠️ TRAVELPAYOUTS DRIVE УБРАН 06.08.2026, НЕ ВОЗВРАЩАТЬ БЕЗ РАЗГОВОРА.
+     Ставили его ради одного — чтобы он сам подменял ссылки на партнёрские.
+     Оказалось, он заодно ВЕШАЕТ БАННЕРЫ: у клиента синяя плашка «Cheap Car
+     Rentals Worldwide» закрыла низ экрана поверх маршрута. Мы на это не
+     подписывались, и человек, читающий свой план, не должен получать чужую
+     рекламу проката поверх него.
+     Подменять ему к тому же почти нечего: жильё и экскурсии идут через Stay22,
+     билеты — через обёртку Aviasales, прокат — через наши ссылки; все метки
+     мы вписали руками, и от Drive они не зависят.
+     Тег был такой:
+     <script nowprocket data-noptimize="1" data-cfasync="false" ...>
+       ... src = 'https://tpembars.com/NTU4NTgy.js?t=558582' ...
+     Вернуть можно, только если в кабинете найдётся выключатель баннеров. -->
+
 <style>
 /* ==========================================================================
    КОЛОРАДО · «БЕНТО» — принятый макет
@@ -1562,18 +1563,32 @@ body.stale{padding-top:44px}
    Правило то же, что у устаревшей вкладки: глушим ЗОНЫ ПРАВОК, а не страницу.
    Гость должен спокойно листать, раскрывать дни, смотреть карту и уходить по
    ссылкам броней. Убираем только то, что меняет чужой план. */
-.guestbar{display:block;position:sticky;top:0;z-index:60;padding:9px 14px;text-align:center;
-  background:linear-gradient(150deg,#7a5cf0,#5b3fc4);color:#fff;
-  font:700 11.5px/1.35 "Inter",sans-serif;letter-spacing:-.01em}
-.guestbar.bad{background:linear-gradient(150deg,#e2564a,#c0392b)}
+/* ⚠️ Полоса была ЯРКОЙ И ЛИПКОЙ — фиолетовая через весь экран, поверх шапки.
+   Клиент: «это сообщение наверное лишнее». Совсем убирать не стал: без него
+   гость не поймёт, почему нет кнопок правок. Сделан тихий вариант — светлая
+   строка обычным текстом, уезжает вместе со страницей и больше не мозолит глаз. */
+.guestbar{display:block;padding:7px 14px;text-align:center;
+  background:#f2effc;color:#6b5aa8;border-bottom:1px solid rgba(91,63,196,.14);
+  font:600 10.5px/1.35 "Inter",sans-serif;letter-spacing:-.01em}
+.guestbar.bad{background:#fdeeec;color:#c0392b;border-bottom-color:rgba(192,57,43,.2)}
 body:not(.guest) .guestbar{display:none}
-body.guest .hstep,body.guest .crm,body.guest .cadd,body.guest .cpmv,body.guest .cpup,
+/* ⚠️ ПРЯЧЕМ ТОЛЬКО ТО, ЧТО ДОБАВЛЯЕТ ИЛИ УБИРАЕТ. Первая версия прятала и поля
+   «Старт поездки», «Город вылета», «Темп» целиком — строки остались с подписью
+   и пустотой справа, будто сайт сломан. Клиент: «я бы вернула все наши кнопки,
+   они часть дизайна, просто нельзя редактировать». Верно: гость должен ВИДЕТЬ
+   дату, город вылета, число людей и темп — это часть чужого плана. */
+body.guest .crm,body.guest .cadd,body.guest .cpmv,body.guest .cpup,
 body.guest .badd,body.guest .bmenu,body.guest .stbtn.add,body.guest .sbtn.sec,
 body.guest .mystact .cpmv,body.guest .shbtn,body.guest #saveBtn,
-body.guest .hswap,body.guest .peoplebar,body.guest .pacebar,
-body.guest #s-route .startcard input,body.guest #s-route .startcard button{display:none!important}
-/* поля цен видно, но менять их гость не может: цифры — часть чужого плана */
-body.guest #budgetBox input,body.guest #stayList input{pointer-events:none;background:transparent!important;border-color:transparent!important}
+body.guest .hswap,body.guest .stepbtn{display:none!important}
+/* значения на месте и читаются, но не нажимаются и не правятся */
+body.guest #s-route .scdate,body.guest #budgetBox input,body.guest #stayList input,
+body.guest .pacepick,body.guest .pnum{pointer-events:none}
+body.guest #s-route .scdate{background:transparent!important;border-color:transparent!important;
+  color:var(--ink)!important;padding-right:0}
+body.guest #budgetBox input,body.guest #stayList input{background:transparent!important;border-color:transparent!important}
+/* степпер убран — число остаётся по центру своего места, а не липнет к краю */
+body.guest .pstep{justify-content:flex-end}
 /* бюджет прячем целиком, если хозяин не разрешил его показывать */
 body.guest.nobudget #s-money,body.guest.nobudget .bottomnav a[href="#s-money"]{display:none!important}
 /* выбор витрины жилья: строка = сервис, значок квадратный, как логотип в приложении */
@@ -10076,7 +10091,7 @@ async function shareBoot(){
     try{const h=localStorage.getItem(HOMEK);HOME=h?JSON.parse(h):null;}catch(e){}
     reinit();rerenderTrip();
     try{if(map){map.remove();map=null;initMap();}}catch(e){}
-    say((row.title?('«'+row.title+'» — '):'')+'вы смотрите чужую поездку. Менять её нельзя');
+    say('Вы смотрите готовый план. Изменить его нельзя');
     window.scrollTo(0,0);
   }catch(e){say('Не удалось открыть поездку','bad');}
 }
