@@ -1558,6 +1558,24 @@ body.stale{padding-top:44px}
 .dsrow[disabled]{opacity:.55}
 /* заголовки разделов в листе — фиолетовые, как эйбрау на страницах (клиент: «поярче») */
 .dssep{font:800 10.5px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:.11em;text-transform:uppercase;color:#5b3fc4;margin:16px 4px 9px}
+/* ── ГОСТЕВОЙ ПРОСМОТР ЧУЖОЙ ПОЕЗДКИ ──
+   Правило то же, что у устаревшей вкладки: глушим ЗОНЫ ПРАВОК, а не страницу.
+   Гость должен спокойно листать, раскрывать дни, смотреть карту и уходить по
+   ссылкам броней. Убираем только то, что меняет чужой план. */
+.guestbar{display:block;position:sticky;top:0;z-index:60;padding:9px 14px;text-align:center;
+  background:linear-gradient(150deg,#7a5cf0,#5b3fc4);color:#fff;
+  font:700 11.5px/1.35 "Inter",sans-serif;letter-spacing:-.01em}
+.guestbar.bad{background:linear-gradient(150deg,#e2564a,#c0392b)}
+body:not(.guest) .guestbar{display:none}
+body.guest .hstep,body.guest .crm,body.guest .cadd,body.guest .cpmv,body.guest .cpup,
+body.guest .badd,body.guest .bmenu,body.guest .stbtn.add,body.guest .sbtn.sec,
+body.guest .mystact .cpmv,body.guest .shbtn,body.guest #saveBtn,
+body.guest .hswap,body.guest .peoplebar,body.guest .pacebar,
+body.guest #s-route .startcard input,body.guest #s-route .startcard button{display:none!important}
+/* поля цен видно, но менять их гость не может: цифры — часть чужого плана */
+body.guest #budgetBox input,body.guest #stayList input{pointer-events:none;background:transparent!important;border-color:transparent!important}
+/* бюджет прячем целиком, если хозяин не разрешил его показывать */
+body.guest.nobudget #s-money,body.guest.nobudget .bottomnav a[href="#s-money"]{display:none!important}
 /* выбор витрины жилья: строка = сервис, значок квадратный, как логотип в приложении */
 .hsrow .hslg{flex:none;width:34px;height:34px;border-radius:10px;display:grid;place-items:center;
   color:#fff;font:800 13px/1 "Plus Jakarta Sans",sans-serif}
@@ -1568,6 +1586,11 @@ body.stale{padding-top:44px}
 .hsrem .hschk{flex:none;width:19px;height:19px;border-radius:6px;border:1.5px solid rgba(91,63,196,.45);background:#fff;
   color:#fff;display:grid;place-items:center;font:800 11px/1 "Inter",sans-serif}
 .hsrem.on .hschk{border-color:transparent;background:linear-gradient(150deg,#7a5cf0,#5b3fc4)}
+/* поле со ссылкой «поделиться»: показываем целиком, выделяется одним касанием */
+.shlink{margin:2px 4px 9px}
+.shlink input{width:100%;box-sizing:border-box;border:1.5px solid rgba(91,63,196,.25);border-radius:12px;
+  padding:11px 12px;font:600 12px/1.3 "Inter",sans-serif;color:#3d4a44;background:#faf9ff;outline:none}
+.shwide{width:100%;margin-bottom:8px}
 /* «искать в другом сервисе» — выход из запомненного выбора, иначе он ловушка */
 .hswap{display:block;width:100%;margin-top:9px;padding:0;border:0;background:none;cursor:pointer;
   font:700 11.5px/1 "Inter",sans-serif;color:#8b8698!important;text-align:center;text-decoration:underline;
@@ -2041,6 +2064,8 @@ section h2.big{margin-bottom:4px}
 
 <div class="orb orb-1"></div><div class="orb orb-2"></div><div class="orb orb-3"></div><div class="glow"></div>
 
+<!-- полоса гостя: видна только по чужой ссылке (?s=…), в обычной поездке её нет -->
+<div id="guestBar" class="guestbar" hidden></div>
 <header class="hero">
   <div class="wrap">
     <!-- ⚠️ В ШАПКЕ НЕТ ГОТОВОГО ТЕКСТА. Здесь стояло Колорадо — заголовок, рассказ
@@ -2206,6 +2231,32 @@ section h2.big{margin-bottom:4px}
       KEYS=['co-trip-2026-plan','co-trip-2026-budget','co-trip-2026-picks','co-trip-2026-food'],
       DEF='trip-colorado.js',
       ok=/^trip-[a-z0-9-]+\.js$/;
+  /* ── ГОСТЕВАЯ ССЫЛКА  ?s=КОД&f=trip-x.js ──
+     Кто-то прислал свою поездку на просмотр. Здесь мы делаем ровно две вещи:
+     берём файл маршрута из адреса и ПОДМЕНЯЕМ ХРАНИЛИЩЕ НА ПАМЯТЬ. Второе —
+     главное: у гостя есть свои поездки, и чужая не должна их даже коснуться.
+     После подмены весь остальной код работает как обычно, только пишет в никуда.
+     Сам план придёт из облака чуть позже и ляжет в эту же память. */
+  var sc=null,sf='';
+  try{var qp=new URLSearchParams(location.search);sc=qp.get('s')||null;
+      var ff=qp.get('f')||'';if(ok.test(ff))sf=ff;}catch(e){}
+  if(sc){
+    try{
+      var mem={};
+      Object.defineProperty(window,'localStorage',{configurable:true,value:{
+        getItem:function(k){return Object.prototype.hasOwnProperty.call(mem,k)?mem[k]:null;},
+        setItem:function(k,v){mem[k]=String(v);},
+        removeItem:function(k){delete mem[k];},
+        clear:function(){mem={};},
+        key:function(i){return Object.keys(mem)[i]||null;},
+        get length(){return Object.keys(mem).length;}
+      }});
+    }catch(e){}
+    window.__share={code:sc,file:sf||DEF};
+    window.__dataFile=sf||DEF;
+    document.write('<scr'+'ipt src="'+(sf||DEF)+'"></scr'+'ipt>');
+    return;
+  }
   var f=DEF,q=null;
   try{q=new URLSearchParams(location.search).get('data');if(!ok.test(q||''))q=null;}catch(e){}
   var t=null;try{t=JSON.parse(localStorage.getItem(TK)||'null');}catch(e){}
@@ -6315,6 +6366,79 @@ function hotelSheet(q,ciIso,coIso,people,title,llStr){
       +'<span>Запомнить выбор и больше не спрашивать</span></button>'
     +'<button class="dscancel" data-dsclose="1">Отмена</button>');
 }
+/* ── ПОДЕЛИТЬСЯ ПОЕЗДКОЙ ──
+   ⚠️ Функция shareSheet() ЗДЕСЬ и должна остаться: кнопка «Поделиться» звала её,
+   а в файле её не было вовсе — нажатие роняло скрипт с «shareSheet is not
+   defined» и не открывало ничего. Нашлось при разборе 06.08.
+   Даём ссылку ТОЛЬКО НА ПРОСМОТР: гость видит план, но ничего не меняет.
+   Совместная правка — отдельная работа, она записана в ПОТОМ.md.
+   Ссылка живая: правим план — гость видит новое при следующем открытии.
+   Бюджет по умолчанию НЕ показываем: там свои цены. */
+let _shareBusy=false;
+function shareLink(code){
+  return location.origin+location.pathname+'?s='+encodeURIComponent(code)
+    +'&f='+encodeURIComponent(window.__dataFile||'trip-colorado.js');
+}
+function shareCode(){const t=trips();const m=(t.list||[]).filter(x=>x.id===t.active)[0];return (m&&m.share)||'';}
+function newShareCode(){
+  /* короткий код: 8 знаков из букв и цифр, читать его человеку не придётся */
+  const a='abcdefghijkmnpqrstuvwxyz23456789';let s='';
+  const r=(window.crypto&&crypto.getRandomValues)?crypto.getRandomValues(new Uint8Array(8)):null;
+  for(let i=0;i<8;i++)s+=a[(r?r[i]:Math.floor(Math.random()*256))%a.length];
+  return s;
+}
+function shareSheet(){
+  const code=shareCode(),link=code?shareLink(code):'';
+  const budget=!!(trips().list.filter(x=>x.id===trips().active)[0]||{}).shareBudget;
+  sheet('<div class="dsh"><b>Поделиться поездкой</b>'
+      +'<span>Тот, кому отправите ссылку, увидит план целиком: дни, места, карту. '
+      +'Менять он ничего не сможет, и регистрироваться ему не нужно.</span></div>'
+    +(code
+      ? '<div class="shlink"><input id="shUrl" readonly value="'+esc0(link)+'"></div>'
+        +'<button class="dsgo shwide" data-shcopy="1">Скопировать ссылку</button>'
+        +(navigator.share?'<button class="dscancel alt" data-shnative="1">Отправить…</button>':'')
+        +'<button class="hsrem'+(budget?' on':'')+'" data-shbud="1"><span class="hschk">'+(budget?'✓':'')+'</span>'
+          +'<span>Показывать гостю бюджет и цены</span></button>'
+        +'<button class="dscancel del" data-shoff="1">Перестать делиться</button>'
+      : '<button class="hsrem'+(budget?' on':'')+'" data-shbud="1"><span class="hschk">'+(budget?'✓':'')+'</span>'
+          +'<span>Показывать гостю бюджет и цены</span></button>'
+        +'<button class="dsgo shwide" data-shmake="1">Создать ссылку</button>')
+    +'<div class="dshint" style="margin:8px 4px 10px">Ссылка живая: поправите план — гость увидит новое. '
+      +'«Перестать делиться» закрывает её навсегда.</div>'
+    +'<button class="dscancel" data-dsclose="1">Закрыть</button>');
+}
+/* положить поездку на общую полку (или обновить то, что там лежит) */
+async function sharePut(){
+  if(_shareBusy)return;
+  if(!sb){popup('soon','Нет связи','Облако сейчас недоступно, ссылку не создать',
+    '<div class="prow"><button class="pok" data-popclose="1">Понятно</button></div>');return;}
+  const{data:sd}=await sb.auth.getSession();
+  if(!sd||!sd.session){closeDaySheet();openAuth();return;}
+  _shareBusy=true;
+  const t=trips(),m=(t.list||[]).filter(x=>x.id===t.active)[0];
+  if(!m){_shareBusy=false;return;}
+  const code=m.share||newShareCode();
+  syncActiveIntoTrips();
+  const plan={};TRIP_KEYS.forEach(k=>{const v=localStorage.getItem(k);if(v!=null)plan[k]=v;});
+  const h=localStorage.getItem(HOMEK);if(h!=null)plan[HOMEK]=h;
+  const row={id:code,owner:sd.session.user.id,plan:plan,
+    opts:{budget:!!m.shareBudget},title:m.title||TRIP_TITLE,
+    file:window.__dataFile||'trip-colorado.js',updated_at:new Date().toISOString()};
+  const{error}=await sb.from('shared_trips').upsert(row,{onConflict:'id'});
+  _shareBusy=false;
+  if(error){popup('soon','Не получилось',(error.message||'Облако не приняло ссылку'),
+    '<div class="prow"><button class="pok" data-popclose="1">Понятно</button></div>');return;}
+  m.share=code;tripsSave(t);
+  shareSheet();
+}
+async function shareOff(){
+  const t=trips(),m=(t.list||[]).filter(x=>x.id===t.active)[0];
+  if(!m||!m.share)return;
+  if(sb){try{await sb.from('shared_trips').delete().eq('id',m.share);}catch(e){}}
+  delete m.share;tripsSave(t);
+  shareSheet();
+  toast('<b>Ссылка закрыта</b><i>Кто получил её раньше, больше поездку не увидит</i>',null,null);
+}
 /* Ставим точку САМИ, а не доверяемся геокодеру: карта с крестиком по центру —
    на телефоне двигать карту точнее, чем попадать пальцем в дом. */
 let fxMap=null;
@@ -6901,11 +7025,22 @@ document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)r
   /* «Поделиться» пока честно: ссылка на сайт есть, а чужой поездки по ней не увидят —
      для этого нужна публичная ссылка только на чтение, это следующий шаг */
   if(t.dataset.ushare){shareSheet();}
-  if(t.dataset.shcopy){const u=location.href.split('#')[0];
+  /* поделиться: создать ссылку, показывать ли бюджет, закрыть доступ */
+  if(t.dataset.shmake){sharePut();}
+  if(t.dataset.shoff){shareOff();}
+  if(t.dataset.shbud){
+    const tr=trips(),m=(tr.list||[]).filter(x=>x.id===tr.active)[0];
+    if(m){m.shareBudget=!m.shareBudget;tripsSave(tr);
+      t.classList.toggle('on',!!m.shareBudget);
+      const c=t.querySelector('.hschk');if(c)c.textContent=m.shareBudget?'✓':'';
+      /* ссылка уже создана — сразу перекладываем настройку на полку */
+      if(m.share)sharePut();}
+  }
+  if(t.dataset.shcopy){const u=(document.getElementById('shUrl')||{}).value||location.href.split('#')[0];
     const done=()=>{const b=document.querySelector('[data-shcopy]');if(b)b.textContent='Ссылка скопирована';};
     if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(u).then(done).catch(()=>{});
     else done();}
-  if(t.dataset.shnative){const u=location.href.split('#')[0];
+  if(t.dataset.shnative){const u=(document.getElementById('shUrl')||{}).value||location.href.split('#')[0];
     if(navigator.share)navigator.share({title:tripMeta().title,url:u}).catch(()=>{});}
   if(t.dataset.usett){setTemp(t.dataset.usett);closeDaySheet();}
   if(t.dataset.usetd){setDist(t.dataset.usetd);closeDaySheet();}
@@ -9654,6 +9789,11 @@ let _signedIn=false,_userEmail='';
    user_id — тогда честно пробуем update, а если строки ещё нет, insert. */
 async function cloudPush(){
   if(!sb)return false;
+  /* ⚠️ ГОСТЮ В ОБЛАКО ХОДА НЕТ. Если чужую ссылку открыл человек со своим
+     аккаунтом, отправка залила бы ЧУЖУЮ поездку в ЕГО строку и затёрла его
+     собственные. Хранилище у гостя и так подменено на память, но эта строка —
+     последний рубеж. */
+  if(window.__share)return false;
   const{data}=await sb.auth.getSession();const s=data&&data.session;
   if(!s){_syncErr='';return false;}
   const stamp=localTs()||Date.now();
@@ -9734,6 +9874,8 @@ function staleReload(){
 }
 async function cloudSync(session){
   if(!sb||!session)return;
+  /* по чужой ссылке своё облако не читаем и не пишем: на экране не наша поездка */
+  if(window.__share)return;
   _signedIn=true;syncSay();
   try{
     /* .limit(1) вместо .maybeSingle(): если строк случайно две, maybeSingle отдаёт
@@ -9774,6 +9916,21 @@ async function cloudSync(session){
    мёртвым — не работали ни главная, ни язык с валютой, ни аватар, ни выход.
    Клиент: «я на сайте не могу нажать вообще никакую кнопку». Теперь молчим
    везде, кроме тех блоков, где правка и вправду меняет план. */
+/* ── ГОСТЬ НИЧЕГО НЕ МЕНЯЕТ ──
+   Кнопки правок скрыты стилями, но полагаться только на это нельзя: часть из них
+   живёт в листах, которые рисуются на лету. Поэтому здесь тот же приём, что и с
+   устаревшей вкладкой — глушим ЗОНЫ ПРАВОК, а не страницу. Листать, раскрывать
+   дни, смотреть карту и уходить по ссылкам броней гостю можно. */
+function isGuest(){return !!window.__share;}
+const GUEST_OK='a[target="_blank"],summary,.mfb,.cst,.bottomnav,#mapShell,.siderail,#guestBar';
+document.addEventListener('click',function(e){
+  if(!isGuest())return;
+  const t=e.target&&e.target.closest?e.target.closest('button,input,select,textarea,label,[role="switch"]'):null;
+  if(!t)return;
+  if(t.closest(GUEST_OK))return;
+  if(!t.closest('#cities,#days,#budgetBox,#planner,#s-route,#stayBox,#daySheet,#toast'))return;
+  e.preventDefault();e.stopPropagation();
+},true);
 const STALE_ZONES='#cities,#days,#budgetBox,#planner,#s-route,#stayBox';
 document.addEventListener('click',function(e){
   if(!_stale)return;
@@ -9883,10 +10040,47 @@ try{markSeen();syncSaveBtn();}catch(e){window.__pageErr.push('закладка: 
 /* Обновление страницы не должно выбрасывать из поездки: возвращаем туда, где
    человек был. Экран запоминается в setScreen() при каждом переходе. */
 if(window.__askApplied);
+else if(window.__share){hideLand();hideHome();}      /* гостевая ссылка — сразу поездка */
 else if(/[?&]home/.test(location.search))showHome();
 else if(/[?&]trip/.test(location.search)){hideLand();hideHome();bootTop();}
 else showLand(null);
 _navBoot=false;
+/* ── ГОСТЕВОЙ ПРОСМОТР ЧУЖОЙ ПОЕЗДКИ ──
+   Хранилище уже подменено на память (в самом верху файла), поэтому здесь просто
+   кладём присланный план в те же четыре ключа и пересобираем страницу.
+   Правки гость делать не может — это отдельно, ниже по коду. */
+async function shareBoot(){
+  const S=window.__share;if(!S)return;
+  document.body.classList.add('guest');
+  const box=document.getElementById('guestBar');
+  const say=(t,cls)=>{if(box){box.textContent=t;box.className='guestbar'+(cls?' '+cls:'');}};
+  say('Открываем поездку…');
+  if(!sb){say('Не удалось открыть: нет связи с облаком','bad');return;}
+  try{
+    /* ⚠️ Читаем ЧЕРЕЗ ФУНКЦИЮ, а не таблицу напрямую. Прямое чтение пришлось бы
+       разрешить всем — а тогда любой человек с ключом сайта мог бы выгрузить
+       ВСЕ поездки, которыми делятся. Функция отдаёт ровно одну строку по коду и
+       перебрать её нельзя: код из 8 знаков, вариантов больше триллиона. */
+    const{data,error}=await sb.rpc('get_shared_trip',{code:S.code});
+    if(error)  {say('Не удалось открыть поездку: '+(error.message||''),'bad');return;}
+    const row=Array.isArray(data)?data[0]:data;
+    if(!row)   {say('Такой ссылки нет — возможно, её закрыли','bad');return;}
+    /* план кладём в память: настоящие данные гостя не тронуты */
+    TRIP_KEYS.forEach(k=>{const v=row.plan&&row.plan[k];
+      if(v!=null)localStorage.setItem(k,typeof v==='string'?v:JSON.stringify(v));});
+    const home=row.plan&&row.plan['co-trip-home'];
+    if(home!=null)localStorage.setItem('co-trip-home',typeof home==='string'?home:JSON.stringify(home));
+    if(!(row.opts&&row.opts.budget))document.body.classList.add('nobudget');
+    /* город вылета перечитываем сами: HOME читается один раз при старте, а план
+       приехал позже — иначе у гостя остался бы его собственный аэропорт */
+    try{const h=localStorage.getItem(HOMEK);HOME=h?JSON.parse(h):null;}catch(e){}
+    reinit();rerenderTrip();
+    try{if(map){map.remove();map=null;initMap();}}catch(e){}
+    say((row.title?('«'+row.title+'» — '):'')+'вы смотрите чужую поездку. Менять её нельзя');
+    window.scrollTo(0,0);
+  }catch(e){say('Не удалось открыть поездку','bad');}
+}
+shareBoot();
 </script>
 </body>
 </html>
