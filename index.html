@@ -6910,7 +6910,12 @@ document.addEventListener('change',e=>{const id=e.target.dataset&&e.target.datas
    выбрана — не мешаем, href уже ведёт куда надо. */
 document.addEventListener('click',e=>{
   const a=e.target.closest('a[data-hsq]');if(!a)return;
-  /* витрина уже выбрана — переходу не мешаем, только объясняем паузу */
+  /* ⚠️ ГОСТЮ ЛИСТ ВЫБОРА ВИТРИНЫ НЕ ПОКАЗЫВАЕМ. Он открывался, а выбор внутри
+     упирался в запрет правок: лист запирался, и выйти было нечем — «даже отмена
+     и закрыть висит» (её скрин 06.08). Ссылка и без листа рабочая: href ведёт на
+     roam с городом и датами. Выбирать витрину «на будущее» гостю незачем — его
+     выбор мы всё равно не запоминаем. */
+  if(isGuest())return;
   if(HSITE)return;   /* витрина выбрана — переходу не мешаем */
   e.preventDefault();
   hotelSheet(a.dataset.hsq,a.dataset.hsci,a.dataset.hsco,+a.dataset.hspp||PEOPLE,a.dataset.hstitle||'',a.dataset.hsll||'');
@@ -9963,7 +9968,18 @@ async function cloudSync(session){
    устаревшей вкладкой — глушим ЗОНЫ ПРАВОК, а не страницу. Листать, раскрывать
    дни, смотреть карту и уходить по ссылкам броней гостю можно. */
 function isGuest(){return !!window.__share;}
-const GUEST_OK='a[target="_blank"],summary,.mfb,.cst,.bottomnav,#mapShell,.siderail,#guestBar';
+/* ⚠️ ЧТО ГОСТЮ МОЖНО ВСЕГДА. Сюда обязаны попадать ЗАКРЫВАЮЩИЕ кнопки: сначала
+   я заглушила листы целиком, и получилась ловушка — лист брони открывался, а
+   «Отмена» и крестик не работали, выйти было нечем (её скрин 06.08). */
+const GUEST_OK='a[target="_blank"],summary,.mfb,.cst,.bottomnav,#mapShell,.siderail,#guestBar,'
+  +'[data-dsclose],.dsx,.dscancel,#toast,.dsov,[data-popclose],[data-tclose]';
+/* Кнопка, которой у гостя нет доступа, не должна молчать: молчание читается как
+   поломка. Её правка: «пусть выходит доброе сообщение». */
+let _guestSaid=0;
+function guestSay(){
+  const now=Date.now();if(now-_guestSaid<1200)return;_guestSaid=now;
+  toast('<b>Вы смотрите готовый план</b><i>Изменить его может только тот, кто его создал</i>',null,null);
+}
 document.addEventListener('click',function(e){
   if(!isGuest())return;
   const t=e.target&&e.target.closest?e.target.closest('button,input,select,textarea,label,[role="switch"]'):null;
@@ -9972,9 +9988,11 @@ document.addEventListener('click',function(e){
   /* «Поделиться» и закладка живут в шапке, вне зон правок: делиться чужой
      поездкой и класть её себе в сохранённые гость не может. Остальное в шапке
      (валюта, язык, градусы, км) ему оставляем — это его удобство, не чужой план. */
-  if(t.closest('.shbtn')||t.closest('#saveBtn')){e.preventDefault();e.stopPropagation();return;}
-  if(!t.closest('#cities,#days,#budgetBox,#planner,#s-route,#stayBox,#daySheet,#toast'))return;
+  if(t.closest('.shbtn')||t.closest('#saveBtn')){e.preventDefault();e.stopPropagation();guestSay();return;}
+  if(!t.closest('#cities,#days,#budgetBox,#planner,#s-route,#stayBox,#daySheet'))return;
   e.preventDefault();e.stopPropagation();
+  closeDaySheet();          /* если лист всё же открылся — закрываем, а не запираем */
+  guestSay();
 },true);
 const STALE_ZONES='#cities,#days,#budgetBox,#planner,#s-route,#stayBox';
 document.addEventListener('click',function(e){
