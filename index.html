@@ -9409,8 +9409,21 @@ function switchTrip(id){
   applyTripKeys(t.data[id]||{});
   t.active=id;tripsSave(t);
   /* у поездок разные файлы данных, а они объявлены через const — подменить их
-     на лету нельзя, поэтому честно перезагружаем страницу */
-  if(tripData(to)!==window.__dataFile){reloadClean(true);return true;}
+     на лету нельзя, поэтому честно перезагружаем страницу.
+     ⚠️ ПЕРЕЗАГРУЖАЕМСЯ СРАЗУ В ПОЕЗДКУ (?trip), А НЕ НА «/». Её жалоба 06.08:
+     «нажимаю Колорадо в моих поездках — выбрасывает на главную; нажимаю второй
+     раз — открывается». Так и было: reloadClean вычищал из адреса все метки
+     экрана, оставался «/» — то есть главная. Со второго раза файл уже совпадал,
+     перезагрузки не было, и поездка открывалась. */
+  if(tripData(to)!==window.__dataFile){
+    try{const u=new URL(location.href);
+      ['data','home','land'].forEach(k=>u.searchParams.delete(k));
+      u.searchParams.set('trip','');
+      location.assign(u.pathname+(u.search||'').replace(/=(?=&|$)/g,'')+(u.hash||''));
+      return true;
+    }catch(e){}
+    reloadClean(true);return true;
+  }
   reinit();syncHomeUI();
   return true;
 }
