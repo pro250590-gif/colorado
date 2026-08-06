@@ -9506,14 +9506,27 @@ document.addEventListener('click',e=>{
      Теперь подгоняем ещё несколько раз в первые секунды и обязательно после
      полной загрузки страницы, когда картинки заняли своё место. */
   if(isDesktop()){
-    const refitNow=()=>{if(!map)return;try{map.invalidateSize(true);if(FULL)map.fitBounds(FULL);}catch(e){}};
+    /* ⚠️ ПОВТОРЯЕМ ТОЛЬКО ЗАМЕР РАЗМЕРА, А НЕ НАВЕДЕНИЕ НА МАРШРУТ.
+       Здесь я ошиблась дважды подряд, и вторая ошибка была хуже первой.
+       Сначала карта подгонялась ОДИН раз и слишком рано — оставалась с
+       размерами, снятыми до того, как страница дорисовалась.
+       Тогда я стала повторять подгонку целиком, вместе с fitBounds(FULL) — и
+       карта поехала на Майами: FULL пересчитывается по ходу дела и в какой-то
+       момент включает дугу перелёта из города вылета. Каждый мой повтор
+       перебивал то, что карта уже показала правильно.
+       Правильно так: размер пересчитываем много раз (это дёшево и это лечит
+       обрезанную карту), а КУДА смотреть — решает движок один раз при запуске
+       и дальше сам, через applyFilter/fitVisible. */
+    let fitted=false;
+    const refitNow=()=>{
+      if(!map)return;
+      try{
+        map.invalidateSize(true);
+        if(!fitted&&FULL){map.fitBounds(FULL);fitted=true;}
+      }catch(e){}
+    };
     let n=0;
-    const iv=setInterval(()=>{
-      n++;
-      if(map)refitNow();
-      /* не останавливаемся на первой удаче: ждём, пока страница успокоится */
-      if(n>26)clearInterval(iv);
-    },150);
+    const iv=setInterval(()=>{n++;if(map)refitNow();if(n>26)clearInterval(iv);},150);
     window.addEventListener('load',()=>{setTimeout(refitNow,150);setTimeout(refitNow,700);});
   }
 })();
