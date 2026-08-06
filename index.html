@@ -2137,19 +2137,19 @@ section h2.big{margin-bottom:4px}
 </header>
 
 <section id="s-route"><div class="wrap">
-  <div class="startcard"><span class="scmed" id="scMedIcon"></span><span class="scin"><span class="sclbl">Старт поездки</span><span class="scsub" id="scSub"></span></span><input type="date" id="startDate" class="scdate"></div>
+  <div class="startcard"><span class="scmed" id="scMedIcon"></span><span class="scin"><span class="sclbl" data-t="Старт поездки">Старт поездки</span><span class="scsub" id="scSub"></span></span><input type="date" id="startDate" class="scdate"></div>
   <!-- Город вылета — вторым, сразу после даты: обе вещи задают всю поездку и
        должны выглядеть одинаково (выбор клиента из двух эскизов). -->
   <!-- значок берём из общего набора (ICONS.plane), а не рисуем на месте: этот
        самолётик был нарисован отдельно и выглядел кривым рядом с остальными -->
-  <div class="startcard"><span class="scmed" id="fromMedIcon"></span><span class="scin"><span class="sclbl">Город вылета</span></span><button class="scdate scfrom" id="fromBtn" data-homeopen="1">—</button></div>
+  <div class="startcard"><span class="scmed" id="fromMedIcon"></span><span class="scin"><span class="sclbl" data-t="Город вылета">Город вылета</span></span><button class="scdate scfrom" id="fromBtn" data-homeopen="1">—</button></div>
   <!-- Все три строки блока — одной формы и одной высоты: значок, название и
        поле справа. Просьба клиента: «чтобы визуально было красиво и равномерно». -->
-  <div class="startcard"><span class="scmed"><svg class="i i-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg></span><span class="scin"><span class="sclbl">Сколько людей</span></span><span class="pstep"><button class="stepbtn" id="pMinus" aria-label="меньше человек">−</button><span class="pnum"><b id="pNum">2</b></span><button class="stepbtn" id="pPlus" aria-label="больше человек">+</button></span></div>
+  <div class="startcard"><span class="scmed"><svg class="i i-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg></span><span class="scin"><span class="sclbl" data-t="Сколько людей">Сколько людей</span></span><span class="pstep"><button class="stepbtn" id="pMinus" aria-label="меньше человек">−</button><span class="pnum"><b id="pNum">2</b></span><button class="stepbtn" id="pPlus" aria-label="больше человек">+</button></span></div>
   <!-- Темп поездки. Раньше «десять часов на ногах» было зашито в код, а темп у
        всех разный: кто-то хочет успеть всё, кто-то не хочет вставать в семь.
        Отсюда считается, что в день влезает и что помечается «если успеете». -->
-  <div class="startcard"><span class="scmed"><svg class="i i-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/></svg></span><span class="scin"><span class="sclbl">Темп поездки</span><span class="scsub" id="paceSub"></span></span><span class="pacepick" id="pacePick"></span></div>
+  <div class="startcard"><span class="scmed"><svg class="i i-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/></svg></span><span class="scin"><span class="sclbl" data-t="Темп поездки">Темп поездки</span><span class="scsub" id="paceSub"></span></span><span class="pacepick" id="pacePick"></span></div>
   <!-- Порядок раздела (правка клиента): сразу после фотографии идут поля,
        которые человек заполняет, а заголовок со схемой маршрута — под ними -->
   <div class="eyebrow">Маршрут</div>
@@ -2352,6 +2352,7 @@ section h2.big{margin-bottom:4px}
 <!-- Счёт дня — общий со страницей проверки в терминале (check-route.js). Написан
      один раз нарочно: пока эта арифметика жила в двух местах, она дважды
      разъезжалась. Наружу отдаёт одно имя — DAYMATH. -->
+<script src="i18n.js"></script>
 <script src="day-math.js"></script>
 <!-- Разбор часов работы из карты: тот же файл читает проверка в терминале. -->
 <script src="open-hours.js"></script>
@@ -6627,6 +6628,7 @@ function rerenderTrip(){
   applyHero();          /* город ушёл проездом — заголовок поездки тоже другой */
   renderUnits();renderStays();buildRoute();buildDays();buildCities();buildFilters();buildElev();
   recomputeDates();refreshBudgetCounts();syncChecks();updateMarkerStyles();applyFilter();updateDirLinks();
+  applyStaticT();      /* подписи, написанные прямо в разметке */
   uiRestore(snap);
   /* сменили дату старта или число ночей — даты городов другие, а погода привязана
      к числам. Догружаем недостающее; если всё уже есть, функция сразу выходит. */
@@ -6719,7 +6721,16 @@ function shortName(s){return s.replace(/\s*\(.*?\)/,'').replace(/\s*\/.*$/,'').t
 function dm(dt){return dt.getDate()+' '+MONTHS[dt.getMonth()].slice(0,3);}
 /* «7–10 авг» вместо «7 авг–10 авг»: месяц повторять незачем, если он тот же */
 function dmRange(a,b){return a.getMonth()===b.getMonth()?(a.getDate()+'–'+dm(b)):(dm(a)+'–'+dm(b));}
-function plural(n,a,b,c){const x=n%10,y=n%100;if(x===1&&y!==11)return a;if(x>=2&&x<=4&&(y<10||y>=20))return b;return c;}
+/* ── ЯЗЫК СТРАНИЦЫ ──
+   t('фраза') отдаёт перевод для текущего языка, а если его ещё нет — саму
+   фразу. Поэтому переносить текст можно кусками: непереведённое остаётся
+   по-русски, и сайт от этого не ломается. Словарь — в i18n.js.
+   ⚠️ Оборачивать надо ТОЛЬКО то, что человек читает. Названия мест, рестораны
+   и поисковые строки не трогаем — они живут в оригинале (правило 10). */
+function t(s){try{return (window.I18N&&I18N.t)?I18N.t(s,LANG):s;}catch(e){return s;}}
+function plural(n,a,b,c){
+  try{if(window.I18N&&I18N.plural)return I18N.plural(n,a,b,c,LANG);}catch(e){}
+  const x=n%10,y=n%100;if(x===1&&y!==11)return a;if(x>=2&&x<=4&&(y<10||y>=20))return b;return c;}
 function nights(n){const a=n%10,b=n%100;if(a===1&&b!==11)return'ночь';if(a>=2&&a<=4&&(b<10||b>=20))return'ночи';return'ночей';}
 function recomputeDates(){
   if(!SCHED.length)buildSchedule();
@@ -7108,7 +7119,12 @@ document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)r
     if(navigator.share)navigator.share({title:tripMeta().title,url:u}).catch(()=>{});}
   if(t.dataset.usett){setTemp(t.dataset.usett);closeDaySheet();}
   if(t.dataset.usetd){setDist(t.dataset.usetd);closeDaySheet();}
-  if(t.dataset.lang){LANG=t.dataset.lang;savePlan();renderUnits();closeDaySheet();}
+  /* ⚠️ Смена языка перерисовывает ВСЮ поездку, а не только значок в шапке.
+     Раньше звался только renderUnits() — язык менялся, а текст оставался
+     прежним до перезагрузки. */
+  if(t.dataset.lang){LANG=t.dataset.lang;savePlan();renderUnits();closeDaySheet();
+    try{rerenderTrip();}catch(e){}
+    try{if(_atHome)showHome();}catch(e){}}
   if(t.dataset.staymenu){stayMenuSheet(t.dataset.staymenu);}
   if(t.dataset.weather){weatherSheet(t.dataset.weather);}
   if(t.dataset.showmap&&window.showOnMap){closeDaySheet();showOnMap(t.dataset.showmap);}
@@ -7283,7 +7299,7 @@ function syncCurBtn(){const b=document.getElementById('curBtn');if(b)b.innerHTML
    расстояние — переключатели: вариантов два, список ради них не открываем. */
 let TEMP='C', DIST='km', LANG='ru';
 const LANGS=[
- {c:'ru',t:'Русский',ok:1},{c:'en',t:'English'},{c:'es',t:'Español'},{c:'de',t:'Deutsch'},{c:'fr',t:'Français'},
+ {c:'ru',t:'Русский',ok:1},{c:'en',t:'English',ok:1},{c:'es',t:'Español'},{c:'de',t:'Deutsch'},{c:'fr',t:'Français'},
  {c:'it',t:'Italiano'},{c:'pt',t:'Português'},{c:'pl',t:'Polski'},{c:'tr',t:'Türkçe'},{c:'zh',t:'中文'}
 ];
 /* флаги рисуем сами: на Windows флаг-эмодзи не существует, вместо него две буквы */
@@ -7366,6 +7382,17 @@ function unitsHTML(){
 /* объявлено здесь, а не в блоке кабинета: renderUnits() зовётся при старте, а
    до объявления let-переменная недоступна — страница падала на «Cannot access _atHome» */
 let _atHome=false;
+/* ⚠️ СТАТИЧНАЯ РАЗМЕТКА ПЕРЕВОДИТСЯ ПО МЕТКЕ data-t.
+   Текст, написанный прямо в HTML (а не собранный в коде), обернуть в t() нельзя
+   — там нет места для вызова. Поэтому у таких мест стоит data-t с русской
+   фразой, а перевод подставляется после отрисовки. Нет перевода — остаётся
+   русский, ровно как и везде. */
+function applyStaticT(){
+  document.querySelectorAll('[data-t]').forEach(el=>{
+    const ru=el.dataset.t;if(!ru)return;
+    const v=t(ru);if(el.textContent!==v)el.textContent=v;
+  });
+}
 function renderUnits(){
   const el=document.getElementById('units');if(!el)return;
   el.innerHTML=unitsHTML();

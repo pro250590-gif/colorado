@@ -68,3 +68,4 @@
 !img/
 !img/*.webp
 !img/*.jpg
+!i18n.js
