@@ -1573,23 +1573,26 @@ body.stale{padding-top:44px}
   font:600 10.5px/1.35 "Inter",sans-serif;letter-spacing:-.01em}
 .guestbar.bad{background:#fdeeec;color:#c0392b;border-bottom-color:rgba(192,57,43,.2)}
 body:not(.guest) .guestbar{display:none}
-/* ⚠️ ПРЯЧЕМ ТОЛЬКО ТО, ЧТО ДОБАВЛЯЕТ ИЛИ УБИРАЕТ. Первая версия прятала и поля
-   «Старт поездки», «Город вылета», «Темп» целиком — строки остались с подписью
-   и пустотой справа, будто сайт сломан. Клиент: «я бы вернула все наши кнопки,
-   они часть дизайна, просто нельзя редактировать». Верно: гость должен ВИДЕТЬ
-   дату, город вылета, число людей и темп — это часть чужого плана. */
+/* ⚠️ У ГОСТЯ НИЧЕГО НЕ ПРЯЧЕМ — ТОЛЬКО ГАСИМ. Дважды переделано по её правкам.
+   Сначала я прятала поля «Старт поездки», «Город вылета», «Темп» — остались
+   строки с подписью и пустотой справа, будто сайт сломан. Потом убрала у них
+   рамку и фон — превратились в голый текст. Потом спрятала кнопки ± ночей —
+   и она показала «Ночей в городе» без счётчика.
+   Её правило, дословно: «везде верни все кнопки, просто не активные сделай».
+   Гость видит ТУ ЖЕ страницу, что и хозяин, один в один. Разница одна: ничего
+   не нажимается. Так он понимает, из чего собран план, и не решает, что у него
+   сломался сайт. Настоящий запрет правок держит перехват нажатий ниже по коду —
+   стили тут только показывают, что кнопка неживая. */
 body.guest .crm,body.guest .cadd,body.guest .cpmv,body.guest .cpup,
 body.guest .badd,body.guest .bmenu,body.guest .stbtn.add,body.guest .sbtn.sec,
 body.guest .mystact .cpmv,body.guest .shbtn,body.guest #saveBtn,
-body.guest .hswap,body.guest .stepbtn{display:none!important}
-/* значения на месте и читаются, но не нажимаются и не правятся */
+body.guest .hswap,body.guest .stepbtn,body.guest .pacepick,body.guest .pnum,
 body.guest #s-route .scdate,body.guest #budgetBox input,body.guest #stayList input,
-body.guest .pacepick,body.guest .pnum{pointer-events:none}
-body.guest #s-route .scdate{background:transparent!important;border-color:transparent!important;
-  color:var(--ink)!important;padding-right:0}
-body.guest #budgetBox input,body.guest #stayList input{background:transparent!important;border-color:transparent!important}
-/* степпер убран — число остаётся по центру своего места, а не липнет к краю */
-body.guest .pstep{justify-content:flex-end}
+body.guest .cst,body.guest .cadd,body.guest [data-tick]{pointer-events:none!important}
+/* приглушение — обычный признак «кнопка неживая»; сами кнопки на месте */
+body.guest .crm,body.guest .cadd,body.guest .cpmv,body.guest .cpup,
+body.guest .badd,body.guest .bmenu,body.guest .stbtn.add,body.guest .sbtn.sec,
+body.guest .shbtn,body.guest #saveBtn,body.guest .hswap,body.guest .stepbtn{opacity:.45}
 /* бюджет прячем целиком, если хозяин не разрешил его показывать */
 body.guest.nobudget #s-money,body.guest.nobudget .bottomnav a[href="#s-money"]{display:none!important}
 /* выбор витрины жилья: строка = сервис, значок квадратный, как логотип в приложении */
@@ -9954,6 +9957,10 @@ document.addEventListener('click',function(e){
   const t=e.target&&e.target.closest?e.target.closest('button,input,select,textarea,label,[role="switch"]'):null;
   if(!t)return;
   if(t.closest(GUEST_OK))return;
+  /* «Поделиться» и закладка живут в шапке, вне зон правок: делиться чужой
+     поездкой и класть её себе в сохранённые гость не может. Остальное в шапке
+     (валюта, язык, градусы, км) ему оставляем — это его удобство, не чужой план. */
+  if(t.closest('.shbtn')||t.closest('#saveBtn')){e.preventDefault();e.stopPropagation();return;}
   if(!t.closest('#cities,#days,#budgetBox,#planner,#s-route,#stayBox,#daySheet,#toast'))return;
   e.preventDefault();e.stopPropagation();
 },true);
