@@ -9367,15 +9367,22 @@ function applyHero(){
   /* прячем, а не выкидываем: шапка перерисовывается при каждой правке поездки,
      и выкинутую плитку было бы уже не вернуть */
   const show=(el,on)=>{if(el)el.style.display=on?'':'none';};
+  /* ⚠️ ПУТЬ К КАРТИНКЕ ИЗ ДАННЫХ ВСЕГДА ДЕЛАЕМ АБСОЛЮТНЫМ. В файлах маршрутов
+     фото шапки записано как 'img/hero-w.webp' — относительно. На главной это
+     работало, а со страницы /en/ браузер искал файл в /en/img/ и не находил:
+     на месте фотографии оставалась подпись «Maroon Bells, Колорадо».
+     Чинить в восьми файлах данных не стали — правильнее здесь, в одном месте:
+     новый маршрут напишут так же, и он тоже заработает. */
+  const abs=u=>(!u||/^(https?:)?\/\//.test(u)||u.charAt(0)==='/')?u:('/'+u);
   const ptile=q('header.hero .tile-photo'),img=ptile&&ptile.querySelector('img'),cnt=ptile&&ptile.querySelector('.cnt');
   const pick=(H&&H.photo)?null:heroPick();
   if(ptile){
     if(H&&H.photo){
-      if(img){img.src=H.photo;img.alt=H.alt||'';}
+      if(img){img.src=abs(H.photo);img.alt=H.alt||'';}
       if(cnt)cnt.innerHTML='<h2>'+esc0(H.capTitle||'')+'</h2><p>'+esc0(H.capSub||'')+'</p>';
       show(ptile,true);
     }else if(pick){
-      if(img){img.src=pick.img;img.alt=pick.p.nm;}
+      if(img){img.src=abs(pick.img);img.alt=pick.p.nm;}
       if(cnt)cnt.innerHTML='<h2>'+esc0(shortName(pick.p.nm))+'</h2><p>'+esc0(pick.sub)+'</p>';
       show(ptile,true);
     }else show(ptile,false);
@@ -9488,8 +9495,26 @@ document.addEventListener('click',e=>{
   if(scrim)scrim.addEventListener('click',closeMap);
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.body.classList.contains('mapopen'))closeMap();});
   let rt=null; window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{if(map){try{map.invalidateSize(true);}catch(e){}}},200);});
-  /* на компьютере карта видна сразу — дождёмся её инициализации и подгоним размер */
-  if(isDesktop()){let n=0;const iv=setInterval(()=>{n++;if(map){try{map.invalidateSize(true);if(FULL)map.fitBounds(FULL);}catch(e){}}if(map||n>50)clearInterval(iv);},150);}
+  /* ⚠️ НА КОМПЬЮТЕРЕ КАРТУ НАДО ПОДГОНЯТЬ НЕ ОДИН РАЗ, А НЕСКОЛЬКО.
+     Её скрин 06.08: карта в правой колонке обрезана по высоте и показывает
+     Британскую Колумбию вместо Колорадо. Причина: прежний код ждал появления
+     карты и сразу же подгонял её ОДИН раз, после чего выключался. А страница в
+     этот момент ещё растёт — грузятся фотографии, дорисовывается лента, — и
+     карта остаётся с размерами, снятыми до этого роста. Leaflet тогда и тайлы
+     кладёт не туда, и границы маршрута не сходятся.
+     Теперь подгоняем ещё несколько раз в первые секунды и обязательно после
+     полной загрузки страницы, когда картинки заняли своё место. */
+  if(isDesktop()){
+    const refitNow=()=>{if(!map)return;try{map.invalidateSize(true);if(FULL)map.fitBounds(FULL);}catch(e){}};
+    let n=0;
+    const iv=setInterval(()=>{
+      n++;
+      if(map)refitNow();
+      /* не останавливаемся на первой удаче: ждём, пока страница успокоится */
+      if(n>26)clearInterval(iv);
+    },150);
+    window.addEventListener('load',()=>{setTimeout(refitNow,150);setTimeout(refitNow,700);});
+  }
 })();
 
 /* ================= АККАУНТ (Supabase: вход/регистрация) ================= */
