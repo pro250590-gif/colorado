@@ -6669,6 +6669,7 @@ function rerenderTrip(){
   renderUnits();renderStays();buildRoute();buildDays();buildCities();buildFilters();buildElev();
   recomputeDates();refreshBudgetCounts();syncChecks();updateMarkerStyles();applyFilter();updateDirLinks();
   applyStaticT();      /* подписи, написанные прямо в разметке */
+  applyDomT();         /* и весь остальной текст страницы */
   uiRestore(snap);
   /* сменили дату старта или число ночей — даты городов другие, а погода привязана
      к числам. Догружаем недостающее; если всё уже есть, функция сразу выходит. */
@@ -7475,6 +7476,40 @@ let _atHome=false;
    — там нет места для вызова. Поэтому у таких мест стоит data-t с русской
    фразой, а перевод подставляется после отрисовки. Нет перевода — остаётся
    русский, ровно как и везде. */
+/* ⚠️ ПЕРЕВОД ПРИ ОТРИСОВКЕ — ГЛАВНЫЙ СПОСОБ, А НЕ ЗАПАСНОЙ.
+   Я начала оборачивать строки в t() руками и на первой же сотне поняла, что это
+   тупик: текст склеен из кусков в тысячах мест, каждая обёртка — шанс на
+   опечатку, а проверить глазами столько правок нельзя.
+   Поэтому переводим готовую страницу: проходим по тексту и заменяем фразы,
+   которые есть в словаре. Работает это так же безопасно, как t(): нет в словаре
+   — текст остаётся русским.
+   Что НЕ трогаем: поля ввода, скрипты, и всё, что помечено data-noT — там живут
+   названия мест и поисковые строки (правило 10, они в оригинале).
+   Русский язык не платит за это ничего: при LANG='ru' функция сразу выходит. */
+function applyDomT(root){
+  if(LANG==='ru'||!window.I18N)return;
+  const host=root||document.body;if(!host)return;
+  try{
+    const w=document.createTreeWalker(host,NodeFilter.SHOW_TEXT,{
+      acceptNode(n){
+        const p=n.parentNode;
+        if(!p||!p.tagName)return NodeFilter.FILTER_REJECT;
+        const tag=p.tagName;
+        if(tag==='SCRIPT'||tag==='STYLE'||tag==='TEXTAREA'||tag==='INPUT')return NodeFilter.FILTER_REJECT;
+        if(p.closest('[data-noT]'))return NodeFilter.FILTER_REJECT;
+        return n.nodeValue&&n.nodeValue.trim().length>1
+          ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+      }
+    });
+    const hit=[];let n;
+    while((n=w.nextNode()))hit.push(n);
+    hit.forEach(node=>{
+      const raw=node.nodeValue,txt=raw.trim();
+      const v=t(txt);
+      if(v!==txt)node.nodeValue=raw.replace(txt,v);
+    });
+  }catch(e){}
+}
 function applyStaticT(){
   document.querySelectorAll('[data-t]').forEach(el=>{
     const ru=el.dataset.t;if(!ru)return;
@@ -9738,7 +9773,7 @@ function homeHTML(){
      Теперь без входа предлагаем войти, а список поездок не рисуем вовсе. */
   if(!_signedIn)
     return '<div class="wrap homewrap">'
-      +'<div class="eyebrow">ЛИЧНЫЙ КАБИНЕТ</div><h1 class="homeh">Мои поездки</h1>'
+      +'<div class="eyebrow">ЛИЧНЫЙ КАБИНЕТ</div><h1 class="homeh">'+t('Мои поездки')+'</h1>'
       +'<div class="homeguest">'
         +'<p>Здесь будут ваши поездки — все, что вы собрали и сохранили. '
         +'Они хранятся в вашем аккаунте, поэтому нужен вход.</p>'
@@ -9746,8 +9781,8 @@ function homeHTML(){
         +'<button class="dscancel" data-goland="1">Посмотреть готовые маршруты</button>'
       +'</div></div>';
   return '<div class="wrap homewrap">'
-    +'<div class="eyebrow">ЛИЧНЫЙ КАБИНЕТ</div><h1 class="homeh">Мои поездки</h1>'
-    +'<button class="newtrip" data-newtrip="1"><i>'+ic('plus','i-sm')+'</i><span>Новая поездка<small>соберём маршрут по твоим ответам</small></span></button>'
+    +'<div class="eyebrow">ЛИЧНЫЙ КАБИНЕТ</div><h1 class="homeh">'+t('Мои поездки')+'</h1>'
+    +'<button class="newtrip" data-newtrip="1"><i>'+ic('plus','i-sm')+'</i><span>'+t('Новая поездка')+'<small>соберём маршрут по твоим ответам</small></span></button>'
     +cards+'</div>';
 }
 function esc0(x){return String(x==null?'':x).replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));}
@@ -9795,7 +9830,7 @@ function tripMenuSheet(id){
 function createTripSheet(srcId){
   const base=srcId?tripMeta(srcId):tripMeta();
   const proposed=(base&&base.title?base.title:'Поездка')+' · копия';
-  sheet('<div class="dsh"><b>Новая поездка</b><span>копия «'+esc0(base?base.title:'')+'» — маршрут тот же, даты и дни поменяете</span></div>'
+  sheet('<div class="dsh"><b>'+t('Новая поездка')+'</b><span>копия «'+esc0(base?base.title:'')+'» — маршрут тот же, даты и дни поменяете</span></div>'
     +'<div class="dsform"><input id="trnm" autocomplete="off" value="'+esc0(proposed)+'">'
     +'<button class="dsgo" data-tcreate="'+esc0(srcId||'')+'">Создать</button></div>'
     +'<button class="dscancel" data-dsclose="1">Отмена</button>');
@@ -10290,7 +10325,7 @@ try{langLinks();}catch(e){window.__pageErr.push('hreflang: '+e.message);}
 /* ⚠️ И ПЕРЕВОД ПОДПИСЕЙ ПРИ ПЕРВОЙ ОТРИСОВКЕ. Сначала applyStaticT() звался
    только из rerenderTrip — а он при обычном открытии страницы не вызывается,
    и на /en/ подписи оставались русскими до первой правки. */
-try{applyStaticT();}catch(e){window.__pageErr.push('подписи: '+e.message);}
+try{applyStaticT();applyDomT();}catch(e){window.__pageErr.push('подписи: '+e.message);}
 /* Сайт открывается ГЛАВНОЙ, а не кабинетом: кабинет — это раздел для того, кто
    вошёл, а не витрина. Клиент: «главная страница должна быть та, которую мы
    сделали для анкеты». В кабинет по-прежнему можно попасть по ?home. */
