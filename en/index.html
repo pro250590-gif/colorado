@@ -1895,6 +1895,11 @@ body.mapopen #mapShell{display:block}
   #mapShell{display:block!important;position:fixed;top:56px;right:0;left:auto;bottom:0;width:40vw;height:calc(100vh - 56px);z-index:60}
   body.mapopen{overflow:auto}
   .mapscrim,.mapclose{display:none}
+  /* ⚠️ На компьютере карта — не карточка, а вся правая колонка от края до края.
+     Скруглять её нечего: её просьба 06.08 «края не должны быть закруглённые».
+     Обнулять надо и у .mapbox — там радиус живёт для телефона, где карта и
+     правда лежит карточкой в ленте. */
+  .mapbox{border-radius:0;border:none;box-shadow:none}
   .mappanel{position:absolute;inset:0;left:0;top:0;right:0;bottom:0;border-radius:0;animation:none;
     border-left:1px solid var(--cardline);box-shadow:-16px 0 44px -26px rgba(20,25,60,.5)}
   /* ── ЦЕЛЬНАЯ ШАПКА НА ВСЮ ШИРИНУ (поверх сайта и карты) ── */
