@@ -140,6 +140,42 @@
       'Выйти из аккаунта': 'Sign out',
       'скоро': 'soon',
 
+
+      /* ——— метки времени и режима дня ———
+         Это самые частые подписи на странице: они стоят у каждой точки. */
+      'утро': 'morning', 'утром': 'in the morning',
+      'днём': 'midday', 'день': 'day', 'весь день': 'all day',
+      'вечер': 'evening', 'вечером': 'in the evening',
+      'закат': 'sunset', 'рассвет': 'sunrise',
+      'завтрак': 'breakfast', 'обед': 'lunch', 'ужин': 'dinner',
+      'обед/ужин': 'lunch or dinner',
+      'по пути': 'on the way',
+      'радиально': 'there and back', 'пешком': 'on foot',
+      'на машине': 'by car', 'переезд': 'transfer',
+      'прилёт': 'arrival', 'приезд': 'arrival', 'вылет': 'departure',
+      'финал': 'last day', 'туда-обратно': 'return trip',
+
+      /* ——— деньги и билеты ——— */
+      'бесплатно': 'free', 'нужен билет': 'ticket needed',
+      'вход в парк': 'park entry', 'на человека в день': 'per person per day',
+      'Входы и активности': 'Tickets and activities',
+      'Перелёт': 'Flights', 'Машина': 'Car', 'Жильё': 'Stays',
+      'Транспорт': 'Transport', 'Бензин': 'Fuel', 'Багаж': 'Baggage',
+      'Билеты': 'Tickets', 'за день': 'per day', 'на всех': 'for everyone',
+      'на человека': 'per person', 'за ночь': 'per night', 'всего': 'total',
+      'Итого': 'Total', 'в среднем': 'on average',
+
+      /* ——— мелочи, которых много ——— */
+      'кое-что': 'a few things', 'рядом': 'nearby', 'мин': 'min',
+      'вег ok': 'veg-friendly',
+      'если успеете': 'if you have time', 'если есть силы': 'if you’re up for it',
+      'дата': 'date', 'место': 'place', 'места': 'places', 'мест': 'places',
+
+      /* ——— разделы страницы ——— */
+      'Где поесть': 'Where to eat', 'Готовые маршруты': 'Ready-made routes',
+      'Ещё в городе': 'More in this city', 'Показать': 'Show',
+      'Свернуть список': 'Collapse', 'Добавить строку': 'Add a line',
+
       /* ——— месяцы и дни недели ———
          ⚠️ Порядок в дате другой: по-русски «7 августа», по-английски
          «August 7». Одним словарём это не решается — правит fmtDate(). */
