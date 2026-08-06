@@ -3501,7 +3501,7 @@ function departureBlock(){
        электричка) в этом случае писать нельзя, он про тех, кто без машины */
     +(cityNm?('<div class="cway">из города в аэропорт: '
         +(d.mode==='car'?'на машине — её и сдаём в аэропорту':esc0(convDist(d.way||'')))+'</div>'):'')
-    +mism+flightBtns()
+    +mism+flightBtns('back')
     +'</div></div></div></div></div>';
 }
 function buildCities(){
@@ -3548,7 +3548,7 @@ function buildCities(){
              аэропорта — строкой переезда в первом дне. */
           /* город вылета меняется наверху, в блоке «Как добираешься», рядом с
              датой старта — здесь кнопки нет, чтобы одно и то же не жило дважды */
-          +flightBtns()+'</div></div>';
+          +flightBtns('there')+'</div></div>';
     }else if(ar){
       const seg=ar.mode,segIc=seg==='flight'?'plane':seg==='train'?'train':seg==='ferry'?'ferry':seg==='bus'?'bus':'car';
       const via=ar.via||[];
@@ -5311,14 +5311,21 @@ function flightFix(f){
   if(f.note)o.note=f.note;
   return Object.keys(o).length?o:null;
 }
-/* строка «Ваш рейс» — тем же порядком, что и форма: откуда, когда → куда, когда */
-function flightSummary(){
+/* строка «Ваш рейс» — тем же порядком, что и форма: откуда, когда → куда, когда.
+   ⚠️ КАЖДОМУ БЛОКУ СВОЙ РЕЙС. Раньше строка была одна на оба места, и в «Вылете
+   домой» висел рейс ТУДА плюс приписка «обратно…». Клиент (скрины 06.08): в
+   прилёте нужен только рейс туда, в вылете — только обратный. Верно: человек
+   смотрит блок про сегодняшний перелёт, а ему показывают вчерашний.
+   which: 'there' — туда, 'back' — обратно, пусто — оба (для листа формы). */
+function flightSummary(which){
   const f=FLIGHT||{},V=k=>String(f[k]||'').trim(),D=k=>ISO10(f[k])?dm(addDays(f[k],0)):'',T=k=>f[k]?(' '+f[k]):'';
   const there=[V('depCity'),(D('depDate')+T('depTime')).trim()].filter(Boolean).join(', ')
     +' → '+[V('arrCity'),(D('arrDate')+T('arrTime')).trim()].filter(Boolean).join(', ');
-  const back=ISO10(f.bDepDate)
-    ? (' · обратно '+[V('bDepCity'),(D('bDepDate')+T('bDepTime')).trim()].filter(Boolean).join(', ')):'';
-  return there+back;
+  const backHas=ISO10(f.bDepDate);
+  const backOne=backHas?[V('bDepCity'),(D('bDepDate')+T('bDepTime')).trim()].filter(Boolean).join(', '):'';
+  if(which==='back')return backOne;
+  if(which==='there')return there;
+  return there+(backHas?(' · обратно '+backOne):'');
 }
 /* ⚠️ ФОРМА РЕЙСА — ЭТО ОТРЕЗОК, А НЕ СПИСОК ПОЛЕЙ. Её правка 03.08: «город
    вылета и город прилёта на одной строке, под ними даты и время». Так и читается
@@ -5430,11 +5437,14 @@ function flightSearchOne(){
   if(ruMarket())return avia('https://www.aviasales.ru/search/'+O.code+ddmm(startIso)+air+PEOPLE);
   return aff('https://www.kayak.com/flights/'+O.code+'-'+air+'/'+startIso+'/'+PEOPLE+'adults?sort=price_a','flight');
 }
-function flightBtns(){
+/* which: 'there' — блок прилёта, 'back' — блок вылета домой */
+function flightBtns(which){
   const oneWay=flightSearchOne(),dp=departureAirport();
   if(flightHas()){
-    const s=flightSummary();
-    return '<div class="cway">Ваш рейс: '+esc0(s)+'</div>'
+    const s=flightSummary(which);
+    /* обратный рейс ещё не вписан — в блоке вылета честнее промолчать про рейс
+       и оставить только кнопку, чем показывать пустую строку «Ваш рейс:» */
+    return (s?('<div class="cway">'+(which==='back'?'Обратный рейс: ':'Ваш рейс: ')+esc0(s)+'</div>'):'')
       +'<button class="cbook" data-flopen="1">'+ic('pencil','i-sm')+' Изменить рейс</button>';
   }
   /* три ответа стоят В ОДИН РЯД — её эскиз 03.08. Подписи короткие и в две
