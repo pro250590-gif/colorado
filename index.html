@@ -1602,7 +1602,15 @@ body.guest .mystact .cpmv,body.guest .shbtn,body.guest #saveBtn,
 body.guest .hswap,body.guest .stepbtn,body.guest .pacepick,body.guest .pnum,
 body.guest #s-route .scdate,body.guest #budgetBox input,body.guest #stayList input,
 body.guest [data-tick],body.guest .scfrom,body.guest .flb.alt,
-body.guest .cbook[data-flopen]{pointer-events:none!important}
+body.guest .cbook[data-flopen],
+/* ⚠️ КНОПКИ БРОНИ ТОЖЕ ГАСИМ — ЭТО ЕЁ РЕШЕНИЕ, НЕ МОЁ. Я оставляла их живыми:
+   гость мог бы забронировать по чужому плану, и это её партнёрский доход. Она
+   дважды показала на них: «эти ссылки активны, ты их пропустил». Значит для неё
+   гостевой экран — только просмотр, без единого действия. Вернуть — убрать эти
+   четыре строки. */
+body.guest .cbook,body.guest .hbook,body.guest .bbook,body.guest .flb,
+body.guest .sbtn.pri,body.guest .cbooklq,body.guest .cbookl.bcarl,
+body.guest a[data-hsq]{pointer-events:none!important}
 /* ⚠️ ЧТО В ЭТОТ СПИСОК НЕ КЛАСТЬ, ПРОВЕРЕНО НА СЕБЕ:
    .dsx и .dscancel — крестик и «Отмена» в листах. Заглушив их, я уже один раз
      заперла гостя в открытом окне; это ровно та ловушка, на которую она жаловалась.
@@ -1614,7 +1622,12 @@ body.guest .crm,body.guest .cadd,body.guest .cpmv,body.guest .cpup,
 body.guest .badd,body.guest .bmenu,body.guest .stbtn.add,body.guest .sbtn.sec,
 body.guest .shbtn,body.guest #saveBtn,body.guest .hswap,body.guest .stepbtn,
 body.guest .pacepick,body.guest .scfrom,body.guest .flb.alt,
-body.guest .cbook[data-flopen],body.guest [data-tick]{filter:grayscale(1);opacity:.42}
+body.guest .cbook[data-flopen],body.guest [data-tick],
+body.guest .cbook,body.guest .hbook,body.guest .bbook,body.guest .flb,
+body.guest .sbtn.pri,body.guest .cbooklq,body.guest .cbookl.bcarl,
+body.guest a[data-hsq]{filter:grayscale(1);opacity:.42}
+/* «Открыть в Google Maps» НЕ гасим: это просмотр места, а не действие с планом */
+body.guest .cbookl:not(.bcarl){filter:none;opacity:1;pointer-events:auto}
 /* бюджет прячем целиком, если хозяин не разрешил его показывать */
 body.guest.nobudget #s-money,body.guest.nobudget .bottomnav a[href="#s-money"]{display:none!important}
 /* выбор витрины жилья: строка = сервис, значок квадратный, как логотип в приложении */
