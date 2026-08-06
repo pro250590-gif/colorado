@@ -1573,6 +1573,10 @@ body.stale{padding-top:44px}
   font:600 10.5px/1.35 "Inter",sans-serif;letter-spacing:-.01em}
 .guestbar.bad{background:#fdeeec;color:#c0392b;border-bottom-color:rgba(192,57,43,.2)}
 body:not(.guest) .guestbar{display:none}
+/* ⚠️ Полоса живёт ТОЛЬКО на экране поездки. Она уже ходила за человеком по
+   главной: он ушёл смотреть готовые маршруты, а внизу висело «вы смотрите
+   готовый план». Вторая защита к перезагрузке в showLand/showHome. */
+body.guest.atland .guestbar,body.guest.athome .guestbar{display:none}
 /* ⚠️ У ГОСТЯ НИЧЕГО НЕ ПРЯЧЕМ — ТОЛЬКО ГАСИМ. Дважды переделано по её правкам.
    Сначала я прятала поля «Старт поездки», «Город вылета», «Темп» — остались
    строки с подписью и пустотой справа, будто сайт сломан. Потом убрала у них
@@ -8531,6 +8535,12 @@ function renderLand(){
   const ta=document.getElementById('askText');if(ta)ta.focus();
 }
 function showLand(ask){
+  /* ⚠️ ГОСТЬ УХОДИТ С ЧУЖОГО ПЛАНА — ПЕРЕСТАЁТ БЫТЬ ГОСТЕМ. Её жалоба 06.08:
+     «вышла из плана, а сообщение преследует меня по другим страницам; там я как
+     новый клиент, чужой план не должен за мной ходить». Верно: чужая поездка
+     живёт только на своём адресе. Перезагружаемся начисто, без ?s= — и человек
+     возвращается к своим данным и своим поездкам, как обычный посетитель. */
+  if(window.__share){location.href=location.pathname;return;}
   setScreen('land');navTo('land');
   ASK=ask||null;_askOpen={};_askMore=false;
   _calM=null;_calOpen=false;_bkDone={};_bkErr={};
@@ -9568,6 +9578,8 @@ function homeHTML(){
 }
 function esc0(x){return String(x==null?'':x).replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));}
 function showHome(){
+  /* то же, что в showLand: из чужого плана в свой кабинет — только начисто */
+  if(window.__share){location.href=location.pathname+'?home';return;}
   setScreen('home');navTo('home');
   /* Кабинет и главная — РАЗНЫЕ экраны, и показывать их одновременно нельзя.
      showHome не прятал главную, поэтому после «Новой поездки» анкета
