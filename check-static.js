@@ -56,7 +56,11 @@ function signatures(t) {
 }
 
 function run(say) {
-  const files = fs.readdirSync(DIR).filter(f => /^trip-[a-z0-9-]+\.js$/.test(f));
+  /* ⚠️ trip-paris-en.js — это НЕ маршрут, а его словарь (window.__tripT).
+     В песочнице он не читается, и проверка честно жаловалась на восемь файлов,
+     с которыми всё в порядке. Двухбуквенный хвост в имени = язык, пропускаем. */
+  const files = fs.readdirSync(DIR)
+    .filter(f => /^trip-[a-z0-9-]+\.js$/.test(f) && !/-[a-z]{2}\.js$/.test(f));
   /* Комментарии не считаются: в них мы как раз объясняем, что здесь лежало
      Колорадо и почему его убрали. Ищем только то, что видит человек. */
   const page = fs.readFileSync(PAGE, 'utf8')

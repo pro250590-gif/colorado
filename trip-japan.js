@@ -122,7 +122,7 @@ const BPHOTO={tok:'sen',kyo:'fus'};
 const ALT={};
 const ALTNM={};
 
-const ORIGIN={city:'Майами',code:'MIA',ll:[25.7617,-80.1918]};
+const ORIGIN={city:'Майами', en:'Miami',code:'MIA',ll:[25.7617,-80.1918]};
 const AIRPORT={tok:'HND',kyo:'KIX'};
 const AIRPORTNM={HND:'Токио',KIX:'Осака'};
 const AIRPORTWAY={HND:'≈20 км · поезд Keikyū, 30–40 мин',KIX:'≈100 км от Киото · экспресс Haruka, 1 ч 20 мин'};

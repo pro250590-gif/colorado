@@ -29,7 +29,23 @@ const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.json': 'applica
 /* сеть в браузере без окна недоступна — это не ошибка страницы, а условия прогона */
 const KNOWN = [/fetch is not defined/i, /Not implemented/i, /leaflet/i];
 
+/* заголовок вкладки, который стоит в самом файле: пока во вкладке он — движок
+   ещё не подставил открытый маршрут */
+const DEFTITLE = (function () {
+  try {
+    const m = /<title>([^<]*)<\/title>/i.exec(fs.readFileSync(path.join(DIR, 'index.html'), 'utf8'));
+    return m ? m[1].trim() : '';
+  } catch (e) { return ''; }
+})();
+
 function haveJsdom() { try { require.resolve('jsdom'); return true; } catch (e) { return false; } }
+
+/* ⚠️ ФАЙЛ МАРШРУТА — ЭТО НЕ ФАЙЛ ЕГО ПЕРЕВОДА. Рядом с trip-paris.js лежит
+   trip-paris-en.js — там не маршрут, а словарь «русская фраза → английская»
+   (window.__tripT). Проверка брала его как маршрут, страница честно падала на
+   «DAY_BASE is not defined», и в отчёте висели четыре ошибки, которых нет.
+   Двухбуквенный хвост в конце имени = язык, такой файл пропускаем. */
+function isRoute(f) { return /^trip-[a-z0-9-]+\.js$/.test(f) && !/-[a-z]{2}\.js$/.test(f); }
 
 /* значения из файла маршрута — читаем в песочнице, как в check-static.js */
 function readTrip(file) {
@@ -53,6 +69,38 @@ function startText(iso) {
 function startMonth(iso) {
   const p = String(iso || '').split('-');
   return p.length === 3 ? MON[+p[1] - 1] : '';
+}
+
+/* ⚠️ ЖДЁМ, ПОКА СТРАНИЦА ЗАТИХНЕТ, А НЕ «ПОЛОЖЕННЫЕ 2,5 СЕКУНДЫ».
+   Поймано 07.08.2026 и стоило часа. Здесь стояло ровно `setTimeout(2500)`, и
+   этого хватало ровно до тех пор, пока машина не занята. Стоило запустить рядом
+   что-нибудь тяжёлое — и проверка начинала кричать «в шапке не даты маршрута»
+   на здоровых маршрутах, каждый раз на РАЗНЫХ. Я почти списала это на свою
+   правку и почти пошла чинить то, что не сломано.
+   Правило то же, что и в остальном проекте: проверка, которая зависит от
+   загрузки машины, — это не проверка.
+
+   ⚠️ «ЖДАТЬ, ПОКА ТЕКСТ ПЕРЕСТАНЕТ МЕНЯТЬСЯ» ТОЖЕ НЕ ГОДИТСЯ — пробовала, стало
+   хуже. Страница успевает нарисовать ленту по СТАРОЙ сохранённой поездке, на
+   секунду замирает, и только потом подставляет открытый маршрут. Затишье
+   приходится ровно на промежуточную, ещё неправильную картинку.
+   Поэтому ждём не тишины, а ПРИЗНАКА ГОТОВНОСТИ: движок ставит во вкладку
+   название открытого маршрута (applyHero). Пока во вкладке стоит заголовок из
+   файла — страница ещё не доехала. Признак не зависит от того, чем занята
+   машина: быстрая освободится сразу, медленная дождётся. */
+const CAP = 20000;        /* потолок: страница не доехала — это уже её ошибка, не наша */
+async function settled(w, deftitle) {
+  const t0 = Date.now();
+  for (;;) {
+    await new Promise(r => setTimeout(r, 150));
+    let ttl = '';
+    try { ttl = w.document.title || ''; } catch (e) {}
+    if (ttl && ttl !== deftitle) {                 /* маршрут доехал до вкладки */
+      await new Promise(r => setTimeout(r, 400));  /* дать дорисовать остальное */
+      return;
+    }
+    if (Date.now() - t0 >= CAP) return;
+  }
 }
 
 /* поднимаем страницу на своём порту и ждём, пока движок дорисует */
@@ -104,7 +152,7 @@ async function renderOne(file) {
   const dom = await JSDOM.fromURL('http://127.0.0.1:' + port + '/index.html?data=' + file,
     { runScripts: 'dangerously', resources: 'usable', pretendToBeVisual: true, virtualConsole: vc });
   const w = dom.window;
-  await new Promise(r => setTimeout(r, 2500));
+  await settled(w, DEFTITLE);
   const own = Array.prototype.slice.call(w.__pageErr || []);
   w.document.querySelectorAll('script,#map').forEach(e => e.remove());
   const text = (w.document.body.textContent || '').replace(/\s+/g, ' ');
@@ -120,9 +168,9 @@ async function run(say, only) {
     return 0;
   }
   const files = only ? [only]
-    : fs.readdirSync(DIR).filter(f => /^trip-[a-z0-9-]+\.js$/.test(f));
+    : fs.readdirSync(DIR).filter(f => isRoute(f));
   const trips = {};
-  fs.readdirSync(DIR).filter(f => /^trip-[a-z0-9-]+\.js$/.test(f)).forEach(f => { trips[f] = readTrip(f); });
+  fs.readdirSync(DIR).filter(f => isRoute(f)).forEach(f => { trips[f] = readTrip(f); });
   let bad = 0;
 
   for (const f of files) {

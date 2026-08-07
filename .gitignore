@@ -8,6 +8,14 @@
 !trip-colorado.js
 !trip-utah.js
 !trip-paris.js
+!trip-paris-en.js
+!trip-colorado-en.js
+!trip-milan-en.js
+!trip-utah-en.js
+!trip-iceland-en.js
+!trip-japan-en.js
+!trip-usa2-en.js
+!trip-test-shapes-en.js
 !trip-milan.js
 !trip-usa2.js
 !trip-iceland.js
@@ -36,6 +44,7 @@
 # открывает готовую страницу в браузере без окна и читает то, что видит человек:
 # чужой план, чужие даты, упавший рендер. Нужен jsdom — npm i jsdom
 !check-page.js
+!check-live.js
 # один адрес — одна страница: главная «/», поездка «?trip», кабинет «?home».
 # Ходит по сайту кнопками; иначе экраны опять начнёт решать общая память
 !check-nav.js
@@ -69,10 +78,23 @@
 !img/*.webp
 !img/*.jpg
 !i18n.js
+!CLAUDE.md
+!ПЕРЕВОД.md
+!i18n-scan.js
+!i18n-table.js
+!i18n-check.js
+!i18n-extract.js
+!i18n-check-trip.js
+!build-langs.js
+!audit-days.js
 # страницы языковых версий — собираются командой node build-langs.js.
 # Руками не править: правки пропадут при следующей сборке.
 !en/
 !en/index.html
+# карта сайта и робот-файл — тоже собираются node build-langs.js из списка
+# готовых языков. Руками не править
+!sitemap.xml
+!robots.txt
 # ⚠️ ОТКЛЮЧАЕТ Jekyll НА GITHUB PAGES. Без этого файла GitHub прогоняет сайт
 # через свой генератор блогов, и на нём сборка встала: страница перестала
 # обновляться (проверено 06.08.2026 — правки трёх коммитов не доехали).

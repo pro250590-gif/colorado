@@ -91,7 +91,7 @@ const BPHOTO = { cty:'pl1' };
 
 const ALT = {}; const ALTNM = {};
 
-const ORIGIN     = { city:'Майами', code:'MIA', ll:[25.7617,-80.1918] };  /* по умолчанию; человек меняет своим */
+const ORIGIN     = { city:'Майами', en:'Miami', code:'MIA', ll:[25.7617,-80.1918] };  /* по умолчанию; человек меняет своим */
 const AIRPORT    = { cty:'XXX' };
 const AIRPORTNM  = { XXX:'Город аэропорта' };
 const AIRPORTWAY = { XXX:'≈00 км · чем и сколько ехать' };

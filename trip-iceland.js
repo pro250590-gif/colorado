@@ -126,7 +126,7 @@ const BPHOTO={rey:'hal',vik:'rey2',hof:'jok'};
 const ALT={1:50,2:180,3:120,4:210,5:60,6:40};
 const ALTNM={1:'Рейкьявик',2:'Гюдльфосс',3:'Скоугафосс',4:'Каньон',5:'Лагуна',6:'Дорога в KEF'};
 
-const ORIGIN={city:'Майами',code:'MIA',ll:[25.7617,-80.1918]};
+const ORIGIN={city:'Майами', en:'Miami',code:'MIA',ll:[25.7617,-80.1918]};
 const AIRPORT={rey:'KEF',hof:'KEF'};
 const AIRPORTNM={KEF:'Кеблавик'};
 const AIRPORTWAY={KEF:'≈50 км · 45 мин на машине до Рейкьявика'};

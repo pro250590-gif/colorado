@@ -34,7 +34,7 @@ const DAYS=[
 ];
 const DAY_BASE={1:'a',2:'a',3:'b',4:'c',5:'c'};
 
-const ORIGIN={city:'Майами',code:'MIA',ll:[25.7959,-80.2870]};
+const ORIGIN={city:'Майами', en:'Miami',code:'MIA',ll:[25.7959,-80.2870]};
 const AIRPORT={a:'CDG',b:'LYS',c:'NCE'};
 const AIRPORTNM={CDG:'Париж',LYS:'Лион',NCE:'Ницца'};
 const AIRPORTWAY={CDG:'RER B, 45 мин',LYS:'Rhônexpress, 30 мин',NCE:'трамвай, 25 мин'};

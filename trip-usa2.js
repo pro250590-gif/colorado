@@ -126,7 +126,7 @@ const BPHOTO={nyc:'bro',lax:'sam'};
 const ALT={};
 const ALTNM={};
 
-const ORIGIN={city:'Майами',code:'MIA',ll:[25.7617,-80.1918]};
+const ORIGIN={city:'Майами', en:'Miami',code:'MIA',ll:[25.7617,-80.1918]};
 const AIRPORT={nyc:'JFK',lax:'LAX'};
 const AIRPORTNM={JFK:'Нью-Йорк',LAX:'Лос-Анджелес'};
 const AIRPORTWAY={JFK:'≈25 км · AirTrain + метро, около часа',LAX:'≈30 км · машина, 30–50 мин'};

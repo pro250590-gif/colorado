@@ -63,7 +63,8 @@ const P=[ {id:'cdg',d:1,base:'par',cat:'transport',lat:49.0097,lng:2.5479,nm:'A�
  {id:'eif',d:3,base:'par',cat:'town',lat:48.8584,lng:2.2945,nm:'Tour Eiffel',q:'Eiffel Tower, Paris',tag:['вечер','t-must'],star:1,
   why:'Вернувшись из Версаля — на закат к башне. Каждый час после темноты она пять минут мерцает.'},
  {id:'mon',d:4,base:'par',cat:'town',lat:48.8867,lng:2.3431,nm:'Basilique du Sacré-Cœur · Montmartre',q:'Sacre-Coeur, Paris',tag:['утро','t-must'],star:1,
-  why:'Последнее утро: холм с видом на весь город, улицы художников, лестницы. Приходи к открытию — днём тут тесно.'},];
+  why:'Последнее утро: холм с видом на весь город, улицы художников, лестницы. Приходи к открытию — днём тут тесно.'},
+];
 
 const FOODCITIES=[
  {city:'Париж',base:'par',q:'Paris, France',lat:48.8566,lng:2.3522,
@@ -101,7 +102,7 @@ const BPHOTO={par:'sei'};
 const ALT={};
 const ALTNM={};
 
-const ORIGIN={city:'Майами',code:'MIA',ll:[25.7617,-80.1918]};
+const ORIGIN={city:'Майами', en:'Miami',code:'MIA',ll:[25.7617,-80.1918]};
 const AIRPORT={par:'CDG'};
 const AIRPORTNM={CDG:'Париж'};
 const AIRPORTWAY={CDG:'≈30 км · RER B, 35–50 мин до центра'};

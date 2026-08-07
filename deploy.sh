@@ -42,7 +42,7 @@ cd "$HERE"
 # строка была ровно «img/», а в списке они вида «img/hero-w.webp». Уехало 17
 # файлов вместо 552, и скрипт при этом отчитался «Готово».
 site_files(){
-  git ls-files | grep -E '^(index\.html|en/index\.html|i18n\.js|day-math\.js|open-hours\.js|constructor\.js|airports\.js|trip-[a-z0-9-]+\.js|CNAME)$|^img/'
+  git ls-files | grep -E '^(index\.html|en/index\.html|i18n\.js|day-math\.js|open-hours\.js|constructor\.js|airports\.js|trip-[a-z0-9-]+\.js|CNAME|sitemap\.xml|robots\.txt)$|^img/'
 }
 FILES=$(site_files)
 

@@ -251,7 +251,7 @@ const BPHOTO={mil:'duo'};
 const ALT={};
 const ALTNM={};
 
-const ORIGIN={city:'Майами',code:'MIA',ll:[25.7617,-80.1918]};
+const ORIGIN={city:'Майами', en:'Miami',code:'MIA',ll:[25.7617,-80.1918]};
 const AIRPORT={mil:'MXP'};
 const AIRPORTNM={MXP:'Милан'};
 const AIRPORTWAY={MXP:'≈50 км · поезд Malpensa Express, 50 мин'};
