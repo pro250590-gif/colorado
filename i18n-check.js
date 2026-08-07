@@ -99,7 +99,30 @@ function pieces(s) { var p = parts(s); return p.vis.concat(p.attrs); }
 /* ⚠️ К СТРАНИЦЕ ПОДКЛЮЧЁН НЕ ТОЛЬКО index.html. constructor.js пишет человеку
    сообщения проверки маршрута («разрыв: день 3 привёз в …»), и его не читал
    никто. Проверяем все файлы, которые страница грузит тегом. */
+/* ⚠️ КАКИЕ ФАЙЛЫ ПРОВЕРЯЕМ — СПРАШИВАЕМ У САМОЙ СТРАНИЦЫ, А НЕ ПОМНИМ.
+   Список был записан руками. Значит подключи страница завтра ещё один файл с
+   русским текстом — проверка честно напечатала бы ноль и никто бы не узнал.
+   Теперь она читает теги <script src="/…"> из index.html и требует, чтобы
+   КАЖДЫЙ подключённый файл был либо проверен, либо назван в исключениях
+   ПОИМЁННО и с причиной (то же правило, что и раздел 1б в ПЕРЕВОД.md).
+   Незнакомый файл — ошибка, а не молчание. */
+const SKIP = {
+  'i18n.js':      'это сам словарь: русские фразы в нём — ключи, а не текст',
+  'airports.js':  'список аэропортов мира, названия в оригинале (правило 10)',
+  'day-math.js':  'счёт дня, общий с проверками в терминале; подписи для человека делает index.html',
+  'open-hours.js':'разбор часов работы, общий с терминалом; подписи для человека делает index.html'
+};
+const PAGE = fs.readFileSync(path.join(DIR, 'index.html'), 'utf8');
+const LOADED = [];
+(PAGE.match(/<script\s+src="\/([A-Za-z0-9._-]+\.js)"/g) || []).forEach(function (tag) {
+  const f = tag.replace(/.*src="\//, '').replace(/"$/, '');
+  if (LOADED.indexOf(f) < 0) LOADED.push(f);
+});
+/* airports.js подключается из кода, а не тегом — но грузится так же */
+if (/airports\.js/.test(PAGE) && LOADED.indexOf('airports.js') < 0) LOADED.push('airports.js');
+
 const FILES = ['index.html', 'constructor.js'].filter(f => fs.existsSync(path.join(DIR, f)));
+const UNKNOWN = LOADED.filter(f => FILES.indexOf(f) < 0 && !SKIP[f]);
 const SEP = String.fromCharCode(10) + '/*FILE*/' + String.fromCharCode(10);
 /* ⚠️ СЧИТАЕМ ПО ФАЙЛАМ ОТДЕЛЬНО. index.html — это то, что человек видит всегда;
    constructor.js — словарь генератора и сообщения сборки маршрута, там текст
@@ -214,12 +237,34 @@ console.log('  ⛔ БЕЗ ПЕРЕВОДА в index.html (видит челов�
 if (FILES.length > 1) console.log('  ·  в constructor.js (генератор): ' + badGen.length);
 console.log('');
 
-const byWhy = {};
-badPage.forEach(b => (byWhy[b.why] = byWhy[b.why] || []).push(b));
-Object.keys(byWhy).sort((a, b) => byWhy[b].length - byWhy[a].length).forEach(w => {
-  console.log('── ' + w + ' (' + byWhy[w].length + ')');
-  byWhy[w].slice(0, 200).forEach(b => console.log('   ' + String(b.line).padStart(6) + '  ' + b.text));
-  console.log('');
-});
+/* ⚠️ ПЕЧАТАЕМ СПИСОК И ДЛЯ ГЕНЕРАТОРА, А НЕ ТОЛЬКО ЧИСЛО. Пока по constructor.js
+   печаталось голое «248», работать с ним было нечем: чтобы узнать, ЧТО именно не
+   переведено, приходилось править саму проверку. Число без списка — это не мера,
+   а отговорка. Показывать по требованию: `node i18n-check.js --list`. */
+function show(list, ttl) {
+  if (!list.length) return;
+  console.log('── ' + ttl + ' ──');
+  const byWhy = {};
+  list.forEach(b => (byWhy[b.why] = byWhy[b.why] || []).push(b));
+  Object.keys(byWhy).sort((a, b) => byWhy[b].length - byWhy[a].length).forEach(w => {
+    console.log('── ' + w + ' (' + byWhy[w].length + ')');
+    byWhy[w].slice(0, 400).forEach(b => console.log('   ' + String(b.line).padStart(6) + '  ' + b.text));
+    console.log('');
+  });
+}
+show(badPage, 'index.html');
+if (process.argv.indexOf('--list') >= 0) show(badGen, 'constructor.js');
 
-process.exit(badPage.length ? 1 : 0);
+console.log('  страница грузит файлов: ' + LOADED.length +
+  ' · проверяем: ' + FILES.filter(f => f !== 'index.html').join(', '));
+Object.keys(SKIP).forEach(f => {
+  if (LOADED.indexOf(f) >= 0) console.log('        · ' + f + ' — не проверяем: ' + SKIP[f]);
+});
+if (UNKNOWN.length) {
+  console.log('');
+  console.log('  ⛔ СТРАНИЦА ГРУЗИТ ФАЙЛ, О КОТОРОМ ПРОВЕРКА НЕ ЗНАЕТ: ' + UNKNOWN.join(', '));
+  console.log('     Либо добавь его в список проверяемых, либо в SKIP с причиной.');
+}
+console.log('');
+
+process.exit((badPage.length || UNKNOWN.length) ? 1 : 0);

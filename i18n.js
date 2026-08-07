@@ -1311,7 +1311,84 @@
       'старт ': 'start ',
       'страница от ': 'updated ',
       'уезжаем вечером ': 'leaving in the evening ',
-      'эта ночь не тут: ': 'this night is not here: '
+      'эта ночь не тут: ': 'this night is not here: ',
+
+      /* ── КОНСТРУКТОР МАРШРУТА (constructor.js) — шаг 1 плана, 07.08.2026 ──
+         Сообщения проверки собранной поездки. Их читает не путешественник, а
+         тот, кто собирает маршрут: мы, генератор и — когда дойдут руки —
+         клиент в кабинете.
+         ⚠️ КЛЮЧ — ЦЕЛОЕ СООБЩЕНИЕ С МЕТКАМИ {…}, А НЕ ОБРЫВОК. Раньше эти
+         фразы были склеены плюсом («'разрыв: день ' + a + ' привёз в «' + x»),
+         и словарь до них не достал бы никогда. Метки можно ставить в любом
+         порядке — по-английски место и число идут не так, как по-русски. */
+
+      /* как называется способ передвижения (E8: где можно спать в пути) */
+      'на своей (прокатной) машине': 'in your own (rental) car',
+      'перелёт': 'a flight',
+      'поезд': 'a train',
+      'паром': 'a ferry',
+      'автобус': 'a bus',
+      'заказной трансфер': 'a private transfer',
+      'машина с водителем': 'a car with a driver',
+
+      /* E1 — цепочка не рвётся */
+      'переезд дня {d}: нет такой точки «{id}»': 'day {d} leg: there is no point called “{id}”',
+      'разрыв: день {a} привёз в «{x}», а день {b} стартует из «{y}»':
+        'broken chain: day {a} ends in “{x}”, but day {b} starts from “{y}”',
+      /* E2 — повисшие точки */
+      'точка «{nm}» не связана ни с чем — в неё нельзя попасть':
+        '“{nm}” connects to nothing — there is no way to get there',
+      'в «{nm}» не на чем приехать': 'nothing gets you into “{nm}”',
+      'из «{nm}» не на чем уехать': 'nothing gets you out of “{nm}”',
+      /* E3 — день кончается там, где ночь */
+      'переезд назначен на день {d}, а в поездке {n}': 'a leg is set for day {d}, but the trip is only {n} days',
+      'день {d}: два несвязанных переезда — «{a}→{b}» и «{c}→{e}». За один день человек не может оказаться в двух местах':
+        'day {d}: two legs that do not connect — “{a}→{b}” and “{c}→{e}”. Nobody can be in two places in one day',
+      'день {d} стартует из «{x}», а ночь {n} была в «{y}»':
+        'day {d} starts from “{x}”, but night {n} was spent in “{y}”',
+      'день {d} приводит в «{x}», а ночь {n} записана в «{y}»':
+        'day {d} ends in “{x}”, but night {n} is booked in “{y}”',
+      'ночь {a} в «{x}», ночь {b} в «{y}», а переезда в этот день нет':
+        'night {a} is in “{x}” and night {b} in “{y}”, with no leg in between',
+      /* E4, W1, W2 — машина */
+      'машину берут в несуществующей точке «{id}»': 'the car is picked up at “{id}”, which is not on the route',
+      'машину сдают в несуществующей точке «{id}»': 'the car is dropped off at “{id}”, which is not on the route',
+      'машину сдают раньше, чем берут': 'the car is dropped off before it is picked up',
+      'вторую машину берут, не сдав первую': 'a second car is picked up before the first one is returned',
+      'берут в «{a}», сдают в «{b}» — будет доплата за возврат в другом месте':
+        'picked up in “{a}”, dropped off in “{b}” — expect a one-way drop fee',
+      'разные регионы ({a} → {b}) — доплата выше и нужна страховка на выезд':
+        'different regions ({a} → {b}) — the drop fee is higher and you need out-of-state coverage',
+      /* E5, E6, E10 — чем едем */
+      'день {d}: переезд на машине, а машины в этот день нет': 'day {d}: the leg is by car, but there is no car that day',
+      'вылет из «{x}», а аэропорта там нет': 'a flight leaves “{x}”, which has no airport',
+      'прилёт в «{x}», а аэропорта там нет': 'a flight lands in “{x}”, which has no airport',
+      'день {d}: переезд назначен на день недели, когда он не ходит':
+        'day {d}: the leg is set for a weekday it does not run',
+      /* E7, E8, W6 — ночи */
+      'ночей {a}, а должно быть {b} при {c} днях': '{a} nights, but a {c}-day trip needs {b}',
+      'ночь {n} в пути, но не сказано, в каком переезде': 'night {n} is spent on the move, but no leg is named',
+      'ночь {n}: в «{how}» спать нельзя': 'night {n}: you cannot sleep in {how}',
+      'ночь {n} в несуществующей точке «{id}»': 'night {n} is in “{id}”, which is not on the route',
+      'ночь {n}: жильё не выбрано — нельзя показывать ночь там, где ничего не проверено':
+        'night {n}: no place to stay picked — we do not show a night we have not checked',
+      /* E11, E9 — город без машины и выезды на день */
+      'в «{nm}» без машины нельзя, а машины в эти дни нет':
+        '“{nm}” does not work without a car, and there is no car on those days',
+      'выезд «{nm}» из несуществующей точки': 'day trip “{nm}” starts from a point that is not on the route',
+      'выезд «{nm}» из точки, где человек не ночует': 'day trip “{nm}” starts where nobody is staying the night',
+      'выезд «{nm}» на своей машине, а машины нет': 'day trip “{nm}” is by your own car, and there is no car',
+      /* W3, W4, W5 — деньги и время */
+      'от аэропорта до «{nm}» ≈{km} км по прямой — спросить, ночевать ли в городе прилёта':
+        'it is about {km} km from the airport to “{nm}” as the crow flies — ask whether to stay the first night near the airport',
+      'до аэропорта в день вылета {h} ч — рейс не должен быть утренним':
+        'the run to the airport on departure day takes {h} hrs — do not book a morning flight',
+      'день {d}: машина не нужна ни в городе, ни на выезде — можно взять позже или сдать раньше':
+        'day {d}: the car is needed neither in town nor for a day trip — pick it up later or drop it off sooner',
+      /* W6 — «почему» */
+      'нет строки «почему»: {list}': 'no “why” line: {list}',
+      'переезд дня {d}': 'the day {d} leg',
+      'выезд «{nm}»': 'the “{nm}” day trip'
     }
 
   };

@@ -5,6 +5,9 @@
 # домен сайта: этот файл включает kolibripro.com на GitHub Pages
 !CNAME
 !constructor.js
+# памятка и самопроверка конструктора: в истории нужна, на сайт НЕ едет —
+# белый список deploy.sh берёт только constructor.js
+!constructor-doc.js
 !trip-colorado.js
 !trip-utah.js
 !trip-paris.js
