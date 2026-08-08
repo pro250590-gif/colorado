@@ -8,21 +8,13 @@
 # памятка и самопроверка конструктора: в истории нужна, на сайт НЕ едет —
 # белый список deploy.sh берёт только constructor.js
 !constructor-doc.js
-!trip-colorado.js
-!trip-utah.js
-!trip-paris.js
-!trip-paris-en.js
-!trip-colorado-en.js
-!trip-milan-en.js
-!trip-utah-en.js
-!trip-iceland-en.js
-!trip-japan-en.js
-!trip-usa2-en.js
-!trip-test-shapes-en.js
-!trip-milan.js
-!trip-usa2.js
-!trip-iceland.js
-!trip-japan.js
+# маршруты и их тексты на других языках — ОБРАЗЦОМ, а не перечислением
+# (08.08.2026, шаг 3 плана). Было четырнадцать строк поимённо: новый маршрут
+# или новый язык маршрута просто не попадал в историю, а значит и на сервер —
+# молча, потому что deploy.sh берёт файлы через `git ls-files`. Ровно так
+# `trip-paris-en.js` лежал на диске, а сайт отдавал 404. Тот же приём, что
+# с языками (`!lang-*.js`) на шаге 2. Сторожит это `node check-ship.js`.
+!trip-*.js
 !.gitignore
 # база проверенных мест: номер места у Гугла + координата, на которой сошлись
 # источники. Хранить это правилами разрешено бессрочно; оценок и отзывов тут нет
@@ -92,6 +84,10 @@
 !i18n-check.js
 !i18n-extract.js
 !i18n-check-trip.js
+# что НЕ переводится: названия и адреса под пометкой data-noT + translate="no"
+!i18n-check-orig.js
+# ворота выкладки: ловит файл, который лежит на диске, но забыт в git
+!check-ship.js
 !build-langs.js
 !audit-days.js
 # страницы языковых версий — собираются командой node build-langs.js.

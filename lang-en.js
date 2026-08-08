@@ -462,7 +462,6 @@
       'ваш выбор': 'your call',
       'ваши ответы совпали с тем, как он задуман': 'your answers matched how it was designed',
       'Введи email и пароль': 'Enter your email and password',
-      'Вечером уезжаем:': 'We leave in the evening:',
       'взрослые': 'adults',
       'взрослый': 'adult',
       'взрослых': 'adults',
@@ -1371,6 +1370,10 @@
         ' You spend this night on the move: {way}. No hotel needed, here or there.',
       'Ночь в этом городе не нужна: вечером садимся на {way}':
         'No room needed here: we board the {way} in the evening',
+      'Вечером уезжаем: {way} → {city} · отель не нужен':
+        'Leaving in the evening: {way} → {city} · no room needed',
+      'Вечером уезжаем: {way} · отель не нужен':
+        'Leaving in the evening: {way} · no room needed',
       'из них {n} не тут: ': 'of them {n} not here: ',
       '{n} минут пешком': '{n} min walk',
       'в этот день закрыто': 'closed that day',

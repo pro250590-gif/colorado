@@ -2103,7 +2103,7 @@ section h2.big{margin-bottom:4px}
 <body>
 
 <div class="topbar"><div class="wrap">
-  <button class="brand" id="brandHome" title="Home"><span id="brandName">KOLIBRI</span> <i>Pro</i></button>
+  <button class="brand" id="brandHome" title="Home"><span id="brandName" data-noT translate="no">KOLIBRI</span> <i data-noT translate="no">Pro</i></button>
   <span class="units" id="units"></span>
   <!-- до входа в шапке только «Войти»; аккаунт со всеми разделами появляется
        после регистрации (просьба клиента) -->
@@ -2773,7 +2773,7 @@ function airRow(a){
 function homeSheet(){
   const cur=originNow();
   const head='<div class="dsh"><b>Откуда вы летите?</b>'
-    +'<span>'+(cur.code?(cx('сейчас ')+esc0(homeNm(cur))+' · '+esc0(cur.code)):'город не выбран')+'</span></div>'
+    +'<span>'+(cur.code?(cx('сейчас ')+nmT(homeNm(cur))+' · '+esc0(cur.code)):'город не выбран')+'</span></div>'
     +'<div class="airbox"><input id="airq" type="search" placeholder="Город или код аэропорта" autocomplete="off"></div>'
     +'<div class="airnote">Пишите по-русски или латиницей — найдётся и так, и так. Выберите строку из списка: рядом видно регион и страну, чтобы не перепутать одноимённые города.</div>'
     +'<div id="airlist"></div>'
@@ -3399,7 +3399,7 @@ function cityIcon(b,cnt){
       +'<filter id="gl-'+b.id+'" x="-45%" y="-45%" width="190%" height="190%"><feDropShadow dx="0" dy="0" stdDeviation="2.2" flood-color="#d9c6ff" flood-opacity="1"/></filter></defs>'
       +'<path d="M20 2C10.6 2 3 9.6 3 19c0 12 17 31 17 31s17-19 17-31C37 9.6 29.4 2 20 2z" fill="url(#rg-'+b.id+')" stroke="#fff" stroke-width="2" filter="url(#gl-'+b.id+')"/>'
       +'<text x="20" y="24.5" text-anchor="middle" font-family="Plus Jakarta Sans,Segoe UI,sans-serif" font-weight="800" font-size="16" fill="#fff">'+cnt+'</text></svg>'
-      +'<span class="cplab">'+baseName(b)+'</span></div>'});
+      +'<span class="cplab">'+nmT(baseName(b))+'</span></div>'});
 }
 /* маркер точки — одним местом, чтобы добавленные руками места тоже попадали на карту */
 function makeMarker(p){
@@ -3496,7 +3496,7 @@ function initMap(){
       animPlane(depPlane,onLine(depLL,homeLL,0.004),onLine(depLL,homeLL,0.05),7000);
     }
     if(homeLL)decoLayer.addLayer(L.marker(homeLL,{icon:L.divIcon({className:'',iconSize:[84,24],iconAnchor:[42,12],
-      html:'<div class="miamichip">✈ '+esc0(homeNm())+'</div>'})}));
+      html:'<div class="miamichip">✈ '+nmT(homeNm())+'</div>'})}));
     /* Путь машинки: переезды по порядку дней. Точки внутри линии в разных файлах
        записаны в разную сторону (Колорадо — с конца, Юта — с начала), поэтому
        разворачиваем по факту: какой конец ближе к тому, где мы сейчас. */
@@ -3630,7 +3630,7 @@ function buildCities(){
   const stepHost=document.getElementById('cityStep');
   /* степпер городов */
   if(stepHost){stepHost.innerHTML=tripBases().map((b,i)=>
-    '<a class="cst'+(i===0?' on':'')+'" href="#city-'+b.id+'" data-city="'+b.id+'"><span class="cn">'+(i+1)+'</span>'+baseName(b)+'</a>').join('');}
+    '<a class="cst'+(i===0?' on':'')+'" href="#city-'+b.id+'" data-city="'+b.id+'"><span class="cn">'+(i+1)+'</span>'+nmT(baseName(b))+'</a>').join('');}
 
   const CB=tripBases();
   host.innerHTML=CB.map((b,i)=>{
@@ -3690,7 +3690,7 @@ function buildCities(){
         +'<div class="carr"><div class="crow">'
           +'<div class="cpt"><b>'+shortName((ar.from&&ar.from.name)||'')+'</b><span>'+dm(dep)+(wayN?(cx(' · вечером')):'')+'</span></div>'
           +'<div class="cmid"><div class="cic">'+ic(wayN?'moon':segIc,'i-sm')+'</div></div>'
-          +'<div class="cpt r"><b>'+baseName(b)+'</b><span>'+dm(ci)+(wayN?(cx(' · утром')):'')+'</span></div></div>'
+          +'<div class="cpt r"><b>'+nmT(baseName(b))+'</b><span>'+dm(ci)+(wayN?(cx(' · утром')):'')+'</span></div></div>'
           +(wayN?'<div class="cnight">'+ic('moon','i-sm')
             +cx(' Ночь проводим в дороге: {way}. Отель ни здесь, ни там за эту ночь не нужен.',{way:esc0(wayN)})+'</div>':'')
           +(seg==='flight'
@@ -3726,9 +3726,9 @@ function buildCities(){
     /* Проживание: если жильё уже есть — показываем его, а Booking понижаем до «других вариантов» */
     const mine=stayPlaces(b.id),guests=PEOPLE+' '+plural(PEOPLE,'гостя','гостей','гостей');
     const stayCard=mine.map(h=>'<div class="cstay myst">'
-        +'<div class="ahead"><span class="aic">'+ic('bed','i-sm')+'</span><h3>'+h.nm+'</h3></div>'
+        +'<div class="ahead"><span class="aic">'+ic('bed','i-sm')+'</span><h3>'+nmT(h.nm)+'</h3></div>'
         +origHTML(h)
-        +'<div class="cmeta">'+baseName(b)+' · '+dm(ci)+'–'+dm(co)+' · '+b.nights+' '+nights(b.nights)+cx(' · на ')+guests+'</div>'
+        +'<div class="cmeta">'+nmT(baseName(b))+' · '+dm(ci)+'–'+dm(co)+' · '+b.nights+' '+nights(b.nights)+cx(' · на ')+guests+'</div>'
         +(h.rate?'<div class="aprice"><b>'+money(h.rate)+'</b> за ночь <span class="sep">·</span> <b>'+money((+h.tot||0)||h.rate*b.nights)+'</b> всего</div>':'')
         +(typeof h.lat==='number'
           ? (h.approx?'<div class="cmeta"><b class="apx">Точка примерная — центр города, поправь её</b></div>':'')
@@ -3744,17 +3744,17 @@ function buildCities(){
     const stay=(!b.nights||!hnc)
       ? '<div class="cnode"><span class="cdot pale">'+ic('bed','i-sm')+'</span>'
         +'<div class="clbl"><b>'+(b.nights?tr('Ночь в пути'):tr('Без ночёвки'))+'</b><span>'+(b.nights
-          ? ((cx('уезжаем вечером '))+dm(addDays(planIso(),nightsBefore(b.id)+b.nights-1))+' · '+wayNc+(nextStayBase(b.id)?(' → '+baseName(nextStayBase(b.id))):''))
+          ? ((cx('уезжаем вечером '))+dm(addDays(planIso(),nightsBefore(b.id)+b.nights-1))+' · '+wayNc+(nextStayBase(b.id)?(' → '+nmT(baseName(nextStayBase(b.id)))):''))
           : (dm(ci)+' · в этом городе не ночуем'))+'</span></div>'
         +'<div class="cstay nostay"><span class="cin"><span class="cmeta">'+(b.nights
           ? (cx('Ночь в этом городе не нужна: вечером садимся на {way}',{way:wayNc})
              +((nextStayBase(b.id)&&TRANSFER[nextStayBase(b.id).id]&&TRANSFER[nextStayBase(b.id).id].clean)?(', '+hrsTxt(TRANSFER[nextStayBase(b.id).id].clean)+(cx(' в пути'))):'')
-             +(nextStayBase(b.id)?((cx(', следующий город — '))+baseName(nextStayBase(b.id))):'')
+             +(nextStayBase(b.id)?((cx(', следующий город — '))+nmT(baseName(nextStayBase(b.id)))):'')
              +(cx(', и приезжаем туда утром. Отель здесь не бронируем и в бюджет не считаем — спим в дороге.')))
           : (cx('Ночей поставлено 0, поэтому жильё тут не ищем и в бюджет ничего не считаем. Вернёшь ночь — вернётся и блок.')))+'</span></span></div></div>'
       : '<div class="cnode"><span class="cdot">'+ic('bed','i-sm')+'</span>'
       +'<div class="clbl"><b>Проживание</b><span>'+daysLbl(firstDay,lastDay)+' · '+dm(ci)+'–'+dm(addDays(planIso(),nightsBefore(b.id)+hnc))+' · '+hnc+' '+nights(hnc)
-        +(awayNights(b.id).length?(' · '+awayNights(b.id).length+' '+nights(awayNights(b.id).length)+(cx(' на выезде: '))+awayNights(b.id).map(e=>esc0(sleepAway(e.tid).nm)).join(', ')):'')
+        +(awayNights(b.id).length?(' · '+awayNights(b.id).length+' '+nights(awayNights(b.id).length)+(cx(' на выезде: '))+awayNights(b.id).map(e=>nmT(sleepAway(e.tid).nm)).join(', ')):'')
         +(wayNc?' · последняя ночь в пути':'')
         /* пока рейс не вписан, дата заезда — наша прикидка, и молчать об этом
            нельзя: по ней человек нажимает «Забронировать» */
@@ -3772,12 +3772,12 @@ function buildCities(){
         : '<div class="cstay noyet">'
           +'<div class="ahead"><span class="cph sm"'+(basePhoto(b.id)?' style="background-image:url('+basePhoto(b.id)+')"':'')+'></span>'
             +'<span class="atxt"><h3>Где остановиться</h3>'
-            +'<span class="cmeta">'+baseName(b)+' · '+hnc+' '+nights(hnc)+' · '+dmRange(ci,addDays(planIso(),nightsBefore(b.id)+hnc))+' · '+guests+'</span></span></div>'
+            +'<span class="cmeta">'+nmT(baseName(b))+' · '+hnc+' '+nights(hnc)+' · '+dmRange(ci,addDays(planIso(),nightsBefore(b.id)+hnc))+' · '+guests+'</span></span></div>'
           /* обе кнопки — одна пара: один рост, одна ширина, один стиль (просьба клиента) */
           +'<div class="stacts">'
             +'<a class="sbtn pri" href="'+bookHotel(b.q,ci,addDays(planIso(),nightsBefore(b.id)+hnc),PEOPLE,'',baseLL(b))+'"'
               +hsData(b.q,ci,addDays(planIso(),nightsBefore(b.id)+hnc),PEOPLE,baseName(b)+' · '+dmRange(ci,addDays(planIso(),nightsBefore(b.id)+hnc))+' · '+guests,baseLL(b))
-              +' target="_blank" rel="noopener">'+(HSITE&&hsiteBy(HSITE)?hsiteBy(HSITE).nm:'Подобрать жильё')+'</a>'
+              +' target="_blank" rel="noopener">'+(HSITE&&hsiteBy(HSITE)?nmT(hsiteBy(HSITE).nm):'Подобрать жильё')+'</a>'
             +'<button class="sbtn sec" data-stayadd="'+b.id+'">Уже есть жильё</button>'
           +'</div>'
           /* выбранную витрину надо уметь переиграть, иначе выбор становится ловушкой */
@@ -3801,7 +3801,7 @@ function buildCities(){
         +'<ul class="cplaces">'+list.map((p,pi)=>{const emo=p.star?'<span class="cstar">'+ic('star','i-sm')+'</span>':'';const on=picked.has(p.id);
           return hopHTML(pi?list[pi-1]:null,p,pi?null:st)
             +'<li class="'+(on?'':'off')+'" data-pl="'+p.id+'"><div class="cpl-row"><div class="cpl-main">'
-            +'<span class="cpnm"><span class="pseq" data-seq="'+p.id+'"></span>'+emo+'<a href="'+mapURL(p)+'" target="_blank" rel="noopener">'+p.nm+'</a></span>'+origHTML(p)+'</div>'
+            +'<span class="cpnm"><span class="pseq" data-seq="'+p.id+'"></span>'+emo+'<a href="'+mapURL(p)+'" target="_blank" rel="noopener">'+nmT(p.nm)+'</a></span>'+origHTML(p)+'</div>'
             +'<span class="cpact">'
             +'<span class="cpsw'+(on?' on':'')+'" data-pl="'+p.id+'" role="switch" aria-checked="'+on+'" aria-label="показывать на карте" tabindex="0"><i></i></span>'
             +'<button class="cpmv" data-mvopen="'+p.id+'" aria-label="перенести или убрать" title="перенести или убрать">⋯</button>'
@@ -3817,7 +3817,7 @@ function buildCities(){
     const nOut=b.nights-hotelNights(b);
     const nb='<div class="cnights"><span class="cnl">Ночей в городе'
       +(nOut?('<i class="cnsub">'+(hotelNights(b)?cx('из них {n} не тут: ',{n:nOut}):(cx('эта ночь не тут: ')))
-        +[nightWay(b.id)?'':'',awayNights(b.id).length?((cx('на выезде — '))+awayNights(b.id).map(e=>esc0(sleepAway(e.tid).nm)).join(', ')):'',
+        +[nightWay(b.id)?'':'',awayNights(b.id).length?((cx('на выезде — '))+awayNights(b.id).map(e=>nmT(sleepAway(e.tid).nm)).join(', ')):'',
            (nextStayBase(b.id)&&nightWay(nextStayBase(b.id).id))?((cx('в дороге — '))+nightWay(nextStayBase(b.id).id)):''].filter(Boolean).join(' · ')+'</i>'):'')
       +'</span>'
       +'<span class="hstep"><button class="stepbtn" data-nd="'+i+'" data-dir="-1" aria-label="меньше ночей">−</button>'
@@ -3828,13 +3828,13 @@ function buildCities(){
     const sp=stashPlaces(b.id);
     /* «в городе», а не «в Урее» — падежи не выведешь для произвольного названия */
     const more=sp.length?('<div class="cnode"><span class="cdot">'+ic('layers','i-sm')+'</span>'
-      +'<div class="clbl"><b>Ещё в городе</b><span>'+baseName(b)+' · '+sp.length+' '+plural(sp.length,'место','места','мест')+' не поместились в дни</span></div>'
+      +'<div class="clbl"><b>Ещё в городе</b><span>'+nmT(baseName(b))+' · '+sp.length+' '+plural(sp.length,'место','места','мест')+' не поместились в дни</span></div>'
       +'<details class="cmore"><summary class="cmoresum">'
         +'<b class="lopen">'+cx('Показать ')+sp.length+' '+plural(sp.length,'место','места','мест')+'</b>'
         +'<b class="lclose">Свернуть список</b>'
         +'<span class="cgo">'+ic('chevron','i-sm')+'</span></summary>'
       +'<div class="cmorebody"><ul class="cplaces">'+sp.map(p=>'<li data-pl="'+p.id+'"><div class="cpl-row"><div class="cpl-main">'
-        +'<span class="cpnm"><a href="'+mapURL(p)+'" target="_blank" rel="noopener">'+p.nm+'</a></span>'+origHTML(p)+'</div>'
+        +'<span class="cpnm"><a href="'+mapURL(p)+'" target="_blank" rel="noopener">'+nmT(p.nm)+'</a></span>'+origHTML(p)+'</div>'
         +'<button class="cpup" data-mvopen="'+p.id+'">'+ic('plus','i-sm')+' в день</button></div>'
         +metaStrip(p)+(p.why?'<span class="cwhy">'+convDist(p.why)+'</span>':'')+'</li>').join('')
       +'</ul><div class="cmoren">Тап «в день» — место встанет в выбранный день. Вернёшь ночь — вернётся и убранный день.</div></div></details></div>'):'';
@@ -3854,7 +3854,7 @@ function buildCities(){
       +'<div class="chead"><span class="ckick">'+baseLbl(i+1,CB.length)+' · '+coRange
         +(w?(' · <button class="wtemp" data-weather="'+b.id+'" title="откуда эти градусы">'
              +ic('sun','i-w wsun')+' ≈'+fmtTempShort(w.d)+' '+ic('moon','i-w wmoon')+' ≈'+fmtTempShort(w.n)+'</button>'):'')+'</span>'
-      +'<h2>'+baseName(b)+'</h2>'+origHTML(b,'big')+'<p>'+convDist(b.desc)+'</p>'+nb+'</div>'
+      +'<h2>'+nmT(baseName(b))+'</h2>'+origHTML(b,'big')+'<p>'+convDist(b.desc)+'</p>'+nb+'</div>'
       /* ⚠️ СНАЧАЛА ЖИЛЬЁ, ПОТОМ МАШИНА. Её слова: «я прилетаю — первым делом мне
          нужно жильё и заселиться; если нужна машина, то машина, если не нужна —
          не пиши машину». Прокат стоял выше жилья и читался как первое дело. */
@@ -3915,9 +3915,27 @@ function origOf(x){
   if(!b||a===b||a.indexOf(b)===0)return '';
   return q;
 }
+/* ⚠️ ПОМЕТКА «НЕ ПЕРЕВОДИТЬ» — ОДНА НА ДВУХ ПЕРЕВОДЧИКОВ (шаг 3 плана, 08.08.2026).
+   Правило 10: название живёт в оригинале, потому что человек его не читает, а
+   ПОКАЗЫВАЕТ — таксисту, на стойке, в поиске. Значит трогать его не должны ни мы,
+   ни браузер:
+     · data-noT       — сюда не заходит наш applyDomT, и таблица перевода не
+                        считает название недоделкой;
+     · translate="no" — то же самое сказано Chrome и Edge. Их переводчик мы сами
+                        оставили кнопкой «глянуть быстро», а он переводит всё
+                        подряд: без метки «Basilica di Sant'Ambrogio» превратится
+                        в «Базилику святого Амвросия», и показывать станет нечего.
+   Метку ставит ОДНА функция, а не два атрибута руками в тридцати местах: такие
+   пары расходятся в первый же день. Сторожит это `node i18n-check-orig.js` —
+   он требует, чтобы каждое имя на странице было либо в nmT(), либо названо в нём
+   поимённо с причиной (правило 22в: решает место, а не имя поля). */
+function nmT(s){return '<span data-noT translate="no">'+esc0(s)+'</span>';}
 function origHTML(x,cls){
   const o=origOf(x);if(!o)return '';
-  return '<button class="orig'+(cls?' '+cls:'')+'" data-copy="'+esc0(o)+'" title="нажмите, чтобы скопировать">'+esc0(o)+'</button>';
+  /* ⚠️ Метка идёт на ТЕКСТ, а не на всю кнопку: у кнопки есть подпись при
+     наведении («нажмите, чтобы скопировать»), и она как раз переводится.
+     Пометив кнопку целиком, мы бы заодно оставили эту подпись русской. */
+  return '<button class="orig'+(cls?' '+cls:'')+'" data-copy="'+esc0(o)+'" title="нажмите, чтобы скопировать">'+nmT(o)+'</button>';
 }
 /* ⚠️ Отметки «показывать на карте» хранятся списком id мест. Если поездка создана
    на ОДНОМ маршруте, а открыта на другом (у клиента так вышло с Ютой), в списке
@@ -4813,7 +4831,7 @@ function dayBudgetHTML(tid){
     +'<span class="dshut" data-shut="'+tid+'" style="display:none"></span>'
     /* ночёвка на выезде — это про сегодняшний день, и человек должен видеть её
        там же, где часы: иначе вечером окажется не в том городе */
-    +(sleepAway(tid)?('<span class="daway">'+ic('bed','i-sm')+(cx(' ночуем на выезде: '))+esc0(sleepAway(tid).nm)+'</span>'):'');
+    +(sleepAway(tid)?('<span class="daway">'+ic('bed','i-sm')+(cx(' ночуем на выезде: '))+nmT(sleepAway(tid).nm)+'</span>'):'');
 }
 /* карточка перерыва прямо в цепочке: во сколько, где и почему именно здесь */
 const KINDNM={restaurant:'ресторан',cafe:'кафе',fast_food:'быстро перекусить',
@@ -4831,7 +4849,7 @@ function mealInner(it){
     : s.price;
   return '<span class="cmtop">'+ic('food','i-sm')+' Перерыв · '+it.meal+' · '+hhmm(it.at)
       +' · '+fmtHM(it.min)+'</span>'
-    +'<span class="cmnm"><a href="'+mapURL({q:s.nm,nm:s.nm,city:it.spot.city})+'" target="_blank" rel="noopener">'+s.nm+'</a>'
+    +'<span class="cmnm"><a href="'+mapURL({q:s.nm,nm:s.nm,city:it.spot.city})+'" target="_blank" rel="noopener">'+nmT(s.nm)+'</a>'
       +'<i class="cmpr">'+meta+'</i>'+(why?'<i class="cmd">'+why+'</i>':'')+'</span>'
     +'<span class="cmwhy">'+(s.why||(s.hours?'Часы работы: '+s.hours:'Место с карты рядом с этой точкой маршрута.'))+'</span>';
 }
@@ -5096,7 +5114,7 @@ function buildDays(){
         +(PHOTO[p.id]?'<span class="thumb" style="background-image:url('+pimg(p.id,'t')+')"></span>'
                      :'<span class="thumb noimg">'+ic(CATS[p.cat]?CATS[p.cat].e:'pin','i-lg')+'</span>')
         +'<input type="checkbox" class="tick" data-tick="'+p.id+'" aria-label="показать на карте"></span>'
-        +'<span class="sinfo"><span class="snm"><span class="pseq" data-seq="'+p.id+'"></span>'+emo+'<a href="'+mapURL(p)+'" target="_blank" rel="noopener">'+p.nm+'</a>'+(p.tag?'<span class="tag '+p.tag[1]+'">'+p.tag[0]+'</span>':'')+'</span>'+origHTML(p)
+        +'<span class="sinfo"><span class="snm"><span class="pseq" data-seq="'+p.id+'"></span>'+emo+'<a href="'+mapURL(p)+'" target="_blank" rel="noopener">'+nmT(p.nm)+'</a>'+(p.tag?'<span class="tag '+p.tag[1]+'">'+p.tag[0]+'</span>':'')+'</span>'+origHTML(p)
         +metaStrip(p)
         +'<span class="why">'+convDist(p.why)+'</span></span></li>';}).join('')+'</ul>'
       /* день вылета кончался последней точкой, и ни дороги в аэропорт, ни самого
@@ -5150,7 +5168,7 @@ function buildBases(){
     const ph=BPHOTO[b.id];
     return '<div class="base" data-base="'+b.id+'">'
       +'<div class="bphoto"'+(ph?' style="background-image:url('+pimg(BPHOTO[b.id],'l')+')"':'')+'>'
-      +'<span class="bnum">'+baseLbl(i+1,CB.length)+'</span>'+'<span class="btitle"><h3>'+baseName(b)+'</h3></span></div>'
+      +'<span class="bnum">'+baseLbl(i+1,CB.length)+'</span>'+'<span class="btitle"><h3>'+nmT(baseName(b))+'</h3></span></div>'
       +'<div class="bbody"><div class="nights" data-basenights="'+b.id+'">'+b.nights+' '+nights(b.nights)+'</div>'
       +'<p>'+convDist(b.desc)+'</p>'
       +(b.alt?'<div class="alt">'+convDist(b.alt)+'</div>':'')+'</div></div>';
@@ -5285,8 +5303,8 @@ function buildFood(){
           +'<span class="fcat">'+mealLbl+'</span>'
           +'<span class="cpsw'+(fon?' on':'')+'" data-food-sw="'+id+'" role="switch" aria-checked="'+fon+'" aria-label="показывать на карте" tabindex="0"><i></i></span>'
           +'<span class="ficon"><img class="fimg" src="'+encodeURI(F3D+ico.f)+'" alt="" loading="lazy" onerror="this.closest(\'.ficon\').classList.add(\'noimg\');this.remove();"><span class="femoji">'+ico.e+'</span></span></div>'
-          +'<div class="fcbody"><div class="fcnm"><a href="'+gmSearch(s.nm+' '+c.q)+'" target="_blank" rel="noopener">'+s.nm+'</a></div>'
-          +'<button class="orig" data-copy="'+esc0(s.nm+', '+c.q)+'" title="нажмите, чтобы скопировать">'+esc0(s.nm+', '+c.q)+'</button>'
+          +'<div class="fcbody"><div class="fcnm"><a href="'+gmSearch(s.nm+' '+c.q)+'" target="_blank" rel="noopener">'+nmT(s.nm)+'</a></div>'
+          +'<button class="orig" data-copy="'+esc0(s.nm+', '+c.q)+'" title="нажмите, чтобы скопировать">'+nmT(s.nm+', '+c.q)+'</button>'
           +'<div class="fcwhy">'+s.why+'</div>'
           +'<div class="fcmeta"><span class="fchip pr">'+s.price+'</span></div></div></div>';
       }).join('');
@@ -6135,7 +6153,7 @@ function movePlace(id,tid){
   if(tid===p._d0)delete MOVED[id];else MOVED[id]=tid;
   applyMoves();savePlan();rerenderTrip();
   const e=dayOf(tid);
-  toast('<b>'+(e?('«'+p.nm+cx('» → День ')+e.disp):('«'+p.nm+'» убрали в «Ещё в городе»'))+'</b>',p.base,prev);
+  toast('<b>'+(e?('«'+nmT(p.nm)+cx('» → День ')+e.disp):('«'+nmT(p.nm)+'» убрали в «Ещё в городе»'))+'</b>',p.base,prev);
 }
 /* удалить СВОЁ добавленное место — насовсем (с отменой в плашке).
    Места самого маршрута не удаляем: для них есть «Убрать в „Ещё в городе“». */
@@ -6147,7 +6165,7 @@ function deletePlace(id){
   delete MOVED[id];picked.delete(id);savePicks();
   if(markers[id]){if(map&&map.hasLayer(markers[id]))map.removeLayer(markers[id]);delete markers[id];}
   savePlan();rerenderTrip();
-  toast('<b>Удалили «'+p.nm+'»</b><i>это было твоё место, в маршруте его больше нет</i>',p.base,prev);
+  toast('<b>Удалили «'+nmT(p.nm)+'»</b><i>это было твоё место, в маршруте его больше нет</i>',p.base,prev);
 }
 /* лист «У меня уже есть жильё» — им же правим уже добавленное */
 function addStaySheet(bid,id){
@@ -6156,7 +6174,7 @@ function addStaySheet(bid,id){
   const p=id?placeById(id):null,esc=s=>String(s||'').replace(/"/g,'&quot;');
   const i=BASES.findIndex(x=>x.id===bid),rate=p?(p.rate||''):(hotelRate(i)||'');
   sheet('<div class="dsh"><b>'+(p?'Изменить жильё':'У меня уже есть жильё')+'</b>'
-      +'<span>'+baseName(b)+' · '+dm(ci)+'–'+dm(co)+' · '+b.nights+' '+nights(b.nights)+cx(' · на ')+PEOPLE+' '+plural(PEOPLE,'гостя','гостей','гостей')+'</span></div>'
+      +'<span>'+nmT(baseName(b))+' · '+dm(ci)+'–'+dm(co)+' · '+b.nights+' '+nights(b.nights)+cx(' · на ')+PEOPLE+' '+plural(PEOPLE,'гостя','гостей','гостей')+'</span></div>'
     +'<div class="dsform"><input id="stNm" placeholder="Название или ссылка на жильё" autocomplete="off" value="'+esc(p?(p.q||p.nm):'')+'">'
       /* значок валюты стоит в самом поле: иначе видно голое число и непонятно, чего оно */
       +'<div class="dstwo">'
@@ -6231,7 +6249,7 @@ function addPlace(tid,d){
   CUSTOM.push(c);P.push(c);
   if(typeof d.lat==='number'&&typeof d.lng==='number'){picked.add(id);savePicks();if(map&&!markers[id])makeMarker(c);}
   savePlan();rerenderTrip();
-  toast('<b>'+cx('Добавили «{nm}» в {day}',{nm:c.nm,day:dayLbl(e.disp)})+'</b>'
+  toast('<b>'+cx('Добавили «{nm}» в {day}',{nm:nmT(c.nm),day:dayLbl(e.disp)})+'</b>'
     +(c.lat?(c.approx?'<i>точку поставили примерно — в центре города, поправь её через «⋯»</i>'
                        :'<i>точка на карте есть — видно при выборе города или дня</i>')
            :'<i>точку на карте не нашли: открой «⋯» у места и нажми «Поставить точку на карте»</i>'),e.base,null);
@@ -6416,7 +6434,7 @@ function setNights(i,n){
   /* до нуля выбирать нечего — уходит весь город целиком, поэтому спрашивать не о чем.
      Делаем сразу и показываем плашку с отменой. */
   if(v===0){const prev=planState();applyNights(i,0);
-    toast('<b>'+baseName(b)+' — без ночёвки</b><i>дни города ждут в «Ещё в городе», жильё и брони убрали</i>',b.id,prev);return;}
+    toast('<b>'+nmT(baseName(b))+' — без ночёвки</b><i>дни города ждут в «Ещё в городе», жильё и брони убрали</i>',b.id,prev);return;}
   if(v<b.nights){pickDaySheet(b.id);return;}
   applyNights(i,v);
 }
@@ -6531,7 +6549,7 @@ function sheet(inner,opts){
 function dayRow(e,attrs,note,cls){
   const n=dayPlaces(e).length;
   return '<button class="dsrow'+(cls?' '+cls:'')+'"'+attrs+'><span class="cn">'+e.disp+'</span>'
-    +'<span class="dst"><b>'+dayTitle(e)+'</b><span>'+dm(e.date)+' · '+baseName(baseById(e.base))+' · '+n+' '+plural(n,'место','места','мест')+'</span></span>'
+    +'<span class="dst"><b>'+dayTitle(e)+'</b><span>'+dm(e.date)+' · '+nmT(baseName(baseById(e.base)))+' · '+n+' '+plural(n,'место','места','мест')+'</span></span>'
     +(note?'<span class="dsfree">'+note+'</span>':'')+'</button>';
 }
 /* «Перенести место» — только дни, куда до этого места реально доехать.
@@ -6545,7 +6563,7 @@ function movePlaceSheet(id){
     const d=dayDistance(p,e),note=isFar&&d?fmtKm(d.km):'';
     return dayRow(e,' data-mvto="'+e.tid+'" data-mvid="'+id+'"',note,isFar?'far':'');
   };
-  sheet('<div class="dsh"><b>Куда перенести?</b><span>'+p.nm+'</span></div>'
+  sheet('<div class="dsh"><b>Куда перенести?</b><span>'+nmT(p.nm)+'</span></div>'
     +(near.length?near.map(e=>row(e,false)).join(''):'<div class="dshint" style="margin:0 4px 10px">Рядом подходящих дней нет.</div>')
     +(far.length?'<button class="dsmore" data-farshow="1" data-farn="'+far.length+'">Показать дальние дни · '+far.length+'</button>'
       +'<div class="dsfar"><div class="dssep">Далеко от этого места</div>'+far.map(e=>row(e,true)).join('')+'</div>':'')
@@ -6560,7 +6578,7 @@ function movePlaceSheet(id){
 function editPlaceSheet(id){
   const p=placeById(id);if(!p||!p.custom)return;
   const esc=s=>String(s||'').replace(/"/g,'&quot;');
-  sheet('<div class="dsh"><b>Изменить место</b><span>'+p.nm+'</span></div>'
+  sheet('<div class="dsh"><b>Изменить место</b><span>'+nmT(p.nm)+'</span></div>'
     +'<div class="dsform"><input id="edNm" placeholder="Название места" autocomplete="off" value="'+esc(p.nm)+'">'
       +'<input id="edWhy" placeholder="Зачем сюда (по желанию)" autocomplete="off" value="'+esc(p.why)+'">'
       +'<div class="dskinds">'+KINDS.map(x=>'<button class="dskind'+(kindOf(p).k===x.k?' on':'')+'" data-kind="'+x.k+'">'
@@ -6574,7 +6592,7 @@ function savePlaceEdit(id,nm,why,kind){
   p.nm=nm||p.nm;p.why=why||'';p.kind=kind||p.kind;
   const c=CUSTOM.find(x=>x.id===id);if(c){c.nm=p.nm;c.why=p.why;c.kind=p.kind;}
   savePlan();rerenderTrip();
-  toast('<b>Изменили «'+p.nm+'»</b>',p.base,prev);
+  toast('<b>Изменили «'+nmT(p.nm)+'»</b>',p.base,prev);
 }
 /* «Поставить точку на карте» — для места, которому координаты не нашлись */
 /* Всё, что можно сделать с жильём — одним списком под «⋯»: в карточке место есть
@@ -6582,7 +6600,7 @@ function savePlaceEdit(id,nm,why,kind){
 function stayMenuSheet(id){
   const p=placeById(id);if(!p)return;
   const b=baseById(p.base),has=typeof p.lat==='number';
-  sheet('<div class="dsh"><b>'+p.nm+'</b><span>'+(b?baseName(b):'')+' · твоё жильё</span></div>'
+  sheet('<div class="dsh"><b>'+nmT(p.nm)+'</b><span>'+(b?nmT(baseName(b)):'')+' · твоё жильё</span></div>'
     +(has?'<button class="dscancel alt" data-showmap="'+id+'">Показать на нашей карте</button>':'')
     +'<button class="dscancel alt" data-fixopen="'+id+'">'+(has?'Поправить точку на карте':'Поставить точку на карте')+'</button>'
     +'<button class="dscancel alt" data-stayedit="'+id+'" data-staybase="'+p.base+'">Изменить название и цену</button>'
@@ -6751,7 +6769,7 @@ function setPoint(id,lat,lng,q){
   picked.add(id);savePicks();savePlan();
   if(map&&!markers[id])makeMarker(p);
   rerenderTrip();
-  toast('<b>«'+p.nm+'» теперь на карте</b><i>'+cx('смотри в дне ')+(dispOf(p.d)||'')+' — выбери город или день, чтобы увидеть точки</i>',p.base,null);
+  toast('<b>«'+nmT(p.nm)+'» теперь на карте</b><i>'+cx('смотри в дне ')+(dispOf(p.d)||'')+' — выбери город или день, чтобы увидеть точки</i>',p.base,null);
   return true;
 }
 /* «Добавить место в день» — три способа */
@@ -6760,7 +6778,7 @@ function addPlaceSheet(tid){
   const st=stashPlaces(e.base);
   /* Одно поле на всё: ссылка, название или просто своя пометка. Отдельный блок
      «вручную» был лишним — первое поле делает то же самое и вдобавок ищет точку. */
-  sheet('<div class="dsh"><b>Добавить место</b><span>'+dayLbl(e.disp)+' · '+dm(e.date)+' · '+baseName(baseById(e.base))+'</span></div>'
+  sheet('<div class="dsh"><b>Добавить место</b><span>'+dayLbl(e.disp)+' · '+dm(e.date)+' · '+nmT(baseName(baseById(e.base)))+'</span></div>'
     +'<div class="dssep">Новое место</div>'
     +'<div class="dsform"><input id="gmUrl" placeholder="Ссылка из Google Maps или название" autocomplete="off">'
       +'<input id="gmWhy" placeholder="Зачем сюда (по желанию)" autocomplete="off">'
@@ -6769,7 +6787,7 @@ function addPlaceSheet(tid){
       +'<button class="dsgo" data-gmadd="'+tid+'">Добавить место</button></div>'
     +(st.length?'<div class="dssep">'+cx('Из «Ещё в городе» · ')+st.length+'</div>'
       +st.map(p=>'<button class="dsrow" data-mvto="'+tid+'" data-mvid="'+p.id+'"><span class="cn">'+ic('pin','i-sm')+'</span>'
-        +'<span class="dst"><b>'+p.nm+'</b><span>'+(p.why||'').replace(/<[^>]+>/g,'').slice(0,60)+'</span></span></button>').join(''):'')
+        +'<span class="dst"><b>'+nmT(p.nm)+'</b><span>'+(p.why||'').replace(/<[^>]+>/g,'').slice(0,60)+'</span></span></button>').join(''):'')
     +'<button class="dscancel" data-dsclose="1">Отмена</button>');
 }
 /* Перерисовка пересобирает ленту целиком, поэтому раскрытые дни закрывались, страница
@@ -7206,7 +7224,7 @@ function renderStays(){
         /* Латинское имя тут не нужно: строка про деньги, а не про то, что показывать
            таксисту. И подписан был только Урей — единственный город со скобками в
            названии, отчего список выглядел кривым (клиент обвела). */
-        +'<span class="hname">'+baseName(b)+'</span>'
+        +'<span class="hname">'+nmT(baseName(b))+'</span>'
         +'<span class="hdate">'+(zero?(b.nights?(dm(ci)+' · ночь в пути'):('без ночёвки · '+dm(ci))):(dm(ci)+' → '+dm(co2)))+'</span>'
         +((wayNx&&hn)?'<span class="hway">'+ic('train','i-sm')+' последняя ночь в пути · '+wayNx+' · отель не нужен</span>':'')
         +'<span class="hstep"><button class="stepbtn" data-nd="'+i+'" data-dir="-1" aria-label="меньше ночей">−</button>'
@@ -7218,7 +7236,7 @@ function renderStays(){
         +'<span class="hf"><label>всего</label><span class="hpill"><input class="htot" data-hi="'+i+'" inputmode="decimal" value="'+(tot?fmtIn(tot):'')+'" placeholder="0"'+ro+'><span class="hu">'+curSym()+'</span></span></span>'
       +'</span>')
       /* жильё в этом городе уже своё — Booking понижаем в «другие варианты», как в ленте */
-      +(zero?'<span class="hpass">'+(b.nights?('Вечером уезжаем: '+wayNx+(nextStayBase(b.id)?(' → '+baseName(nextStayBase(b.id))):'')+' · отель не нужен'):'Проездом · жильё не ищем')+'</span>'
+      +(zero?'<span class="hpass">'+(b.nights?((nextStayBase(b.id)?cx('Вечером уезжаем: {way} → {city} · отель не нужен',{way:wayNx,city:nmT(baseName(nextStayBase(b.id)))}):cx('Вечером уезжаем: {way} · отель не нужен',{way:wayNx}))):'Проездом · жильё не ищем')+'</span>'
         :'<a class="hbook'+(stayPlaces(b.id).length?' alt':'')+'" href="'+bookHotel(b.q,ci,co2,PEOPLE,'',baseLL(b))+'"'
         +hsData(b.q,ci,co2,PEOPLE,baseName(b)+' · '+dm(ci)+'–'+dm(co2),baseLL(b))+' target="_blank" rel="noopener" title="подобрать жильё на эти даты">'+ic('bed','i-sm')
         +'<span>'+hsLabel(stayPlaces(b.id).length?'Посмотреть другие варианты жилья':'Забронировать жильё')+' · '+dm(ci)+'–'+dm(co2)+' · '+PEOPLE+(cx(' гост.'))+'</span></a>'
@@ -7232,8 +7250,8 @@ function renderStays(){
         const r=ARATE[e.tid]||0;
         return '<div class="hrow away">'
           +'<span class="hdot pale">'+ic('bed','i-sm')+'</span>'
-          +'<span class="hmain"><span class="hname">'+esc0(sl.nm)+'</span>'
-            +'<span class="hdate">'+cx('ночь на выезде · ')+dm(dt)+' → '+dm(dt2)+cx(' · вместо ночи · ')+baseName(b)+'</span></span>'
+          +'<span class="hmain"><span class="hname">'+nmT(sl.nm)+'</span>'
+            +'<span class="hdate">'+cx('ночь на выезде · ')+dm(dt)+' → '+dm(dt2)+cx(' · вместо ночи · ')+nmT(baseName(b))+'</span></span>'
           +'<span class="hmoney"><span class="hf"><label>за ночь</label><span class="hpill">'
             +'<input class="arate" data-at="'+e.tid+'" inputmode="decimal" value="'+(r?fmtIn(r):'')+'" placeholder="0"><span class="hu">'+curSym()+'</span></span></span></span>'
           +'<a class="hbook" href="'+bookHotel(sl.q||sl.nm,dt,dt2,PEOPLE,'',baseLL(sl))+'"'
@@ -7833,7 +7851,7 @@ function weatherSheet(bid){
   const before=nightsBefore(b.id),ci=addDays(planIso(),before),co=addDays(planIso(),before+b.nights);
   const w=weatherOf(b.id,ci,co);if(!w)return;
   const yrs=(w.y0&&w.y1)?(w.y0+'–'+w.y1):'прошлого года';
-  sheet('<div class="dsh"><b>Погода примерная</b><span>'+baseName(b)+' · '+dmRange(ci,co)+'</span></div>'
+  sheet('<div class="dsh"><b>Погода примерная</b><span>'+nmT(baseName(b))+' · '+dmRange(ci,co)+'</span></div>'
     /* абзац «это не прогноз, дальше уже гадание» клиент вычеркнула: заголовок и так
        говорит «примерная», а объяснять человеку, чего не бывает, ни к чему */
     +'<div class="wexp">'
@@ -8133,14 +8151,14 @@ function buildBudget(){
              :(tr('на человека')+' × <b data-ppl>'+PEOPLE+'</b>'+UP+' × <b data-days>'+days+'</b>'+UD);
         const totVal=Math.round((parseFloat(rate)||0)*itemQty(per,days));
         return '<div class="brow3'+(it.own?' own':'')+'" data-per="'+per+'">'
-          +'<div class="b3l"><b class="b3nm">'+esc0(it.nm)+'</b><span class="b3desc">'+desc+'</span></div>'
+          +'<div class="b3l"><b class="b3nm">'+nmT(it.nm)+'</b><span class="b3desc">'+desc+'</span></div>'
           +'<span class="b3box b3rate"><input class="money perunit" data-k="'+it.k+'rate" inputmode="decimal" value="'+fmtIn(rate)+'"><span class="b3u">'+unit+'</span></span>'
           +'<span class="b3box b3total"><input class="btotal" data-k="'+it.k+'" inputmode="decimal" value="'+fmtIn(totVal)+'"><span class="b3u">'+curSym()+'</span></span>'
           +(it.own?'<button class="cpmv bmenu" data-bmenu="'+it.k+'" aria-label="что сделать со строкой" title="изменить или удалить">⋯</button>':'')+'</div>';
       }
       const desc=(it.sub||'')+(it.ok?' <span class="cf">'+ic('check','i-sm')+'</span>':(it.est?' <span class="est">~</span>':''));
       return '<div class="brow3'+(it.own?' own':'')+'">'
-        +'<div class="b3l"><b class="b3nm">'+esc0(it.nm)+'</b><span class="b3desc">'+desc+'</span></div>'
+        +'<div class="b3l"><b class="b3nm">'+nmT(it.nm)+'</b><span class="b3desc">'+desc+'</span></div>'
         +'<span class="b3box b3total"><input class="money" data-k="'+it.k+'" inputmode="decimal" value="'+fmtIn(val)+'"><span class="b3u">'+curSym()+'</span></span>'
         +(it.own?'<button class="cpmv bmenu" data-bmenu="'+it.k+'" aria-label="что сделать со строкой" title="изменить или удалить">⋯</button>':'')+'</div>';
     }).join('');
@@ -8197,7 +8215,7 @@ function addBudgetSheet(g,k){
 /* «⋯» у своей строки: изменить или удалить */
 function budgetRowSheet(k){
   const it=CUSTB.find(x=>x.k===k);if(!it)return;
-  sheet('<div class="dsh"><b>'+esc0(it.nm)+'</b><span>'+esc0(it.g)+' · '+(BPER.find(x=>x[0]===(it.per||''))||['',''])[1]+'</span></div>'
+  sheet('<div class="dsh"><b>'+nmT(it.nm)+'</b><span>'+esc0(it.g)+' · '+(BPER.find(x=>x[0]===(it.per||''))||['',''])[1]+'</span></div>'
     +'<button class="dsgo" data-bedit="'+k+'">Изменить</button>'
     +'<button class="dscancel del" data-bdel="'+k+'">Удалить строку</button>'
     +'<button class="dscancel" data-dsclose="1">Отмена</button>');
@@ -9832,7 +9850,7 @@ function applyHero(){
       show(ptile,true);
     }else if(pick){
       if(img){img.src=abs(pick.img);img.alt=pick.p.nm;}
-      if(cnt)cnt.innerHTML='<h2>'+esc0(shortName(pick.p.nm))+'</h2><p>'+esc0(pick.sub)+'</p>';
+      if(cnt)cnt.innerHTML='<h2>'+nmT(shortName(pick.p.nm))+'</h2><p>'+esc0(pick.sub)+'</p>';
       show(ptile,true);
     }else show(ptile,false);
   }

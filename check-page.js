@@ -56,6 +56,8 @@ function readTrip(file) {
       + ' name:typeof TRIP_NAME!=="undefined"?TRIP_NAME:"",'
       + ' hero:typeof HERO!=="undefined"?HERO:null,'
       + ' bases:typeof BASES!=="undefined"?BASES:[],'
+      + ' places:typeof P!=="undefined"?P:[],'
+      + ' foodc:typeof FOODCITIES!=="undefined"?FOODCITIES:[],'
       + ' segment:typeof SEGMENT!=="undefined"?SEGMENT:{}})', sand);
   } catch (e) { return null; }
 }
@@ -157,9 +159,36 @@ async function renderOne(file) {
   w.document.querySelectorAll('script,#map').forEach(e => e.remove());
   const text = (w.document.body.textContent || '').replace(/\s+/g, ' ');
   const title = w.document.title || '';
+  /* ⚠️ ЧТО НА ЭКРАНЕ СТОИТ БЕЗ ПОМЕТКИ «НЕ ПЕРЕВОДИТЬ» (шаг 3 плана, 08.08.2026).
+     Пару к этой мере даёт `i18n-check-orig.js` — та смотрит КОД и требует
+     решения на каждое место, где имя попадает в разметку. Но за значением,
+     которое сначала кладут в переменную, а показывают в другом месте, по коду
+     не проследить. Поэтому вторая мера — по экрану: берём названия из САМОГО
+     МАРШРУТА и смотрим, стоят ли они на странице внутри [data-noT].
+     Так проверка не гадает, что считать названием: она сверяет с данными. */
+  const free = [];
+  (function () {
+    const D = w.document;
+    const walk = D.createTreeWalker(D.body, w.NodeFilter.SHOW_TEXT, {
+      acceptNode(n) {
+        const p = n.parentNode;
+        if (!p || !p.tagName) return w.NodeFilter.FILTER_REJECT;
+        if (p.closest('[data-noT],[translate="no"]')) return w.NodeFilter.FILTER_REJECT;
+        /* ⚠️ ОДНО ИСКЛЮЧЕНИЕ, И ОНО НАЗВАНО. Подпись к фотографии в шапке — это
+           текст МАРШРУТА, а не название: там бывает и «Duomo di Milano», и
+           «Скалистые горы на рассвете». Переводится она файлом маршрута
+           (trip-<маршрут>-en.js), и пометка «не переводить» ей навредила бы. */
+        if (p.closest('.tile-photo .cnt')) return w.NodeFilter.FILTER_REJECT;
+        return (n.nodeValue || '').trim().length > 1
+          ? w.NodeFilter.FILTER_ACCEPT : w.NodeFilter.FILTER_REJECT;
+      }
+    });
+    let n; while ((n = walk.nextNode())) free.push(n.nodeValue.trim());
+  })();
   try { dom.window.close(); } catch (e) {}
   srv.close();
-  return { text: text, title: title, errs: hard.concat(own).filter(m => !KNOWN.some(rx => rx.test(m))) };
+  return { text: text, title: title, free: free,
+    errs: hard.concat(own).filter(m => !KNOWN.some(rx => rx.test(m))) };
 }
 
 async function run(say, only) {
@@ -204,6 +233,31 @@ async function run(say, only) {
         }
       });
     });
+
+    /* ── названия в оригинале должны стоять под пометкой (правило 10) ──
+       Список названий берём из файла маршрута, а не из головы: имена мест,
+       заведений и городов. Короткие («Piz») не берём — такое слово может
+       случайно совпасть с обычным текстом, и проверка начала бы врать. */
+    if (t) {
+      const names = [];
+      (t.places || []).forEach(p => { if (p && p.nm) names.push(String(p.nm)); });
+      (t.foodc || []).forEach(c => (c.spots || []).forEach(s => { if (s && s.nm) names.push(String(s.nm)); }));
+      (t.bases || []).forEach(b => { if (b && b.q) names.push(String(b.q).split(',')[0].trim()); });
+      const free = new Set(r.free || []);
+      const loose = [];
+      names.forEach(nm => {
+        if (nm.length < 8 || loose.indexOf(nm) >= 0) return;
+        if (free.has(nm)) loose.push(nm);
+      });
+      if (loose.length) {
+        bad += loose.length;
+        say('  ОШИБКА ' + f + ': названия стоят без пометки «не переводить» ('
+          + loose.length + ') — браузерный переводчик их съест, и показать таксисту будет нечего:');
+        loose.slice(0, 8).forEach(nm => say('        · ' + nm));
+        if (loose.length > 8) say('        · …и ещё ' + (loose.length - 8));
+        say('        чинится обёрткой nmT() в index.html, см. i18n-check-orig.js');
+      }
+    }
 
     /* прилетели — значит и улетаем: оба блока должны быть на месте */
     const flies = t && t.bases && t.bases.length && t.segment && t.segment[t.bases[0].id] === 'flight';
