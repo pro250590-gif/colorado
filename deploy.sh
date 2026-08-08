@@ -41,8 +41,13 @@ cd "$HERE"
 # '…|img/|CNAME)$' — и якорь конца строки съел все картинки: он требовал, чтобы
 # строка была ровно «img/», а в списке они вида «img/hero-w.webp». Уехало 17
 # файлов вместо 552, и скрипт при этом отчитался «Готово».
+# ⚠️ ЯЗЫКИ ЗАДАНЫ ОБРАЗЦОМ, А НЕ ПЕРЕЧИСЛЕНИЕМ (08.08.2026, шаг 2 плана).
+# Было 'en/index\.html' — ровно один язык. Добавили бы испанский, и /es/ просто
+# не уехал бы на сервер: сборка прошла, deploy отчитался «Готово», а страницы
+# нет. Тот же сорт тихой поломки, что и с картинками выше. Теперь берём любую
+# двухбуквенную папку и любой словарь lang-<код>.js.
 site_files(){
-  git ls-files | grep -E '^(index\.html|en/index\.html|i18n\.js|day-math\.js|open-hours\.js|constructor\.js|airports\.js|trip-[a-z0-9-]+\.js|CNAME|sitemap\.xml|robots\.txt)$|^img/'
+  git ls-files | grep -E '^(index\.html|[a-z]{2}/index\.html|i18n\.js|lang-[a-z]{2}\.js|day-math\.js|open-hours\.js|constructor\.js|airports\.js|trip-[a-z0-9-]+\.js|CNAME|sitemap\.xml|robots\.txt)$|^img/'
 }
 FILES=$(site_files)
 

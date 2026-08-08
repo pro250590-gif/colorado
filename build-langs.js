@@ -209,12 +209,34 @@ function langUrl(c){return SITE+(c==='ru'?'/':'/'+c+'/');}
    станет смешанным, а `--check` начнёт ругаться на пустом месте */
 function eolOf(s){return /\r\n/.test(s)?'\r\n':'\n';}
 
+/* как язык называется на своём языке — спрашиваем у его же словаря
+   (LOCALE.nm). Нет записи — показываем код: это честнее выдуманного названия. */
+function langName(c){
+  try{
+    const L=require(path.join(DIR,'i18n.js')).LOCALE||{};
+    return (L[c]&&L[c].nm)||c.toUpperCase();
+  }catch(e){return c.toUpperCase();}
+}
+
+/* ⚠️ Названия языков пишем escape-последовательностями (\uXXXX), а не буквами.
+   Блок стоит в <head>, и мы уже обжигались на том, что кириллица перед разбором
+   кодировки превращается в «Ð¡Ñ‚Ð°Ñ€Ñ‚». ASCII такой беды не знает. */
+function ascii(s){
+  return s.replace(/[-￿]/g,c=>'\\u'+('000'+c.charCodeAt(0).toString(16)).slice(-4));
+}
+
 function linksFor(lang,langs,eol){
   const L=['<!--LANGLINKS-->',
     '<link rel="canonical" href="'+langUrl(lang)+'">',
     '<link rel="alternate" hreflang="x-default" href="'+langUrl('ru')+'">',
     '<link rel="alternate" hreflang="ru" href="'+langUrl('ru')+'">'];
   langs.forEach(l=>L.push('<link rel="alternate" hreflang="'+l+'" href="'+langUrl(l)+'">'));
+  /* ⚠️ СПИСОК ГОТОВЫХ ЯЗЫКОВ — ТОЖЕ ДАННЫЕ (шаг 2 плана, 08.08.2026). Раньше
+     готовность стояла флажком ok:1 в самом index.html, и новый язык требовал
+     правки движка — прямое нарушение правила 22б. Теперь список собирается
+     из словарей и лежит здесь же, рядом с метками версий. */
+  const ready=['ru'].concat(langs).map(c=>({c:c,t:langName(c)}));
+  L.push('<script>window.__langsReady='+ascii(JSON.stringify(ready))+';</script>');
   L.push('<!--/LANGLINKS-->');
   return L.join(eol);
 }

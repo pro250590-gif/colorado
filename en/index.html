@@ -31,6 +31,7 @@
 <link rel="alternate" hreflang="x-default" href="https://kolibripro.com/">
 <link rel="alternate" hreflang="ru" href="https://kolibripro.com/">
 <link rel="alternate" hreflang="en" href="https://kolibripro.com/en/">
+<script>window.__langsReady=[{"c":"ru","t":"\u0420\u0443\u0441\u0441\u043a\u0438\u0439"},{"c":"en","t":"English"}];</script>
 <!--/LANGLINKS-->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2389,6 +2390,22 @@ section h2.big{margin-bottom:4px}
      «Unexpected token», причём только в прогонах, а в браузере работала. */
   if(window.__lang&&window.__lang!=='ru'){
     document.write('<scr'+'ipt src="/'+f.replace(/\.js$/,'-'+window.__lang+'.js')+'"></scr'+'ipt>');
+    /* ⚠️ И САМ СЛОВАРЬ ЯЗЫКА — ТУДА ЖЕ (шаг 2 плана, 08.08.2026). Переводы
+       больше не лежат в i18n.js: там остался механизм, а фразы уехали в
+       lang-<код>.js и грузятся ТОЛЬКО на своей странице. Русский посетитель
+       не качает английский словарь вовсе — то же правило, что и с текстом
+       маршрута (22г).
+       Файл приезжает раньше i18n.js — это нормально: он оставляет себя на
+       окне, а i18n.js подберёт его при запуске.
+
+       ⚠️ И ВМЕСТЕ С НИМ — АНГЛИЙСКИЙ, ЕСЛИ ЯЗЫК НЕ АНГЛИЙСКИЙ. Это второе звено
+       цепочки «язык → английский → русский» (шаг 0 плана). Пока словари лежали
+       одним файлом, запасной английский приезжал сам собой; после разделения
+       испанец без этой строки видел бы в дырке словаря КИРИЛЛИЦУ — ровно то,
+       от чего шаг 0 и уходил. Поймано прогоном пробного испанского 08.08.2026.
+       Платит за это только третий язык: русский и англичанин качают по одному. */
+    if(window.__lang!=='en')document.write('<scr'+'ipt src="/lang-en.js"></scr'+'ipt>');
+    document.write('<scr'+'ipt src="/lang-'+window.__lang+'.js"></scr'+'ipt>');
   }
 })();
 </script>
@@ -2516,13 +2533,32 @@ FOODCITIES.forEach((c,ci)=>{c.spots.forEach((s,si)=>{
 
 
 
-const MONTHS=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
-const WD=['вс','пн','вт','ср','чт','пт','сб'];
-/* Английские названия месяцев и дней лежат здесь же, рядом с русскими: даты
-   собираются в десятке мест, и искать их по файлу не надо. Короткие формы
-   («Sep», «Sun») — в MON_EN/WD_EN, полные — в MONTHS_EN. */
-const MONTHS_EN=['January','February','March','April','May','June','July','August','September','October','November','December'];
-const WD_EN=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+/* ⚠️ МЕСЯЦЫ И ДНИ НЕДЕЛИ ЖИВУТ У ЯЗЫКА, А НЕ ЗДЕСЬ (шаг 2 плана, 08.08.2026).
+   Раньше тут лежали четыре массива — русские и английские названия — а порядок
+   слов в дате выбирала развилка LANG!=='ru'. Третий язык получил бы английские
+   месяцы просто потому, что он «не русский», и починить это можно было бы
+   только правкой этого файла — то есть нарушением правила 22б.
+   Теперь календарь каждого языка лежит в i18n.js вместе с его словарём:
+   названия, дни недели, первый день недели, знак дробной части и ОБРАЗЦЫ ДАТ
+   («{d} {mon}» против «{mon} {d}»). Здесь остаются четыре тонкие обёртки.
+   Нет i18n.js — дата не пропадает, показываем «7.8»: сайт не должен падать
+   из-за незагрузившегося словаря (то же правило, что у tr()). */
+function dfmt(kind,a,b){
+  try{if(window.I18N&&I18N.date)return I18N.date(kind,a,b,LANG);}catch(e){}
+  return a?(a.getDate()+'.'+(a.getMonth()+1)):'';
+}
+/* название месяца по номеру: how = 'nm' именительный, 'nms' короткий
+   именительный, 's' короткий, иначе родительный (для дат) */
+function monName(i,how){
+  try{if(window.I18N&&I18N.month)return I18N.month(i,how,LANG);}catch(e){}
+  return i==null?'':String(i+1);
+}
+function decSep(){try{if(window.I18N&&I18N.dec)return I18N.dec(LANG);}catch(e){}return '.';}
+/* как язык пишет числа («10 800» против «10,800») — метка для toLocaleString.
+   Раньше она лежала в словаре ключом 'ru-RU', и третий язык без своей строки
+   получал американское написание вместо своего. Теперь это запись языка. */
+function numTag(){try{const L=locData();if(L&&L.numTag)return L.numTag;}catch(e){}return 'ru-RU';}
+function locData(){try{if(window.I18N&&I18N.loc)return I18N.loc(LANG);}catch(e){}return null;}
 
 /* ================= ХЕЛПЕРЫ ================= */
 const gurl=q=>'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(q);
@@ -2562,11 +2598,9 @@ function mapURL(p){
     return 'https://www.google.com/maps/search/?api=1&query='+p.lat+'%2C'+p.lng;
   return gurl('');
 }
-function fmtDate(dt){
-  /* «вс, 20 сентября» → «Sun, September 20»: другой порядок, а не другие слова */
-  if(LANG!=='ru')return WD_EN[dt.getDay()]+', '+MONTHS_EN[dt.getMonth()]+' '+dt.getDate();
-  return WD[dt.getDay()]+', '+dt.getDate()+' '+MONTHS[dt.getMonth()];
-}
+/* «вс, 20 сентября» → «Sun, September 20»: другой порядок, а не другие слова.
+   Порядок задаёт образец языка (i18n.js), здесь его знать незачем. */
+function fmtDate(dt){return dfmt('full',dt);}
 function addDays(iso,n){const d=new Date(iso+'T00:00:00');d.setDate(d.getDate()+n);return d;}
 function dayDate(startIso,dayN){return fmtDate(addDays(planIso(),dayN-1));}
 
@@ -2770,11 +2804,9 @@ function airPick(code){
   /* пришли из окна «Когда стартуете» — возвращаемся туда, а не закрываем всё */
   if(_readyBack){const b=_readyBack;closeDaySheet();readyStartSheet(b.k,b.date);return;}
   closeDaySheet();
-  const en=LANG!=='ru';
   toast('<b>'+(cx('Летим из '))+esc0(city)+'</b><i>'
     +(cx('Аэропорт '))+esc0(a[0])+' · '+esc0(a[1])
-    +(en?'. Map, flight card and flight search all updated</i>'
-        :cx('. Карта, карточка перелёта и подбор рейсов пересчитаны')+'</i>'),null,null);
+    +cx('. Карта, карточка перелёта и подбор рейсов пересчитаны')+'</i>',null,null);
 }
 /* ================= ПАРТНЁРСКИЕ ССЫЛКИ БРОНИ ================= */
 /* ⚠️ ОДНО МЕСТО НА ВСЕ ПАРТНЁРКИ. Пусто — ссылки работают как обычные, просто
@@ -3659,7 +3691,8 @@ function buildCities(){
           +'<div class="cpt"><b>'+shortName((ar.from&&ar.from.name)||'')+'</b><span>'+dm(dep)+(wayN?(cx(' · вечером')):'')+'</span></div>'
           +'<div class="cmid"><div class="cic">'+ic(wayN?'moon':segIc,'i-sm')+'</div></div>'
           +'<div class="cpt r"><b>'+baseName(b)+'</b><span>'+dm(ci)+(wayN?(cx(' · утром')):'')+'</span></div></div>'
-          +(wayN?'<div class="cnight">'+ic('moon','i-sm')+(LANG!=='ru'?(' You spend this night on the move: '+esc0(wayN)+'. No hotel needed, here or there.</div>'):(' Ночь проводим в дороге: '+esc0(wayN)+'. Отель ни здесь, ни там за эту ночь не нужен.</div>')):'')
+          +(wayN?'<div class="cnight">'+ic('moon','i-sm')
+            +cx(' Ночь проводим в дороге: {way}. Отель ни здесь, ни там за эту ночь не нужен.',{way:esc0(wayN)})+'</div>':'')
           +(seg==='flight'
             ? '<a class="cbook" href="'+skyscanner((ar.from&&ar.from.air)||AIRPORT[ar.from?ar.from.id:'']||'',AIRPORT[b.id]||'',fmtISO(ci))+'" target="_blank" rel="noopener">'+ic('plane','i-sm')+' Подобрать рейсы</a>'
             : (seg==='train'||seg==='bus'||seg==='ferry')
@@ -3714,7 +3747,7 @@ function buildCities(){
           ? ((cx('уезжаем вечером '))+dm(addDays(planIso(),nightsBefore(b.id)+b.nights-1))+' · '+wayNc+(nextStayBase(b.id)?(' → '+baseName(nextStayBase(b.id))):''))
           : (dm(ci)+' · в этом городе не ночуем'))+'</span></div>'
         +'<div class="cstay nostay"><span class="cin"><span class="cmeta">'+(b.nights
-          ? ((LANG!=='ru'?'No room needed here: we board the '+wayNc+' in the evening':cx('Ночь в этом городе не нужна: вечером садимся на ')+wayNc)
+          ? (cx('Ночь в этом городе не нужна: вечером садимся на {way}',{way:wayNc})
              +((nextStayBase(b.id)&&TRANSFER[nextStayBase(b.id).id]&&TRANSFER[nextStayBase(b.id).id].clean)?(', '+hrsTxt(TRANSFER[nextStayBase(b.id).id].clean)+(cx(' в пути'))):'')
              +(nextStayBase(b.id)?((cx(', следующий город — '))+baseName(nextStayBase(b.id))):'')
              +(cx(', и приезжаем туда утром. Отель здесь не бронируем и в бюджет не считаем — спим в дороге.')))
@@ -3783,7 +3816,7 @@ function buildCities(){
        так и пишем под счётчиком: иначе «1 ночь» читается как ночь в отеле */
     const nOut=b.nights-hotelNights(b);
     const nb='<div class="cnights"><span class="cnl">Ночей в городе'
-      +(nOut?('<i class="cnsub">'+(hotelNights(b)?((LANG!=='ru'?'of them '+nOut+' not here: ':cx('из них ')+nOut+' не тут: ')):(cx('эта ночь не тут: ')))
+      +(nOut?('<i class="cnsub">'+(hotelNights(b)?cx('из них {n} не тут: ',{n:nOut}):(cx('эта ночь не тут: ')))
         +[nightWay(b.id)?'':'',awayNights(b.id).length?((cx('на выезде — '))+awayNights(b.id).map(e=>esc0(sleepAway(e.tid).nm)).join(', ')):'',
            (nextStayBase(b.id)&&nightWay(nextStayBase(b.id).id))?((cx('в дороге — '))+nightWay(nextStayBase(b.id).id)):''].filter(Boolean).join(' · ')+'</i>'):'')
       +'</span>'
@@ -3951,10 +3984,7 @@ function buildFilters(){
   if(fopen)box.querySelectorAll('.mfdrop [data-f]').forEach(el=>el.addEventListener('click',ev=>{ev.stopPropagation();pick(el);}));
 }
 /* строки выпадающего списка — единый минимал-стиль для всех меню (Дни/Базы/Типы), без фото */
-function fmtLong(dt){
-  if(LANG!=='ru')return MONTHS_EN[dt.getMonth()]+' '+dt.getDate();
-  return dt.getDate()+' '+MONTHS[dt.getMonth()];
-}
+function fmtLong(dt){return dfmt('long',dt);}
 function dropList(seg,total){
   const mrow=(f,v,on,title,sub)=>'<button class="mfrow mfday'+(on?' on':'')+'" data-f="'+f+'" data-v="'+v+'">'
     +'<span class="mfdtx"><b>'+title+'</b><span>'+sub+'</span></span></button>';
@@ -4053,11 +4083,13 @@ function savePicks(){try{localStorage.setItem(KEY,JSON.stringify([...picked]));}
    ⚠️ И запятая в дробях тоже разная: по-русски «1,5 ч», по-английски «1.5 hr». */
 function minTxt(n){
   if(typeof n!=='number'||!(n>0))return '';
-  const en=LANG!=='ru', MIN=cx(' мин'), HR=cx(' ч');
+  const MIN=cx(' мин'), HR=cx(' ч');
   if(n<60)return n+MIN;
   const h=Math.floor(n/60),r=n%60;
   if(!r)return h+HR;
-  if(r===30)return h+(cx(',5'))+HR;
+  /* «1,5 ч» / «1.5 hr» — это не слово, а знак дробной части: он лежит в записи
+     языка, а не в словаре. Через словарь испанец получал английскую точку */
+  if(r===30)return h+decSep()+'5'+HR;
   return h+HR+' '+r+MIN;
 }
 
@@ -4118,7 +4150,7 @@ function moveOf(bid){
   return (p&&p.city_transport)||own||'';
 }
 function hopWord(bid){
-  const m=moveOf(bid),en=LANG!=='ru';
+  const m=moveOf(bid);
   if(m==='car_all'||m==='car_trips')return cx('на машине');
   if(m==='metro_walk')return cx('на метро');
   return cx('на транспорте');
@@ -4147,10 +4179,12 @@ function roadMap(){
 }
 function durTxt(n){return n>=60?minTxt(n):n+(cx(' мин'));}
 /* «4 минуты пешком» — по-английски так не пишут, там короткое «4 min walk».
-   Это не перевод слов, а другая конструкция, поэтому развилка, а не словарь. */
+   Это не перевод слов, а другая конструкция, поэтому шаблон, а не словарь.
+   Развилка тут на РУССКИЙ: у него три формы слова и своя склейка, у остальных
+   языков фраза целиком лежит в их разделе CODE. */
 function walkTxt(n){
-  if(LANG!=='ru')return n+' min walk';
-  return n+' '+plural(n,'минута','минуты','минут')+' пешком';
+  if(LANG==='ru')return n+' '+plural(n,'минута','минуты','минут')+' пешком';
+  return cx('{n} минут пешком',{n:n});
 }
 /* Метро есть в городе, а не в пятидесяти километрах от него. Способ движения у
    нас записан на весь город ночёвки, и в Белладжо — деревне на другом берегу
@@ -4182,7 +4216,7 @@ function otherMin(d){return Math.max(5,Math.round(d/25*60/5)*5);}
    деревнями на озере не ходит ни то, ни другое — там пусто, и мы молчим. */
 function transWord(a,b,mv){
   if(mv!=='metro_walk')return '';
-  const A=inMetroCity(a),B=inMetroCity(b),en=LANG!=='ru';
+  const A=inMetroCity(a),B=inMetroCity(b);
   if(A&&B)return cx('на метро');
   if(A||B)return cx('на метро или поезде');
   return '';
@@ -4249,7 +4283,9 @@ function dayStart(tid){
     if(sg&&!/car|drive|машин/i.test(sg))return null;
     const pb=baseById(SCHED[i-1].base);
     if(pb&&typeof pb.lat==='number')
-      return {id:'@'+pb.id,lat:pb.lat,lng:pb.lng,base:pb.id,lead:(cx('из города '))+(LANG!=='ru'?baseName(pb):shortName(pb.name))};
+      /* baseName сам отдаёт латиницу не-русскому языку и русское имя русскому —
+         развилка тут была лишней и мешала третьему языку */
+      return {id:'@'+pb.id,lat:pb.lat,lng:pb.lng,base:pb.id,lead:(cx('из города '))+baseName(pb)};
     return null;
   }
   const st=P.find(x=>isStay(x)&&x.base===e.base&&typeof x.lat==='number'&&!x.approx);
@@ -4579,7 +4615,7 @@ function dayMinutes(tid){
 }
 function fmtHM(n){
   n=Math.round(n);
-  const en=LANG!=='ru', MIN=cx(' мин'), HR=cx(' ч');
+  const MIN=cx(' мин'), HR=cx(' ч');
   if(n<60)return n+MIN;
   const h=Math.floor(n/60),m=n%60;
   return h+HR+(m?' '+m+MIN:'');
@@ -4910,14 +4946,12 @@ function hoursChip(p){
   if(!t)return {txt:String(m.hours),warn:false};      /* строку не разобрали — как есть */
   /* ⚠️ ЧАСЫ ПЕРЕВОДЯТСЯ ЗДЕСЬ, А НЕ В open-hours.js. Тот файл общий с проверками
      в терминале, у него свои самотесты на русских ответах — язык ему знать
-     незачем. Разбор остаётся один на всех, а подпись собирается по-своему. */
-  if(LANG!=='ru'){
-    if(t==='закрыто')return {txt:'closed that day',warn:true};
-    if(t==='круглосуточно')return {txt:'open 24 hours',warn:false};
-    return {txt:'that day '+t,warn:false};
-  }
-  if(t==='закрыто')return {txt:'в этот день закрыто',warn:true};
-  return {txt:cx('в этот день ')+t,warn:false};
+     незачем. Разбор остаётся один на всех, а подпись собирается по-своему.
+     Раньше здесь стояла развилка с готовым английским текстом — теперь шаблоны,
+     и третий язык получает свою подпись, а не английскую (правило 22б). */
+  if(t==='закрыто')return {txt:cx('в этот день закрыто'),warn:true};
+  if(t==='круглосуточно')return {txt:cx('в этот день круглосуточно'),warn:false};
+  return {txt:cx('в этот день {h}',{h:t}),warn:false};
 }
 /* ⛔ ВЫХОДНОЙ ДЕНЬ НЕДЕЛИ — её просьба: «в плашку добавить: выходной понедельник,
    выходной суббота-воскресенье». Это видно ДО того, как человек попал в закрытое,
@@ -4927,13 +4961,16 @@ function offChip(p){
   if(!m.hours)return '';
   const d=dayDateFor(p.d);
   if(!d)return '';
-  if(LANG!=='ru'){
-    /* по-английски берём сами номера дней недели, а не готовую русскую строку */
-    const w=OPENHOURS.weekOff?OPENHOURS.weekOff(m.hours,d):null;
-    if(!w||!w.length)return '';
-    return 'closed '+w.map(x=>WD_EN[x]).join(', ');
-  }
-  return OPENHOURS.offText(m.hours,d);
+  /* ⚠️ Русская подпись приходит готовой строкой из open-hours.js — там она
+     умеет диапазон («выходной суббота-воскресенье»). Для остальных языков
+     собираем сами: номера дней недели + названия из записи языка + шаблон.
+     Развилка тут на РУССКИЙ, а не «не русский»: третий язык идёт по общему
+     пути и получает свои дни недели, а не английские. */
+  if(LANG==='ru')return OPENHOURS.offText(m.hours,d);
+  const w=OPENHOURS.weekOff?OPENHOURS.weekOff(m.hours,d):null;
+  if(!w||!w.length)return '';
+  const L=locData(),wd=(L&&L.wd)||[];
+  return cx('выходной {list}',{list:w.map(x=>wd[x]||x).join(', ')});
 }
 function refreshHours(){
   document.querySelectorAll('[data-hours]').forEach(el=>{
@@ -4955,11 +4992,10 @@ function refreshHours(){
     const tid=tidOf(el.dataset.shut),sh=shutOf(tid);
     if(!sh.list.length){el.style.display='none';return;}
     el.style.display='';
-    const en=LANG!=='ru';
     el.innerHTML=ic('info','i-sm')+' '+(sh.list.length===1
-      ? (en?('closed that day: '+esc0(sh.list[0].nm)):(cx('в этот день закрыт ')+esc0(sh.list[0].nm)))
-      : (en?('closed that day: '+sh.list.length+' places')
-           :(cx('в этот день закрыты ')+sh.list.length+' '+plural(sh.list.length,'место','места','мест'))));
+      ? cx('в этот день закрыт {nm}',{nm:esc0(sh.list[0].nm)})
+      : cx('в этот день закрыты {n} {places}',
+           {n:sh.list.length,places:plural(sh.list.length,'место','места','мест')}));
   });
 }
 /* какие точки этого дня закрыты в ЭТУ дату — по включённым и по активному плану */
@@ -5086,11 +5122,9 @@ function checkinHTML(e){
   const car=vehiclesTakenAt(b.id).length
     ?(cx(' Машина нужна — берём её здесь же.'))
     :'';                                              /* не нужна — и не пишем */
-  /* предложение с городом внутри: по-английски оно строится иначе, поэтому
-     не словарь, а две готовые фразы (правило 21) */
-  const txt=LANG!=='ru'
-    ? ('Check in first — '+esc0(baseName(b))+'. Your stay is booked from this day on.')
-    : ('Первым делом — заселение: '+esc0(baseName(b))+cx(', с этого дня и бронируем жильё.'));
+  /* предложение с городом внутри: по-английски оно строится иначе — поэтому
+     ШАБЛОН с меткой, а не склейка (правило 21). Порядок слов у каждого языка свой */
+  const txt=cx('Первым делом — заселение: {nm}, с этого дня и бронируем жильё.',{nm:esc0(baseName(b))});
   return '<div class="cnight">'+ic('bed','i-sm')+' '+txt+car+'</div>';
 }
 function depDayHTML(){
@@ -5100,12 +5134,13 @@ function depDayHTML(){
   const how=d.mode==='car'
     ?(cx('на машине, сдаём её там'))
     :(d.way?convDist(d.way):'');
-  const en=LANG!=='ru';
-  return '<div class="cnight">'+ic('plane','i-sm')+' '+(cx('Дорога домой: '))
-    +(city?esc0(city)+' → ':'')+(en?'':'аэропорт ')+esc0(d.air.air||'')+(en?' airport':'')
-    +(how?' ('+esc0(how)+')':'')+' → '+esc0(d.home.name||'')
-    +(en?'. Leave time to get to the airport — that part of the day is taken too.</div>'
-        :cx('. В аэропорту быть заранее — этот кусок дня тоже занят.')+'</div>');
+  /* вся строка одним шаблоном: по-английски слово «аэропорт» стоит ПОСЛЕ имени
+     («JFK airport»), а по-русски перед ним — склейкой это не переставить */
+  return '<div class="cnight">'+ic('plane','i-sm')+' '
+    +cx('Дорога домой: {from}аэропорт {air}{how} → {home}. В аэропорту быть заранее — этот кусок дня тоже занят.',
+        {from:(city?esc0(city)+' → ':''),air:esc0(d.air.air||''),
+         how:(how?' ('+esc0(how)+')':''),home:esc0(d.home.name||'')})
+    +'</div>';
 }
 /* карточки баз — лента со стрелками, как в приложениях-планировщиках */
 function buildBases(){
@@ -5257,12 +5292,10 @@ function buildFood(){
       }).join('');
       const more=order.length>MAXSHOW
         ? '<button class="fmoreBtn" data-fmore="'+ci+'">'+ic('food','i-sm')+' '
-          +(LANG!=='ru'?('All the restaurants we picked — '+(order.length-MAXSHOW)+' more')
-                       :(cx('Все рестораны из нашей подборки — ещё ')+(order.length-MAXSHOW)))+'</button>' : '';
+          +cx('Все рестораны из нашей подборки — ещё {n}',{n:order.length-MAXSHOW})+'</button>' : '';
       return '<div class="fcity'+(ci===activeCi?'':' hide')+'" data-fcity="'+ci+'"><div class="fgrid">'+cards+'</div>'+more
-        +'<a class="fgm" href="'+gmSearch('restaurants '+c.q)+'" target="_blank" rel="noopener">'+ic('pin','i-sm')+'<span>'+(LANG!=='ru'
-          ? ('All restaurants in '+foodCityNm(c)+' on Google Maps')
-          : ('Все рестораны — '+c.city+' на Google Maps'))+'</span></a></div>';
+        +'<a class="fgm" href="'+gmSearch('restaurants '+c.q)+'" target="_blank" rel="noopener">'+ic('pin','i-sm')+'<span>'
+          +cx('Все рестораны — {city} на Google Maps',{city:foodCityNm(c)})+'</span></a></div>';
     }).join('');
   /* тумблеры еды: вкл/выкл заведение на карте (тот же переключатель, что у активностей) */
   host.querySelectorAll('.cpsw[data-food-sw]').forEach(sw=>{
@@ -6198,7 +6231,7 @@ function addPlace(tid,d){
   CUSTOM.push(c);P.push(c);
   if(typeof d.lat==='number'&&typeof d.lng==='number'){picked.add(id);savePicks();if(map&&!markers[id])makeMarker(c);}
   savePlan();rerenderTrip();
-  toast('<b>'+(LANG!=='ru'?('Added “'+c.nm+'” to '):('Добавили «'+c.nm+'» в '))+dayLbl(e.disp)+'</b>'
+  toast('<b>'+cx('Добавили «{nm}» в {day}',{nm:c.nm,day:dayLbl(e.disp)})+'</b>'
     +(c.lat?(c.approx?'<i>точку поставили примерно — в центре города, поправь её через «⋯»</i>'
                        :'<i>точка на карте есть — видно при выборе города или дня</i>')
            :'<i>точку на карте не нашли: открой «⋯» у места и нажми «Поставить точку на карте»</i>'),e.base,null);
@@ -6809,7 +6842,7 @@ function loadPlan(){try{const s=JSON.parse(localStorage.getItem(PKEY));if(s){if(
      привязан к адресу /en/. Клиент видела ровно это и была права: «ты
      говоришь, что починил, а на сайте не изменилось».
      Теперь выбор человека не теряется, но переносит его НА СВОЙ АДРЕС. */
-  if(!_langFromUrl&&s.lang&&s.lang!=='ru'&&LANGS.some(x=>x.c===s.lang)){
+  if(!_langFromUrl&&s.lang&&s.lang!=='ru'&&langsReady().some(x=>x.c===s.lang)){
     try{location.replace(langHref(s.lang));return;}catch(e){LANG=s.lang;}
   }
   if(typeof s.crate==='number'&&s.crate>0)CRATE=s.crate;
@@ -6897,25 +6930,16 @@ function baseName(x){
 }
 /* ⚠️ ДАТЫ СТРОЯТСЯ ПО ПРАВИЛАМ ЯЗЫКА, А НЕ ОДНИМ СЛОВАРЁМ. По-русски «7 авг»,
    по-английски «Aug 7» — другой порядок, и никакой заменой слов это не решить.
-   Поэтому у даты своя развилка на язык, одна на все места. */
-const MON_EN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-function dm(dt){
-  if(LANG!=='ru')return MON_EN[dt.getMonth()]+' '+dt.getDate();
-  return dt.getDate()+' '+MONTHS[dt.getMonth()].slice(0,3);
-}
+   Раньше здесь стояла развилка LANG!=='ru'; теперь порядок слов задаёт образец
+   языка в i18n.js, и третий язык ставит свой, не трогая этот файл. */
+function dm(dt){return dfmt('short',dt);}
 /* «18–23 сентября 2026» / «September 18–23, 2026» — длинная строка с годом,
-   она стоит в шапке и в списке поездок. Порядок слов разный, поэтому развилка. */
-function span2(a,b){
-  if(LANG!=='ru')
-    return MONTHS_EN[b.getMonth()]+' '+a.getDate()+'–'+b.getDate()+', '+b.getFullYear();
-  return a.getDate()+'–'+b.getDate()+' '+MONTHS[b.getMonth()]+' '+b.getFullYear();
-}
+   она стоит в шапке и в списке поездок. */
+function span2(a,b){return dfmt('span',a,b);}
 /* «7–10 авг» вместо «7 авг–10 авг»: месяц повторять незачем, если он тот же.
    По-английски то же правило читается как «Aug 7–10». */
 function dmRange(a,b){
-  if(a.getMonth()===b.getMonth())
-    return LANG!=='ru' ? (MON_EN[a.getMonth()]+' '+a.getDate()+'–'+b.getDate())
-                       : (a.getDate()+'–'+dm(b));
+  if(a.getMonth()===b.getMonth())return dfmt('spanS',a,b);
   return dm(a)+'–'+dm(b);
 }
 /* ── ЯЗЫК СТРАНИЦЫ ──
@@ -6936,7 +6960,22 @@ function tr(s){try{return (window.I18N&&I18N.t)?I18N.t(s,LANG):s;}catch(e){retur
    «чтоб новый язык был больше не проблемой». Теперь в коде стоит русская
    строка, а переводы лежат в CODE в i18n.js: добавить язык = дописать раздел,
    код не трогается. Нет перевода — остаётся русский, сайт не ломается. */
-function cx(s){try{return (window.I18N&&I18N.c)?I18N.c(s,LANG):s;}catch(e){return s;}}
+/* ⚠️ ВТОРОЙ ДОВОД — ЗНАЧЕНИЯ ДЛЯ МЕТОК {…} В ШАБЛОНЕ (шаг 2 плана, 08.08.2026).
+   Пока cx() умел только отдавать кусок, фразу с числом или именем приходилось
+   собирать плюсом: cx('из них ')+n+' не тут: '. Порядок слов в такой склейке
+   не поменять, а по-английски он другой — поэтому рядом стояла развилка с
+   готовым английским текстом, и третий язык получал английский просто потому,
+   что он «не русский». Шаблон решает и то и другое: один ключ на всю фразу,
+   метки внутри переставляются как надо языку. Приём тот же, что в
+   constructor.js (шаг 1), и функция намеренно написана так же. */
+function cx(s,v){
+  var out=s;
+  try{out=(window.I18N&&I18N.c)?I18N.c(s,LANG):s;}catch(e){out=s;}
+  /* ⚠️ значение приводим к строке явно: join(undefined) склеивает через запятую,
+     и пропавшее название превращалось в «сдают в „,“» (поймано на шаге 1) */
+  if(v)for(var k in v)out=out.split('{'+k+'}').join(v[k]==null?'':String(v[k]));
+  return out;
+}
 /* ⚠️ СОДЕРЖИМОЕ МАРШРУТА — ОТДЕЛЬНЫМ ФАЙЛОМ РЯДОМ С МАРШРУТОМ.
    Описания дней и мест написал автор поездки, и они лежат в trip-*.js
    по-русски. Класть их английский вариант в тот же файл нельзя: русский
@@ -7080,7 +7119,7 @@ function nights(n){return plural(n,'ночь','ночи','ночей');}
    тремя функциями, чтобы правка языка была в одном месте, а не в двадцати. */
 function dayLbl(n){return (cx('День '))+n;}
 function daysLbl(a,b){return (cx('Дни '))+a+'–'+b;}
-function baseLbl(i,n){return LANG!=='ru'?('City '+i+' of '+n):(cx('База ')+i+cx(' из ')+n);}
+function baseLbl(i,n){return cx('База {i} из {n}',{i:i,n:n});}
 /* «из 10 ч» → «of 10 hr»: связка между двумя длительностями */
 function ofTxt(){return cx(' из ');}
 function recomputeDates(){
@@ -7691,10 +7730,28 @@ function langHref(code){
 function langLinks(){
   try{document.documentElement.setAttribute('lang',LANG);}catch(e){}
 }
+/* ⚠️ ЗДЕСЬ ЛЕЖАТ ТОЛЬКО НАЗВАНИЯ И ФЛАГИ, А НЕ СПИСОК ГОТОВЫХ ЯЗЫКОВ.
+   Раньше готовность стояла флажком ok:1 прямо в этом списке — значит новый язык
+   требовал правки index.html, то есть нарушения правила 22б. Теперь готовые
+   языки собирает node build-langs.js из самих словарей и кладёт их строкой в
+   голову страницы (window.__langsReady). Язык, которого тут нет вовсе, всё
+   равно покажется: имя приедет из его словаря, флаг нарисуем двумя буквами. */
 const LANGS=[
- {c:'ru',t:'Русский',ok:1},{c:'en',t:'English',ok:1},{c:'es',t:'Español'},{c:'de',t:'Deutsch'},{c:'fr',t:'Français'},
+ {c:'ru',t:'Русский'},{c:'en',t:'English'},{c:'es',t:'Español'},{c:'de',t:'Deutsch'},{c:'fr',t:'Français'},
  {c:'it',t:'Italiano'},{c:'pt',t:'Português'},{c:'pl',t:'Polski'},{c:'tr',t:'Türkçe'},{c:'zh',t:'中文'}
 ];
+/* какие языки готовы — данные, а не код. Нет метки (страницу открыли без
+   сборки) — остаются русский и английский, они есть всегда. */
+function langsReady(){
+  try{
+    const r=window.__langsReady;
+    if(r&&r.length)return r.map(x=>{
+      const known=LANGS.filter(y=>y.c===x.c)[0];
+      return {c:x.c,t:x.t||(known&&known.t)||x.c.toUpperCase()};
+    });
+  }catch(e){}
+  return LANGS.filter(x=>x.c==='ru'||x.c==='en');
+}
 /* флаги рисуем сами: на Windows флаг-эмодзи не существует, вместо него две буквы */
 const FLAGS={
  ru:'<circle cx="12" cy="12" r="12" fill="#fff"/><path d="M0 8h24v8H0z" fill="#0039a6"/><path d="M0 16h24v8H0z" fill="#d52b1e"/>',
@@ -7708,15 +7765,22 @@ const FLAGS={
  tr:'<circle cx="12" cy="12" r="12" fill="#e30a17"/><circle cx="10" cy="12" r="5" fill="#fff"/><circle cx="11.6" cy="12" r="4" fill="#e30a17"/><path d="M16 12l-3.2 1 2-2.6v3.2l-2-2.6z" fill="#fff"/>',
  zh:'<circle cx="12" cy="12" r="12" fill="#de2910"/><path d="M6 6.6l1 2.9 2.5-1.8H6.5l2.5 1.8z" fill="#ffde00"/><circle cx="12.5" cy="5.6" r="1" fill="#ffde00"/><circle cx="14.5" cy="8" r="1" fill="#ffde00"/><circle cx="14.5" cy="11" r="1" fill="#ffde00"/><circle cx="12.5" cy="13.2" r="1" fill="#ffde00"/>'
 };
-function flagSVG(c){return '<svg viewBox="0 0 24 24" aria-hidden="true">'+(FLAGS[c]||FLAGS.ru)+'</svg>';}
+/* ⚠️ ФЛАГА НЕТ — РИСУЕМ ДВЕ БУКВЫ, А НЕ ЧУЖОЙ ФЛАГ. Раньше запасным стоял
+   российский: язык, которого нет в списке, показался бы под русским флагом. */
+function flagSVG(c){
+  const f=FLAGS[c]||('<circle cx="12" cy="12" r="12" fill="#e9e7f5"/>'
+    +'<text x="12" y="16" text-anchor="middle" font-size="10" font-weight="700" fill="#5b4b8a">'
+    +String(c||'').toUpperCase()+'</text>');
+  return '<svg viewBox="0 0 24 24" aria-hidden="true">'+f+'</svg>';
+}
 /* ── расстояние ── */
 function distNum(km){return DIST==='mi'?km*0.621371:km;}
 /* «62,1 миля» — неверно: у дробных всегда «мили». Целые склоняем как обычно. */
 function mileWord(v){
-  /* ⚠️ По-русски три формы («1 миля / 2 мили / 5 миль»), по-английски одна.
-     Пойман скриншотом клиента: «74.6 мили · 2 hr driving» — половина строки
-     переведена, половина нет. */
-  if(LANG!=='ru')return 'mi';
+  /* ⚠️ По-русски три формы («1 миля / 2 мили / 5 миль»), по-английски одна
+     короткая. Пойман скриншотом клиента: «74.6 мили · 2 hr driving» — половина
+     строки переведена, половина нет. Слово берём у языка, а не пишем тут. */
+  if(LANG!=='ru')return cx('мили');
   if(Math.round(v)!==v)return 'мили';
   const a=v%10,b=v%100;
   if(a===1&&b!==11)return 'миля';
@@ -7736,7 +7800,7 @@ function fmtKm(km){
   const v=distRound(distNum(km));
   /* ⚠️ И ЧИСЛО ПИШЕТСЯ ПО-РАЗНОМУ: по-русски «10,8 км», по-английски «10.8 km».
      Дробь через запятую в английском тексте читается как другое число. */
-  const n=v.toLocaleString(cx('ru-RU'));
+  const n=v.toLocaleString(numTag());
   if(DIST==='mi')return n+' '+mileWord(v);
   return n+' '+(cx('км'));
 }
@@ -7750,7 +7814,10 @@ function convDist(txt){
     const n=parseFloat((a.replace(/[\s\u00a0]/g,''))+(b?('.'+b):''));
     if(!isFinite(n))return m;
     const v=distRound(n*0.621371);
-    return v.toLocaleString('ru-RU')+' '+mileWord(v);
+    /* ⚠️ и число тут пишется по правилам языка, как в fmtKm: «62,1» против
+       «62.1». Раньше стояло жёсткое 'ru-RU', и на английской странице мили
+       выходили с русской запятой */
+    return v.toLocaleString(numTag())+' '+mileWord(v);
   });
 }
 /* ── температура ── */
@@ -7931,11 +7998,11 @@ function unitsSheet(kind){
   /* ⚠️ ПОКАЗЫВАЕМ ТОЛЬКО ГОТОВЫЕ ЯЗЫКИ (шаг 0 плана перевода, 07.08.2026).
      Раньше в списке стояли все десять, восемь из них с подписью «скоро». Это
      обещание, которого мы не давали: человек видит свой язык, тянется к нему —
-     и получает отказ. Список рабочих языков и так один (поле ok), поэтому
-     новый язык появится здесь сам, как только будет готов. */
+     и получает отказ. Готовые языки приходят данными от build-langs.js, поэтому
+     новый язык появляется здесь сам — правкой словаря, а не этого файла. */
   sheet('<div class="dsh"><b>Язык сайта</b><span>сюда попадают только полностью переведённые языки</span></div>'
-    +'<div class="dsform"><div class="langs">'+LANGS.filter(x=>x.ok).map(x=>'<button class="langb'+(x.c===LANG?' on':'')+'"'
-      +' data-lang="'+x.c+'">'+flagSVG(x.c)+x.t+'</button>').join('')+'</div></div>',
+    +'<div class="dsform"><div class="langs">'+langsReady().map(x=>'<button class="langb'+(x.c===LANG?' on':'')+'"'
+      +' data-lang="'+x.c+'">'+flagSVG(x.c)+esc0(x.t)+'</button>').join('')+'</div></div>',
     {top:true});
 }
 /* ── погода: чем переключать градусы ──
@@ -8059,7 +8126,7 @@ function buildBudget(){
       if(per==='day'||per==='person'||per==='personday'){
         const rate=saved[it.k+'rate']!==undefined?saved[it.k+'rate']:(it.rate!==undefined?it.rate:it.v);
         /* сокращения «дн.» и «чел.» стоят рядом с числом — словарь их не берёт */
-        const en=LANG!=='ru', UD=cx(' дн.'), UP=cx(' чел.');
+        const UD=cx(' дн.'), UP=cx(' чел.');
         const unit=per==='day'?(curSym()+(cx('/дн'))):(curSym()+(cx('/чел')));
         const desc=per==='day'?(tr('за день')+' × <b data-days>'+days+'</b>'+UD)
              :per==='person'?(tr('на человека')+' × <b data-ppl>'+PEOPLE+'</b>'+UP)
@@ -8475,10 +8542,10 @@ function parseAsk(raw){
 const PACES=[['calm','Спокойно'],['mid','Средне'],['fast','Насыщенно']];
 const chk='<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5L20 6.5"/></svg>';
 const qmk='<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17h.01M9.5 9a2.5 2.5 0 1 1 3.2 2.4c-.6.2-.7.8-.7 1.3v.6"/></svg>';
-/* MONTHS в родительном («августа») — он для дат «7 августа». Для галочки и названия
-   поездки нужен именительный, иначе получается «Когда: августа» */
-const MONNM=['январь','февраль','март','апрель','май','июнь','июль','август','сентябрь','октябрь','ноябрь','декабрь'];
-function monthNm(i){return i==null?'':(LANG!=='ru'?MONTHS_EN[i]:MONNM[i]);}
+/* ⚠️ У ДАТЫ И У НАЗВАНИЯ МЕСЯЦА РАЗНЫЕ ФОРМЫ. По-русски дата просит родительный
+   («7 августа»), а галочка и название поездки — именительный, иначе получается
+   «Когда: августа». Обе формы лежат в записи языка (i18n.js), здесь только имя. */
+function monthNm(i){return monName(i,'nm');}
 function askWho(a){
   if(a.adults==null)return null;
   return a.adults+' '+plural(a.adults,'взрослый','взрослых','взрослых')+(a.kids?(' · '+a.kids+' '+plural(a.kids,'ребёнок','детей','детей')):'');
@@ -8487,7 +8554,7 @@ function askWho(a){
    есть ровно даты, а не «август»; у того, кто ещё не решил, — только длина. */
 function dmy(iso){if(!iso)return '';const p=String(iso).split('-');
   if(p.length!==3)return iso;
-  return LANG!=='ru' ? (MON_EN[+p[1]-1]+' '+(+p[2])) : ((+p[2])+' '+MONNM[+p[1]-1].slice(0,3));}
+  return dfmt('short',new Date(+p[0],+p[1]-1,+p[2]));}
 function askDays(a){
   if(a.dateMode==='exact'&&a.from&&a.to){
     const d=Math.round((new Date(a.to)-new Date(a.from))/864e5)+1;
@@ -8535,7 +8602,11 @@ function calMonth(a){
 function calHTML(a){
   const cur=calMonth(a),y=+cur.slice(0,4),m=+cur.slice(5,7)-1;
   const first=new Date(y,m,1),last=new Date(y,m+1,0);
-  const sh=(first.getDay()+6)%7;                       /* неделя с понедельника */
+  /* ⚠️ С КАКОГО ДНЯ НАЧИНАЕТСЯ НЕДЕЛЯ — ЭТО СВОЙСТВО ЯЗЫКА, А НЕ КОДА. У нас
+     неделя с понедельника, в Америке — с воскресенья, и человек должен видеть
+     привычный календарь. Первый день лежит в записи языка (w1 в i18n.js). */
+  const L=locData(),w1=(L&&typeof L.w1==='number')?L.w1:1;
+  const sh=(first.getDay()-w1+7)%7;
   const today=new Date();const tIso=isoOf(today.getFullYear(),today.getMonth(),today.getDate());
   let cells='';
   for(let i=0;i<sh;i++)cells+='<span class="cd off"></span>';
@@ -8549,9 +8620,12 @@ function calHTML(a){
     :(a.from?'Теперь нажмите день отъезда':'Нажмите день приезда, потом день отъезда');
   return '<div class="cal">'
     +'<div class="calhd"><button class="calnav" data-calnav="-1">‹</button>'
-    +'<b>'+MONNM[m]+' '+y+'</b>'
+    +'<b>'+monthNm(m)+' '+y+'</b>'
     +'<button class="calnav" data-calnav="1">›</button></div>'
-    +'<div class="calg cw">'+['пн','вт','ср','чт','пт','сб','вс'].map(x=>'<span class="cd hd">'+x+'</span>').join('')+'</div>'
+    /* дни недели берём у языка и с его первого дня — раньше здесь стояли
+       русские «пн вт ср», и на английской странице они такими и оставались */
+    +'<div class="calg cw">'+[0,1,2,3,4,5,6].map(i=>'<span class="cd hd">'
+      +(((L&&L.wd)||['вс','пн','вт','ср','чт','пт','сб'])[(w1+i)%7])+'</span>').join('')+'</div>'
     +'<div class="calg">'+cells+'</div>'
     +'<p class="qhint">'+hint+'</p>'
     +'<div class="bkrow" style="margin-top:8px">'
@@ -8664,7 +8738,7 @@ function qBlock(f,a){
       body+='<div class="altrow">'+alt('month','знаю только месяц')+alt('days','знаю только сколько дней')+'</div>';
     }
     else if(md==='month'){
-      body='<div class="qopts">'+MONNM.map((mn,i)=>o('m'+i,mn.slice(0,3),a.month===i)).join('')+'</div>'
+      body='<div class="qopts">'+[0,1,2,3,4,5,6,7,8,9,10,11].map(i=>o('m'+i,monName(i,'nms'),a.month===i)).join('')+'</div>'
         +dayRow
         +'<p class="qhint">Даты поставим примерные и так и подпишем — вы поменяете их в маршруте.</p>'
         +'<div class="altrow">'+alt('exact','знаю точные даты — открыть календарь')+'</div>';
@@ -9356,10 +9430,11 @@ function assemble(a){
 }
 /* «5 ч» / «4,5 ч» — часы человеческим языком */
 function fmtH(h){
-  const en=LANG!=='ru', HR=cx(' ч');
+  const HR=cx(' ч');
   if(!h)return '0'+HR;
   const r=Math.round(h*10)/10;
-  return (en?String(r):String(r).replace('.',','))+HR;
+  /* знак дробной части — свойство языка: «4,5 ч» против «4.5 hr» */
+  return String(r).replace('.',decSep())+HR;
 }
 /* Лист «Как мы собрали»: что решили и почему. Открывается сразу после сборки и
    потом в любой момент из карточки «Старт поездки» — человек должен иметь

@@ -107,11 +107,19 @@ function pieces(s) { var p = parts(s); return p.vis.concat(p.attrs); }
    ПОИМЁННО и с причиной (то же правило, что и раздел 1б в ПЕРЕВОД.md).
    Незнакомый файл — ошибка, а не молчание. */
 const SKIP = {
-  'i18n.js':      'это сам словарь: русские фразы в нём — ключи, а не текст',
+  'i18n.js':      'это механизм перевода: русских фраз для человека в нём нет',
   'airports.js':  'список аэропортов мира, названия в оригинале (правило 10)',
   'day-math.js':  'счёт дня, общий с проверками в терминале; подписи для человека делает index.html',
   'open-hours.js':'разбор часов работы, общий с терминалом; подписи для человека делает index.html'
 };
+/* ⚠️ СЛОВАРИ ЯЗЫКОВ ПРОПУСКАЕМ ПО СОРТУ, А НЕ ПО ИМЕНИ. Перечислять их поимённо
+   значило бы править эту проверку на каждом новом языке — то же самое, от чего
+   уходит правило 22б. Сорт узнаётся по имени файла: lang-<код>.js. */
+function skipWhy(f) {
+  if (SKIP[f]) return SKIP[f];
+  if (/^lang-[a-z]{2}\.js$/.test(f)) return 'словарь языка: русские фразы в нём — ключи, а не текст';
+  return null;
+}
 const PAGE = fs.readFileSync(path.join(DIR, 'index.html'), 'utf8');
 const LOADED = [];
 (PAGE.match(/<script\s+src="\/([A-Za-z0-9._-]+\.js)"/g) || []).forEach(function (tag) {
@@ -120,9 +128,18 @@ const LOADED = [];
 });
 /* airports.js подключается из кода, а не тегом — но грузится так же */
 if (/airports\.js/.test(PAGE) && LOADED.indexOf('airports.js') < 0) LOADED.push('airports.js');
+/* ⚠️ СЛОВАРИ ЯЗЫКОВ ТОЖЕ ПОДКЛЮЧАЮТСЯ ИЗ КОДА (шаг 2 плана, 08.08.2026):
+   страница подставляет lang-<код>.js, когда язык не русский. Тега в файле нет,
+   значит сам себя этот файл проверке не покажет — спрашиваем у папки, какие
+   словари есть, и называем их поимённо, как всё остальное. */
+if (/lang-'\+/.test(PAGE)) {
+  fs.readdirSync(DIR).forEach(function (f) {
+    if (/^lang-[a-z]{2}\.js$/.test(f) && LOADED.indexOf(f) < 0) LOADED.push(f);
+  });
+}
 
 const FILES = ['index.html', 'constructor.js'].filter(f => fs.existsSync(path.join(DIR, f)));
-const UNKNOWN = LOADED.filter(f => FILES.indexOf(f) < 0 && !SKIP[f]);
+const UNKNOWN = LOADED.filter(f => FILES.indexOf(f) < 0 && !skipWhy(f));
 const SEP = String.fromCharCode(10) + '/*FILE*/' + String.fromCharCode(10);
 /* ⚠️ СЧИТАЕМ ПО ФАЙЛАМ ОТДЕЛЬНО. index.html — это то, что человек видит всегда;
    constructor.js — словарь генератора и сообщения сборки маршрута, там текст
@@ -159,13 +176,15 @@ while ((m = rx.exec(src))) {
   if (KEEP_RX.test(before) && !/\?\s*$/.test(val)) { okBy.keep++; kept.push({ line: line, text: val }); continue; }
   if (TECH.some(r => r.test(val.trim()))) { okBy.tech++; continue; }
 
-  /* ⚠️ ДВЕ ЗАКОННЫЕ ПРИЧИНЫ НЕ РУГАТЬСЯ — иначе проверка кричит на здоровое
-     и её перестают читать, а это хуже, чем её отсутствие.
-     ① строка стоит в русской ветке развилки на язык — рядом в той же строке
-        кода написано LANG!=='ru', значит английский вариант есть тут же;
-     ② строка не текст вовсе: кусок регулярки для разбора дат, имя поля формы. */
+  /* ⚠️ ЗДЕСЬ БЫЛА ПОБЛАЖКА РАЗВИЛКАМ — И ЭТО БЫЛА ДЫРА (убрана 08.08.2026,
+     шаг 2 плана). Раньше строка прощалась, если рядом в той же строке кода
+     стояло LANG!=='ru': мол, английский вариант написан тут же. Английский —
+     да, а третий язык получал его же, просто потому что он «не русский», и
+     проверка про это молчала. Так пряталась 31 фраза.
+     Теперь развилки разбираются отдельно и печатаются поимённо (см. ниже).
+     Осталась одна законная причина не ругаться: строка не текст вовсе —
+     кусок регулярки для разбора дат, имя поля формы. */
   const codeLine = LINES_SRC[line - 1] || '';
-  if (/LANG\s*!==\s*'ru'/.test(codeLine)) { okBy.code++; continue; }
   if (/MONRX|'date'|'text'|'area'|new RegExp/.test(codeLine)) { okBy.tech++; continue; }
 
   /* ② стоит в cx('…') — значит ищем в словаре для кода */
@@ -257,14 +276,73 @@ if (process.argv.indexOf('--list') >= 0) show(badGen, 'constructor.js');
 
 console.log('  страница грузит файлов: ' + LOADED.length +
   ' · проверяем: ' + FILES.filter(f => f !== 'index.html').join(', '));
-Object.keys(SKIP).forEach(f => {
-  if (LOADED.indexOf(f) >= 0) console.log('        · ' + f + ' — не проверяем: ' + SKIP[f]);
+LOADED.forEach(f => {
+  const why = FILES.indexOf(f) < 0 ? skipWhy(f) : null;
+  if (why) console.log('        · ' + f + ' — не проверяем: ' + why);
 });
 if (UNKNOWN.length) {
   console.log('');
   console.log('  ⛔ СТРАНИЦА ГРУЗИТ ФАЙЛ, О КОТОРОМ ПРОВЕРКА НЕ ЗНАЕТ: ' + UNKNOWN.join(', '));
   console.log('     Либо добавь его в список проверяемых, либо в SKIP с причиной.');
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   РАЗВИЛКИ ПО ЯЗЫКУ — ПОИМЁННО, КАК И ВСЕ ОСТАЛЬНЫЕ ИСКЛЮЧЕНИЯ (шаг 2 плана)
+
+   Развилки бывают двух сортов, и это НЕ одно и то же.
+
+   ✔ LANG === 'ru'  — безопасна по устройству. Русский идёт своей веткой (у него
+     три формы слова, готовая строка из open-hours.js), а ВСЕ остальные языки —
+     общей: шаблон плюс их собственный словарь. Третий язык тут ничего не теряет.
+
+   ⛔ LANG !== 'ru'  — опасна. «Не русский» значит «английский», и третий язык
+     получит английский текст просто по признаку «не русский». Ровно так и
+     пряталась 31 фраза до 08.08.2026.
+
+   Поэтому каждая такая развилка должна быть названа здесь с причиной. Новая,
+   о которой проверка не знает, роняет её в ошибку — то же правило, что и с
+   подключёнными файлами: молчания быть не должно.
+   ══════════════════════════════════════════════════════════════════════════ */
+const FORKS = {
+  "return cx('мили')":
+    'у русского три формы («1 миля / 2 мили / 5 миль»), у остальных языков слово целиком лежит в их словаре',
+  "tr(md.getAttribute('content')":
+    'не выбор текста, а признак «язык не исходный»: описание страницы в <head> на русском переводить нечего'
+};
+const forkLines = [];
+LINES_SRC.forEach(function (ln, i) {
+  if (!/LANG\s*!==\s*'ru'/.test(ln)) return;
+  const txt = ln.trim();
+  const why = Object.keys(FORKS).filter(function (k) { return txt.indexOf(k) >= 0; })[0];
+  forkLines.push({ line: i + 1, text: txt.length > 90 ? txt.slice(0, 90) + '…' : txt, why: why ? FORKS[why] : null });
+});
+const forkBad = forkLines.filter(function (f) { return !f.why; });
+console.log('');
+console.log('  развилок «язык не русский»: ' + forkLines.length + ' (каждая названа с причиной)');
+forkLines.forEach(function (f) {
+  console.log('        · ' + String(f.line).padStart(6) + '  ' + (f.why || '⛔ ПРИЧИНА НЕ УКАЗАНА'));
+  if (!f.why) console.log('          ' + f.text);
+});
+if (forkBad.length) {
+  console.log('');
+  console.log('  ⛔ РАЗВИЛКА ПО ЯЗЫКУ, О КОТОРОЙ ПРОВЕРКА НЕ ЗНАЕТ. Третий язык получит');
+  console.log('     то, что написано для английского. Либо перепиши шаблоном через cx(),');
+  console.log('     либо назови её в FORKS в этом файле и объясни, почему это безопасно.');
+}
+
+/* ⚠️ СЛОВАРЬ ТОЖЕ УСТАРЕВАЕТ. Переписали фразу шаблоном — старый ключ остаётся
+   лежать, и его никто не тронет: работать он не мешает, а читать словарь
+   мешает. Поэтому показываем ключи CODE, которых в коде уже нет. Это не
+   ошибка выкладки, а уборка. */
+const codeSrc = raw;
+const deadKeys = Object.keys(CODE).filter(function (k) {
+  return codeSrc.indexOf("cx('" + k + "'") < 0 && codeSrc.indexOf('cx("' + k + '"') < 0;
+});
+if (deadKeys.length) {
+  console.log('');
+  console.log('  в CODE есть ключи, которых в коде уже нет: ' + deadKeys.length + ' — можно убрать');
+  deadKeys.slice(0, 20).forEach(function (k) { console.log('        · ' + k.slice(0, 70)); });
+}
 console.log('');
 
-process.exit((badPage.length || UNKNOWN.length) ? 1 : 0);
+process.exit((badPage.length || UNKNOWN.length || forkBad.length) ? 1 : 0);

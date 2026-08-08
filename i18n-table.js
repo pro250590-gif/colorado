@@ -107,8 +107,18 @@ function render(trip, lang) {
       const tf = trip.replace(/\.js$/, '-' + lang + '.js');
       const tTag = (lang !== 'ru' && fs.existsSync(path.join(DIR, tf)))
         ? ('<script src="' + tf + '"></script>\n') : '';
+      /* ⚠️ САМ СЛОВАРЬ ЯЗЫКА ТОЖЕ ПРИЕЗЖАЕТ ЧЕРЕЗ document.write (шаг 2 плана,
+         08.08.2026): переводы больше не лежат в i18n.js. Не подставить его
+         тегом — и прогон покажет английскую страницу русской, то есть соврёт
+         ровно там, где мы этой таблице верим. Тег стоит ПОСЛЕ i18n.js. */
+      const lf = 'lang-' + lang + '.js';
+      /* английский — второе звено цепочки «язык → английский → русский»,
+         поэтому на третьем языке он едет вместе с ним, как и в браузере */
+      const lTag = (lang !== 'ru' && fs.existsSync(path.join(DIR, lf)))
+        ? ((lang !== 'en' ? '<script src="lang-en.js"></script>\n' : '')
+          + '<script src="' + lf + '"></script>\n') : '';
       h = h.replace('<script src="/day-math.js"></script>',
-        '<script src="' + trip + '"></script>\n' + tTag + '<script src="day-math.js"></script>');
+        lTag + '<script src="' + trip + '"></script>\n' + tTag + '<script src="day-math.js"></script>');
       res.end(h);
     });
     await new Promise(r => srv.listen(0, r));
