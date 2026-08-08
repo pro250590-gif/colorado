@@ -2763,12 +2763,16 @@ function airRow(a){
   const nm=a[1]||'',city=a[2]||'',ruA=a[8]||'',ruC=a[9]||'';
   const all=a[7]===3;
   const head=ruC||ruA||(nm+((city&&nm.toLowerCase().indexOf(city.toLowerCase())<0)?(' · '+city):''));
-  const sub=all?('все аэропорты · '+(a[10]||'')+' · '+(a[4]||''))
-               :[nm,a[3],a[4]].filter(Boolean).join(' · ');
+  /* ⚠️ Названия аэропортов, городов, областей и стран — тоже оригинал (правило
+     10), и переводчику их отдавать нельзя: человек по этой строке узнаёт свой
+     город и не путает Портленд в Орегоне с Портлендом в Мэне. «Все аэропорты» —
+     наша подпись, она переводится, поэтому метка идёт только на имена. */
+  const sub=all?('все аэропорты · '+nmT([a[10],a[4]].filter(Boolean).join(' · ')))
+               :nmT([nm,a[3],a[4]].filter(Boolean).join(' · '));
   return '<button class="dsrow airrow'+(all?' airall':'')+'" data-airpick="'+a[0]+'">'
-    +'<span class="aircode">'+a[0]+'</span>'
-    +'<span class="dst"><b>'+esc0(head)+'</b>'
-    +'<span>'+esc0(sub)+'</span></span></button>';
+    +'<span class="aircode" data-noT translate="no">'+a[0]+'</span>'
+    +'<span class="dst"><b>'+nmT(head)+'</b>'
+    +'<span>'+sub+'</span></span></button>';
 }
 function homeSheet(){
   const cur=originNow();
@@ -3337,7 +3341,7 @@ function popupHTML(nm,q,why,label,color,photo,foodicon,plate,ll){
         +'<div class="mpopB-ic"><img class="fimg" src="'+encodeURI(F3D+ico.f)+'" alt="" loading="lazy" onerror="this.closest(\'.mpopB-ic\').classList.add(\'noimg\');this.remove();"><span class="femoji">'+ico.e+'</span></div>'
         +'<div class="mpopB-ti">'
           +'<div class="mpop-eye" style="color:#5b3fc4">Еда</div>'
-          +'<div class="mpop-nm">'+nm+'</div>'
+          +'<div class="mpop-nm">'+nmT(nm)+'</div>'
         +'</div></div>'
       +'<div class="mpop-bd mpopB-bd">'+or+'<div class="mpop-why">'+why+'</div>'
       /* точку заведения не нашли — она стоит у центра города, и на карте это
@@ -3351,7 +3355,7 @@ function popupHTML(nm,q,why,label,color,photo,foodicon,plate,ll){
       +(photo?'':'<span class="mpop-ico">'+ic(plate||'pin','i-lg')+'</span>')+'</div>'
     +'<div class="mpop-bd">'
     +(label?'<div class="mpop-eye" style="color:'+color+'">'+label+'</div>':'')
-    +'<div class="mpop-nm">'+nm+'</div>'+or
+    +'<div class="mpop-nm">'+nmT(nm)+'</div>'+or
     +'<div class="mpop-why">'+why+'</div>'
     +gm+'</div></div>';
 }
