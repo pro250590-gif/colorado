@@ -57,9 +57,41 @@ function get(u) {
   for (const u of asked) {
     const r = await get('https://kolibripro.com' + (u.startsWith('/') ? u : '/' + u));
     console.log('   ' + u + ' → ' + r.code + (r.code === 200 ? ('  ' + r.body.length + ' байт') : ''));
-    if (/-en\.js$/.test(u) && r.code === 200) {
+    /* ⚠️ РАЗНЫЕ ФАЙЛЫ — РАЗНАЯ ПРОВЕРКА. Оба кончаются на «-en.js», но внутри
+       у них разное: trip-<маршрут>-en.js — текст поездки, lang-en.js — словарь
+       интерфейса. Одна проверка на оба врала: про словарь она честно печатала
+       «английского текста внутри: false», хотя файл целый и на месте. */
+    if (/^\/?lang-[a-z]{2}\.js$/.test(u) && r.code === 200) {
+      console.log('   словарь языка живой:', /I18N\.add|__i18nPacks/.test(r.body),
+        '· фраз:', (r.body.match(/':\s*'/g) || []).length);
+    } else if (/-en\.js$/.test(u) && r.code === 200) {
       console.log('   английский текст внутри:', /__tripText/.test(r.body),
         '· пример:', (r.body.match(/why: '([^']{20,60})/) || [])[1] || '—');
     }
   }
+
+  /* ⚠️ РУССКИЙ НЕ ДОЛЖЕН КАЧАТЬ ЧУЖОЙ СЛОВАРЬ (шаг 2 плана, 08.08.2026).
+     Ради этого словари и разделены — значит это надо МЕРИТЬ, а не верить.
+     ⚠️ И мерить именно прогоном загрузчика, а не поиском строки в файле:
+     строка «src="/lang-» лежит в самом коде загрузчика и есть на любой
+     странице, включая русскую. Первый заход именно так и соврал. */
+  const ru = await get('https://kolibripro.com/');
+  console.log('\nрусская страница: ' + ru.code + ', ' + ru.body.length + ' байт');
+  const rblocks = ru.body.split('<script').filter(b => b.indexOf('document.write') >= 0);
+  const rcode = rblocks.length ? rblocks[0].slice(rblocks[0].indexOf('>') + 1).split('</script')[0] : '';
+  const rasked = [];
+  const rwin = {
+    location: { search: '?trip', pathname: '/', href: 'https://kolibripro.com/?trip', origin: 'https://kolibripro.com' },
+    localStorage: { getItem: () => null, setItem: () => { }, removeItem: () => { } },
+    history: { replaceState: () => { } },
+    document: { write: s => { const m = s.match(/src="([^"]+)"/); if (m) rasked.push(m[1]); } }
+  };
+  rwin.window = rwin;
+  const rctx = vm.createContext(rwin);
+  rctx.URLSearchParams = URLSearchParams; rctx.URL = URL; rctx.JSON = JSON;
+  rctx.Date = Date; rctx.Math = Math; rctx.Object = Object; rctx.Array = Array;
+  try { vm.runInContext(rcode, rctx); } catch (e) { console.log('  загрузчик споткнулся:', e.message); }
+  console.log('  она попросит: ' + (rasked.join(', ') || '—'));
+  console.log('  словарь языка среди них:',
+    rasked.some(u => /lang-[a-z]{2}\.js$/.test(u)) ? 'ДА — это ошибка' : 'нет, как и задумано');
 })();
